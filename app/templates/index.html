@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Mis entrenamientos</h1>
+    {% for w in workouts %}
+        <p><a href="{{ url_for('workout_detail', workout_id=w.id) }}">{{ w.timestamp.strftime('%d/%m/%Y %H:%M') }} - {{ w.note }}</a></p>
+    {% endfor %}
+{% endblock %}

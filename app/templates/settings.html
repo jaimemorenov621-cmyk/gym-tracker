@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Configuración</h1>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.stagnation_threshold.label }}<br>
+            {{ form.stagnation_threshold() }}
+        </p>
+        <p>
+            {{ form.effort_scale.label }}<br>
+            <small>
+                <strong>RIR</strong> (Repeticiones en Reserva): cuántas repeticiones más podrías haber hecho antes de fallar. 0 = al fallo, 3 = con bastante margen.<br>
+                <strong>RPE</strong> (Percepción de Esfuerzo): escala inversa, de 0 a 10, donde 10 = esfuerzo máximo (equivale a RIR 0).
+            </small><br>
+            {{ form.effort_scale() }}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

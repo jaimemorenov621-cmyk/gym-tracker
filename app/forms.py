@@ -1,0 +1,111 @@
+from flask_wtf import FlaskForm
+from wtforms import (
+    StringField,
+    PasswordField,
+    BooleanField,
+    SubmitField,
+    FloatField,
+    IntegerField,
+    SelectField,
+    TextAreaField,
+)
+from wtforms.validators import (
+    DataRequired,
+    InputRequired,
+    Optional,
+    Email,
+    EqualTo,
+    ValidationError,
+    NumberRange,
+    Length,
+)
+import sqlalchemy as sa
+from app import db
+from app.models import User
+
+
+class LoginForm(FlaskForm):
+    username = StringField("Username", validators=[DataRequired()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    remember_me = BooleanField("Remember Me")
+    submit = SubmitField("Sign In")
+
+
+class RegistrationForm(FlaskForm):
+    username = StringField("Username", validators=[DataRequired()])
+    email = StringField("Email", validators=[DataRequired(), Email()])
+    password = PasswordField("Password", validators=[DataRequired()])
+    password2 = PasswordField(
+        "Repeat Password", validators=[DataRequired(), EqualTo("password")]
+    )
+    submit = SubmitField("Register")
+
+    def validate_username(self, username):
+        user = db.session.scalar(sa.select(User).where(User.username == username.data))
+        if user is not None:
+            raise ValidationError("Please use a different username.")
+
+    def validate_email(self, email):
+        user = db.session.scalar(sa.select(User).where(User.email == email.data))
+        if user is not None:
+            raise ValidationError("Please use a different email address.")
+
+
+class WorkoutForm(FlaskForm):
+    note = StringField("Nombre de la sesión (ej: Pecho y tríceps)")
+    submit = SubmitField("Empezar entrenamiento")
+
+
+class SetEntryForm(FlaskForm):
+    exercise = StringField("Ejercicio", validators=[DataRequired()])
+    weight = FloatField(
+        "Peso (kg)",
+        validators=[DataRequired(), NumberRange(min=0, max=500)],
+        render_kw={"min": 0, "max": 500, "step": "any"},
+    )
+    reps = IntegerField(
+        "Repeticiones",
+        validators=[DataRequired(), NumberRange(min=1, max=30)],
+        render_kw={"min": 1, "max": 30},
+    )
+    effort_value = IntegerField(
+        "Valor de esfuerzo",
+        validators=[Optional(), NumberRange(min=0, max=10)],
+        render_kw={"min": 0, "max": 10},
+    )
+    submit = SubmitField("Añadir serie")
+
+
+class EmptyForm(FlaskForm):
+    submit = SubmitField("Submit")
+
+
+class SettingsForm(FlaskForm):
+    stagnation_threshold = IntegerField(
+        "Sesiones sin récord para avisar de estancamiento",
+        validators=[DataRequired(), NumberRange(min=1, max=20)],
+    )
+    effort_scale = SelectField(
+        "¿Cómo quieres medir el esfuerzo?",
+        choices=[("rir", "RIR"), ("rpe", "RPE"), ("none", "No anotar")],
+        default="rir",
+    )
+    submit = SubmitField("Guardar")
+
+
+class FinishWorkoutForm(FlaskForm):
+    performance_rating = SelectField('¿Cómo ha sido tu rendimiento hoy?', coerce=int,
+        choices=[
+            (1, '1 - Pésimo: no pude completar el entrenamiento planeado'),
+            (2, '2 - Muy mal: rendimiento muy por debajo de lo normal'),
+            (3, '3 - Mal: peso o reps notablemente inferiores a lo habitual'),
+            (4, '4 - Flojo: por debajo de lo normal'),
+            (5, '5 - Regular: cumplí, sin más'),
+            (6, '6 - Normal: sesión estándar, sin sorpresas'),
+            (7, '7 - Bien: mejor de lo esperado en algún ejercicio'),
+            (8, '8 - Muy bien: buena sensación general, progresé'),
+            (9, '9 - Muy buena: cerca de mis mejores marcas'),
+            (10, '10 - Excelente: nuevos récords, gran sesión'),
+        ])
+    performance_comment = TextAreaField('Comentario (opcional)', validators=[Length(max=255)])
+    submit = SubmitField('Guardar entrenamiento')

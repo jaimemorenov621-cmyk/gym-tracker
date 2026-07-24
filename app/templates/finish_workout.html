@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Finalizar: {{ workout.note or "Entrenamiento" }}</h1>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.performance_rating.label }}<br>
+            {{ form.performance_rating() }}
+        </p>
+        <p>
+            {{ form.performance_comment.label }}<br>
+            {{ form.performance_comment(cols=50, rows=3) }}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

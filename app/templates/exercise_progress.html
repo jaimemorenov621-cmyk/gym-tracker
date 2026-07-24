@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>{{ exercise|title }}</h1>
+
+    {% if stagnation %}
+        <p style="color: #c62828; font-weight: bold;">
+            ⚠️ Posible estancamiento: no has batido tu récord en las últimas {{ threshold }} sesiones de {{ exercise|title }}.
+        </p>
+    {% endif %}
+    {% if improvement %}
+        <p style="color: #2e7d32; font-weight: bold;">
+            🎉 ¡Nuevo récord! Tu última sesión superó tu mejor marca anterior.
+        </p>
+    {% endif %}
+
+    <canvas id="progressChart" width="600" height="300"></canvas>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('progressChart');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: {{ chart_labels|tojson }},
+                datasets: [{
+                    label: '1RM estimado (kg)',
+                    data: {{ chart_values|tojson }},
+                    borderColor: '#999',
+                    pointBackgroundColor: {{ chart_colors|tojson }},
+                    pointRadius: 7,
+                    tension: 0.2
+                }]
+            }
+        });
+    </script>
+
+    <hr>
+    {% for s in sessions %}
+        <h3>{{ s.timestamp.strftime('%d/%m/%Y %H:%M') }} {% if s.is_pr %}🏆{% endif %}</h3>
+        {% for e in s.sets %}
+            <p>
+                {{ e.weight }}kg x {{ e.reps }} reps
+                {% if e.rir is not none %}(RIR {{ e.rir }}){% elif e.rpe is not none %}(RPE {{ e.rpe }}){% endif %}
+            </p>
+        {% endfor %}
+        <p><em>1RM estimado: {{ s.best_1rm|round(1) }} kg</em></p>
+        <hr>
+    {% endfor %}
+{% endblock %}

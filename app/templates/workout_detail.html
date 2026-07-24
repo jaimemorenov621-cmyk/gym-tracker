@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>{{ workout.note or "Entrenamiento" }}</h1>
+    {% if workout.performance_rating %}<p><em>📝 Rendimiento: {{ workout.performance_rating }}/10</em></p>{% endif %}
+    {% if workout.performance_comment %}<p><em>💬 {{ workout.performance_comment }}</em></p>{% endif %}
+    <p>{{ workout.timestamp.strftime('%d/%m/%Y %H:%M') }}
+        {% if effort_scale == 'none' %}
+            — Sin medición de esfuerzo
+        {% else %}
+            — Midiendo esfuerzo con {{ effort_scale|upper }}
+        {% endif %}
+    </p>
+    <hr>
+
+    <h2>Series registradas</h2>
+    {% for exercise, group in grouped_sets.items() %}
+        <h3>💪 <a href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a></h3>
+        {% for s in group %}
+            <p>
+                {{ s.weight }}kg x {{ s.reps }} reps
+                {% if s.rir is not none %}(RIR {{ s.rir }}){% elif s.rpe is not none %}(RPE {{ s.rpe }}){% endif %}
+            </p>
+        {% endfor %}
+        <p><a href="{{ url_for('workout_detail', workout_id=workout.id, exercise=exercise) }}">+ Añadir otra serie de {{ exercise }}</a></p>
+    {% endfor %}
+
+    <hr>
+    <h2>Añadir serie</h2>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.exercise.label }}<br>
+            {{ form.exercise(size=32) }}<br>
+            {% for error in form.exercise.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.weight.label }}<br>
+            {{ form.weight() }}<br>
+            {% for error in form.weight.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form.reps.label }}<br>
+            {{ form.reps() }}<br>
+            {% for error in form.reps.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        {% if effort_scale != 'none' %}
+        <p>
+            {{ form.effort_value.label }} ({{ effort_scale|upper }})<br>
+            {{ form.effort_value() }}<br>
+            {% for error in form.effort_value.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        {% endif %}
+        <p>{{ form.submit() }}</p>
+    </form>
+
+    <hr>
+
+    <p><a href="{{ url_for('finish_workout', workout_id=workout.id) }}">Guardar y finalizar</a></p>
+
+    <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post" style="display:inline"
+          onsubmit="return confirm('¿Seguro que quieres eliminar este entrenamiento? No se puede deshacer.');">
+        {{ empty_form.hidden_tag() }}
+        {{ empty_form.submit(value='Eliminar entrenamiento') }}
+    </form>
+{% endblock %}

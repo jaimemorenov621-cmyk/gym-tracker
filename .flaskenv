@@ -1,0 +1,2 @@
+FLASK_APP=gymtracker.py
+FLASK_DEBUG=1
