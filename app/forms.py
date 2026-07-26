@@ -73,6 +73,16 @@ class SetEntryForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0, max=10)],
         render_kw={"min": 0, "max": 10},
     )
+    set_type = SelectField(
+        "Tipo de serie",
+        choices=[
+            ("normal", "Normal"),
+            ("calentamiento", "Calentamiento"),
+            ("fallo", "Al fallo"),
+            ("dropset", "Dropset"),
+        ],
+        default="normal",
+    )
     submit = SubmitField("Añadir serie")
 
 
@@ -94,18 +104,50 @@ class SettingsForm(FlaskForm):
 
 
 class FinishWorkoutForm(FlaskForm):
-    performance_rating = SelectField('¿Cómo ha sido tu rendimiento hoy?', coerce=int,
+    performance_rating = SelectField(
+        "¿Cómo ha sido tu rendimiento hoy?",
+        coerce=int,
         choices=[
-            (1, '1 - Pésimo: no pude completar el entrenamiento planeado'),
-            (2, '2 - Muy mal: rendimiento muy por debajo de lo normal'),
-            (3, '3 - Mal: peso o reps notablemente inferiores a lo habitual'),
-            (4, '4 - Flojo: por debajo de lo normal'),
-            (5, '5 - Regular: cumplí, sin más'),
-            (6, '6 - Normal: sesión estándar, sin sorpresas'),
-            (7, '7 - Bien: mejor de lo esperado en algún ejercicio'),
-            (8, '8 - Muy bien: buena sensación general, progresé'),
-            (9, '9 - Muy buena: cerca de mis mejores marcas'),
-            (10, '10 - Excelente: nuevos récords, gran sesión'),
-        ])
-    performance_comment = TextAreaField('Comentario (opcional)', validators=[Length(max=255)])
-    submit = SubmitField('Guardar entrenamiento')
+            (1, "1 - Pésimo: no pude completar el entrenamiento planeado"),
+            (2, "2 - Muy mal: rendimiento muy por debajo de lo normal"),
+            (3, "3 - Mal: peso o reps notablemente inferiores a lo habitual"),
+            (4, "4 - Flojo: por debajo de lo normal"),
+            (5, "5 - Regular: cumplí, sin más"),
+            (6, "6 - Normal: sesión estándar, sin sorpresas"),
+            (7, "7 - Bien: mejor de lo esperado en algún ejercicio"),
+            (8, "8 - Muy bien: buena sensación general, progresé"),
+            (9, "9 - Muy buena: cerca de mis mejores marcas"),
+            (10, "10 - Excelente: nuevos récords, gran sesión"),
+        ],
+    )
+    performance_comment = TextAreaField(
+        "Comentario (opcional)", validators=[Length(max=255)]
+    )
+    submit = SubmitField("Guardar entrenamiento")
+
+
+class ExerciseNoteForm(FlaskForm):
+    notes = TextAreaField("Notas (una línea = un punto)", validators=[Length(max=1000)])
+    submit = SubmitField("Guardar notas")
+
+
+class RoutineForm(FlaskForm):
+    name = StringField(
+        "Nombre de la rutina (ej: Push A)", validators=[DataRequired(), Length(max=64)]
+    )
+    submit = SubmitField("Crear rutina")
+
+
+class RoutineExerciseForm(FlaskForm):
+    exercise = StringField("Ejercicio", validators=[DataRequired(), Length(max=64)])
+    target_sets = IntegerField(
+        "Series objetivo",
+        validators=[DataRequired(), NumberRange(min=1, max=15)],
+        default=3,
+    )
+    target_reps = StringField(
+        "Reps objetivo (ej: 8-10)",
+        validators=[DataRequired(), Length(max=16)],
+        default="8-10",
+    )
+    submit = SubmitField("Añadir ejercicio")

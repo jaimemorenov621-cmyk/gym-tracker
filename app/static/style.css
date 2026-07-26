@@ -1,0 +1,176 @@
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 16px;
+    color: #222;
+}
+
+nav {
+    background: #f5f5f7;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+}
+
+.btn, button, input[type="submit"] {
+    display: inline-block;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #7c4dff, #536dfe);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 3px 6px 3px 0;
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+
+.btn:hover, button:hover, input[type="submit"]:hover {
+    background: linear-gradient(135deg, #6a3dff, #3d5afe);
+    color: white;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+}
+
+.btn-danger, input[type="submit"].btn-danger {
+    background: linear-gradient(135deg, #ff5252, #d32f2f);
+}
+.btn-danger:hover {
+    background: linear-gradient(135deg, #e04848, #b71c1c);
+}
+
+.btn-nav {
+    background: transparent;
+    color: #444;
+    box-shadow: none;
+    padding: 8px 12px;
+}
+.btn-nav:hover {
+    background: rgba(0,0,0,0.06);
+    color: #111;
+    box-shadow: none;
+}
+.btn-nav-primary {
+    background: linear-gradient(135deg, #7c4dff, #536dfe);
+    color: white;
+}
+.btn-nav-primary:hover {
+    color: white;
+}
+
+nav a { margin-right: 6px; }
+
+.workout-card {
+    display: block;
+    background: #f8f8fc;
+    border: 1px solid #e5e5ee;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    text-decoration: none;
+    color: #222;
+    transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.workout-card:hover {
+    border-color: #7c4dff;
+    box-shadow: 0 4px 12px rgba(124,77,255,0.15);
+    transform: translateY(-1px);
+}
+.workout-card .wc-title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #3d2b8a;
+}
+.workout-card .wc-date {
+    font-size: 0.85rem;
+    color: #888;
+    background: #ececf7;
+    padding: 3px 10px;
+    border-radius: 999px;
+    float: right;
+}
+
+.btn-outline {
+    display: inline-block;
+    padding: 5px 12px;
+    background: white;
+    color: #536dfe;
+    border: 1.5px solid #536dfe;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin: 2px 4px 2px 0;
+    transition: background 0.15s ease;
+}
+.btn-outline:hover { background: #ececf7; }
+
+.active-toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    color: #3d2b8a;
+    border: 1.5px solid #7c4dff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 6px 18px rgba(124,77,255,0.25);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.active-toast::before {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #22c98c;
+    display: inline-block;
+}
+.active-toast:hover { background: #f5f3ff; color: #3d2b8a; }
+
+
+.exercise-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f8fc;
+    border: 1px solid #e5e5ee;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+}
+.drag-handle {
+    cursor: grab;
+    color: #999;
+    margin-right: 10px;
+    font-size: 1.2rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #c62828;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+.btn-icon:hover { background: #fdecea; }
+
+
+.flash {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    color: #664d03;
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}

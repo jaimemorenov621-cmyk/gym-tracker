@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>{{ routine.name }}</h1>
+
+    <form action="{{ url_for('start_routine', routine_id=routine.id) }}" method="post" style="display:inline">
+        {{ empty_form.hidden_tag() }}
+        <input type="submit" value="▶ Iniciar entrenamiento" class="btn">
+    </form>
+    <form action="{{ url_for('delete_routine', routine_id=routine.id) }}" method="post" style="display:inline"
+          onsubmit="return confirm('¿Eliminar esta rutina?');">
+        {{ empty_form.hidden_tag() }}
+        <input type="submit" value="Eliminar rutina" class="btn btn-danger">
+    </form>
+
+    <hr>
+    <h2>Ejercicios planificados</h2>
+    <p><small>Arrastra ⠿ para reordenar.</small></p>
+    <ul id="exerciseList" style="list-style:none; padding:0;">
+        {% for ex in exercises %}
+            <li class="exercise-row" data-id="{{ ex.id }}">
+                <span><span class="drag-handle">⠿</span>{{ ex.exercise|title }} — {{ ex.target_sets }} series x {{ ex.target_reps }} reps</span>
+                <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" style="display:inline">
+                    {{ empty_form.hidden_tag() }}
+                    <button type="submit" class="btn-icon" title="Quitar ejercicio">🗑️</button>
+                </form>
+            </li>
+        {% else %}
+            <p><em>Todavía no has añadido ejercicios.</em></p>
+        {% endfor %}
+    </ul>
+
+    <hr>
+    <h2>Añadir ejercicio</h2>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.exercise.label }}<br>
+            {{ form.exercise(size=32) }}
+        </p>
+        <p>
+            {{ form.target_sets.label }}<br>
+            {{ form.target_sets() }}
+        </p>
+        <p>
+            {{ form.target_reps.label }}<br>
+            {{ form.target_reps() }}
+        </p>
+        <p><input type="submit" value="Añadir ejercicio" class="btn"></p>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        const list = document.getElementById('exerciseList');
+        if (list) {
+            new Sortable(list, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: function() {
+                    const order = Array.from(list.children).map(li => parseInt(li.dataset.id));
+                    fetch("{{ url_for('reorder_routine', routine_id=routine.id) }}", {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({order: order})
+                    });
+                }
+            });
+        }
+    </script>
+{% endblock %}

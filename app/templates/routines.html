@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Mis rutinas</h1>
+    <p><a class="btn" href="{{ url_for('new_routine') }}">+ Nueva rutina</a></p>
+
+    {% for info in routines_info %}
+        <div class="workout-card" style="cursor:default;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <a class="btn-outline" href="{{ url_for('routine_detail', routine_id=info.routine.id) }}">{{ info.routine.name }}</a>
+                <form action="{{ url_for('start_routine', routine_id=info.routine.id) }}" method="post" style="display:inline">
+                    {{ empty_form.hidden_tag() }}
+                    <input type="submit" value="▶ Iniciar" class="btn">
+                </form>
+            </div>
+            <div style="margin-top:8px; color:#666; font-size:0.9rem;">
+                {% if info.exercise_names %}
+                    {{ info.exercise_names|join(', ') }}
+                {% else %}
+                    <em>Sin ejercicios todavía</em>
+                {% endif %}
+            </div>
+            {% if info.last_day %}
+                <div style="margin-top:6px; font-size:0.85rem; color:#999;">
+                    Última vez: {{ info.last_day }} ({{ info.last_date }})
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <p><em>Todavía no tienes rutinas guardadas.</em></p>
+    {% endfor %}
+{% endblock %}

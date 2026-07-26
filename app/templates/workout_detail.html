@@ -13,25 +13,58 @@
     </p>
     <hr>
 
+    {% if routine_plan %}
+        <h2>📋 Plan de la rutina</h2>
+        {% for p in routine_plan %}
+            <p>
+                {{ p.exercise|title }} — {{ p.target_sets }}x{{ p.target_reps }}
+                — <strong>{{ p.done }}/{{ p.target_sets }}</strong> hechas
+                <a class="btn" href="{{ url_for('workout_detail', workout_id=workout.id, exercise=p.exercise) }}">Registrar</a>
+            </p>
+        {% endfor %}
+        <hr>
+    {% endif %}
+
     <h2>Series registradas</h2>
     {% for exercise, group in grouped_sets.items() %}
-        <h3>💪 <a href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a></h3>
+        <h3>💪 <a class="btn-outline" href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a>
+            <a class="btn-outline" href="{{ url_for('exercise_notes', name=exercise) }}">📝 notas</a>
+        </h3>
+
+        {% set n = exercise_notes_map.get(exercise) %}
+        {% if n and n.notes %}
+            <div style="background:#f0f0f0; padding:8px 12px; border-radius:6px; margin-bottom:8px;">
+                <ul style="margin:0; padding-left:20px;">
+                    {% for line in n.notes.split('\n') %}
+                        {% if line.strip() %}<li>{{ line.strip() }}</li>{% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
         {% for s in group %}
             <p>
                 {{ s.weight }}kg x {{ s.reps }} reps
                 {% if s.rir is not none %}(RIR {{ s.rir }}){% elif s.rpe is not none %}(RPE {{ s.rpe }}){% endif %}
+                {% if s.set_type and s.set_type != 'normal' %}<strong>[{{ s.set_type|title }}]</strong>{% endif %}
             </p>
         {% endfor %}
-        <p><a href="{{ url_for('workout_detail', workout_id=workout.id, exercise=exercise) }}">+ Añadir otra serie de {{ exercise }}</a></p>
+        <p><a class="btn" href="{{ url_for('workout_detail', workout_id=workout.id, exercise=exercise) }}">+ Añadir otra serie de {{ exercise }}</a></p>
+        <hr>
     {% endfor %}
 
-    <hr>
     <h2>Añadir serie</h2>
+
+    <div id="exerciseInfoBox" style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px; display:none;">
+        <div id="exercisePrevious" style="font-weight:bold;"></div>
+        <ul id="exerciseNotesList" style="margin:6px 0 0 0; padding-left:20px;"></ul>
+    </div>
+
     <form action="" method="post">
         {{ form.hidden_tag() }}
         <p>
             {{ form.exercise.label }}<br>
-            {{ form.exercise(size=32) }}<br>
+            {{ form.exercise(size=32, oninput="fetchExerciseInfo(this.value)") }}<br>
             {% for error in form.exercise.errors %}
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}
@@ -59,16 +92,65 @@
             {% endfor %}
         </p>
         {% endif %}
-        <p>{{ form.submit() }}</p>
+        <p>
+            {{ form.set_type.label }}<br>
+            {{ form.set_type() }}
+        </p>
+        <p><input type="submit" value="Añadir serie" class="btn"></p>
     </form>
 
     <hr>
-
-    <p><a href="{{ url_for('finish_workout', workout_id=workout.id) }}">Guardar y finalizar</a></p>
-
+    <p><a class="btn" href="{{ url_for('finish_workout', workout_id=workout.id) }}">Guardar y finalizar</a></p>
+    <form action="{{ url_for('save_as_routine', workout_id=workout.id) }}" method="post" style="display:inline">
+        {{ empty_form.hidden_tag() }}
+        <input type="submit" value="💾 Guardar como rutina" class="btn">
+    </form>
     <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post" style="display:inline"
           onsubmit="return confirm('¿Seguro que quieres eliminar este entrenamiento? No se puede deshacer.');">
         {{ empty_form.hidden_tag() }}
-        {{ empty_form.submit(value='Eliminar entrenamiento') }}
+        <input type="submit" value="Eliminar entrenamiento" class="btn btn-danger">
     </form>
+
+    <script>
+        let exerciseInfoTimeout;
+        function fetchExerciseInfo(name) {
+            clearTimeout(exerciseInfoTimeout);
+            exerciseInfoTimeout = setTimeout(() => {
+                if (!name.trim()) {
+                    document.getElementById('exerciseInfoBox').style.display = 'none';
+                    return;
+                }
+                fetch('/api/exercise_info?name=' + encodeURIComponent(name.trim()))
+                    .then(r => r.json())
+                    .then(data => {
+                        const box = document.getElementById('exerciseInfoBox');
+                        const prevEl = document.getElementById('exercisePrevious');
+                        const listEl = document.getElementById('exerciseNotesList');
+                        let hasContent = false;
+                        if (data.previous) {
+                            prevEl.textContent = 'Última vez: ' + data.previous;
+                            hasContent = true;
+                        } else {
+                            prevEl.textContent = '';
+                        }
+                        listEl.innerHTML = '';
+                        if (data.notes) {
+                            data.notes.split('\n').forEach(line => {
+                                if (line.trim()) {
+                                    const li = document.createElement('li');
+                                    li.textContent = line.trim();
+                                    listEl.appendChild(li);
+                                    hasContent = true;
+                                }
+                            });
+                        }
+                        box.style.display = hasContent ? 'block' : 'none';
+                    });
+            }, 300);
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const field = document.querySelector('[name="exercise"]');
+            if (field && field.value) fetchExerciseInfo(field.value);
+        });
+    </script>
 {% endblock %}

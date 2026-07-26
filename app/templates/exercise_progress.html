@@ -14,6 +14,18 @@
         </p>
     {% endif %}
 
+    <h3>📝 Notas técnicas</h3>
+    {% if exercise_note and exercise_note.notes %}
+        <ul>
+            {% for line in exercise_note.notes.split('\n') %}
+                {% if line.strip() %}<li>{{ line.strip() }}</li>{% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p><em>Sin notas todavía.</em></p>
+    {% endif %}
+    <p><a class="btn-outline" href="{{ url_for('exercise_notes', name=exercise) }}">Editar notas</a></p>
+
     <canvas id="progressChart" width="600" height="300"></canvas>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>

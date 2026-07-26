@@ -1,7 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
     <h1>Mis entrenamientos</h1>
-    {% for w in workouts %}
-        <p><a href="{{ url_for('workout_detail', workout_id=w.id) }}">{{ w.timestamp.strftime('%d/%m/%Y %H:%M') }} - {{ w.note }}</a></p>
+    {% for group in grouped %}
+        <h3 style="color:#888; margin-top:24px;">Semana {{ group.label }}</h3>
+        {% for w in group.workouts %}
+            <a class="workout-card" href="{{ url_for('workout_detail', workout_id=w.id) }}">
+                <span class="wc-date">{{ w.timestamp.strftime('%d/%m/%Y · %H:%M') }}</span>
+                <span class="wc-title">{{ w.note or "Entrenamiento" }}</span>
+            </a>
+        {% endfor %}
+    {% else %}
+        <p><em>Todavía no has registrado ningún entrenamiento.</em></p>
     {% endfor %}
 {% endblock %}

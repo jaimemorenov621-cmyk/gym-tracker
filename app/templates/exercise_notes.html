@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Notas de {{ exercise|title }}</h1>
+    <p><small>Escribe una idea por línea — cada línea se mostrará como un punto.</small></p>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>{{ form.notes(cols=50, rows=8) }}</p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

@@ -1,34 +1,46 @@
 <!doctype html>
-<html>
-    <head>
-        {% if title %}
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if title %}
         <title>{{ title }} - GymTracker</title>
-        {% else %}
+    {% else %}
         <title>GymTracker</title>
+    {% endif %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <nav>
+        <p style="text-align:center; color:#5a4fcf; font-style:italic; font-weight:600; font-size:1.05rem; margin:12px 0;">
+            "Lo que no se mide, no se puede mejorar."
+        </p>
+        <strong>GymTracker</strong>
+        <a class="btn btn-nav" href="{{ url_for('index') }}">Inicio</a>
+        {% if current_user.is_anonymous %}
+            <a class="btn btn-nav" href="{{ url_for('login') }}">Login</a>
+        {% else %}
+            <a class="btn btn-nav-primary" href="{{ url_for('new_workout') }}">+ Nuevo entrenamiento</a>
+            <a class="btn btn-nav" href="{{ url_for('routines') }}">Rutinas</a>
+            <a class="btn btn-nav" href="{{ url_for('settings') }}">Configuración</a>
+            <a class="btn btn-nav" href="{{ url_for('logout') }}">Salir</a>
         {% endif %}
-    </head>
-    <body>
-        <div>
-            GymTracker:
-            <a href="{{ url_for('index') }}">Inicio</a>
-            {% if current_user.is_anonymous %}
-            <a href="{{ url_for('login') }}">Login</a>
-            {% else %}
-            <a href="{{ url_for('new_workout') }}">Nuevo entrenamiento</a>
-            <a href="{{ url_for('logout') }}">Logout</a>
-            <a href="{{ url_for('settings') }}">Configuración</a>
-            {% endif %}
-        </div>
-        <hr>
-        {% with messages = get_flashed_messages() %}
+    </nav>
+
+    {% if active_workout %}
+    <a href="{{ url_for('workout_detail', workout_id=active_workout.id) }}" class="active-toast">
+        {{ active_workout.note or "Entrenamiento" }} en curso
+    </a>
+    {% endif %}
+
+    {% with messages = get_flashed_messages() %}
         {% if messages %}
-        <ul>
             {% for message in messages %}
-            <li>{{ message }}</li>
+                <div class="flash">{{ message }}</div>
             {% endfor %}
-        </ul>
         {% endif %}
-        {% endwith %}
-        {% block content %}{% endblock %}
-    </body>
+    {% endwith %}
+    {% block content %}
+    {% endblock %}
+</body>
 </html>
