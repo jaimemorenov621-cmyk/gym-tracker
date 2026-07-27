@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
     <h1>Mis entrenamientos</h1>
+    <p style="color:#5a4fcf; font-style:italic; font-weight:600; margin:4px 0 20px;">
+        "Lo que no se mide, no se puede mejorar."
+    </p>
     {% for group in grouped %}
         <h3 style="color:#888; margin-top:24px;">Semana {{ group.label }}</h3>
         {% for w in group.workouts %}
