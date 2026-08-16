@@ -78,7 +78,7 @@
                     <tr>
                         <th>#</th><th>Kg</th><th>Reps</th>
                         {% if effort_scale != 'none' %}<th>{{ effort_scale|upper }}</th>{% endif %}
-                        <th>Tipo</th><th></th>
+                        <th>Tipo</th><th>✓</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -97,6 +97,7 @@
                                 {% endfor %}
                             </select>
                         </td>
+                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" onclick="toggleSetComplete({{ s.id }}, this, '{{ exercise }}')">✓</button></td>
                         <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})">🗑️</button></td>
                     </tr>
                     {% endfor %}
@@ -245,10 +246,27 @@
                     '<td><select class="cell-input" onchange="updateSet(' + data.id + ', \'set_type\', this.value)">' +
                     '<option value="normal">Normal</option><option value="calentamiento">Calent.</option>' +
                     '<option value="fallo">Fallo</option><option value="dropset">Dropset</option></select></td>' +
+                    '<td><button type="button" class="set-check-btn" onclick="toggleSetComplete(' + data.id + ', this, \'' + exercise.replace(/'/g, "\\'") + '\')">✓</button></td>' +
                     '<td><button type="button" class="delete-set-btn" onclick="deleteSet(' + data.id + ')">🗑️</button></td>';
                 tbody.appendChild(tr);
                 tr.querySelector('select').value = lastType;
-                triggerRestTimer(exercise, data.rest_seconds);
+            });
+        }
+
+        function toggleSetComplete(id, btn, exercise) {
+            const willComplete = !btn.classList.contains('checked');
+            fetch("/set/" + id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({completed: willComplete})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return;
+                btn.classList.toggle('checked', willComplete);
+                if (willComplete && data.rest_seconds) {
+                    triggerRestTimer(exercise, data.rest_seconds);
+                }
             });
         }
     </script>

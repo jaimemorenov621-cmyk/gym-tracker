@@ -76,6 +76,7 @@ class SetEntry(db.Model):
     workout_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Workout.id), index=True)
     workout: so.Mapped[Workout] = so.relationship(back_populates="sets")
     set_type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
+    completed: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
 
     def __repr__(self):
         return f"<SetEntry {self.exercise} {self.weight}x{self.reps}>"

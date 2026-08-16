@@ -285,6 +285,24 @@ select.cell-input {
 .cell-input:focus { background: #ece7ff; outline: none; }
 .set-num { font-weight: 700; color: #3d2b8a; }
 .delete-set-btn { background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; }
+.set-check-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid #c9c4e8;
+    background: white;
+    color: transparent;
+    font-size: 0.8rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.set-check-btn:hover { border-color: #7c4dff; }
+.set-check-btn.checked {
+    background: linear-gradient(135deg, #7c4dff, #536dfe);
+    border-color: transparent;
+    color: white;
+}
 
 .action-menu {
     position: relative;

@@ -266,15 +266,7 @@ def api_create_set(workout_id):
     db.session.add(entry)
     db.session.commit()
 
-    note = db.session.scalar(
-        sa.select(ExerciseNote).where(
-            ExerciseNote.user_id == current_user.id, ExerciseNote.exercise == exercise
-        )
-    )
-    rest_seconds = (
-        note.default_rest_seconds if note and note.default_rest_seconds else 90
-    )
-    return jsonify({"ok": True, "id": entry.id, "rest_seconds": rest_seconds})
+    return jsonify({"ok": True, "id": entry.id, "rest_seconds": get_rest_seconds(exercise)})
 
 
 @app.route("/set/<int:set_id>", methods=["PUT"])
@@ -299,8 +291,14 @@ def api_update_set(set_id):
             entry.rir = None
     if "set_type" in data:
         entry.set_type = data["set_type"]
+    if "completed" in data:
+        entry.completed = bool(data["completed"])
     db.session.commit()
-    return jsonify({"ok": True})
+
+    response = {"ok": True}
+    if data.get("completed"):
+        response["rest_seconds"] = get_rest_seconds(entry.exercise)
+    return jsonify(response)
 
 
 @app.route("/set/<int:set_id>/delete", methods=["POST"])
@@ -913,6 +911,15 @@ def effective_reps(entry):
 def estimated_1rm(entry):
     """Fórmula de Epley, usando repeticiones efectivas en vez de las repeticiones hechas."""
     return entry.weight * (1 + effective_reps(entry) / 30)
+
+
+def get_rest_seconds(exercise):
+    note = db.session.scalar(
+        sa.select(ExerciseNote).where(
+            ExerciseNote.user_id == current_user.id, ExerciseNote.exercise == exercise
+        )
+    )
+    return note.default_rest_seconds if note and note.default_rest_seconds else 90
 
 
 def format_rest(seconds):
