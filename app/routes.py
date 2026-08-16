@@ -2,6 +2,7 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlsplit
 import sqlalchemy as sa
+from openai import OpenAI
 from app import app, db
 from app.forms import (
     LoginForm,
@@ -25,6 +26,7 @@ from app.models import (
     Routine,
     RoutineExercise,
     Exercise,
+    AiAnalysis,
 )
 from datetime import datetime, timezone, timedelta
 
@@ -75,27 +77,7 @@ def index():
         .where(Workout.user_id == current_user.id)
     )
 
-    # Racha: días consecutivos entrenando, contando hacia atrás desde hoy o ayer
-    trained_dates = sorted({w.timestamp.date() for w in workouts}, reverse=True)
-    streak = 0
-    if trained_dates:
-        today = datetime.now(timezone.utc).date()
-        expected = (
-            today
-            if trained_dates[0] == today
-            else (
-                today - timedelta(days=1)
-                if trained_dates[0] == today - timedelta(days=1)
-                else None
-            )
-        )
-        if expected:
-            for d in trained_dates:
-                if d == expected:
-                    streak += 1
-                    expected -= timedelta(days=1)
-                else:
-                    break
+    streak = compute_streak(workouts)
 
     # Calendario de los últimos 3 meses
     today = datetime.now(timezone.utc).date()
@@ -422,37 +404,14 @@ def delete_workout(workout_id):
 def exercise_progress(name):
     name = name.strip().lower()
 
-    query = (
-        sa.select(Workout, SetEntry)
-        .join(SetEntry, SetEntry.workout_id == Workout.id)
-        .where(Workout.user_id == current_user.id, SetEntry.exercise == name)
-        .order_by(Workout.timestamp.asc())
-    )
-    rows = db.session.execute(query).all()
-
-    sessions = {}
-    for workout, entry in rows:
-        sessions.setdefault(workout.id, {"timestamp": workout.timestamp, "sets": []})
-        sessions[workout.id]["sets"].append(entry)
-
-    session_list = sorted(sessions.values(), key=lambda s: s["timestamp"])
-
-    running_max = float("-inf")
-    for s in session_list:
-        s["best_set"] = max(s["sets"], key=estimated_1rm)
-        s["best_1rm"] = estimated_1rm(s["best_set"])
-        s["is_pr"] = s["best_1rm"] > running_max
-        running_max = max(running_max, s["best_1rm"])
+    session_list, stagnation, improvement = get_exercise_sessions(name)
 
     threshold = current_user.stagnation_threshold
-    stagnation = False
-    improvement = False
-    lastN_ids = set()
-    if len(session_list) >= threshold:
-        lastN = session_list[-threshold:]
-        lastN_ids = {id(s) for s in lastN}
-        stagnation = not any(s["is_pr"] for s in lastN)
-        improvement = lastN[-1]["is_pr"]
+    lastN_ids = (
+        {id(s) for s in session_list[-threshold:]}
+        if len(session_list) >= threshold
+        else set()
+    )
 
     chart_labels = [s["timestamp"].strftime("%d/%m %H:%M") for s in session_list]
     chart_values = [round(s["best_1rm"], 1) for s in session_list]
@@ -558,6 +517,54 @@ def settings():
         form.stagnation_threshold.data = current_user.stagnation_threshold
         form.effort_scale.data = current_user.effort_scale
     return render_template("settings.html", title="Configuración", form=form)
+
+
+@app.route("/ai/analysis")
+@login_required
+def ai_analysis():
+    latest = db.session.scalar(
+        sa.select(AiAnalysis)
+        .where(AiAnalysis.user_id == current_user.id)
+        .order_by(AiAnalysis.created_at.desc())
+    )
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    next_available = None
+    if latest:
+        available_at = latest.created_at + timedelta(days=7)
+        if available_at > now:
+            next_available = available_at
+    return render_template(
+        "ai_analysis.html",
+        title="Análisis de IA",
+        latest=latest,
+        next_available=next_available,
+        empty_form=EmptyForm(),
+    )
+
+
+@app.route("/ai/analyze", methods=["POST"])
+@login_required
+def request_ai_analysis():
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=7)
+    has_recent = db.session.scalar(
+        sa.select(AiAnalysis.id)
+        .where(AiAnalysis.user_id == current_user.id, AiAnalysis.created_at >= cutoff)
+        .limit(1)
+    )
+    if has_recent:
+        flash("Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante.")
+        return redirect(url_for("ai_analysis"))
+
+    try:
+        content = generate_ai_analysis()
+    except Exception:
+        flash("No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos minutos.")
+        return redirect(url_for("ai_analysis"))
+
+    db.session.add(AiAnalysis(content=content, user_id=current_user.id))
+    db.session.commit()
+    flash("¡Análisis generado!")
+    return redirect(url_for("ai_analysis"))
 
 
 @app.route("/routines")
@@ -911,6 +918,174 @@ def effective_reps(entry):
 def estimated_1rm(entry):
     """Fórmula de Epley, usando repeticiones efectivas en vez de las repeticiones hechas."""
     return entry.weight * (1 + effective_reps(entry) / 30)
+
+
+def compute_streak(workouts):
+    """Días consecutivos entrenando, contando hacia atrás desde hoy o ayer."""
+    trained_dates = sorted({w.timestamp.date() for w in workouts}, reverse=True)
+    streak = 0
+    if trained_dates:
+        today = datetime.now(timezone.utc).date()
+        expected = (
+            today
+            if trained_dates[0] == today
+            else (
+                today - timedelta(days=1)
+                if trained_dates[0] == today - timedelta(days=1)
+                else None
+            )
+        )
+        if expected:
+            for d in trained_dates:
+                if d == expected:
+                    streak += 1
+                    expected -= timedelta(days=1)
+                else:
+                    break
+    return streak
+
+
+def get_exercise_sessions(name):
+    """Sesiones históricas de `name` para current_user, con 1RM estimado, PRs y estancamiento."""
+    query = (
+        sa.select(Workout, SetEntry)
+        .join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == current_user.id, SetEntry.exercise == name)
+        .order_by(Workout.timestamp.asc())
+    )
+    rows = db.session.execute(query).all()
+
+    sessions = {}
+    for workout, entry in rows:
+        sessions.setdefault(workout.id, {"timestamp": workout.timestamp, "sets": []})
+        sessions[workout.id]["sets"].append(entry)
+
+    session_list = sorted(sessions.values(), key=lambda s: s["timestamp"])
+
+    running_max = float("-inf")
+    for s in session_list:
+        s["best_set"] = max(s["sets"], key=estimated_1rm)
+        s["best_1rm"] = estimated_1rm(s["best_set"])
+        s["is_pr"] = s["best_1rm"] > running_max
+        running_max = max(running_max, s["best_1rm"])
+
+    threshold = current_user.stagnation_threshold
+    stagnation = False
+    improvement = False
+    if len(session_list) >= threshold:
+        lastN = session_list[-threshold:]
+        stagnation = not any(s["is_pr"] for s in lastN)
+        improvement = lastN[-1]["is_pr"]
+
+    return session_list, stagnation, improvement
+
+
+def build_progress_summary():
+    """Resumen compacto del historial de current_user, listo para pasarle a la IA."""
+    workouts = db.session.scalars(
+        current_user.workouts.select().order_by(Workout.timestamp.desc())
+    ).all()
+
+    exercise_rows = db.session.execute(
+        sa.select(
+            SetEntry.exercise,
+            sa.func.count(sa.func.distinct(SetEntry.workout_id)).label("n"),
+        )
+        .join(Workout, Workout.id == SetEntry.workout_id)
+        .where(Workout.user_id == current_user.id)
+        .group_by(SetEntry.exercise)
+        .order_by(sa.desc("n"))
+        .limit(20)
+    ).all()
+
+    exercises = []
+    for name, n_sessions in exercise_rows:
+        session_list, stagnation, _ = get_exercise_sessions(name)
+        if not session_list:
+            continue
+        exercises.append(
+            {
+                "name": name.title(),
+                "sessions": n_sessions,
+                "best_1rm": round(max(s["best_1rm"] for s in session_list), 1),
+                "stagnation": stagnation,
+                "last_trained": session_list[-1]["timestamp"].strftime("%d/%m/%Y"),
+            }
+        )
+
+    recent_workouts = []
+    for w in workouts[:8]:
+        sets = db.session.scalars(w.sets.select()).all()
+        recent_workouts.append(
+            {
+                "date": w.timestamp.strftime("%d/%m/%Y"),
+                "note": w.note or "Entrenamiento",
+                "rating": w.performance_rating,
+                "comment": w.performance_comment,
+                "volume": round(sum(s.weight * s.reps for s in sets)),
+                "duration": w.duration_str(),
+            }
+        )
+
+    return {
+        "total_workouts": len(workouts),
+        "streak": compute_streak(workouts),
+        "exercises": exercises,
+        "recent_workouts": recent_workouts,
+    }
+
+
+def generate_ai_analysis():
+    """Llama a la IA con el resumen de progreso de current_user y devuelve el texto generado."""
+    summary = build_progress_summary()
+
+    lines = [
+        f"Entrenamientos totales: {summary['total_workouts']}",
+        f"Racha actual: {summary['streak']} días consecutivos entrenando",
+        "",
+        "Ejercicios registrados (nombre: nº sesiones, mejor 1RM estimado, estado, última vez):",
+    ]
+    for ex in summary["exercises"]:
+        estado = "ESTANCADO" if ex["stagnation"] else "progresando"
+        lines.append(
+            f"- {ex['name']}: {ex['sessions']} sesiones, "
+            f"1RM est. {ex['best_1rm']}kg, {estado}, última vez {ex['last_trained']}"
+        )
+
+    lines.append("")
+    lines.append("Últimos entrenamientos (fecha · nombre · valoración · volumen · duración · comentario):")
+    for w in summary["recent_workouts"]:
+        rating = f"{w['rating']}/10" if w["rating"] else "sin valorar"
+        parts = [w["date"], w["note"], rating, f"{w['volume']}kg de volumen"]
+        if w["duration"]:
+            parts.append(w["duration"])
+        if w["comment"]:
+            parts.append(f"comentario: {w['comment']}")
+        lines.append("- " + " · ".join(parts))
+
+    prompt = "\n".join(lines)
+
+    api_key = app.config.get("OPENAI_API_KEY")
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY no configurada")
+
+    client = OpenAI(api_key=api_key)
+    response = client.responses.create(
+        model="gpt-5.6-luna",
+        instructions=(
+            "Eres un entrenador personal experto analizando el historial de entrenamientos "
+            "de un usuario de una app de gimnasio. Responde en español, con un análisis breve "
+            "y recomendaciones concretas y accionables basadas ÚNICAMENTE en los datos "
+            "proporcionados. No inventes datos que no se te han dado. Evita consejos genéricos "
+            "('sigue esforzándote'); sé específico sobre qué ejercicios necesitan atención y por qué. "
+            "Responde en texto plano: no uses Markdown (nada de #, ##, ** ni otros símbolos de "
+            "formato), la app lo muestra como texto sin renderizar. Usa saltos de línea y guiones "
+            "simples ('- ') para listas si hace falta."
+        ),
+        input=prompt,
+        max_output_tokens=800,
+    )
+    return response.output_text
 
 
 def get_rest_seconds(exercise):

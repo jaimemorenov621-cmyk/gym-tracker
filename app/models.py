@@ -128,6 +128,18 @@ class RoutineExercise(db.Model):
         return f"<RoutineExercise {self.exercise}>"
 
 
+class AiAnalysis(db.Model):
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    content: so.Mapped[str] = so.mapped_column(sa.Text)
+    created_at: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc)
+    )
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+
+    def __repr__(self):
+        return f"<AiAnalysis user={self.user_id} {self.created_at}>"
+
+
 class Exercise(db.Model):
     id: so.Mapped[str] = so.mapped_column(sa.String(64), primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(120), index=True)
