@@ -4,12 +4,48 @@
     <p style="color:#5a4fcf; font-style:italic; font-weight:600; margin:4px 0 20px;">
         "Lo que no se mide, no se puede mejorar."
     </p>
+
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-num">{{ total_workouts }}</div>
+            <div class="stat-label">Entrenamientos</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-num">🔥 {{ streak }}</div>
+            <div class="stat-label">Racha (días)</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="calendar-grid">
+            {% for week in calendar_weeks %}
+                <div class="calendar-col {% if week.new_month %}new-month{% endif %}">
+                    {% for day in week.days %}
+                        {% if day is none %}
+                            <div class="calendar-day empty"></div>
+                        {% else %}
+                            <div class="calendar-day {% if day.trained %}trained{% endif %}" title="{{ day.date }}">{{ day.date.day }}</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
     {% for group in grouped %}
         <h3 style="color:#888; margin-top:24px;">Semana {{ group.label }}</h3>
-        {% for w in group.workouts %}
-            <a class="workout-card" href="{{ url_for('workout_detail', workout_id=w.id) }}">
-                <span class="wc-date">{{ w.timestamp.strftime('%d/%m/%Y · %H:%M') }}</span>
-                <span class="wc-title">{{ w.note or "Entrenamiento" }}</span>
+        {% for item in group.workouts %}
+            <a class="workout-card" href="{{ url_for('workout_detail', workout_id=item.workout.id) }}">
+                <span class="wc-date">{{ item.workout.timestamp.strftime('%d/%m/%Y · %H:%M') }}</span>
+                <span class="wc-title">{{ item.workout.note or "Entrenamiento" }}</span>
+                {% if item.exercise_names %}
+                    <div style="margin-top:6px; font-size:0.85rem; color:#666;">
+                        {{ item.exercise_names|join(', ') }}
+                    </div>
+                {% endif %}
+                <div style="margin-top:6px; font-size:0.8rem; color:#999;">
+                    {% if item.duration %}⏱ {{ item.duration }} · {% endif %}🏋️ {{ item.volume }}kg volumen
+                </div>
             </a>
         {% endfor %}
     {% else %}

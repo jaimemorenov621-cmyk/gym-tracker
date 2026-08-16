@@ -85,7 +85,8 @@ nav a { margin-right: 6px; }
 }
 .workout-card .wc-date {
     font-size: 0.85rem;
-    color: #888;
+    color: #4a4a5a;
+    font-weight: 600;
     background: #ececf7;
     padding: 3px 10px;
     border-radius: 999px;
@@ -174,3 +175,262 @@ nav a { margin-right: 6px; }
     margin-bottom: 12px;
     font-weight: 600;
 }
+
+
+.rest-toast {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    background: white;
+    border: 1.5px solid #7c4dff;
+    color: #3d2b8a;
+    padding: 14px 18px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(124,77,255,0.25);
+    z-index: 999;
+    font-size: 0.9rem;
+    min-width: 220px;
+    text-align: center;
+}
+.rest-toast .rt-time {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 6px 0;
+}
+.rest-toast .rt-adjust {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+.rest-badge {
+    display: inline-block;
+    background: #f5f3ff;
+    color: #5a4fcf;
+    border: 1px solid #d9d2ff;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.rest-badge:hover { background: #ece7ff; }
+
+
+.set-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8f8fc;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    font-size: 0.95rem;
+}
+.set-row .set-weight { font-weight: 700; color: #3d2b8a; min-width: 70px; }
+.set-row .set-tag {
+    display: inline-block;
+    background: #f5f3ff;
+    color: #5a4fcf;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600
+}
+
+.form-table {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 10px;
+    align-items: end;
+    background: #f8f8fc;
+    padding: 14px;
+    border-radius: 10px;
+}
+.form-table label { display: block; font-size: 0.8rem; margin-bottom: 3px; }
+.form-table input, .form-table select { width: 100%; box-sizing: border-box; }
+.form-table .form-submit { grid-column: 1 / -1; }
+
+
+.set-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+.set-table th {
+    font-size: 0.75rem;
+    color: #999;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 4px;
+}
+.set-table td { text-align: center; padding: 4px; }
+.set-table tr:nth-child(even) { background: #f8f8fc; }
+.cell-input {
+    width: 55px;
+    text-align: center;
+    border: none;
+    background: transparent;
+    font-size: 1rem;
+    padding: 6px 2px;
+    border-radius: 6px;
+}
+select.cell-input {
+    width: 100px;
+    padding-right: 22px;
+    text-align: left;
+    -webkit-appearance: menulist;
+    appearance: menulist;
+}
+.cell-input:focus { background: #ece7ff; outline: none; }
+.set-num { font-weight: 700; color: #3d2b8a; }
+.delete-set-btn { background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; }
+
+.action-menu {
+    position: relative;
+    display: inline-block;
+}
+.action-menu-btn {
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: #555;
+}
+.action-menu-content {
+    display: none;
+    position: absolute;
+    bottom: 110%;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    min-width: 200px;
+    z-index: 100;
+    overflow: hidden;
+}
+.action-menu-content.open { display: block; }
+.action-menu-content button, .action-menu-content input[type=submit] {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    color: #333;
+}
+.action-menu-content button:hover, .action-menu-content input[type=submit]:hover {
+    background: #f5f3ff;
+}
+.action-menu-content .danger { color: #c62828; }
+
+.btn-finish {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #22c98c, #17a973);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.05rem;
+    box-shadow: 0 6px 16px rgba(34,201,140,0.35);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.btn-finish:hover {
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(34,201,140,0.45);
+}
+.btn-finish::before {
+    content: "";
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.25);
+    display: inline-block;
+    position: relative;
+}
+.btn-finish::before {
+    background-image: none;
+}
+
+.btn-text-danger {
+    background: none !important;
+    border: none !important;
+    color: #c62828 !important;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 12px;
+    text-decoration: none !important;
+    font-family: inherit;
+}
+.btn-text-danger:hover {
+    color: #8e0000 !important;
+    text-decoration: none !important;
+}
+
+.btn-danger-outline {
+    display: inline-block;
+    background: white;
+    border: 1.5px solid #c62828;
+    color: #c62828;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+}
+.btn-danger-outline:hover {
+    background: #fdecea;
+    color: #8e0000;
+}
+
+.stats-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+.stat-box {
+    background: #f5f3ff;
+    border: 1px solid #e0d9ff;
+    border-radius: 10px;
+    padding: 12px 18px;
+    text-align: center;
+    flex: 1;
+    min-width: 100px;
+}
+.stat-box .stat-num {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #5a4fcf;
+}
+.stat-box .stat-label {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.calendar-grid { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 6px; }
+.calendar-col { display: flex; flex-direction: column; gap: 3px; }
+.calendar-col.new-month { margin-left: 8px; }
+.calendar-day {
+    width: 22px; height: 22px; border-radius: 5px;
+    background: #ececf7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    color: #999;
+}
+.calendar-day.trained { background: #22c98c; color: white; font-weight: 700; }
+.calendar-day.empty { background: transparent; }
+

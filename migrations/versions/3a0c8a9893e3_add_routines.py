@@ -26,7 +26,9 @@ def upgrade():
         sa.PrimaryKeyConstraint("id"),
     )
     with op.batch_alter_table("routine", schema=None) as batch_op:
-        batch_op.create_index(batch_op.f("ix_routine_user_id"), ["user_id"], unique=False)
+        batch_op.create_index(
+            batch_op.f("ix_routine_user_id"), ["user_id"], unique=False
+        )
 
     op.create_table(
         "routine_exercise",
@@ -36,11 +38,15 @@ def upgrade():
         sa.Column("target_reps", sa.String(length=16), nullable=False),
         sa.Column("order_index", sa.Integer(), nullable=False),
         sa.Column("routine_id", sa.Integer(), nullable=False),
-        sa.ForeignKeyConstraint(["routine_id"], ["routine.id"], name="fk_routine_exercise_routine_id"),
+        sa.ForeignKeyConstraint(
+            ["routine_id"], ["routine.id"], name="fk_routine_exercise_routine_id"
+        ),
         sa.PrimaryKeyConstraint("id"),
     )
     with op.batch_alter_table("routine_exercise", schema=None) as batch_op:
-        batch_op.create_index(batch_op.f("ix_routine_exercise_routine_id"), ["routine_id"], unique=False)
+        batch_op.create_index(
+            batch_op.f("ix_routine_exercise_routine_id"), ["routine_id"], unique=False
+        )
 
     with op.batch_alter_table("workout", schema=None) as batch_op:
         batch_op.add_column(sa.Column("routine_id", sa.Integer(), nullable=True))

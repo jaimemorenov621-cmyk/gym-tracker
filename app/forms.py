@@ -128,7 +128,17 @@ class FinishWorkoutForm(FlaskForm):
 
 class ExerciseNoteForm(FlaskForm):
     notes = TextAreaField("Notas (una línea = un punto)", validators=[Length(max=1000)])
-    submit = SubmitField("Guardar notas")
+    rest_minutes = IntegerField(
+        "Minutos de descanso",
+        validators=[Optional(), NumberRange(min=0, max=15)],
+        default=1,
+    )
+    rest_seconds = IntegerField(
+        "Segundos de descanso",
+        validators=[Optional(), NumberRange(min=0, max=59)],
+        default=30,
+    )
+    submit = SubmitField("Guardar")
 
 
 class RoutineForm(FlaskForm):
@@ -151,3 +161,15 @@ class RoutineExerciseForm(FlaskForm):
         default="8-10",
     )
     submit = SubmitField("Añadir ejercicio")
+
+
+class NewExerciseForm(FlaskForm):
+    exercise = StringField("Ejercicio", validators=[DataRequired(), Length(max=64)])
+    submit = SubmitField("Añadir ejercicio")
+
+
+class ExerciseTranslationForm(FlaskForm):
+    name_es = StringField(
+        "Nombre en español", validators=[Optional(), Length(max=120)]
+    )
+    submit = SubmitField("Guardar")

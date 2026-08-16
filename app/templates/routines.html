@@ -9,7 +9,7 @@
                 <a class="btn-outline" href="{{ url_for('routine_detail', routine_id=info.routine.id) }}">{{ info.routine.name }}</a>
                 <form action="{{ url_for('start_routine', routine_id=info.routine.id) }}" method="post" style="display:inline">
                     {{ empty_form.hidden_tag() }}
-                    <input type="submit" value="▶ Iniciar" class="btn">
+                    <button type="submit" class="btn">▶ Iniciar</button>
                 </form>
             </div>
             <div style="margin-top:8px; color:#666; font-size:0.9rem;">

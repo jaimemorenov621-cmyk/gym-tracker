@@ -1,156 +1,255 @@
 {% extends "base.html" %}
-
 {% block content %}
     <h1>{{ workout.note or "Entrenamiento" }}</h1>
-    {% if workout.performance_rating %}<p><em>📝 Rendimiento: {{ workout.performance_rating }}/10</em></p>{% endif %}
-    {% if workout.performance_comment %}<p><em>💬 {{ workout.performance_comment }}</em></p>{% endif %}
-    <p>{{ workout.timestamp.strftime('%d/%m/%Y %H:%M') }}
-        {% if effort_scale == 'none' %}
-            — Sin medición de esfuerzo
+    <div class="card" style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+        <span class="set-tag">📅 {{ workout.timestamp.strftime('%d/%m/%Y') }}</span>
+        <span class="set-tag">🕐 {{ workout.timestamp.strftime('%H:%M') }}</span>
+        {% if workout.ended_at %}
+            <span class="set-tag">⏱ {{ workout.duration_str() }}</span>
         {% else %}
-            — Midiendo esfuerzo con {{ effort_scale|upper }}
+            <span class="set-tag" id="liveDuration">⏱ 0min 00s</span>
         {% endif %}
-    </p>
-    <hr>
-
-    {% if routine_plan %}
-        <h2>📋 Plan de la rutina</h2>
-        {% for p in routine_plan %}
-            <p>
-                {{ p.exercise|title }} — {{ p.target_sets }}x{{ p.target_reps }}
-                — <strong>{{ p.done }}/{{ p.target_sets }}</strong> hechas
-                <a class="btn" href="{{ url_for('workout_detail', workout_id=workout.id, exercise=p.exercise) }}">Registrar</a>
-            </p>
-        {% endfor %}
-        <hr>
-    {% endif %}
-
-    <h2>Series registradas</h2>
-    {% for exercise, group in grouped_sets.items() %}
-        <h3>💪 <a class="btn-outline" href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a>
-            <a class="btn-outline" href="{{ url_for('exercise_notes', name=exercise) }}">📝 notas</a>
-        </h3>
-
-        {% set n = exercise_notes_map.get(exercise) %}
-        {% if n and n.notes %}
-            <div style="background:#f0f0f0; padding:8px 12px; border-radius:6px; margin-bottom:8px;">
-                <ul style="margin:0; padding-left:20px;">
-                    {% for line in n.notes.split('\n') %}
-                        {% if line.strip() %}<li>{{ line.strip() }}</li>{% endif %}
-                    {% endfor %}
-                </ul>
-            </div>
-        {% endif %}
-
-        {% for s in group %}
-            <p>
-                {{ s.weight }}kg x {{ s.reps }} reps
-                {% if s.rir is not none %}(RIR {{ s.rir }}){% elif s.rpe is not none %}(RPE {{ s.rpe }}){% endif %}
-                {% if s.set_type and s.set_type != 'normal' %}<strong>[{{ s.set_type|title }}]</strong>{% endif %}
-            </p>
-        {% endfor %}
-        <p><a class="btn" href="{{ url_for('workout_detail', workout_id=workout.id, exercise=exercise) }}">+ Añadir otra serie de {{ exercise }}</a></p>
-        <hr>
-    {% endfor %}
-
-    <h2>Añadir serie</h2>
-
-    <div id="exerciseInfoBox" style="background:#fff3cd; padding:10px; border-radius:6px; margin-bottom:10px; display:none;">
-        <div id="exercisePrevious" style="font-weight:bold;"></div>
-        <ul id="exerciseNotesList" style="margin:6px 0 0 0; padding-left:20px;"></ul>
+        {% if workout.performance_rating %}<span class="set-tag">📝 {{ workout.performance_rating }}/10</span>{% endif %}
+        <span class="set-tag">{% if effort_scale == 'none' %}Sin esfuerzo{% else %}{{ effort_scale|upper }}{% endif %}</span>
     </div>
 
-    <form action="" method="post">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.exercise.label }}<br>
-            {{ form.exercise(size=32, oninput="fetchExerciseInfo(this.value)") }}<br>
-            {% for error in form.exercise.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.weight.label }}<br>
-            {{ form.weight() }}<br>
-            {% for error in form.weight.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.reps.label }}<br>
-            {{ form.reps() }}<br>
-            {% for error in form.reps.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        {% if effort_scale != 'none' %}
-        <p>
-            {{ form.effort_value.label }} ({{ effort_scale|upper }})<br>
-            {{ form.effort_value() }}<br>
-            {% for error in form.effort_value.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        {% endif %}
-        <p>
-            {{ form.set_type.label }}<br>
-            {{ form.set_type() }}
-        </p>
-        <p><input type="submit" value="Añadir serie" class="btn"></p>
-    </form>
+    {% if not workout.ended_at %}
+    <script>
+        (function() {
+            const startTime = new Date("{{ workout.timestamp.isoformat() }}Z").getTime();
+            const el = document.getElementById('liveDuration');
+            function tick() {
+                const diffSeconds = Math.floor((Date.now() - startTime) / 1000);
+                const h = Math.floor(diffSeconds / 3600);
+                const m = Math.floor((diffSeconds % 3600) / 60);
+                const s = diffSeconds % 60;
+                const mStr = String(m).padStart(h ? 2 : 1, '0');
+                const sStr = String(s).padStart(2, '0');
+                el.textContent = '⏱ ' + (h ? h + 'h ' + mStr + 'min ' + sStr + 's' : m + 'min ' + sStr + 's');
+            }
+            tick();
+            setInterval(tick, 1000);
+        })();
+    </script>
+    {% endif %}
+    {% if workout.performance_comment %}
+        <div class="notes-box" style="margin-top:10px;">💬 {{ workout.performance_comment }}</div>
+    {% endif %}
 
-    <hr>
-    <p><a class="btn" href="{{ url_for('finish_workout', workout_id=workout.id) }}">Guardar y finalizar</a></p>
-    <form action="{{ url_for('save_as_routine', workout_id=workout.id) }}" method="post" style="display:inline">
-        {{ empty_form.hidden_tag() }}
-        <input type="submit" value="💾 Guardar como rutina" class="btn">
-    </form>
-    <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post" style="display:inline"
-          onsubmit="return confirm('¿Seguro que quieres eliminar este entrenamiento? No se puede deshacer.');">
-        {{ empty_form.hidden_tag() }}
-        <input type="submit" value="Eliminar entrenamiento" class="btn btn-danger">
-    </form>
+    {% if routine_plan %}
+        <div class="card">
+            <h3 style="margin-top:0;">📋 Plan de la rutina</h3>
+            {% for p in routine_plan %}
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px; flex-wrap:wrap;">
+                    <span class="set-tag">{{ p.exercise|title }}</span>
+                    <span class="set-tag">{{ p.target_sets }}x{{ p.target_reps }}</span>
+                    <span class="set-tag" style="{% if p.done >= p.target_sets %}background:#e8f8f0; color:#1a8a5f;{% endif %}">{{ p.done }}/{{ p.target_sets }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    {% for exercise in exercise_order %}
+        {% set group = grouped_sets[exercise] %}
+        {% set n = exercise_notes_map.get(exercise) %}
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                    {% set img = get_exercise_image(exercise) %}
+                    {% if img %}<img src="{{ img }}" style="width:32px; height:32px; object-fit:cover; border-radius:6px;">{% endif %}
+                    💪 <a class="btn-outline" href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a>
+                </h3>
+                <a class="rest-badge" href="{{ url_for('exercise_notes', name=exercise) }}">
+                    📝 notas{% if n and n.default_rest_seconds %} · ⏱ {{ format_rest(n.default_rest_seconds) }}{% endif %}
+                </a>
+            </div>
+            {% if n and n.notes %}
+                <div class="notes-box">
+                    <ul class="notes-list">
+                        {% for line in n.notes.split('\n') %}
+                            {% if line.strip() %}<li>{{ line.strip() }}</li>{% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <table class="set-table" id="table-{{ exercise|replace(' ', '_') }}">
+                <thead>
+                    <tr>
+                        <th>#</th><th>Kg</th><th>Reps</th>
+                        {% if effort_scale != 'none' %}<th>{{ effort_scale|upper }}</th>{% endif %}
+                        <th>Tipo</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in group %}
+                    <tr id="row-{{ s.id }}">
+                        <td class="set-num">{{ loop.index }}</td>
+                        <td><input class="cell-input" type="number" step="any" value="{{ s.weight }}" onchange="updateSet({{ s.id }}, 'weight', this.value)"></td>
+                        <td><input class="cell-input" type="number" value="{{ s.reps }}" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
+                        {% if effort_scale != 'none' %}
+                        <td><input class="cell-input" type="number" min="0" max="10" value="{{ s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') }}" onchange="updateSet({{ s.id }}, 'effort', this.value)"></td>
+                        {% endif %}
+                        <td>
+                            <select class="cell-input" onchange="updateSet({{ s.id }}, 'set_type', this.value)">
+                                {% for val, label in [('normal','Normal'),('calentamiento','Calent.'),('fallo','Fallo'),('dropset','Dropset')] %}
+                                    <option value="{{ val }}" {% if s.set_type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})">🗑️</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="button" class="btn-outline" onclick="addSet('{{ exercise }}')">+ Agregar serie</button>
+        </div>
+    {% endfor %}
+
+    <div class="card">
+        <h3 style="margin-top:0;">Añadir ejercicio nuevo</h3>
+        <form action="{{ url_for('add_exercise_to_workout', workout_id=workout.id) }}" method="post" style="display:flex; gap:8px; position:relative;">
+            {{ new_exercise_form.hidden_tag() }}
+            <div style="flex:1; position:relative;">
+                {{ new_exercise_form.exercise(placeholder="Nombre del ejercicio", style="width:100%; box-sizing:border-box;", autocomplete="off", oninput="searchExercises(this.value)") }}
+                <div id="exerciseSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #e0e0e0; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.12); z-index:50; max-height:280px; overflow-y:auto;"></div>
+            </div>
+            <input type="submit" value="+ Añadir" class="btn">
+        </form>
+    </div>
 
     <script>
-        let exerciseInfoTimeout;
-        function fetchExerciseInfo(name) {
-            clearTimeout(exerciseInfoTimeout);
-            exerciseInfoTimeout = setTimeout(() => {
-                if (!name.trim()) {
-                    document.getElementById('exerciseInfoBox').style.display = 'none';
-                    return;
-                }
-                fetch('/api/exercise_info?name=' + encodeURIComponent(name.trim()))
+        let searchTimeout;
+        function searchExercises(query) {
+            clearTimeout(searchTimeout);
+            const box = document.getElementById('exerciseSuggestions');
+            if (query.trim().length < 2) { box.style.display = 'none'; return; }
+            searchTimeout = setTimeout(() => {
+                fetch('/api/exercises/search?q=' + encodeURIComponent(query))
                     .then(r => r.json())
-                    .then(data => {
-                        const box = document.getElementById('exerciseInfoBox');
-                        const prevEl = document.getElementById('exercisePrevious');
-                        const listEl = document.getElementById('exerciseNotesList');
-                        let hasContent = false;
-                        if (data.previous) {
-                            prevEl.textContent = 'Última vez: ' + data.previous;
-                            hasContent = true;
-                        } else {
-                            prevEl.textContent = '';
-                        }
-                        listEl.innerHTML = '';
-                        if (data.notes) {
-                            data.notes.split('\n').forEach(line => {
-                                if (line.trim()) {
-                                    const li = document.createElement('li');
-                                    li.textContent = line.trim();
-                                    listEl.appendChild(li);
-                                    hasContent = true;
-                                }
-                            });
-                        }
-                        box.style.display = hasContent ? 'block' : 'none';
+                    .then(results => {
+                        if (!results.length) { box.style.display = 'none'; return; }
+                        box.innerHTML = results.map(ex =>
+                            '<div onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer;" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'white\'">' +
+                            (ex.image ? '<img src="' + ex.image + '" style="width:36px; height:36px; object-fit:cover; border-radius:6px;">' : '<div style="width:36px;height:36px;background:#ececf7;border-radius:6px;"></div>') +
+                            '<div><div style="font-weight:600; font-size:0.9rem;">' + ex.name + '</div>' +
+                            (ex.muscles ? '<div style="font-size:0.75rem; color:#888;">' + ex.muscles + '</div>' : '') +
+                            '</div></div>'
+                        ).join('');
+                        box.style.display = 'block';
                     });
-            }, 300);
+            }, 250);
         }
-        document.addEventListener('DOMContentLoaded', function() {
-            const field = document.querySelector('[name="exercise"]');
-            if (field && field.value) fetchExerciseInfo(field.value);
+        function selectExercise(name) {
+            document.querySelector('[name="exercise"]').value = name;
+            document.getElementById('exerciseSuggestions').style.display = 'none';
+        }
+        document.addEventListener('click', function(e) {
+            const box = document.getElementById('exerciseSuggestions');
+            if (box && !e.target.closest('form')) box.style.display = 'none';
         });
+    </script>
+
+    <hr>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <a class="btn-finish" href="{{ url_for('finish_workout', workout_id=workout.id) }}">
+            ✓ Guardar y finalizar
+        </a>
+
+        <div class="action-menu">
+            <button type="button" class="action-menu-btn" onclick="toggleActionMenu()">⋮</button>
+            <div class="action-menu-content" id="actionMenuContent">
+                <form action="{{ url_for('save_as_routine', workout_id=workout.id) }}" method="post">
+                    {{ empty_form.hidden_tag() }}
+                    <input type="submit" value="💾 Guardar como rutina">
+                </form>
+                <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post"
+                      onsubmit="return confirm('¿Seguro que quieres eliminar este entrenamiento? No se puede deshacer.');">
+                    {{ empty_form.hidden_tag() }}
+                    <input type="submit" value="🗑️ Eliminar entrenamiento" class="danger">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleActionMenu() {
+            document.getElementById('actionMenuContent').classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+            const menu = document.querySelector('.action-menu');
+            if (menu && !menu.contains(e.target)) {
+                document.getElementById('actionMenuContent').classList.remove('open');
+            }
+        });
+    </script>
+
+    <script>
+        function updateSet(id, field, value) {
+            const payload = {};
+            payload[field] = value;
+            fetch("/set/" + id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+        }
+
+        function deleteSet(id) {
+            if (!confirm('¿Eliminar esta serie?')) return;
+            fetch("/set/" + id + "/delete", { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) document.getElementById('row-' + id).remove();
+                });
+        }
+
+        function addSet(exercise) {
+            const table = document.getElementById('table-' + exercise.replace(/ /g, '_'));
+            const rows = table.querySelectorAll('tbody tr');
+            let lastWeight = 0, lastReps = 0, lastEffort = '', lastType = 'normal';
+            if (rows.length) {
+                const last = rows[rows.length - 1];
+                const inputs = last.querySelectorAll('input, select');
+                lastWeight = inputs[0].value;
+                lastReps = inputs[1].value;
+                {% if effort_scale != 'none' %}
+                lastEffort = inputs[2].value;
+                lastType = inputs[3].value;
+                {% else %}
+                lastType = inputs[2].value;
+                {% endif %}
+            }
+
+            fetch("{{ url_for('api_create_set', workout_id=workout.id) }}", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    exercise: exercise, weight: lastWeight, reps: lastReps,
+                    effort: lastEffort || null, set_type: lastType
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) return;
+                const tbody = table.querySelector('tbody');
+                const tr = document.createElement('tr');
+                tr.id = 'row-' + data.id;
+                tr.innerHTML =
+                    '<td class="set-num">' + (rows.length + 1) + '</td>' +
+                    '<td><input class="cell-input" type="number" step="any" value="' + lastWeight + '" onchange="updateSet(' + data.id + ', \'weight\', this.value)"></td>' +
+                    '<td><input class="cell-input" type="number" value="' + lastReps + '" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
+                    '{% if effort_scale != "none" %}' +
+                    '<td><input class="cell-input" type="number" min="0" max="10" value="' + lastEffort + '" onchange="updateSet(' + data.id + ', \'effort\', this.value)"></td>' +
+                    '{% endif %}' +
+                    '<td><select class="cell-input" onchange="updateSet(' + data.id + ', \'set_type\', this.value)">' +
+                    '<option value="normal">Normal</option><option value="calentamiento">Calent.</option>' +
+                    '<option value="fallo">Fallo</option><option value="dropset">Dropset</option></select></td>' +
+                    '<td><button type="button" class="delete-set-btn" onclick="deleteSet(' + data.id + ')">🗑️</button></td>';
+                tbody.appendChild(tr);
+                tr.querySelector('select').value = lastType;
+                triggerRestTimer(exercise, data.rest_seconds);
+            });
+        }
     </script>
 {% endblock %}

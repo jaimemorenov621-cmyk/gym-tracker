@@ -24,7 +24,7 @@
         {% endif %}
     </nav>
 
-    {% if active_workout %}
+    {% if active_workout and request.endpoint not in ("new_workout", "workout_detail") %}
     <a href="{{ url_for('workout_detail', workout_id=active_workout.id) }}" class="active-toast">
         {{ active_workout.note or "Entrenamiento" }} en curso
     </a>
@@ -39,5 +39,126 @@
     {% endwith %}
     {% block content %}
     {% endblock %}
+
+    <div id="restTimerBox" class="rest-toast" style="display:none;">
+        <div><strong>⏱ Descanso</strong> <span id="restExerciseName"></span></div>
+        <div class="rt-time" id="timerDisplay">00:00</div>
+        <div class="rt-adjust">
+            <button type="button" class="btn-outline" onclick="adjustTimer(-15)">−15s</button>
+            <button type="button" class="btn-outline" onclick="adjustTimer(15)">+15s</button>
+        </div>
+        <button type="button" class="btn-outline" onclick="stopRestTimer()">⏹ Parar</button>
+    </div>
+
+    <script>
+        let restInterval = null;
+        let currentTimerExercise = "{{ just_added or '' }}";
+        const hasActiveWorkout = {{ 'true' if active_workout else 'false' }};
+
+        function beep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.frequency.value = 880;
+                gain.gain.setValueAtTime(0.3, ctx.currentTime);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } catch (e) {}
+        }
+
+        function formatMMSS(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function adjustTimer(delta) {
+            const saved = localStorage.getItem('restEndTime');
+            if (saved) {
+                localStorage.setItem('restEndTime', parseInt(saved) + delta * 1000);
+                updateRestDisplay();
+            }
+        }
+
+        function startRestTimer(totalSeconds) {
+            if (totalSeconds <= 0) return;
+            document.getElementById('restTimerBox').style.display = 'block';
+            document.getElementById('restExerciseName').textContent = currentTimerExercise ? '— ' + currentTimerExercise : '';
+
+            if (currentTimerExercise) {
+                fetch('/exercise/' + encodeURIComponent(currentTimerExercise) + '/rest_default', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({seconds: totalSeconds})
+                });
+            }
+
+            localStorage.setItem('restEndTime', Date.now() + totalSeconds * 1000);
+            localStorage.setItem('restExercise', currentTimerExercise);
+
+            if (restInterval) clearInterval(restInterval);
+            updateRestDisplay();
+            restInterval = setInterval(updateRestDisplay, 1000);
+        }
+
+        function updateRestDisplay() {
+            const saved = localStorage.getItem('restEndTime');
+            if (!saved) return;
+            const remaining = Math.round((parseInt(saved) - Date.now()) / 1000);
+            if (remaining <= 0) {
+                clearInterval(restInterval);
+                localStorage.removeItem('restEndTime');
+                localStorage.removeItem('restExercise');
+                document.getElementById('restTimerBox').style.display = 'none';
+                beep();
+                if (window.Notification && Notification.permission === 'granted') {
+                    new Notification('¡Descanso terminado!');
+                } else {
+                    alert('¡Descanso terminado!');
+                }
+                return;
+            }
+            document.getElementById('timerDisplay').textContent = formatMMSS(remaining);
+        }
+
+        function stopRestTimer() {
+            if (restInterval) clearInterval(restInterval);
+            localStorage.removeItem('restEndTime');
+            localStorage.removeItem('restExercise');
+            document.getElementById('restTimerBox').style.display = 'none';
+        }
+
+        function triggerRestTimer(exercise, seconds) {
+            currentTimerExercise = exercise;
+            startRestTimer(seconds);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+
+            if (!hasActiveWorkout) {
+                stopRestTimer();
+                return;
+            }
+
+            if (currentTimerExercise) {
+                startRestTimer({{ just_added_rest or 90 }});
+                return;
+            }
+
+            const savedEnd = localStorage.getItem('restEndTime');
+            if (savedEnd && parseInt(savedEnd) > Date.now()) {
+                currentTimerExercise = localStorage.getItem('restExercise') || '';
+                document.getElementById('restTimerBox').style.display = 'block';
+                document.getElementById('restExerciseName').textContent = currentTimerExercise ? '— ' + currentTimerExercise : '';
+                updateRestDisplay();
+                restInterval = setInterval(updateRestDisplay, 1000);
+            }
+        });
+    </script>
 </body>
 </html>

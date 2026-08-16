@@ -40,8 +40,9 @@ class Workout(db.Model):
     timestamp: so.Mapped[datetime] = so.mapped_column(
         index=True, default=lambda: datetime.now(timezone.utc)
     )
+    ended_at: so.Mapped[Optional[datetime]] = so.mapped_column()
     routine_id: so.Mapped[Optional[int]] = so.mapped_column(
-        sa.ForeignKey("routine.id", name="fk_workout_routine_id"), index=True
+        sa.ForeignKey("routine.id"), index=True
     )
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
 
@@ -50,6 +51,16 @@ class Workout(db.Model):
     sets: so.WriteOnlyMapped["SetEntry"] = so.relationship(
         back_populates="workout", passive_deletes=True
     )
+
+    def duration_str(self):
+        if not self.ended_at:
+            return None
+        seconds = int((self.ended_at - self.timestamp).total_seconds())
+        m, s = divmod(seconds, 60)
+        h, m = divmod(m, 60)
+        if h:
+            return f"{h}h {m}min"
+        return f"{m}min"
 
     def __repr__(self):
         return f"<Workout {self.note} {self.timestamp}>"
@@ -74,6 +85,7 @@ class ExerciseNote(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     exercise: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
     notes: so.Mapped[Optional[str]] = so.mapped_column(sa.String(1000))
+    default_rest_seconds: so.Mapped[Optional[int]] = so.mapped_column()
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
 
     __table_args__ = (
@@ -94,8 +106,8 @@ class Routine(db.Model):
         back_populates="routine", passive_deletes=True
     )
     workouts: so.WriteOnlyMapped["Workout"] = so.relationship(
-    back_populates="routine", passive_deletes=True
-)
+        back_populates="routine", passive_deletes=True
+    )
 
     def __repr__(self):
         return f"<Routine {self.name}>"
@@ -113,3 +125,16 @@ class RoutineExercise(db.Model):
 
     def __repr__(self):
         return f"<RoutineExercise {self.exercise}>"
+
+
+class Exercise(db.Model):
+    id: so.Mapped[str] = so.mapped_column(sa.String(64), primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(120), index=True)
+    name_es: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True)
+    category: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    primary_muscles: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
+    equipment: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    image_url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
+
+    def __repr__(self):
+        return f"<Exercise {self.name}>"
