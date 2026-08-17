@@ -275,6 +275,11 @@ def api_update_set(set_id):
     if "set_type" in data:
         entry.set_type = data["set_type"]
     if "completed" in data:
+        if data["completed"] and entry.reps == 0:
+            db.session.rollback()
+            return jsonify(
+                {"ok": False, "error": "No puedes confirmar una serie con 0 repeticiones."}
+            ), 400
         entry.completed = bool(data["completed"])
     db.session.commit()
 
@@ -369,6 +374,18 @@ def finish_workout(workout_id):
 
     form = FinishWorkoutForm()
     if form.validate_on_submit():
+        non_empty_count = db.session.scalar(
+            sa.select(sa.func.count())
+            .select_from(SetEntry)
+            .where(SetEntry.workout_id == workout.id, SetEntry.reps > 0)
+        )
+        if not non_empty_count:
+            flash(
+                "No puedes finalizar un entrenamiento sin ninguna serie con "
+                "repeticiones registradas."
+            )
+            return redirect(url_for("workout_detail", workout_id=workout.id))
+
         empty_sets = db.session.scalars(
             sa.select(SetEntry).where(
                 SetEntry.workout_id == workout.id, SetEntry.reps == 0

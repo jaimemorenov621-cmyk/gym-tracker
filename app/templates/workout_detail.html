@@ -262,7 +262,10 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (!data.ok) return;
+                if (!data.ok) {
+                    if (data.error) alert(data.error);
+                    return;
+                }
                 btn.classList.toggle('checked', willComplete);
                 if (willComplete) {
                     btn.classList.remove('just-checked');
