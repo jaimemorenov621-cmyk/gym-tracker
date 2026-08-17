@@ -122,11 +122,15 @@ def index():
     if calendar_weeks:
         calendar_weeks[0]["new_month"] = False
 
-    latest_weight = db.session.scalar(
+    weight_entries = db.session.scalars(
         sa.select(BodyWeightEntry)
         .where(BodyWeightEntry.user_id == current_user.id)
-        .order_by(BodyWeightEntry.timestamp.desc())
-    )
+        .order_by(BodyWeightEntry.timestamp.asc())
+    ).all()
+    latest_weight = weight_entries[-1] if weight_entries else None
+
+    strength_result = compute_strength_change()
+    strength_change, strength_window_days = strength_result if strength_result else (None, None)
 
     return render_template(
         "index.html",
@@ -135,8 +139,11 @@ def index():
         total_workouts=total_workouts,
         streak=streak,
         calendar_weeks=calendar_weeks,
-        strength_change=compute_strength_change(),
+        strength_change=strength_change,
+        strength_window_days=strength_window_days,
         latest_weight=latest_weight,
+        weight_chart_labels=[e.timestamp.strftime("%d/%m") for e in weight_entries],
+        weight_chart_values=[e.weight for e in weight_entries],
         muscle_colors=compute_muscle_intensity(),
     )
 
@@ -1085,12 +1092,26 @@ def get_exercise_sessions(name):
 
 
 def compute_strength_change():
-    """% de cambio de fuerza entre los últimos 90 días y los 90 anteriores,
-    ponderado por nº de sesiones recientes de cada ejercicio. None si no hay
-    datos suficientes en ningún ejercicio."""
+    """% de cambio de fuerza entre el periodo actual y el anterior, ponderado por
+    nº de sesiones recientes de cada ejercicio. Devuelve (pct, window_days) o None
+    si no hay datos suficientes en ningún ejercicio.
+
+    La ventana es adaptativa (hasta 90 días) en vez de fija: con una cuenta nueva,
+    exigir siempre 90+91 días de historial deja el dato en "—" durante meses sin
+    remedio posible, por mucho que se entrene. En su lugar se parte el historial
+    real del usuario por la mitad (mínimo 7 días de ventana), y ese reparto crece
+    hasta el estándar de 90 días según se acumula historial."""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
-    current_start = now - timedelta(days=90)
-    previous_start = now - timedelta(days=180)
+
+    oldest = db.session.scalar(
+        sa.select(sa.func.min(Workout.timestamp)).where(Workout.user_id == current_user.id)
+    )
+    if oldest is None:
+        return None
+    window_days = min(90, max(7, (now - oldest).days // 2))
+
+    current_start = now - timedelta(days=window_days)
+    previous_start = now - timedelta(days=window_days * 2)
 
     exercises = db.session.scalars(
         sa.select(SetEntry.exercise)
@@ -1121,7 +1142,8 @@ def compute_strength_change():
     if total_weight == 0:
         return None
 
-    return max(-50, min(100, weighted_sum / total_weight))
+    pct = max(-50, min(100, weighted_sum / total_weight))
+    return pct, window_days
 
 
 def build_progress_summary():
@@ -1194,6 +1216,8 @@ def generate_ai_analysis():
         "perdida_grasa": "pérdida de grasa",
     }
     profile_parts = []
+    if current_user.sex:
+        profile_parts.append(current_user.sex)
     if current_user.height_cm:
         profile_parts.append(f"{current_user.height_cm}cm")
     if current_user.training_goal:
@@ -1332,14 +1356,26 @@ MUSCLE_GROUP_MAP = {
 }
 MUSCLE_GROUPS = ("hombros", "pecho", "abdomen", "brazos", "piernas", "espalda", "pantorrillas")
 _MUSCLE_NEUTRAL_RGB = (216, 211, 238)  # #d8d3ee, mismo tono neutro que el resto de la app
-_MUSCLE_FULL_RGB = (124, 77, 255)  # #7c4dff, morado de marca
+# Color de "firma" por grupo muscular (a intensidad máxima) — inspirado en las
+# referencias de Jaime: cada zona tiene su propio color reconocible, no todas el
+# mismo morado. A intensidad 0 todas convergen al mismo gris neutro de arriba.
+_MUSCLE_SIGNATURE_RGB = {
+    "hombros": (232, 93, 61),
+    "pecho": (245, 146, 31),
+    "abdomen": (67, 160, 71),
+    "brazos": (251, 192, 45),
+    "piernas": (61, 127, 217),
+    "espalda": (198, 40, 40),
+    "pantorrillas": (142, 95, 217),
+}
 
 
-def _interpolate_muscle_color(t):
+def _interpolate_muscle_color(group, t):
     t = max(0.0, min(1.0, t))
-    r = round(_MUSCLE_NEUTRAL_RGB[0] + (_MUSCLE_FULL_RGB[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
-    g = round(_MUSCLE_NEUTRAL_RGB[1] + (_MUSCLE_FULL_RGB[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
-    b = round(_MUSCLE_NEUTRAL_RGB[2] + (_MUSCLE_FULL_RGB[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
+    target = _MUSCLE_SIGNATURE_RGB[group]
+    r = round(_MUSCLE_NEUTRAL_RGB[0] + (target[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
+    g = round(_MUSCLE_NEUTRAL_RGB[1] + (target[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
+    b = round(_MUSCLE_NEUTRAL_RGB[2] + (target[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
@@ -1387,6 +1423,6 @@ def compute_muscle_intensity(days=14):
 
     max_volume = max(volumes.values()) if volumes else 0
     return {
-        group: _interpolate_muscle_color(volume / max_volume if max_volume else 0)
+        group: _interpolate_muscle_color(group, volume / max_volume if max_volume else 0)
         for group, volume in volumes.items()
     }

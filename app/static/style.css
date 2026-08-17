@@ -536,6 +536,20 @@ select.cell-input {
     .dash-body { flex-direction: column; }
     .dash-muscle-map { flex-basis: auto; }
 }
+.dash-weight {
+    margin-top: 14px;
+    background: white;
+    border: 1px solid #ece7ff;
+    border-radius: 14px;
+    padding: 10px 14px;
+}
+.dash-weight-empty {
+    margin: 4px 0;
+    font-size: 0.85rem;
+    color: #888;
+    text-align: center;
+}
+.dash-weight-empty a { color: #7c4dff; font-weight: 600; }
 
 .calendar-grid { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 6px; }
 .calendar-col { display: flex; flex-direction: column; gap: 3px; }
