@@ -462,29 +462,78 @@ select.cell-input {
     color: #8e0000;
 }
 
-.stats-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-.stat-box {
-    background: #f5f3ff;
+.dashboard-panel {
+    background: #fbfaff;
     border: 1px solid #e0d9ff;
-    border-radius: 10px;
-    padding: 12px 18px;
-    text-align: center;
-    flex: 1;
-    min-width: 100px;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(124, 77, 255, 0.08);
+    padding: 22px 24px;
+    margin-bottom: 20px;
 }
-.stat-box .stat-num {
-    font-size: 1.5rem;
+.dash-eyebrow {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9a8fd6;
+    margin-bottom: 14px;
+}
+.dash-metrics {
+    display: flex;
+    align-items: baseline;
+    gap: 28px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+.dash-metric { display: flex; flex-direction: column; }
+.dash-metric-value {
+    font-size: 1.4rem;
     font-weight: 800;
     color: #5a4fcf;
 }
-.stat-box .stat-label {
+.dash-metric-primary .dash-metric-value { font-size: 2rem; }
+.dash-metric-soon .dash-metric-value { color: #b7b2c9; }
+.dash-metric-label {
     font-size: 0.75rem;
     color: #888;
+    margin-top: 2px;
+}
+.dash-body {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+}
+.dash-muscle-map {
+    flex: 0 0 34%;
+    background: white;
+    border: 1px solid #ece7ff;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.dash-muscle-map svg { width: 72px; height: auto; }
+.dash-muscle-map svg * { fill: #d8d3ee; }
+.dash-muscle-caption {
+    font-size: 0.68rem;
+    color: #aaa;
+    margin-top: 8px;
+    text-align: center;
+}
+.dash-calendar {
+    flex: 1;
+    background: white;
+    border: 1px solid #ece7ff;
+    border-radius: 14px;
+    padding: 14px;
+    overflow-x: auto;
+}
+@media (max-width: 600px) {
+    .dash-body { flex-direction: column; }
+    .dash-muscle-map { flex-basis: auto; }
 }
 
 .calendar-grid { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 6px; }
