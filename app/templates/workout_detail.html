@@ -56,7 +56,13 @@
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
                     {% set img = get_exercise_image(exercise) %}
-                    {% if img %}<img src="{{ img }}" style="width:56px; height:56px; object-fit:cover; border-radius:8px;">{% endif %}
+                    {% if img %}
+                        <img src="{{ img }}" style="width:56px; height:56px; object-fit:cover; border-radius:8px;">
+                    {% else %}
+                        <div style="width:56px; height:56px; border-radius:8px; background:#ececf7; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="19" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="5" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="17" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="7" y="11" width="10" height="2" fill="#7c4dff"/></svg>
+                        </div>
+                    {% endif %}
                     💪 <a class="btn-outline" href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a>
                 </h3>
                 <a class="rest-badge" href="{{ url_for('exercise_notes', name=exercise) }}">
@@ -83,7 +89,7 @@
                 </thead>
                 <tbody>
                     {% for s in group %}
-                    <tr id="row-{{ s.id }}">
+                    <tr id="row-{{ s.id }}"{% if s.completed %} class="set-row-done"{% endif %}>
                         <td class="set-num">{{ loop.index }}</td>
                         <td><input class="cell-input" type="number" step="any" value="{{ s.weight }}" onchange="updateSet({{ s.id }}, 'weight', this.value)"></td>
                         <td><input class="cell-input" type="number" value="{{ s.reps }}" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
@@ -132,7 +138,7 @@
                         if (!results.length) { box.style.display = 'none'; return; }
                         box.innerHTML = results.map(ex =>
                             '<div onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer;" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'white\'">' +
-                            (ex.image ? '<img src="' + ex.image + '" style="width:44px; height:44px; object-fit:cover; border-radius:6px;">' : '<div style="width:44px;height:44px;background:#ececf7;border-radius:6px;"></div>') +
+                            (ex.image ? '<img src="' + ex.image + '" style="width:44px; height:44px; object-fit:cover; border-radius:6px;">' : '<div style="width:44px;height:44px;background:#ececf7;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="19" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="5" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="17" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="7" y="11" width="10" height="2" fill="#7c4dff"/></svg></div>') +
                             '<div><div style="font-weight:600; font-size:0.9rem;">' + ex.name + '</div>' +
                             (ex.muscles ? '<div style="font-size:0.75rem; color:#888;">' + ex.muscles + '</div>' : '') +
                             '</div></div>'
@@ -267,6 +273,8 @@
                     return;
                 }
                 btn.classList.toggle('checked', willComplete);
+                const row = btn.closest('tr');
+                if (row) row.classList.toggle('set-row-done', willComplete);
                 if (willComplete) {
                     btn.classList.remove('just-checked');
                     void btn.offsetWidth;

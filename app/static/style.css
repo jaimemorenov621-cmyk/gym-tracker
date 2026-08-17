@@ -309,6 +309,12 @@ select.cell-input {
     background: linear-gradient(135deg, #7c4dff, #536dfe);
     border-color: transparent;
     color: white;
+    transform: scale(1.08);
+    box-shadow: 0 2px 6px rgba(124, 77, 255, 0.45);
+}
+.set-table tr.set-row-done {
+    background: rgba(124, 77, 255, 0.08);
+    transition: background 0.2s ease-out;
 }
 .set-check-btn.just-checked {
     animation: set-check-pop 0.4s ease-out;
