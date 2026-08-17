@@ -30,6 +30,17 @@
                     <span class="dash-metric-label">Fuerza (90 días)</span>
                 </div>
             {% endif %}
+            {% if latest_weight %}
+                <div class="dash-metric">
+                    <span class="dash-metric-value">{{ latest_weight.weight|round(1) }}kg</span>
+                    <span class="dash-metric-label">Peso</span>
+                </div>
+            {% else %}
+                <div class="dash-metric dash-metric-soon">
+                    <span class="dash-metric-value">—</span>
+                    <span class="dash-metric-label">Peso sin registrar</span>
+                </div>
+            {% endif %}
         </div>
         <div class="dash-body">
             <div class="dash-muscle-map">

@@ -122,6 +122,12 @@ def index():
     if calendar_weeks:
         calendar_weeks[0]["new_month"] = False
 
+    latest_weight = db.session.scalar(
+        sa.select(BodyWeightEntry)
+        .where(BodyWeightEntry.user_id == current_user.id)
+        .order_by(BodyWeightEntry.timestamp.desc())
+    )
+
     return render_template(
         "index.html",
         title="Inicio",
@@ -130,6 +136,7 @@ def index():
         streak=streak,
         calendar_weeks=calendar_weeks,
         strength_change=compute_strength_change(),
+        latest_weight=latest_weight,
     )
 
 
