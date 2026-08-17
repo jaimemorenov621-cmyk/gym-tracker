@@ -1,6 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlsplit
+import unicodedata
 import sqlalchemy as sa
 from openai import OpenAI
 from app import app, db
@@ -209,7 +210,7 @@ def add_exercise_to_workout(workout_id):
     form = NewExerciseForm()
     if form.validate_on_submit():
         entry = SetEntry(
-            exercise=form.exercise.data.strip().lower(),
+            exercise=canonicalize_exercise_name(form.exercise.data),
             weight=0,
             reps=0,
             set_type="normal",
@@ -627,7 +628,7 @@ def routine_detail(routine_id):
             .where(RoutineExercise.routine_id == routine.id)
         )
         ex = RoutineExercise(
-            exercise=form.exercise.data.strip().lower(),
+            exercise=canonicalize_exercise_name(form.exercise.data),
             target_sets=form.target_sets.data,
             target_reps=form.target_reps.data,
             order_index=count,
@@ -1108,14 +1109,40 @@ def format_rest(seconds):
     return f"{s}s"
 
 
+def _strip_accents(s):
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c)
+    ).lower()
+
+
 def find_catalog_exercise(name):
     if not name:
         return None
-    return db.session.scalar(
+    match = db.session.scalar(
         sa.select(Exercise).where(
             sa.or_(Exercise.name.ilike(name), Exercise.name_es.ilike(name))
         )
     )
+    if match:
+        return match
+
+    target = _strip_accents(name)
+    for ex in db.session.scalars(sa.select(Exercise)):
+        if _strip_accents(ex.name) == target:
+            return ex
+        if ex.name_es and _strip_accents(ex.name_es) == target:
+            return ex
+    return None
+
+
+def canonicalize_exercise_name(name):
+    """Si `name` coincide (ignorando acentos/mayúsculas) con el catálogo, devuelve la
+    forma canónica del catálogo en vez del texto tal cual lo escribió el usuario."""
+    name = name.strip().lower()
+    match = find_catalog_exercise(name)
+    if match:
+        return (match.name_es or match.name).strip().lower()
+    return name
 
 
 def get_exercise_image(name):
