@@ -31,6 +31,7 @@ from app.models import (
     AiAnalysis,
     BodyWeightEntry,
 )
+from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from datetime import datetime, timezone, timedelta
 
 
@@ -145,6 +146,7 @@ def index():
         weight_chart_labels=[e.timestamp.strftime("%d/%m") for e in weight_entries],
         weight_chart_values=[e.weight for e in weight_entries],
         muscle_colors=compute_muscle_intensity(),
+        muscle_svg=build_muscle_svg_parts(current_user.sex),
     )
 
 
@@ -1335,44 +1337,80 @@ def get_exercise_image(name):
     return ex.image_url if ex else None
 
 
+# Vocabulario de Exercise.primary_muscles -> grupo (en español, como el resto de
+# la app). "abductors" no tiene path propio en los datos vectoriales de origen
+# (verificado: cero coincidencias en los 4 ficheros fuente) — se aproxima a
+# "cuadriceps" (cara externa del muslo, la región visualmente más próxima) en
+# vez de fingir que es lo mismo que "adductors" (aductores, cara interna).
 MUSCLE_GROUP_MAP = {
     "shoulders": "hombros",
-    "neck": "hombros",
+    "neck": "cuello",
     "chest": "pecho",
     "abdominals": "abdomen",
     "biceps": "biceps",
     "triceps": "triceps",
     "forearms": "antebrazos",
     "quadriceps": "cuadriceps",
-    "adductors": "cuadriceps",
-    "abductors": "cuadriceps",
+    "adductors": "aductores",
+    "abductors": "cuadriceps",  # aproximación, sin path dedicado en la fuente — ver comentario arriba
     "glutes": "gluteos",
     "hamstrings": "isquiotibiales",
     "lats": "dorsales",
     "middle back": "dorsales",
-    "lower back": "dorsales",
+    "lower back": "espalda_baja",
     "traps": "trapecios",
     "calves": "pantorrillas",
 }
 MUSCLE_GROUPS = (
-    "trapecios", "hombros", "pecho", "biceps", "triceps", "antebrazos",
-    "abdomen", "dorsales", "cuadriceps", "isquiotibiales", "gluteos", "pantorrillas",
+    "trapecios", "hombros", "pecho", "biceps", "triceps", "antebrazos", "cuello",
+    "abdomen", "dorsales", "espalda_baja", "cuadriceps", "aductores",
+    "isquiotibiales", "gluteos", "pantorrillas",
 )
+# Grupo (español) -> slug del dataset vectorial (app/muscle_svg_data.py). Los
+# slugs ausentes de este dict (head, hair, hands, feet, knees, ankles, tibialis)
+# son piezas anatómicas auxiliares del dibujo, no músculos entrenables: se
+# pintan siempre en color neutro, nunca a través de compute_muscle_intensity().
+LIBRARY_SLUG_TO_GROUP = {
+    "chest": "pecho",
+    "abs": "abdomen",
+    "obliques": "abdomen",
+    "biceps": "biceps",
+    "triceps": "triceps",
+    "forearm": "antebrazos",
+    "deltoids": "hombros",
+    "neck": "cuello",
+    "trapezius": "trapecios",
+    "upper-back": "dorsales",
+    "lower-back": "espalda_baja",
+    "quadriceps": "cuadriceps",
+    "adductors": "aductores",
+    "gluteal": "gluteos",
+    "hamstring": "isquiotibiales",
+    "calves": "pantorrillas",
+}
+assert set(LIBRARY_SLUG_TO_GROUP) | AUXILIARY_SLUGS >= {
+    slug for side in BODY_PARTS["male"].values() for slug in side
+}, "hay un slug del dataset vectorial sin clasificar como grupo real o auxiliar"
+
 _MUSCLE_NEUTRAL_RGB = (217, 213, 239)  # #d9d5ef, mismo tono neutro de la silueta base
 # Color de "firma" por grupo muscular (a intensidad máxima) — un color vivo y
-# distinto por cada uno de los 12 grupos, inspirado en las referencias de Jaime
-# (mapas musculares tipo arcoíris). A intensidad 0 todas convergen al gris neutro.
+# distinto por cada uno de los 15 grupos, en un barrido de matiz tipo arcoíris
+# para que sean fácilmente distinguibles entre sí. A intensidad 0 todas
+# convergen al mismo gris neutro de arriba.
 _MUSCLE_SIGNATURE_RGB = {
     "trapecios": (239, 68, 68),
     "hombros": (249, 115, 22),
     "pecho": (245, 158, 11),
     "biceps": (234, 179, 8),
     "antebrazos": (132, 204, 22),
-    "abdomen": (34, 197, 94),
+    "cuello": (34, 197, 94),
+    "abdomen": (16, 185, 129),
     "dorsales": (20, 184, 166),
-    "cuadriceps": (6, 182, 212),
-    "isquiotibiales": (59, 130, 246),
-    "triceps": (99, 102, 241),
+    "espalda_baja": (6, 182, 212),
+    "cuadriceps": (14, 165, 233),
+    "aductores": (59, 130, 246),
+    "isquiotibiales": (99, 102, 241),
+    "triceps": (139, 92, 246),
     "gluteos": (168, 85, 247),
     "pantorrillas": (236, 72, 153),
 }
@@ -1385,6 +1423,23 @@ def _interpolate_muscle_color(group, t):
     g = round(_MUSCLE_NEUTRAL_RGB[1] + (target[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
     b = round(_MUSCLE_NEUTRAL_RGB[2] + (target[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
     return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def build_muscle_svg_parts(sex):
+    """Devuelve {"front": [...], "back": [...]} listos para iterar en la plantilla:
+    cada elemento es {"group": <grupo español o None>, "paths": [d, d, ...]}.
+    group=None son piezas auxiliares (cabeza, manos, pies...) que la plantilla
+    pinta siempre en color neutro."""
+    gender = "female" if sex == "mujer" else "male"
+    result = {}
+    for side in ("front", "back"):
+        parts = []
+        for slug, paths in BODY_PARTS[gender][side].items():
+            group = LIBRARY_SLUG_TO_GROUP.get(slug)
+            all_paths = paths["left"] + paths["right"] + paths["common"]
+            parts.append({"group": group, "paths": all_paths})
+        result[side] = parts
+    return result
 
 
 def _effort_factor(entry):
