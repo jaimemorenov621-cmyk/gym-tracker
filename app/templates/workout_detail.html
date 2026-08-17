@@ -280,6 +280,12 @@
                     void btn.offsetWidth;
                     btn.classList.add('just-checked');
                     setTimeout(() => btn.classList.remove('just-checked'), 400);
+                    if (row) {
+                        row.classList.remove('set-row-sweep');
+                        void row.offsetWidth;
+                        row.classList.add('set-row-sweep');
+                        setTimeout(() => row.classList.remove('set-row-sweep'), 600);
+                    }
                 }
                 if (willComplete && data.rest_seconds) {
                     triggerRestTimer(exercise, data.rest_seconds);

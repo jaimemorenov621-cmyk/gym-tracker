@@ -316,6 +316,20 @@ select.cell-input {
     background: rgba(124, 77, 255, 0.08);
     transition: background 0.2s ease-out;
 }
+@media (prefers-reduced-motion: no-preference) {
+    .set-table tr.set-row-sweep {
+        background-image: linear-gradient(100deg,
+            transparent 0%, rgba(255, 255, 255, 0.5) 45%,
+            rgba(124, 77, 255, 0.35) 50%, rgba(255, 255, 255, 0.5) 55%, transparent 100%);
+        background-repeat: no-repeat;
+        background-size: 60% 100%;
+        animation: set-row-sweep-anim 550ms ease-out;
+    }
+}
+@keyframes set-row-sweep-anim {
+    from { background-position: -150% 0; }
+    to   { background-position: 250% 0; }
+}
 .set-check-btn.just-checked {
     animation: set-check-pop 0.4s ease-out;
 }
