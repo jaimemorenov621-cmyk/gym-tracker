@@ -51,4 +51,15 @@
     {% else %}
         <p><em>Todavía no has registrado ningún entrenamiento.</em></p>
     {% endfor %}
+
+    {% if request.args.get('celebrate') %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            celebrate();
+            const url = new URL(window.location);
+            url.searchParams.delete('celebrate');
+            window.history.replaceState({}, '', url);
+        });
+    </script>
+    {% endif %}
 {% endblock %}

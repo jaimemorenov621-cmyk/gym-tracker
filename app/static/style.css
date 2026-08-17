@@ -310,6 +310,29 @@ select.cell-input {
     border-color: transparent;
     color: white;
 }
+.set-check-btn.just-checked {
+    animation: set-check-pop 0.4s ease-out;
+}
+@keyframes set-check-pop {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.6); }
+    40% { transform: scale(1.35); box-shadow: 0 0 0 8px rgba(124, 77, 255, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 77, 255, 0); }
+}
+
+.confetti-piece {
+    position: fixed;
+    top: -10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    z-index: 999;
+    animation: confetti-fall linear forwards;
+    pointer-events: none;
+}
+@keyframes confetti-fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+}
 
 .action-menu {
     position: relative;

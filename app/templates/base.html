@@ -136,6 +136,20 @@
             startRestTimer(seconds);
         }
 
+        function celebrate(count) {
+            const colors = ['#7c4dff', '#536dfe', '#22c98c', '#ffb300', '#ff5252'];
+            for (let i = 0; i < (count || 40); i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.animationDelay = (Math.random() * 0.3) + 's';
+                piece.style.animationDuration = (1.2 + Math.random() * 0.8) + 's';
+                document.body.appendChild(piece);
+                piece.addEventListener('animationend', () => piece.remove());
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function () {
             if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
                 Notification.requestPermission();
@@ -147,7 +161,7 @@
             }
 
             if (currentTimerExercise) {
-                startRestTimer({{ just_added_rest or 90 }});
+                startRestTimer({{ just_added_rest or 120 }});
                 return;
             }
 

@@ -56,7 +56,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
                     {% set img = get_exercise_image(exercise) %}
-                    {% if img %}<img src="{{ img }}" style="width:32px; height:32px; object-fit:cover; border-radius:6px;">{% endif %}
+                    {% if img %}<img src="{{ img }}" style="width:56px; height:56px; object-fit:cover; border-radius:8px;">{% endif %}
                     💪 <a class="btn-outline" href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a>
                 </h3>
                 <a class="rest-badge" href="{{ url_for('exercise_notes', name=exercise) }}">
@@ -132,7 +132,7 @@
                         if (!results.length) { box.style.display = 'none'; return; }
                         box.innerHTML = results.map(ex =>
                             '<div onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer;" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'white\'">' +
-                            (ex.image ? '<img src="' + ex.image + '" style="width:36px; height:36px; object-fit:cover; border-radius:6px;">' : '<div style="width:36px;height:36px;background:#ececf7;border-radius:6px;"></div>') +
+                            (ex.image ? '<img src="' + ex.image + '" style="width:44px; height:44px; object-fit:cover; border-radius:6px;">' : '<div style="width:44px;height:44px;background:#ececf7;border-radius:6px;"></div>') +
                             '<div><div style="font-weight:600; font-size:0.9rem;">' + ex.name + '</div>' +
                             (ex.muscles ? '<div style="font-size:0.75rem; color:#888;">' + ex.muscles + '</div>' : '') +
                             '</div></div>'
@@ -264,8 +264,17 @@
             .then(data => {
                 if (!data.ok) return;
                 btn.classList.toggle('checked', willComplete);
+                if (willComplete) {
+                    btn.classList.remove('just-checked');
+                    void btn.offsetWidth;
+                    btn.classList.add('just-checked');
+                    setTimeout(() => btn.classList.remove('just-checked'), 400);
+                }
                 if (willComplete && data.rest_seconds) {
                     triggerRestTimer(exercise, data.rest_seconds);
+                }
+                if (willComplete && data.is_pr) {
+                    celebrate(70);
                 }
             });
         }

@@ -2,7 +2,7 @@
 {% block content %}
     <h1 style="display:flex; align-items:center; gap:12px;">
         {% set img = get_exercise_image(exercise) %}
-        {% if img %}<img src="{{ img }}" style="width:48px; height:48px; object-fit:cover; border-radius:8px;">{% endif %}
+        {% if img %}<img src="{{ img }}" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">{% endif %}
         {{ exercise|title }}
     </h1>
 

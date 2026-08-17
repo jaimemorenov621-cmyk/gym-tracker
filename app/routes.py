@@ -281,6 +281,9 @@ def api_update_set(set_id):
     response = {"ok": True}
     if data.get("completed"):
         response["rest_seconds"] = get_rest_seconds(entry.exercise)
+        session_list, _, _ = get_exercise_sessions(entry.exercise)
+        if session_list and session_list[-1]["is_pr"] and session_list[-1]["best_set"].id == entry.id:
+            response["is_pr"] = True
     return jsonify(response)
 
 
@@ -366,12 +369,28 @@ def finish_workout(workout_id):
 
     form = FinishWorkoutForm()
     if form.validate_on_submit():
+        empty_sets = db.session.scalars(
+            sa.select(SetEntry).where(
+                SetEntry.workout_id == workout.id, SetEntry.reps == 0
+            )
+        ).all()
+        for entry in empty_sets:
+            db.session.delete(entry)
+
         workout.performance_rating = form.performance_rating.data
         workout.performance_comment = form.performance_comment.data
         workout.ended_at = datetime.now(timezone.utc)
         db.session.commit()
-        flash("Entrenamiento guardado.")
-        return redirect(url_for("index"))
+
+        if empty_sets:
+            n = len(empty_sets)
+            if n == 1:
+                flash("Entrenamiento guardado. Se eliminó 1 serie vacía sin rellenar.")
+            else:
+                flash(f"Entrenamiento guardado. Se eliminaron {n} series vacías sin rellenar.")
+        else:
+            flash("Entrenamiento guardado.")
+        return redirect(url_for("index", celebrate=1))
     elif request.method == "GET" and workout.performance_rating is not None:
         form.performance_rating.data = workout.performance_rating
         form.performance_comment.data = workout.performance_comment
@@ -825,14 +844,12 @@ def api_search_exercises():
     q = request.args.get("q", "").strip()
     if len(q) < 2:
         return jsonify([])
+    word_conditions = [
+        sa.or_(Exercise.name.ilike(f"%{word}%"), Exercise.name_es.ilike(f"%{word}%"))
+        for word in q.split()
+    ]
     results = db.session.scalars(
-        sa.select(Exercise)
-        .where(
-            sa.or_(
-                Exercise.name.ilike(f"%{q}%"), Exercise.name_es.ilike(f"%{q}%")
-            )
-        )
-        .limit(8)
+        sa.select(Exercise).where(sa.and_(*word_conditions)).limit(8)
     ).all()
     return jsonify(
         [
@@ -1095,7 +1112,7 @@ def get_rest_seconds(exercise):
             ExerciseNote.user_id == current_user.id, ExerciseNote.exercise == exercise
         )
     )
-    return note.default_rest_seconds if note and note.default_rest_seconds else 90
+    return note.default_rest_seconds if note and note.default_rest_seconds else 120
 
 
 def format_rest(seconds):
