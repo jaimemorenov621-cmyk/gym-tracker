@@ -291,6 +291,7 @@ select.cell-input {
 }
 .cell-input:focus { background: #ece7ff; outline: none; }
 .set-num { font-weight: 700; color: #3d2b8a; }
+.set-previous { font-size: 0.8rem; color: #999; white-space: nowrap; }
 .delete-set-btn { background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; }
 .set-check-btn {
     width: 26px;

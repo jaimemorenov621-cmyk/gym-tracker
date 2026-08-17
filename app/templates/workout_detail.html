@@ -79,10 +79,11 @@
                 </div>
             {% endif %}
 
+            {% set prev = previous_sets_map.get(exercise) %}
             <table class="set-table" id="table-{{ exercise|replace(' ', '_') }}">
                 <thead>
                     <tr>
-                        <th>#</th><th>Kg</th><th>Reps</th>
+                        <th>#</th><th>Anterior</th><th>Kg</th><th>Reps</th>
                         {% if effort_scale != 'none' %}<th>{{ effort_scale|upper }}</th>{% endif %}
                         <th>Tipo</th><th>✓</th><th></th>
                     </tr>
@@ -91,6 +92,7 @@
                     {% for s in group %}
                     <tr id="row-{{ s.id }}"{% if s.completed %} class="set-row-done"{% endif %}>
                         <td class="set-num">{{ loop.index }}</td>
+                        <td class="set-previous">{{ prev[loop.index0] if prev and loop.index0 < prev|length else "—" }}</td>
                         <td><input class="cell-input" type="number" step="any" value="{{ s.weight }}" onchange="updateSet({{ s.id }}, 'weight', this.value)"></td>
                         <td><input class="cell-input" type="number" value="{{ s.reps }}" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
@@ -192,6 +194,8 @@
     </script>
 
     <script>
+        const previousSetsMap = {{ previous_sets_map|tojson }};
+
         function updateSet(id, field, value) {
             const payload = {};
             payload[field] = value;
@@ -242,8 +246,11 @@
                 const tbody = table.querySelector('tbody');
                 const tr = document.createElement('tr');
                 tr.id = 'row-' + data.id;
+                const prevForExercise = previousSetsMap[exercise];
+                const previousLabel = (prevForExercise && prevForExercise[rows.length]) || '—';
                 tr.innerHTML =
                     '<td class="set-num">' + (rows.length + 1) + '</td>' +
+                    '<td class="set-previous">' + previousLabel + '</td>' +
                     '<td><input class="cell-input" type="number" step="any" value="' + lastWeight + '" onchange="updateSet(' + data.id + ', \'weight\', this.value)"></td>' +
                     '<td><input class="cell-input" type="number" value="' + lastReps + '" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
                     '{% if effort_scale != "none" %}' +

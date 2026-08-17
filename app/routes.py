@@ -350,6 +350,7 @@ def workout_detail(workout_id):
 
     empty_form = EmptyForm()
     new_exercise_form = NewExerciseForm()
+    previous_sets_map = get_previous_sets_map(workout, exercise_order)
     return render_template(
         "workout_detail.html",
         title=workout.note or "Entrenamiento",
@@ -361,6 +362,7 @@ def workout_detail(workout_id):
         exercise_notes_map=exercise_notes_map,
         routine_plan=routine_plan,
         new_exercise_form=new_exercise_form,
+        previous_sets_map=previous_sets_map,
     )
 
 
@@ -978,6 +980,31 @@ def compute_streak(workouts):
                 else:
                     break
     return streak
+
+
+def get_previous_sets_map(workout, exercise_names):
+    """Para cada ejercicio de `exercise_names`, las series (peso×reps) de la última vez
+    que current_user lo entrenó antes de `workout`. Una sola consulta, sin N+1."""
+    if not exercise_names:
+        return {}
+    rows = db.session.execute(
+        sa.select(Workout.id, SetEntry.exercise, SetEntry.weight, SetEntry.reps)
+        .join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(
+            Workout.user_id == current_user.id,
+            Workout.timestamp < workout.timestamp,
+            SetEntry.exercise.in_(exercise_names),
+        )
+        .order_by(SetEntry.exercise, Workout.timestamp.desc(), SetEntry.id)
+    ).all()
+
+    result = {}
+    last_workout_id = {}
+    for wid, exercise, weight, reps in rows:
+        last_workout_id.setdefault(exercise, wid)
+        if last_workout_id[exercise] == wid:
+            result.setdefault(exercise, []).append(f"{weight:g}kg×{reps}")
+    return result
 
 
 def get_exercise_sessions(name):
