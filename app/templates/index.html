@@ -16,10 +16,20 @@
                 <span class="dash-metric-value">🔥 {{ streak }}</span>
                 <span class="dash-metric-label">Racha (días)</span>
             </div>
-            <div class="dash-metric dash-metric-soon">
-                <span class="dash-metric-value">—</span>
-                <span class="dash-metric-label">Fuerza (próximamente)</span>
-            </div>
+            {% if strength_change is not none %}
+                <div class="dash-metric">
+                    <span class="dash-metric-value">
+                        {% if strength_change > 0.5 %}↗{% elif strength_change < -0.5 %}↘{% else %}→{% endif %}
+                        {{ "%+.0f"|format(strength_change) }}%
+                    </span>
+                    <span class="dash-metric-label">Fuerza (90 días)</span>
+                </div>
+            {% else %}
+                <div class="dash-metric dash-metric-soon">
+                    <span class="dash-metric-value">—</span>
+                    <span class="dash-metric-label">Fuerza (90 días)</span>
+                </div>
+            {% endif %}
         </div>
         <div class="dash-body">
             <div class="dash-muscle-map">

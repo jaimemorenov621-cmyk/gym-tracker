@@ -129,6 +129,7 @@ def index():
         total_workouts=total_workouts,
         streak=streak,
         calendar_weeks=calendar_weeks,
+        strength_change=compute_strength_change(),
     )
 
 
@@ -1073,6 +1074,46 @@ def get_exercise_sessions(name):
         improvement = lastN[-1]["is_pr"]
 
     return session_list, stagnation, improvement
+
+
+def compute_strength_change():
+    """% de cambio de fuerza entre los últimos 90 días y los 90 anteriores,
+    ponderado por nº de sesiones recientes de cada ejercicio. None si no hay
+    datos suficientes en ningún ejercicio."""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    current_start = now - timedelta(days=90)
+    previous_start = now - timedelta(days=180)
+
+    exercises = db.session.scalars(
+        sa.select(SetEntry.exercise)
+        .join(Workout, Workout.id == SetEntry.workout_id)
+        .where(Workout.user_id == current_user.id)
+        .distinct()
+    ).all()
+
+    weighted_sum = 0.0
+    total_weight = 0
+    for name in exercises:
+        session_list, _, _ = get_exercise_sessions(name)
+        current_sessions = [s for s in session_list if s["timestamp"] >= current_start]
+        previous_sessions = [
+            s for s in session_list if previous_start <= s["timestamp"] < current_start
+        ]
+        if len(current_sessions) < 2 or len(previous_sessions) < 2:
+            continue
+        best_current = max(s["best_1rm"] for s in current_sessions)
+        best_previous = max(s["best_1rm"] for s in previous_sessions)
+        if best_previous <= 0:
+            continue
+        pct_change = (best_current - best_previous) / best_previous * 100
+        weight = len(current_sessions)
+        weighted_sum += pct_change * weight
+        total_weight += weight
+
+    if total_weight == 0:
+        return None
+
+    return max(-50, min(100, weighted_sum / total_weight))
 
 
 def build_progress_summary():
