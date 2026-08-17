@@ -11,9 +11,7 @@ from app import app, db
 from app.models import Exercise
 
 JSON_URL = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json"
-IMAGE_BASE = (
-    "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/"
-)
+IMAGE_BASE = "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/"
 TRANSLATE_TIMEOUT = 10  # deep-translator's requests.get has no timeout of its own
 
 translator = GoogleTranslator(source="en", target="es")
