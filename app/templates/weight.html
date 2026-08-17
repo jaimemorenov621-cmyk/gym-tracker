@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>⚖️ Peso corporal</h1>
+
+    <div class="card">
+        <form action="" method="post" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+            {{ form.hidden_tag() }}
+            <p style="margin:0;">
+                {{ form.weight.label }}<br>
+                {{ form.weight() }}
+            </p>
+            {{ form.submit() }}
+        </form>
+    </div>
+
+    {% if chart_labels %}
+        <div class="card">
+            <canvas id="weightChart" width="600" height="280"></canvas>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const ctx = document.getElementById('weightChart');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: {{ chart_labels|tojson }},
+                    datasets: [{
+                        label: 'Peso (kg)',
+                        data: {{ chart_values|tojson }},
+                        borderColor: '#7c4dff',
+                        pointBackgroundColor: '#7c4dff',
+                        pointRadius: 5,
+                        tension: 0.25
+                    }]
+                }
+            });
+        </script>
+    {% else %}
+        <p><em>Todavía no has registrado ningún peso.</em></p>
+    {% endif %}
+{% endblock %}

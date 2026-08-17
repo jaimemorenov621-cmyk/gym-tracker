@@ -90,6 +90,13 @@ class EmptyForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
+class WeightForm(FlaskForm):
+    weight = FloatField(
+        "Peso (kg)", validators=[DataRequired(), NumberRange(min=20, max=400)]
+    )
+    submit = SubmitField("Guardar")
+
+
 class SettingsForm(FlaskForm):
     stagnation_threshold = IntegerField(
         "Sesiones sin récord para avisar de estancamiento",

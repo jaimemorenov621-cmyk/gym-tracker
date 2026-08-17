@@ -143,6 +143,18 @@ class AiAnalysis(db.Model):
         return f"<AiAnalysis user={self.user_id} {self.created_at}>"
 
 
+class BodyWeightEntry(db.Model):
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    weight: so.Mapped[float] = so.mapped_column()
+    timestamp: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc)
+    )
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+
+    def __repr__(self):
+        return f"<BodyWeightEntry user={self.user_id} {self.weight}kg>"
+
+
 class Exercise(db.Model):
     id: so.Mapped[str] = so.mapped_column(sa.String(64), primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(120), index=True)

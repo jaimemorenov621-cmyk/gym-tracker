@@ -18,6 +18,7 @@ from app.forms import (
     RoutineExerciseForm,
     NewExerciseForm,
     ExerciseTranslationForm,
+    WeightForm,
 )
 from app.models import (
     User,
@@ -28,6 +29,7 @@ from app.models import (
     RoutineExercise,
     Exercise,
     AiAnalysis,
+    BodyWeightEntry,
 )
 from datetime import datetime, timezone, timedelta
 
@@ -562,6 +564,31 @@ def settings():
         form.height_cm.data = current_user.height_cm
         form.training_goal.data = current_user.training_goal or ""
     return render_template("settings.html", title="Configuración", form=form)
+
+
+@app.route("/weight", methods=["GET", "POST"])
+@login_required
+def weight():
+    form = WeightForm()
+    if form.validate_on_submit():
+        db.session.add(BodyWeightEntry(weight=form.weight.data, user_id=current_user.id))
+        db.session.commit()
+        flash("Peso registrado.")
+        return redirect(url_for("weight"))
+
+    entries = db.session.scalars(
+        sa.select(BodyWeightEntry)
+        .where(BodyWeightEntry.user_id == current_user.id)
+        .order_by(BodyWeightEntry.timestamp.asc())
+    ).all()
+
+    return render_template(
+        "weight.html",
+        title="Peso corporal",
+        form=form,
+        chart_labels=[e.timestamp.strftime("%d/%m/%Y") for e in entries],
+        chart_values=[e.weight for e in entries],
+    )
 
 
 @app.route("/ai/analysis")
