@@ -137,6 +137,7 @@ def index():
         calendar_weeks=calendar_weeks,
         strength_change=compute_strength_change(),
         latest_weight=latest_weight,
+        muscle_colors=compute_muscle_intensity(),
     )
 
 
@@ -1308,3 +1309,84 @@ def canonicalize_exercise_name(name):
 def get_exercise_image(name):
     ex = find_catalog_exercise(name)
     return ex.image_url if ex else None
+
+
+MUSCLE_GROUP_MAP = {
+    "shoulders": "hombros",
+    "neck": "hombros",
+    "chest": "pecho",
+    "abdominals": "abdomen",
+    "biceps": "brazos",
+    "triceps": "brazos",
+    "forearms": "brazos",
+    "quadriceps": "piernas",
+    "adductors": "piernas",
+    "abductors": "piernas",
+    "glutes": "piernas",
+    "hamstrings": "piernas",
+    "lats": "espalda",
+    "middle back": "espalda",
+    "lower back": "espalda",
+    "traps": "espalda",
+    "calves": "pantorrillas",
+}
+MUSCLE_GROUPS = ("hombros", "pecho", "abdomen", "brazos", "piernas", "espalda", "pantorrillas")
+_MUSCLE_NEUTRAL_RGB = (216, 211, 238)  # #d8d3ee, mismo tono neutro que el resto de la app
+_MUSCLE_FULL_RGB = (124, 77, 255)  # #7c4dff, morado de marca
+
+
+def _interpolate_muscle_color(t):
+    t = max(0.0, min(1.0, t))
+    r = round(_MUSCLE_NEUTRAL_RGB[0] + (_MUSCLE_FULL_RGB[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
+    g = round(_MUSCLE_NEUTRAL_RGB[1] + (_MUSCLE_FULL_RGB[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
+    b = round(_MUSCLE_NEUTRAL_RGB[2] + (_MUSCLE_FULL_RGB[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
+
+def _effort_factor(entry):
+    """Multiplicador de estrés según cercanía al fallo: 1.0x si la serie fue al fallo,
+    0.5x si tenía mucho margen. Deliberadamente NO reutiliza effective_reps() —
+    esa función va en la dirección contraria a propósito (más RIR = 1RM estimado
+    más alto, porque para estimar fuerza máxima importa cuánto margen quedaba).
+    Aquí el objetivo es el opuesto: una serie al fallo estimula más el músculo
+    que la misma serie con mucho margen, así que a menos RIR (o más RPE) le
+    corresponde más factor, no menos."""
+    if entry.rir is not None:
+        proximity = max(0, 10 - entry.rir) / 10
+    elif entry.rpe is not None:
+        proximity = entry.rpe / 10
+    else:
+        proximity = 0.7
+    return 0.5 + proximity * 0.5
+
+
+def compute_muscle_intensity(days=14):
+    """Color por grupo muscular según el volumen (peso × reps × cercanía al fallo)
+    entrenado en los últimos `days` días. Relativo al grupo más trabajado, no a
+    un umbral absoluto."""
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
+    entries = db.session.scalars(
+        sa.select(SetEntry)
+        .join(Workout, Workout.id == SetEntry.workout_id)
+        .where(Workout.user_id == current_user.id, Workout.timestamp >= cutoff)
+    ).all()
+
+    volumes = {group: 0.0 for group in MUSCLE_GROUPS}
+    catalog_cache = {}
+    for entry in entries:
+        if entry.exercise not in catalog_cache:
+            catalog_cache[entry.exercise] = find_catalog_exercise(entry.exercise)
+        catalog = catalog_cache[entry.exercise]
+        if not catalog or not catalog.primary_muscles:
+            continue
+        stress = entry.weight * entry.reps * _effort_factor(entry)
+        for muscle in catalog.primary_muscles.split(", "):
+            group = MUSCLE_GROUP_MAP.get(muscle)
+            if group:
+                volumes[group] += stress
+
+    max_volume = max(volumes.values()) if volumes else 0
+    return {
+        group: _interpolate_muscle_color(volume / max_volume if max_volume else 0)
+        for group, volume in volumes.items()
+    }

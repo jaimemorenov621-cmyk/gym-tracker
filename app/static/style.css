@@ -506,7 +506,7 @@ select.cell-input {
     align-items: stretch;
 }
 .dash-muscle-map {
-    flex: 0 0 34%;
+    flex: 0 0 40%;
     background: white;
     border: 1px solid #ece7ff;
     border-radius: 14px;
@@ -516,8 +516,8 @@ select.cell-input {
     justify-content: center;
     padding: 16px;
 }
-.dash-muscle-map svg { width: 72px; height: auto; }
-.dash-muscle-map svg * { fill: #d8d3ee; }
+.mm-row { display: flex; gap: 10px; align-items: flex-start; }
+.mm-figure { width: 58px; height: auto; }
 .dash-muscle-caption {
     font-size: 0.68rem;
     color: #aaa;
