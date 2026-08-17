@@ -1340,33 +1340,41 @@ MUSCLE_GROUP_MAP = {
     "neck": "hombros",
     "chest": "pecho",
     "abdominals": "abdomen",
-    "biceps": "brazos",
-    "triceps": "brazos",
-    "forearms": "brazos",
-    "quadriceps": "piernas",
-    "adductors": "piernas",
-    "abductors": "piernas",
-    "glutes": "piernas",
-    "hamstrings": "piernas",
-    "lats": "espalda",
-    "middle back": "espalda",
-    "lower back": "espalda",
-    "traps": "espalda",
+    "biceps": "biceps",
+    "triceps": "triceps",
+    "forearms": "antebrazos",
+    "quadriceps": "cuadriceps",
+    "adductors": "cuadriceps",
+    "abductors": "cuadriceps",
+    "glutes": "gluteos",
+    "hamstrings": "isquiotibiales",
+    "lats": "dorsales",
+    "middle back": "dorsales",
+    "lower back": "dorsales",
+    "traps": "trapecios",
     "calves": "pantorrillas",
 }
-MUSCLE_GROUPS = ("hombros", "pecho", "abdomen", "brazos", "piernas", "espalda", "pantorrillas")
-_MUSCLE_NEUTRAL_RGB = (216, 211, 238)  # #d8d3ee, mismo tono neutro que el resto de la app
-# Color de "firma" por grupo muscular (a intensidad máxima) — inspirado en las
-# referencias de Jaime: cada zona tiene su propio color reconocible, no todas el
-# mismo morado. A intensidad 0 todas convergen al mismo gris neutro de arriba.
+MUSCLE_GROUPS = (
+    "trapecios", "hombros", "pecho", "biceps", "triceps", "antebrazos",
+    "abdomen", "dorsales", "cuadriceps", "isquiotibiales", "gluteos", "pantorrillas",
+)
+_MUSCLE_NEUTRAL_RGB = (217, 213, 239)  # #d9d5ef, mismo tono neutro de la silueta base
+# Color de "firma" por grupo muscular (a intensidad máxima) — un color vivo y
+# distinto por cada uno de los 12 grupos, inspirado en las referencias de Jaime
+# (mapas musculares tipo arcoíris). A intensidad 0 todas convergen al gris neutro.
 _MUSCLE_SIGNATURE_RGB = {
-    "hombros": (232, 93, 61),
-    "pecho": (245, 146, 31),
-    "abdomen": (67, 160, 71),
-    "brazos": (251, 192, 45),
-    "piernas": (61, 127, 217),
-    "espalda": (198, 40, 40),
-    "pantorrillas": (142, 95, 217),
+    "trapecios": (239, 68, 68),
+    "hombros": (249, 115, 22),
+    "pecho": (245, 158, 11),
+    "biceps": (234, 179, 8),
+    "antebrazos": (132, 204, 22),
+    "abdomen": (34, 197, 94),
+    "dorsales": (20, 184, 166),
+    "cuadriceps": (6, 182, 212),
+    "isquiotibiales": (59, 130, 246),
+    "triceps": (99, 102, 241),
+    "gluteos": (168, 85, 247),
+    "pantorrillas": (236, 72, 153),
 }
 
 

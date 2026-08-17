@@ -45,88 +45,125 @@
         <div class="dash-body">
             <div class="dash-muscle-map">
                 <style>
-                    .mm-neutral { fill: #ececf7; }
+                    .mm-neutral { fill: #d9d5ef; }
+                    .mm-trapecios { fill: {{ muscle_colors.trapecios }}; }
                     .mm-hombros { fill: {{ muscle_colors.hombros }}; }
                     .mm-pecho { fill: {{ muscle_colors.pecho }}; }
+                    .mm-biceps { fill: {{ muscle_colors.biceps }}; }
+                    .mm-triceps { fill: {{ muscle_colors.triceps }}; }
+                    .mm-antebrazos { fill: {{ muscle_colors.antebrazos }}; }
                     .mm-abdomen { fill: {{ muscle_colors.abdomen }}; }
-                    .mm-brazos { fill: {{ muscle_colors.brazos }}; }
-                    .mm-piernas { fill: {{ muscle_colors.piernas }}; }
-                    .mm-espalda { fill: {{ muscle_colors.espalda }}; }
+                    .mm-dorsales { fill: {{ muscle_colors.dorsales }}; }
+                    .mm-cuadriceps { fill: {{ muscle_colors.cuadriceps }}; }
+                    .mm-isquiotibiales { fill: {{ muscle_colors.isquiotibiales }}; }
+                    .mm-gluteos { fill: {{ muscle_colors.gluteos }}; }
                     .mm-pantorrillas { fill: {{ muscle_colors.pantorrillas }}; }
                 </style>
                 {% if current_user.sex == 'mujer' %}
-                <div class="mm-row">
-                    <svg viewBox="0 0 100 185" aria-hidden="true" class="mm-figure">
-                        <circle class="mm-neutral" cx="50" cy="13" r="11"/>
-                        <ellipse class="mm-hombros" cx="26" cy="32" rx="8" ry="6.5"/>
-                        <ellipse class="mm-hombros" cx="74" cy="32" rx="8" ry="6.5"/>
-                        <path class="mm-pecho" d="M29 29 Q50 24 71 29 L64 50 Q50 54 36 50 Z"/>
-                        <path class="mm-abdomen" d="M36 50 Q50 54 64 50 L69 84 Q50 90 31 84 Z"/>
-                        <rect class="mm-brazos" x="12" y="30" width="10" height="55" rx="5"/>
-                        <rect class="mm-brazos" x="78" y="30" width="10" height="55" rx="5"/>
-                        <rect class="mm-piernas" x="31" y="88" width="17" height="77" rx="8.5"/>
-                        <rect class="mm-piernas" x="52" y="88" width="17" height="77" rx="8.5"/>
-                    </svg>
-                    <svg viewBox="0 0 100 185" aria-hidden="true" class="mm-figure">
-                        <circle class="mm-neutral" cx="50" cy="13" r="11"/>
-                        <path class="mm-espalda" d="M23 27 Q50 22 77 27 L68 52 Q50 56 32 52 Z"/>
-                        <rect class="mm-brazos" x="12" y="30" width="10" height="55" rx="5"/>
-                        <rect class="mm-brazos" x="78" y="30" width="10" height="55" rx="5"/>
-                        <rect class="mm-piernas" x="31" y="88" width="17" height="46" rx="8.5"/>
-                        <rect class="mm-piernas" x="52" y="88" width="17" height="46" rx="8.5"/>
-                        <rect class="mm-pantorrillas" x="31" y="134" width="17" height="31" rx="8.5"/>
-                        <rect class="mm-pantorrillas" x="52" y="134" width="17" height="31" rx="8.5"/>
-                    </svg>
-                </div>
+                    {% set torso = "M50,58 Q46,80 52,98 Q58,128 86,160 Q72,182 66,206 Q84,222 100,222 Q116,222 134,206 Q128,182 114,160 Q142,128 148,98 Q154,80 150,58 Q128,46 100,46 Q72,46 50,58 Z" %}
+                    {% set armL = "M46,60 Q30,72 26,98 Q20,130 24,158 Q20,182 24,205 Q26,214 34,215 Q42,214 43,204 Q40,180 44,158 Q40,130 46,100 Q50,78 56,64 Q52,58 46,60 Z" %}
+                    {% set armR = "M154,60 Q170,72 174,98 Q180,130 176,158 Q180,182 176,205 Q174,214 166,215 Q158,214 157,204 Q160,180 156,158 Q160,130 154,100 Q150,78 144,64 Q148,58 154,60 Z" %}
+                    {% set legL = "M68,208 Q56,236 58,266 Q52,296 58,326 Q54,352 62,384 Q64,392 74,392 Q82,392 84,384 Q86,354 82,328 Q88,296 84,266 Q90,236 96,210 Q82,202 68,208 Z" %}
+                    {% set legR = "M132,208 Q144,236 142,266 Q148,296 142,326 Q146,352 138,384 Q136,392 126,392 Q118,392 116,384 Q114,354 118,328 Q112,296 116,266 Q110,236 104,210 Q118,202 132,208 Z" %}
+                    {% set armDx = 8 %}{% set hipDx = -3 %}
+                    {% set deltR = "14" %}{% set deltRy = "18" %}{% set bicR = "12" %}{% set bicRy = "30" %}{% set foreR = "10.5" %}{% set foreRy = "27" %}
+                    {% set trapsL = "M86,48 Q75,50 68,60 L80,70 Q89,60 92,50 Z" %}
+                    {% set trapsR = "M114,48 Q125,50 132,60 L120,70 Q111,60 108,50 Z" %}
+                    {% set trapsBack = "M100,46 L132,60 Q136,74 124,92 L100,104 L76,92 Q64,74 68,60 Z" %}
                 {% elif current_user.sex == 'hombre' %}
-                <div class="mm-row">
-                    <svg viewBox="0 0 100 185" aria-hidden="true" class="mm-figure">
-                        <circle class="mm-neutral" cx="50" cy="13" r="11"/>
-                        <ellipse class="mm-hombros" cx="20" cy="32" rx="10.5" ry="8"/>
-                        <ellipse class="mm-hombros" cx="80" cy="32" rx="10.5" ry="8"/>
-                        <path class="mm-pecho" d="M22 28 Q50 20 78 28 L72 58 Q50 63 28 58 Z"/>
-                        <path class="mm-abdomen" d="M28 58 Q50 63 72 58 L68 84 Q50 89 32 84 Z"/>
-                        <rect class="mm-brazos" x="6" y="30" width="12" height="59" rx="6"/>
-                        <rect class="mm-brazos" x="82" y="30" width="12" height="59" rx="6"/>
-                        <rect class="mm-piernas" x="28" y="90" width="19" height="75" rx="9.5"/>
-                        <rect class="mm-piernas" x="53" y="90" width="19" height="75" rx="9.5"/>
-                    </svg>
-                    <svg viewBox="0 0 100 185" aria-hidden="true" class="mm-figure">
-                        <circle class="mm-neutral" cx="50" cy="13" r="11"/>
-                        <path class="mm-espalda" d="M17 26 Q50 18 83 26 L75 62 Q50 68 25 62 Z"/>
-                        <rect class="mm-brazos" x="6" y="30" width="12" height="59" rx="6"/>
-                        <rect class="mm-brazos" x="82" y="30" width="12" height="59" rx="6"/>
-                        <rect class="mm-piernas" x="28" y="90" width="19" height="45" rx="9.5"/>
-                        <rect class="mm-piernas" x="53" y="90" width="19" height="45" rx="9.5"/>
-                        <rect class="mm-pantorrillas" x="28" y="137" width="19" height="28" rx="9.5"/>
-                        <rect class="mm-pantorrillas" x="53" y="137" width="19" height="28" rx="9.5"/>
-                    </svg>
-                </div>
+                    {% set torso = "M36,54 Q30,80 40,100 Q50,138 72,168 Q64,186 74,206 Q88,218 100,218 Q112,218 126,206 Q136,186 128,168 Q150,138 160,100 Q170,80 164,54 Q130,42 100,42 Q70,42 36,54 Z" %}
+                    {% set armL = "M46,60 Q30,72 26,98 Q20,130 24,158 Q20,182 24,205 Q26,214 34,215 Q42,214 43,204 Q40,180 44,158 Q40,130 46,100 Q50,78 56,64 Q52,58 46,60 Z" %}
+                    {% set armR = "M154,60 Q170,72 174,98 Q180,130 176,158 Q180,182 176,205 Q174,214 166,215 Q158,214 157,204 Q160,180 156,158 Q160,130 154,100 Q150,78 144,64 Q148,58 154,60 Z" %}
+                    {% set legL = "M68,208 Q56,236 58,266 Q52,296 58,326 Q54,352 62,384 Q64,392 74,392 Q82,392 84,384 Q86,354 82,328 Q88,296 84,266 Q90,236 96,210 Q82,202 68,208 Z" %}
+                    {% set legR = "M132,208 Q144,236 142,266 Q148,296 142,326 Q146,352 138,384 Q136,392 126,392 Q118,392 116,384 Q114,354 118,328 Q112,296 116,266 Q110,236 104,210 Q118,202 132,208 Z" %}
+                    {% set armDx = -6 %}{% set hipDx = 4 %}
+                    {% set deltR = "15" %}{% set deltRy = "19" %}{% set bicR = "13" %}{% set bicRy = "32" %}{% set foreR = "11.5" %}{% set foreRy = "29" %}
+                    {% set trapsL = "M78,44 Q66,46 58,56 L72,66 Q82,56 86,46 Z" %}
+                    {% set trapsR = "M122,44 Q134,46 142,56 L128,66 Q118,56 114,46 Z" %}
+                    {% set trapsBack = "M100,42 L140,56 Q144,72 130,92 L100,106 L70,92 Q56,72 60,56 Z" %}
                 {% else %}
+                    {% set torso = "M42,56 Q38,82 46,102 Q54,142 78,170 Q66,190 70,212 Q86,220 100,220 Q114,220 130,212 Q134,190 122,170 Q146,142 154,102 Q162,82 158,56 Q130,44 100,44 Q70,44 42,56 Z" %}
+                    {% set armL = "M46,60 Q30,72 26,98 Q20,130 24,158 Q20,182 24,205 Q26,214 34,215 Q42,214 43,204 Q40,180 44,158 Q40,130 46,100 Q50,78 56,64 Q52,58 46,60 Z" %}
+                    {% set armR = "M154,60 Q170,72 174,98 Q180,130 176,158 Q180,182 176,205 Q174,214 166,215 Q158,214 157,204 Q160,180 156,158 Q160,130 154,100 Q150,78 144,64 Q148,58 154,60 Z" %}
+                    {% set legL = "M68,208 Q56,236 58,266 Q52,296 58,326 Q54,352 62,384 Q64,392 74,392 Q82,392 84,384 Q86,354 82,328 Q88,296 84,266 Q90,236 96,210 Q82,202 68,208 Z" %}
+                    {% set legR = "M132,208 Q144,236 142,266 Q148,296 142,326 Q146,352 138,384 Q136,392 126,392 Q118,392 116,384 Q114,354 118,328 Q112,296 116,266 Q110,236 104,210 Q118,202 132,208 Z" %}
+                    {% set armDx = 0 %}{% set hipDx = 0 %}
+                    {% set deltR = "15" %}{% set deltRy = "19" %}{% set bicR = "13" %}{% set bicRy = "32" %}{% set foreR = "11.5" %}{% set foreRy = "29" %}
+                    {% set trapsL = "M82,46 Q70,48 62,58 L76,68 Q86,58 90,48 Z" %}
+                    {% set trapsR = "M118,46 Q130,48 138,58 L124,68 Q114,58 110,48 Z" %}
+                    {% set trapsBack = "M100,44 L136,58 Q140,74 128,94 L100,108 L72,94 Q60,74 64,58 Z" %}
+                {% endif %}
                 <div class="mm-row">
-                    <svg viewBox="0 0 100 185" aria-hidden="true" class="mm-figure">
-                        <circle class="mm-neutral" cx="50" cy="13" r="11"/>
-                        <ellipse class="mm-hombros" cx="23" cy="32" rx="9" ry="7.5"/>
-                        <ellipse class="mm-hombros" cx="77" cy="32" rx="9" ry="7.5"/>
-                        <path class="mm-pecho" d="M26 28 Q50 22 74 28 L69 55 Q50 60 31 55 Z"/>
-                        <path class="mm-abdomen" d="M31 55 Q50 60 69 55 L65 84 Q50 89 35 84 Z"/>
-                        <rect class="mm-brazos" x="9" y="30" width="11" height="57" rx="5.5"/>
-                        <rect class="mm-brazos" x="80" y="30" width="11" height="57" rx="5.5"/>
-                        <rect class="mm-piernas" x="30" y="90" width="17.5" height="75" rx="8.75"/>
-                        <rect class="mm-piernas" x="52.5" y="90" width="17.5" height="75" rx="8.75"/>
+                    <svg viewBox="0 0 200 420" aria-hidden="true" class="mm-figure">
+                        <ellipse class="mm-neutral" cx="100" cy="24" rx="16" ry="18"/>
+                        <rect class="mm-neutral" x="90" y="38" width="20" height="16"/>
+                        <path class="mm-neutral" d="{{ torso }}"/>
+                        <g transform="translate({{ armDx }},0)">
+                            <path class="mm-neutral" d="{{ armL }}"/>
+                            <ellipse class="mm-hombros" cx="47" cy="76" rx="{{ deltR }}" ry="{{ deltRy }}"/>
+                            <ellipse class="mm-biceps" cx="34" cy="116" rx="{{ bicR }}" ry="{{ bicRy }}" transform="rotate(-4 34 116)"/>
+                            <ellipse class="mm-antebrazos" cx="32" cy="178" rx="{{ foreR }}" ry="{{ foreRy }}" transform="rotate(-3 32 178)"/>
+                        </g>
+                        <g transform="translate({{ -armDx }},0)">
+                            <path class="mm-neutral" d="{{ armR }}"/>
+                            <ellipse class="mm-hombros" cx="153" cy="76" rx="{{ deltR }}" ry="{{ deltRy }}"/>
+                            <ellipse class="mm-biceps" cx="166" cy="116" rx="{{ bicR }}" ry="{{ bicRy }}" transform="rotate(4 166 116)"/>
+                            <ellipse class="mm-antebrazos" cx="168" cy="178" rx="{{ foreR }}" ry="{{ foreRy }}" transform="rotate(3 168 178)"/>
+                        </g>
+                        <path class="mm-trapecios" d="{{ trapsL }}"/>
+                        <path class="mm-trapecios" d="{{ trapsR }}"/>
+                        <path class="mm-pecho" d="M66,60 Q100,50 100,60 L100,114 Q86,120 75,111 Q64,96 66,78 Z"/>
+                        <path class="mm-pecho" d="M134,60 Q100,50 100,60 L100,114 Q114,120 125,111 Q136,96 134,78 Z"/>
+                        <g class="mm-abdomen">
+                            <rect x="84" y="120" width="14" height="18" rx="4"/><rect x="102" y="120" width="14" height="18" rx="4"/>
+                            <rect x="85" y="142" width="13" height="17" rx="4"/><rect x="102" y="142" width="13" height="17" rx="4"/>
+                            <rect x="86" y="163" width="12" height="16" rx="4"/><rect x="102" y="163" width="12" height="16" rx="4"/>
+                        </g>
+                        <path class="mm-abdomen" opacity="0.7" d="M72,120 Q64,148 72,182 L80,180 Q76,148 80,122 Z"/>
+                        <path class="mm-abdomen" opacity="0.7" d="M128,120 Q136,148 128,182 L120,180 Q124,148 120,122 Z"/>
+                        <g transform="translate({{ hipDx }},0)">
+                            <path class="mm-neutral" d="{{ legL }}"/>
+                            <path class="mm-cuadriceps" d="M70,214 Q58,240 60,268 Q56,294 62,322 Q66,336 78,334 Q88,330 88,310 L88,224 Q80,214 70,214 Z"/>
+                        </g>
+                        <g transform="translate({{ -hipDx }},0)">
+                            <path class="mm-neutral" d="{{ legR }}"/>
+                            <path class="mm-cuadriceps" d="M130,214 Q142,240 140,268 Q144,294 138,322 Q134,336 122,334 Q112,330 112,310 L112,224 Q120,214 130,214 Z"/>
+                        </g>
                     </svg>
-                    <svg viewBox="0 0 100 185" aria-hidden="true" class="mm-figure">
-                        <circle class="mm-neutral" cx="50" cy="13" r="11"/>
-                        <path class="mm-espalda" d="M20 26 Q50 20 80 26 L72 60 Q50 65 28 60 Z"/>
-                        <rect class="mm-brazos" x="9" y="30" width="11" height="57" rx="5.5"/>
-                        <rect class="mm-brazos" x="80" y="30" width="11" height="57" rx="5.5"/>
-                        <rect class="mm-piernas" x="30" y="90" width="17.5" height="45" rx="8.75"/>
-                        <rect class="mm-piernas" x="52.5" y="90" width="17.5" height="45" rx="8.75"/>
-                        <rect class="mm-pantorrillas" x="30" y="137" width="17.5" height="28" rx="8.75"/>
-                        <rect class="mm-pantorrillas" x="52.5" y="137" width="17.5" height="28" rx="8.75"/>
+                    <svg viewBox="0 0 200 420" aria-hidden="true" class="mm-figure">
+                        <ellipse class="mm-neutral" cx="100" cy="24" rx="16" ry="18"/>
+                        <rect class="mm-neutral" x="90" y="38" width="20" height="16"/>
+                        <path class="mm-neutral" d="{{ torso }}"/>
+                        <g transform="translate({{ armDx }},0)">
+                            <path class="mm-neutral" d="{{ armL }}"/>
+                            <ellipse class="mm-hombros" cx="47" cy="76" rx="{{ deltR }}" ry="{{ deltRy }}"/>
+                            <ellipse class="mm-triceps" cx="34" cy="116" rx="{{ bicR }}" ry="{{ bicRy }}" transform="rotate(-4 34 116)"/>
+                            <ellipse class="mm-antebrazos" cx="32" cy="178" rx="{{ foreR }}" ry="{{ foreRy }}" transform="rotate(-3 32 178)"/>
+                        </g>
+                        <g transform="translate({{ -armDx }},0)">
+                            <path class="mm-neutral" d="{{ armR }}"/>
+                            <ellipse class="mm-hombros" cx="153" cy="76" rx="{{ deltR }}" ry="{{ deltRy }}"/>
+                            <ellipse class="mm-triceps" cx="166" cy="116" rx="{{ bicR }}" ry="{{ bicRy }}" transform="rotate(4 166 116)"/>
+                            <ellipse class="mm-antebrazos" cx="168" cy="178" rx="{{ foreR }}" ry="{{ foreRy }}" transform="rotate(3 168 178)"/>
+                        </g>
+                        <path class="mm-trapecios" d="{{ trapsBack }}"/>
+                        <path class="mm-dorsales" d="M76,96 Q58,120 66,154 Q72,180 92,190 L92,108 Q86,100 76,96 Z"/>
+                        <path class="mm-dorsales" d="M124,96 Q142,120 134,154 Q128,180 108,190 L108,108 Q114,100 124,96 Z"/>
+                        <rect class="mm-dorsales" opacity="0.85" x="92" y="150" width="16" height="42" rx="6"/>
+                        <g transform="translate({{ hipDx }},0)">
+                            <path class="mm-neutral" d="{{ legL }}"/>
+                            <path class="mm-gluteos" d="M68,196 Q54,202 54,222 Q54,240 72,244 Q88,246 92,228 L92,198 Q80,192 68,196 Z"/>
+                            <path class="mm-isquiotibiales" d="M72,246 Q58,264 62,292 Q64,312 76,318 Q86,322 90,308 L90,250 Q82,244 72,246 Z"/>
+                            <path class="mm-pantorrillas" d="M70,326 Q60,348 66,376 Q70,390 80,388 Q88,384 86,362 L83,330 Q77,324 70,326 Z"/>
+                        </g>
+                        <g transform="translate({{ -hipDx }},0)">
+                            <path class="mm-neutral" d="{{ legR }}"/>
+                            <path class="mm-gluteos" d="M132,196 Q146,202 146,222 Q146,240 128,244 Q112,246 108,228 L108,198 Q120,192 132,196 Z"/>
+                            <path class="mm-isquiotibiales" d="M128,246 Q142,264 138,292 Q136,312 124,318 Q114,322 110,308 L110,250 Q118,244 128,246 Z"/>
+                            <path class="mm-pantorrillas" d="M130,326 Q140,348 134,376 Q130,390 120,388 Q112,384 114,362 L117,330 Q123,324 130,326 Z"/>
+                        </g>
                     </svg>
                 </div>
-                {% endif %}
                 <span class="dash-muscle-caption">Frente · Espalda — últimos 14 días</span>
             </div>
             <div class="dash-calendar">
