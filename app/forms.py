@@ -100,6 +100,24 @@ class SettingsForm(FlaskForm):
         choices=[("rir", "RIR"), ("rpe", "RPE"), ("none", "No anotar")],
         default="rir",
     )
+    sex = SelectField(
+        "Sexo",
+        choices=[("", "Prefiero no decirlo"), ("hombre", "Hombre"), ("mujer", "Mujer")],
+        validators=[Optional()],
+    )
+    height_cm = IntegerField(
+        "Altura (cm)", validators=[Optional(), NumberRange(min=100, max=250)]
+    )
+    training_goal = SelectField(
+        "Objetivo principal",
+        choices=[
+            ("", "Sin especificar"),
+            ("hipertrofia", "Hipertrofia"),
+            ("fuerza", "Fuerza"),
+            ("perdida_grasa", "Pérdida de grasa"),
+        ],
+        validators=[Optional()],
+    )
     submit = SubmitField("Guardar")
 
 

@@ -16,6 +16,9 @@ class User(UserMixin, db.Model):
     routines: so.WriteOnlyMapped["Routine"] = so.relationship(back_populates="author")
     stagnation_threshold: so.Mapped[int] = so.mapped_column(default=3)
     effort_scale: so.Mapped[str] = so.mapped_column(sa.String(4), default="rir")
+    sex: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10))
+    height_cm: so.Mapped[Optional[int]] = so.mapped_column()
+    training_goal: so.Mapped[Optional[str]] = so.mapped_column(sa.String(20))
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

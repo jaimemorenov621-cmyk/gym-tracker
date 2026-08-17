@@ -549,12 +549,18 @@ def settings():
     if form.validate_on_submit():
         current_user.stagnation_threshold = form.stagnation_threshold.data
         current_user.effort_scale = form.effort_scale.data
+        current_user.sex = form.sex.data or None
+        current_user.height_cm = form.height_cm.data
+        current_user.training_goal = form.training_goal.data or None
         db.session.commit()
         flash("Configuración guardada.")
         return redirect(url_for("settings"))
     elif request.method == "GET":
         form.stagnation_threshold.data = current_user.stagnation_threshold
         form.effort_scale.data = current_user.effort_scale
+        form.sex.data = current_user.sex or ""
+        form.height_cm.data = current_user.height_cm
+        form.training_goal.data = current_user.training_goal or ""
     return render_template("settings.html", title="Configuración", form=form)
 
 
@@ -1104,6 +1110,24 @@ def generate_ai_analysis():
     lines = [
         f"Entrenamientos totales: {summary['total_workouts']}",
         f"Racha actual: {summary['streak']} días consecutivos entrenando",
+    ]
+
+    goal_labels = {
+        "hipertrofia": "hipertrofia",
+        "fuerza": "fuerza",
+        "perdida_grasa": "pérdida de grasa",
+    }
+    profile_parts = []
+    if current_user.height_cm:
+        profile_parts.append(f"{current_user.height_cm}cm")
+    if current_user.training_goal:
+        profile_parts.append(
+            f"objetivo: {goal_labels.get(current_user.training_goal, current_user.training_goal)}"
+        )
+    if profile_parts:
+        lines.append(f"Perfil: {', '.join(profile_parts)}.")
+
+    lines += [
         "",
         "Ejercicios registrados (nombre: nº sesiones, mejor 1RM estimado, estado, última vez):",
     ]
