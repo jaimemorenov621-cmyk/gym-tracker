@@ -6,7 +6,8 @@
 
 ## 1. Visión del proyecto
 
-GymTracker es una aplicación web de seguimiento de entrenamientos de gimnasio, construida por el usuario (estudiante de ingeniería informática, primer año superado, sin experiencia previa en desarrollo web) como proyecto de aprendizaje práctico tras completar CS50P y el Flask Mega-Tutorial de Miguel Grinberg.
+GymTracker es una aplicación web de seguimiento de entrenamientos de gimnasio, construida por el usuario (estudiante de ingeniería informática, primer año superado, sin experiencia previa en desarrollo web) como proyecto de aprendizaje práctico tras completar CS50P y el Flask Mega-Tutorial de Miguel Grinber.
+Aunque comenzó como un proyecto de aprendizaje, el objetivo a medio plazo es convertir GymTracker en un producto real y comercial, conseguir usuarios y generar ingresos mediante un modelo de monetización sostenible.
 
 **Contexto de producto importante:** este proyecto nació de una idea más amplia ("aplicación para optimizarte a ti mismo", con módulos futuros de sueño, nutrición, finanzas, estudio, etc. — concepto interno llamado "LifeOS"). Esa idea fue **explícitamente descartada como prematura** (over-engineering) en favor de una V1 minimalista: **solo entrenamiento**, usada a diario por el propio usuario, que se expande únicamente si demuestra valor real de uso. **No sugieras expandir a otros dominios de vida (sueño, nutrición, etc.) a menos que el usuario lo pida explícitamente.**
 
