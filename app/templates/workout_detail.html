@@ -143,6 +143,24 @@
 
     <script>
         let searchTimeout;
+        let lastSearchResults = [];
+        let lastSearchQuery = '';
+        const MUSCLE_OPTIONS = [
+            ['shoulders', 'Hombros'], ['neck', 'Cuello'], ['chest', 'Pecho'], ['abdominals', 'Abdomen'],
+            ['biceps', 'Bíceps'], ['triceps', 'Tríceps'], ['forearms', 'Antebrazos'], ['quadriceps', 'Cuádriceps'],
+            ['adductors', 'Aductores'], ['abductors', 'Abductores'], ['glutes', 'Glúteos'], ['hamstrings', 'Isquiotibiales'],
+            ['lats', 'Dorsales'], ['middle back', 'Espalda media'], ['lower back', 'Espalda baja'], ['traps', 'Trapecios'],
+            ['calves', 'Pantorrillas'],
+        ];
+
+        function resultRowHTML(ex) {
+            return '<div onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer;" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'white\'">' +
+                (ex.image ? '<img src="' + ex.image + '" style="width:44px; height:44px; object-fit:cover; border-radius:6px;">' : '<div style="width:44px;height:44px;background:#ececf7;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="19" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="5" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="17" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="7" y="11" width="10" height="2" fill="#7c4dff"/></svg></div>') +
+                '<div><div style="font-weight:600; font-size:0.9rem;">' + ex.name + '</div>' +
+                (ex.muscles ? '<div style="font-size:0.75rem; color:#888;">' + ex.muscles + '</div>' : '') +
+                '</div></div>';
+        }
+
         function searchExercises(query) {
             clearTimeout(searchTimeout);
             const box = document.getElementById('exerciseSuggestions');
@@ -151,18 +169,89 @@
                 fetch('/api/exercises/search?q=' + encodeURIComponent(query))
                     .then(r => r.json())
                     .then(results => {
-                        if (!results.length) { box.style.display = 'none'; return; }
-                        box.innerHTML = results.map(ex =>
-                            '<div onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer;" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'white\'">' +
-                            (ex.image ? '<img src="' + ex.image + '" style="width:44px; height:44px; object-fit:cover; border-radius:6px;">' : '<div style="width:44px;height:44px;background:#ececf7;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="19" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="5" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="17" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="7" y="11" width="10" height="2" fill="#7c4dff"/></svg></div>') +
-                            '<div><div style="font-weight:600; font-size:0.9rem;">' + ex.name + '</div>' +
-                            (ex.muscles ? '<div style="font-size:0.75rem; color:#888;">' + ex.muscles + '</div>' : '') +
-                            '</div></div>'
-                        ).join('');
-                        box.style.display = 'block';
+                        lastSearchResults = results;
+                        lastSearchQuery = query;
+                        renderSuggestionsBox();
                     });
             }, 250);
         }
+
+        function renderSuggestionsBox() {
+            const box = document.getElementById('exerciseSuggestions');
+            let html = lastSearchResults.length
+                ? lastSearchResults.map(resultRowHTML).join('')
+                : '<div style="padding:10px 12px; color:#888; font-size:0.85rem;">Sin resultados en el catálogo.</div>';
+            html += '<div style="border-top:1px solid #eee; padding:8px 12px;">' +
+                '<button type="button" onclick="startCreateExercise()" class="btn-outline" style="width:100%;">+ Crear ejercicio nuevo</button>' +
+                '</div>';
+            box.innerHTML = html;
+            box.style.display = 'block';
+        }
+
+        function startCreateExercise() {
+            const box = document.getElementById('exerciseSuggestions');
+            if (lastSearchResults.length) {
+                box.innerHTML = '<div style="padding:10px 12px; font-size:0.85rem; color:#555;">¿Es alguno de estos?</div>' +
+                    lastSearchResults.map(resultRowHTML).join('') +
+                    '<div style="border-top:1px solid #eee; padding:8px 12px;">' +
+                    '<button type="button" onclick="renderCreateExerciseForm()" class="btn-outline" style="width:100%;">Ninguno, crear nuevo</button>' +
+                    '</div>';
+            } else {
+                renderCreateExerciseForm();
+            }
+        }
+
+        function renderCreateExerciseForm() {
+            const box = document.getElementById('exerciseSuggestions');
+            const muscleCheckboxes = MUSCLE_OPTIONS.map(([value, label]) =>
+                '<label style="display:flex; align-items:center; gap:4px; font-size:0.8rem; padding:2px 4px;">' +
+                '<input type="checkbox" value="' + value + '"> ' + label + '</label>'
+            ).join('');
+            box.innerHTML =
+                '<div style="padding:12px;">' +
+                '<input id="newExName" type="text" value="' + lastSearchQuery.replace(/"/g, '&quot;') + '" placeholder="Nombre del ejercicio" style="width:100%; box-sizing:border-box; margin-bottom:8px;">' +
+                '<div style="font-size:0.75rem; color:#888; margin-bottom:4px;">Músculos principales</div>' +
+                '<div style="display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-bottom:10px; max-height:140px; overflow-y:auto; border:1px solid #eee; border-radius:6px; padding:6px;">' +
+                muscleCheckboxes +
+                '</div>' +
+                '<input id="newExCategory" type="text" placeholder="Categoría (opcional)" style="width:100%; box-sizing:border-box; margin-bottom:6px;">' +
+                '<input id="newExEquipment" type="text" placeholder="Equipo (opcional)" style="width:100%; box-sizing:border-box; margin-bottom:10px;">' +
+                '<div id="newExError" style="color:#c62828; font-size:0.8rem; margin-bottom:6px; display:none;"></div>' +
+                '<button type="button" onclick="submitNewExercise()" class="btn" style="width:100%;">Crear y usar</button>' +
+                '</div>';
+        }
+
+        function submitNewExercise() {
+            const box = document.getElementById('exerciseSuggestions');
+            const name = document.getElementById('newExName').value.trim();
+            const muscles = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
+            const errorBox = document.getElementById('newExError');
+            if (!name || !muscles.length) {
+                errorBox.textContent = !name ? 'El nombre es obligatorio.' : 'Elige al menos un músculo.';
+                errorBox.style.display = 'block';
+                return;
+            }
+            fetch('/api/exercises/create', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: name,
+                    muscles: muscles,
+                    category: document.getElementById('newExCategory').value.trim(),
+                    equipment: document.getElementById('newExEquipment').value.trim(),
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) {
+                    errorBox.textContent = data.error || 'No se pudo crear el ejercicio.';
+                    errorBox.style.display = 'block';
+                    return;
+                }
+                selectExercise(data.name);
+            });
+        }
+
         function selectExercise(name) {
             document.querySelector('[name="exercise"]').value = name;
             document.getElementById('exerciseSuggestions').style.display = 'none';

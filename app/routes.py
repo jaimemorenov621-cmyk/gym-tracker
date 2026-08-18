@@ -1026,6 +1026,53 @@ def api_search_exercises():
     )
 
 
+def _slugify_exercise_name(name):
+    """Genera un id de catálogo a partir de un nombre -- sin usar el módulo `re`
+    a propósito: `re` ya se usa como nombre de variable de bucle en otras
+    funciones de este archivo (RoutineExercise), y un `import re` a nivel de
+    módulo sería confuso mezclado con eso."""
+    stripped = _strip_accents(name)
+    slug = "".join(c if c.isalnum() else "_" for c in stripped)
+    while "__" in slug:
+        slug = slug.replace("__", "_")
+    return slug.strip("_") or "exercise"
+
+
+@app.route("/api/exercises/create", methods=["POST"])
+@login_required
+def api_create_exercise():
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    muscles = [m for m in (data.get("muscles") or []) if m in MUSCLE_GROUP_MAP]
+    category = (data.get("category") or "").strip() or None
+    equipment = (data.get("equipment") or "").strip() or None
+
+    if not name:
+        return jsonify({"ok": False, "error": "El nombre es obligatorio."}), 400
+    if not muscles:
+        return jsonify({"ok": False, "error": "Elige al menos un músculo."}), 400
+
+    base_slug = _slugify_exercise_name(name)
+    new_id = base_slug
+    suffix = 2
+    while db.session.get(Exercise, new_id) is not None:
+        new_id = f"{base_slug}_{suffix}"
+        suffix += 1
+
+    exercise = Exercise(
+        id=new_id,
+        name=name,
+        name_es=name,
+        category=category,
+        primary_muscles=", ".join(muscles),
+        equipment=equipment,
+        image_url=None,
+    )
+    db.session.add(exercise)
+    db.session.commit()
+    return jsonify({"ok": True, "name": name})
+
+
 @app.route("/workout/<int:workout_id>/save_as_routine", methods=["POST"])
 @login_required
 def save_as_routine(workout_id):
