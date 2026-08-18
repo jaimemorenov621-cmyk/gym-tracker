@@ -2,14 +2,56 @@
 {% block content %}
     <h1>🔍 Análisis de IA</h1>
 
-    <div class="card">
-        {% if latest %}
-            <p class="set-tag">📅 {{ latest.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
-            <div class="notes-box" style="margin-top:10px; white-space:pre-wrap;">{{ latest.content }}</div>
+    {% if latest %}
+        <p class="set-tag">📅 {{ latest.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+
+        {% if analysis %}
+            <div class="card analysis-summary">
+                {{ analysis.resumen }}
+            </div>
+
+            <div class="card analysis-section analysis-fortalezas">
+                <h3>💪 Fortalezas</h3>
+                {% if analysis.fortalezas %}
+                    <ul>
+                        {% for item in analysis.fortalezas %}<li>{{ item }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="analysis-placeholder">Todavía no hay suficiente historial para identificar fortalezas claras.</p>
+                {% endif %}
+            </div>
+
+            <div class="card analysis-section analysis-areas-mejora">
+                <h3>⚠️ Áreas de mejora</h3>
+                {% if analysis.areas_mejora %}
+                    <ul>
+                        {% for item in analysis.areas_mejora %}<li><strong>{{ item.ejercicio }}</strong>: {{ item.motivo }}</li>{% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="analysis-placeholder">Ningún ejercicio destaca por estancamiento ahora mismo.</p>
+                {% endif %}
+            </div>
+
+            <div class="card analysis-section analysis-proximos-pasos">
+                <h3>🎯 Próximos pasos</h3>
+                {% if analysis.proximos_pasos %}
+                    <ol>
+                        {% for item in analysis.proximos_pasos %}<li>{{ item }}</li>{% endfor %}
+                    </ol>
+                {% else %}
+                    <p class="analysis-placeholder">Sin recomendaciones concretas por ahora.</p>
+                {% endif %}
+            </div>
         {% else %}
-            <p><em>Todavía no has generado ningún análisis. Pulsa el botón para que la IA revise tu progreso.</em></p>
+            <div class="card">
+                <div class="notes-box" style="white-space:pre-wrap;">{{ latest.content }}</div>
+            </div>
         {% endif %}
-    </div>
+    {% else %}
+        <div class="card">
+            <p><em>Todavía no has generado ningún análisis. Pulsa el botón para que la IA revise tu progreso.</em></p>
+        </div>
+    {% endif %}
 
     <form action="{{ url_for('request_ai_analysis') }}" method="post">
         {{ empty_form.hidden_tag() }}

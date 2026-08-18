@@ -2,6 +2,7 @@ from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlsplit
 from collections import defaultdict
+import json
 import unicodedata
 import sqlalchemy as sa
 from openai import OpenAI
@@ -651,10 +652,25 @@ def ai_analysis():
         available_at = latest.created_at + timedelta(days=7)
         if available_at > now:
             next_available = available_at
+
+    try:
+        analysis = json.loads(latest.content) if latest else None
+    except json.JSONDecodeError:
+        analysis = None
+    # NOTA: esto solo cubre JSON inválido (texto libre antiguo, o cualquier
+    # fallo de parseo). Si en el futuro se amplía AI_ANALYSIS_SCHEMA con un
+    # campo nuevo, las filas ya guardadas con el schema viejo siguen siendo
+    # JSON válido pero sin esa clave -- json.loads() no fallará aquí, y Jinja
+    # no lanza excepción por una clave ausente (renderiza vacío en silencio).
+    # Ese caso NO está cubierto todavía -- si se toca el schema, decidir
+    # entonces si se versiona o si el fallback debe activarse también cuando
+    # faltan claves esperadas, no solo cuando el JSON es inválido.
+
     return render_template(
         "ai_analysis.html",
         title="Análisis de IA",
         latest=latest,
+        analysis=analysis,
         next_available=next_available,
         empty_form=EmptyForm(),
     )
@@ -1296,6 +1312,41 @@ def build_progress_summary():
     }
 
 
+AI_ANALYSIS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "resumen": {
+            "type": "string",
+            "description": "1-2 frases de resumen general del progreso reciente",
+        },
+        "fortalezas": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Cosas que van bien, concretas y basadas en los datos",
+        },
+        "areas_mejora": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "ejercicio": {"type": "string"},
+                    "motivo": {"type": "string"},
+                },
+                "required": ["ejercicio", "motivo"],
+                "additionalProperties": False,
+            },
+        },
+        "proximos_pasos": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Recomendaciones concretas y accionables",
+        },
+    },
+    "required": ["resumen", "fortalezas", "areas_mejora", "proximos_pasos"],
+    "additionalProperties": False,
+}
+
+
 def generate_ai_analysis():
     """Llama a la IA con el resumen de progreso de current_user y devuelve el texto generado."""
     summary = build_progress_summary()
@@ -1357,16 +1408,23 @@ def generate_ai_analysis():
         model="gpt-5.6-luna",
         instructions=(
             "Eres un entrenador personal experto analizando el historial de entrenamientos "
-            "de un usuario de una app de gimnasio. Responde en español, con un análisis breve "
-            "y recomendaciones concretas y accionables basadas ÚNICAMENTE en los datos "
-            "proporcionados. No inventes datos que no se te han dado. Evita consejos genéricos "
-            "('sigue esforzándote'); sé específico sobre qué ejercicios necesitan atención y por qué. "
-            "Responde en texto plano: no uses Markdown (nada de #, ##, ** ni otros símbolos de "
-            "formato), la app lo muestra como texto sin renderizar. Usa saltos de línea y guiones "
-            "simples ('- ') para listas si hace falta."
+            "de un usuario de una app de gimnasio. Responde en español, con recomendaciones "
+            "concretas y accionables basadas ÚNICAMENTE en los datos proporcionados. No "
+            "inventes datos que no se te han dado. Evita consejos genéricos ('sigue "
+            "esforzándote'); sé específico sobre qué ejercicios necesitan atención y por qué. "
+            "Si de verdad no hay suficiente historial para alguna sección, devuelve esa lista "
+            "vacía en vez de rellenarla con generalidades sin base en los datos."
         ),
         input=prompt,
-        max_output_tokens=800,
+        text={
+            "format": {
+                "type": "json_schema",
+                "name": "analisis_entrenamiento",
+                "schema": AI_ANALYSIS_SCHEMA,
+                "strict": True,
+            }
+        },
+        max_output_tokens=1500,
     )
     return response.output_text
 

@@ -69,6 +69,36 @@ nav {
 
 nav a { margin-right: 6px; }
 
+.card {
+    background: white;
+    border: 1px solid #ece7ff;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+}
+
+.analysis-summary {
+    border-left: 4px solid #7c4dff;
+    font-size: 1.05rem;
+}
+.analysis-section h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+.analysis-section ul {
+    margin: 0;
+    padding-left: 20px;
+}
+.analysis-section li { margin-bottom: 4px; }
+.analysis-placeholder {
+    color: #888;
+    font-size: 0.9rem;
+    margin: 0;
+}
+.analysis-fortalezas { border-left: 4px solid #22c98c; }
+.analysis-areas-mejora { border-left: 4px solid #c62828; }
+.analysis-proximos-pasos { border-left: 4px solid #7c4dff; }
+
 .workout-card {
     display: block;
     background: #f8f8fc;
