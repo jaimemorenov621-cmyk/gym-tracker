@@ -79,25 +79,44 @@ nav a { margin-right: 6px; }
 
 .analysis-summary {
     border-left: 4px solid #7c4dff;
+    background: #f2eefd;
+    color: #4a3a8f;
     font-size: 1.05rem;
 }
 .analysis-section h3 {
     margin-top: 0;
     margin-bottom: 8px;
 }
-.analysis-section ul {
+.analysis-section ul, .analysis-section ol {
     margin: 0;
     padding-left: 20px;
 }
 .analysis-section li { margin-bottom: 4px; }
 .analysis-placeholder {
-    color: #888;
     font-size: 0.9rem;
     margin: 0;
+    font-style: italic;
 }
-.analysis-fortalezas { border-left: 4px solid #22c98c; }
-.analysis-areas-mejora { border-left: 4px solid #c62828; }
-.analysis-proximos-pasos { border-left: 4px solid #7c4dff; }
+.analysis-fortalezas {
+    border-left: 4px solid #22c98c;
+    background: #e7faf1;
+}
+.analysis-fortalezas h3 { color: #128a5e; }
+.analysis-fortalezas .analysis-placeholder { color: #3d8a6b; }
+
+.analysis-areas-mejora {
+    border-left: 4px solid #c62828;
+    background: #fdecec;
+}
+.analysis-areas-mejora h3 { color: #a11f1f; }
+.analysis-areas-mejora .analysis-placeholder { color: #a15a5a; }
+
+.analysis-proximos-pasos {
+    border-left: 4px solid #7c4dff;
+    background: #f2eefd;
+}
+.analysis-proximos-pasos h3 { color: #5a4fcf; }
+.analysis-proximos-pasos .analysis-placeholder { color: #6b5fa8; }
 
 .workout-card {
     display: block;
