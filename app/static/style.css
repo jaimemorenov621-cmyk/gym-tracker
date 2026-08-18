@@ -11,7 +11,7 @@
     --color-text: #222;
     --color-text-muted: #888;
     --radius-card: 18px;
-    --shadow-elevated: 0 4px 20px rgba(124, 77, 255, 0.08);
+    --shadow-elevated: 0 8px 28px rgba(124, 77, 255, 0.18);
 }
 
 body {
@@ -465,6 +465,8 @@ select.cell-input {
     background: #f5f3ff;
 }
 .action-menu-content .danger { color: #c62828; }
+.action-menu-btn .icon { color: var(--color-brand); }
+.action-menu-content button:not(.danger) .icon { color: var(--color-brand); }
 
 .btn-finish {
     display: inline-flex;
@@ -649,11 +651,19 @@ select.cell-input {
 }
 
 .workout-meta {
+    background: #f5f3ff;
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+}
+.workout-meta .icon {
+    color: #726c8a; /* gris con un toque de morado, no un gris neutro puro -- contraste ~4.1:1 sobre el chip, verificado */
+    background: rgba(124, 77, 255, 0.12);
+    border-radius: 50%;
+    padding: 4px;
+    box-sizing: content-box;
 }
 .workout-meta-tags {
     display: flex;
@@ -729,5 +739,22 @@ select.cell-input {
     position: relative;
 }
 
-.cell-input-weight { font-variant-numeric: tabular-nums; font-weight: 700; }
+.cell-input-number {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--color-text);
+    width: 62px;
+}
+.cell-input-number::-webkit-outer-spin-button,
+.cell-input-number::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+.cell-input-number[type=number] { -moz-appearance: textfield; }
+.cell-input-weight { width: 84px; } /* admite decimales (p.ej. "102.5") -- 62px recortaba, verificado con scrollWidth > clientWidth */
+.set-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
 

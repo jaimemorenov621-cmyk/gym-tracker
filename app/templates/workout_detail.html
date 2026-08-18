@@ -92,6 +92,7 @@
             {% endif %}
 
             {% set prev = previous_sets_map.get(exercise) %}
+            <div class="set-table-wrap">
             <table class="set-table" id="table-{{ exercise|replace(' ', '_') }}">
                 <thead>
                     <tr>
@@ -105,10 +106,10 @@
                     <tr id="row-{{ s.id }}"{% if s.completed %} class="set-row-done"{% endif %}>
                         <td class="set-num">{{ loop.index }}</td>
                         <td class="set-previous">{{ prev[loop.index0] if prev and loop.index0 < prev|length else "—" }}</td>
-                        <td><input class="cell-input cell-input-weight" type="number" step="any" value="{{ s.weight }}" onchange="updateSet({{ s.id }}, 'weight', this.value)"></td>
-                        <td><input class="cell-input" type="number" value="{{ s.reps }}" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
+                        <td><input class="cell-input cell-input-number cell-input-weight" type="number" step="any" value="{{ s.weight }}" onchange="updateSet({{ s.id }}, 'weight', this.value)"></td>
+                        <td><input class="cell-input cell-input-number" type="number" value="{{ s.reps }}" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
-                        <td><input class="cell-input" type="number" min="0" max="10" value="{{ s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') }}" onchange="updateSet({{ s.id }}, 'effort', this.value)"></td>
+                        <td><input class="cell-input cell-input-number" type="number" min="0" max="10" value="{{ s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') }}" onchange="updateSet({{ s.id }}, 'effort', this.value)"></td>
                         {% endif %}
                         <td>
                             <select class="cell-input" onchange="updateSet({{ s.id }}, 'set_type', this.value)">
@@ -123,6 +124,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            </div>
             <button type="button" class="btn-outline" onclick="addSet('{{ exercise }}')">+ Agregar serie</button>
         </div>
     {% endfor %}
@@ -263,10 +265,10 @@
                 tr.innerHTML =
                     '<td class="set-num">' + (rows.length + 1) + '</td>' +
                     '<td class="set-previous">' + previousLabel + '</td>' +
-                    '<td><input class="cell-input cell-input-weight" type="number" step="any" value="' + lastWeight + '" onchange="updateSet(' + data.id + ', \'weight\', this.value)"></td>' +
-                    '<td><input class="cell-input" type="number" value="' + lastReps + '" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
+                    '<td><input class="cell-input cell-input-number cell-input-weight" type="number" step="any" value="' + lastWeight + '" onchange="updateSet(' + data.id + ', \'weight\', this.value)"></td>' +
+                    '<td><input class="cell-input cell-input-number" type="number" value="' + lastReps + '" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
                     '{% if effort_scale != "none" %}' +
-                    '<td><input class="cell-input" type="number" min="0" max="10" value="' + lastEffort + '" onchange="updateSet(' + data.id + ', \'effort\', this.value)"></td>' +
+                    '<td><input class="cell-input cell-input-number" type="number" min="0" max="10" value="' + lastEffort + '" onchange="updateSet(' + data.id + ', \'effort\', this.value)"></td>' +
                     '{% endif %}' +
                     '<td><select class="cell-input" onchange="updateSet(' + data.id + ', \'set_type\', this.value)">' +
                     '<option value="normal">Normal</option><option value="calentamiento">Calent.</option>' +
