@@ -11,7 +11,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <nav>
+    {% import "_macros.html" as macros %}
+    <nav class="top-nav">
         <strong>GymTracker</strong>
         <a class="btn btn-nav" href="{{ url_for('index') }}">Inicio</a>
         {% if current_user.is_anonymous %}
@@ -25,6 +26,54 @@
             <a class="btn btn-nav" href="{{ url_for('logout') }}">Salir</a>
         {% endif %}
     </nav>
+
+    {% if current_user.is_authenticated %}
+        {% set routine_endpoints = ('routines', 'routine_detail', 'new_routine') %}
+        {% set workout_endpoints = ('new_workout', 'workout_detail') %}
+        <nav class="bottom-nav">
+            <a class="bottom-nav-item{% if request.endpoint == 'index' %} active{% endif %}" href="{{ url_for('index') }}">
+                {{ macros.icon('home', 22) }}
+                <span>Inicio</span>
+            </a>
+            <a class="bottom-nav-item{% if request.endpoint in workout_endpoints %} active{% endif %}" href="{{ url_for('new_workout') }}">
+                {{ macros.icon('plus-circle', 22) }}
+                <span>Nuevo</span>
+            </a>
+            <a class="bottom-nav-item{% if request.endpoint in routine_endpoints %} active{% endif %}" href="{{ url_for('routines') }}">
+                {{ macros.icon('list', 22) }}
+                <span>Rutinas</span>
+            </a>
+            <a class="bottom-nav-item{% if request.endpoint == 'ai_analysis' %} active{% endif %}" href="{{ url_for('ai_analysis') }}">
+                {{ macros.icon('sparkle', 22) }}
+                <span>IA</span>
+            </a>
+            <a class="bottom-nav-item{% if request.endpoint == 'weight' %} active{% endif %}" href="{{ url_for('weight') }}">
+                {{ macros.icon('scale', 22) }}
+                <span>Peso</span>
+            </a>
+            <div class="bottom-nav-item bottom-nav-profile">
+                <button type="button" class="bottom-nav-profile-btn{% if request.endpoint == 'settings' %} active{% endif %}" onclick="toggleProfileMenu()">
+                    {{ macros.icon('user', 22) }}
+                    <span>Más</span>
+                </button>
+                <div class="bottom-nav-profile-menu" id="bottomNavProfileMenu">
+                    <a href="{{ url_for('settings') }}">Configuración</a>
+                    <a href="{{ url_for('logout') }}">Salir</a>
+                </div>
+            </div>
+        </nav>
+        <script>
+            function toggleProfileMenu() {
+                document.getElementById('bottomNavProfileMenu').classList.toggle('open');
+            }
+            document.addEventListener('click', function (e) {
+                const wrap = document.querySelector('.bottom-nav-profile');
+                if (wrap && !wrap.contains(e.target)) {
+                    document.getElementById('bottomNavProfileMenu').classList.remove('open');
+                }
+            });
+        </script>
+    {% endif %}
 
     {% if active_workout and request.endpoint not in ("new_workout", "workout_detail") %}
     <a href="{{ url_for('workout_detail', workout_id=active_workout.id) }}" class="active-toast">
