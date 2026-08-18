@@ -155,6 +155,27 @@ class BodyWeightEntry(db.Model):
         return f"<BodyWeightEntry user={self.user_id} {self.weight}kg>"
 
 
+class WeeklyGoalHistory(db.Model):
+    """Historial append-only del objetivo semanal de entrenamientos (para la
+    racha inteligente). Nunca se actualizan filas existentes -- cada cambio
+    de objetivo inserta una fila nueva. goal=None significa "objetivo
+    desactivado desde effective_from" (vuelve a racha por días)."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    goal: so.Mapped[Optional[int]] = so.mapped_column()
+    # Naive a propósito (no timezone.utc-aware): Workout.timestamp usa el
+    # mismo patrón y vuelve naive al leerlo de SQLite, así que effective_from
+    # se normaliza igual para poder compararlos sin TypeError. Ver
+    # compute_smart_streak() en app/routes.py.
+    effective_from: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+
+    def __repr__(self):
+        return f"<WeeklyGoalHistory user={self.user_id} goal={self.goal} from={self.effective_from}>"
+
+
 class Exercise(db.Model):
     id: so.Mapped[str] = so.mapped_column(sa.String(64), primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(120), index=True)

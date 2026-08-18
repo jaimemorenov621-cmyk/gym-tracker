@@ -1,6 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlsplit
+from collections import defaultdict
 import unicodedata
 import sqlalchemy as sa
 from openai import OpenAI
@@ -30,6 +31,7 @@ from app.models import (
     Exercise,
     AiAnalysis,
     BodyWeightEntry,
+    WeeklyGoalHistory,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from datetime import datetime, timezone, timedelta
@@ -81,7 +83,7 @@ def index():
         .where(Workout.user_id == current_user.id)
     )
 
-    streak = compute_streak(workouts)
+    streak, streak_unit = compute_smart_streak(current_user.id, workouts)
 
     # Calendario de los últimos 3 meses
     today = datetime.now(timezone.utc).date()
@@ -139,6 +141,7 @@ def index():
         grouped=grouped,
         total_workouts=total_workouts,
         streak=streak,
+        streak_unit=streak_unit,
         calendar_weeks=calendar_weeks,
         strength_change=strength_change,
         strength_window_days=strength_window_days,
@@ -562,6 +565,15 @@ def exercise_notes(name):
     )
 
 
+def _latest_weekly_goal_row(user_id):
+    return db.session.scalar(
+        sa.select(WeeklyGoalHistory)
+        .where(WeeklyGoalHistory.user_id == user_id)
+        .order_by(WeeklyGoalHistory.effective_from.desc())
+        .limit(1)
+    )
+
+
 @app.route("/settings", methods=["GET", "POST"])
 @login_required
 def settings():
@@ -572,6 +584,19 @@ def settings():
         current_user.sex = form.sex.data or None
         current_user.height_cm = form.height_cm.data
         current_user.training_goal = form.training_goal.data or None
+
+        latest = _latest_weekly_goal_row(current_user.id)
+        current_goal = latest.goal if latest else None
+        if form.disable_weekly_goal.data:
+            if current_goal is not None:
+                db.session.add(WeeklyGoalHistory(user_id=current_user.id, goal=None))
+        elif form.weekly_workout_goal.data and form.weekly_workout_goal.data != current_goal:
+            db.session.add(
+                WeeklyGoalHistory(
+                    user_id=current_user.id, goal=form.weekly_workout_goal.data
+                )
+            )
+
         db.session.commit()
         flash("Configuración guardada.")
         return redirect(url_for("settings"))
@@ -581,6 +606,9 @@ def settings():
         form.sex.data = current_user.sex or ""
         form.height_cm.data = current_user.height_cm
         form.training_goal.data = current_user.training_goal or ""
+        latest = _latest_weekly_goal_row(current_user.id)
+        form.weekly_workout_goal.data = latest.goal if latest else None
+        form.disable_weekly_goal.data = bool(latest and latest.goal is None)
     return render_template("settings.html", title="Configuración", form=form)
 
 
@@ -1033,6 +1061,69 @@ def compute_streak(workouts):
     return streak
 
 
+def compute_smart_streak(user_id, workouts):
+    """(valor, unidad). Sin objetivo semanal nunca configurado, o desactivado
+    explícitamente (última fila de WeeklyGoalHistory con goal=None) ->
+    fallback a compute_streak() (días). Con objetivo activo -> semanas
+    consecutivas cumpliendo el objetivo que estaba VIGENTE en cada semana
+    (no el objetivo actual) -- ver WeeklyGoalHistory en app/models.py."""
+    history = db.session.scalars(
+        sa.select(WeeklyGoalHistory)
+        .where(WeeklyGoalHistory.user_id == user_id)
+        .order_by(WeeklyGoalHistory.effective_from.desc())
+    ).all()
+    if not history or history[0].goal is None:
+        return compute_streak(workouts), "días"
+
+    week_counts = defaultdict(int)
+    for w in workouts:
+        week_start = w.timestamp.date() - timedelta(days=w.timestamp.weekday())
+        week_counts[week_start] += 1
+
+    def goal_for_week(week_start):
+        # naive, igual que WeeklyGoalHistory.effective_from -- ver comentario
+        # en el modelo sobre por qué Workout.timestamp vuelve naive de SQLite.
+        week_start_dt = datetime.combine(week_start, datetime.min.time())
+        for h in history:  # ya ordenado desc por effective_from
+            if h.effective_from <= week_start_dt:
+                return h.goal
+        return None  # anterior a que existiera cualquier objetivo, o antes
+        # de una fila con goal=None (desactivado)
+
+    today = datetime.now(timezone.utc).date()
+    current_week_start = today - timedelta(days=today.weekday())
+    week = current_week_start
+    streak = 0
+
+    current_goal = goal_for_week(week)
+    if current_goal is not None:
+        if week_counts.get(week, 0) >= current_goal:
+            streak += 1
+            week -= timedelta(days=7)
+        elif today.weekday() == 6:
+            # semana en curso YA terminó (es domingo) y no llegó al objetivo
+            return 0, "semanas"
+        else:
+            # semana en curso todavía sin terminar y sin cumplir aún -- no
+            # rompe la racha, simplemente no cuenta todavía; se sigue
+            # evaluando desde la semana anterior, ya cerrada
+            week -= timedelta(days=7)
+    else:
+        return 0, "semanas"
+
+    while True:
+        goal = goal_for_week(week)
+        if goal is None:
+            break
+        if week_counts.get(week, 0) >= goal:
+            streak += 1
+            week -= timedelta(days=7)
+        else:
+            break
+
+    return streak, "semanas"
+
+
 def get_previous_sets_map(workout, exercise_names):
     """Para cada ejercicio de `exercise_names`, las series (peso×reps) de la última vez
     que current_user lo entrenó antes de `workout`. Una sola consulta, sin N+1."""
@@ -1195,9 +1286,11 @@ def build_progress_summary():
             }
         )
 
+    streak, streak_unit = compute_smart_streak(current_user.id, workouts)
     return {
         "total_workouts": len(workouts),
-        "streak": compute_streak(workouts),
+        "streak": streak,
+        "streak_unit": streak_unit,
         "exercises": exercises,
         "recent_workouts": recent_workouts,
     }
@@ -1209,7 +1302,9 @@ def generate_ai_analysis():
 
     lines = [
         f"Entrenamientos totales: {summary['total_workouts']}",
-        f"Racha actual: {summary['streak']} días consecutivos entrenando",
+        f"Racha actual: {summary['streak']} {summary['streak_unit']} consecutivos entrenando"
+        if summary["streak_unit"] == "días"
+        else f"Racha actual: {summary['streak']} semanas consecutivas cumpliendo el objetivo semanal",
     ]
 
     goal_labels = {

@@ -125,6 +125,13 @@ class SettingsForm(FlaskForm):
         ],
         validators=[Optional()],
     )
+    weekly_workout_goal = IntegerField(
+        "Objetivo de entrenamientos por semana (para la racha)",
+        validators=[Optional(), NumberRange(min=1, max=14)],
+    )
+    disable_weekly_goal = BooleanField(
+        "Desactivar el objetivo semanal (volver a racha por días)"
+    )
     submit = SubmitField("Guardar")
 
 

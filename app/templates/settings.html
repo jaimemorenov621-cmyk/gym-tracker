@@ -28,6 +28,16 @@
             {{ form.training_goal.label }}<br>
             {{ form.training_goal() }}
         </p>
+        <h3>Racha</h3>
+        <p>
+            {{ form.weekly_workout_goal.label }}<br>
+            <small>Si lo rellenas, la racha del panel pasa a contar semanas consecutivas cumpliendo este objetivo en vez de días consecutivos entrenando.</small><br>
+            {{ form.weekly_workout_goal() }}
+        </p>
+        <p>
+            {{ form.disable_weekly_goal() }}
+            {{ form.disable_weekly_goal.label }}
+        </p>
         <p>{{ form.submit() }}</p>
     </form>
 {% endblock %}
