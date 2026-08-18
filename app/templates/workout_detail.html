@@ -57,7 +57,10 @@
                 <div class="plan-row">
                     <span class="set-tag">{{ p.exercise|title }}</span>
                     <span class="set-tag">{{ p.target_sets }}x{{ p.target_reps }}</span>
-                    <span class="set-tag{% if p.done >= p.target_sets %} plan-row-done{% endif %}">{{ p.done }}/{{ p.target_sets }}</span>
+                    <span class="set-tag{% if p.done >= p.target_sets %} plan-row-done{% endif %}"
+                          data-plan-exercise="{{ p.exercise|trim|lower }}"
+                          data-done="{{ p.done }}"
+                          data-target="{{ p.target_sets }}">{{ p.done }}/{{ p.target_sets }}</span>
                 </div>
             {% endfor %}
         </div>
@@ -403,7 +406,33 @@
                 if (willComplete && data.is_pr) {
                     celebrate(70);
                 }
+                updateRoutineProgress(exercise, willComplete ? 1 : -1);
             });
+        }
+
+        function updateRoutineProgress(exercise, delta) {
+            const pill = document.querySelector('.plan-row [data-plan-exercise="' + exercise + '"]');
+            if (!pill) return;
+            const target = parseInt(pill.dataset.target, 10);
+            const done = Math.max(0, Math.min(target, parseInt(pill.dataset.done, 10) + delta));
+            pill.dataset.done = done;
+            pill.textContent = done + '/' + target;
+            pill.classList.toggle('plan-row-done', done >= target);
+
+            let totalDone = 0, totalTarget = 0;
+            document.querySelectorAll('.plan-row [data-plan-exercise]').forEach(p => {
+                totalDone += parseInt(p.dataset.done, 10);
+                totalTarget += parseInt(p.dataset.target, 10);
+            });
+            const ringFill = document.querySelector('.progress-ring-fill');
+            const ringValue = document.querySelector('.progress-ring-value');
+            const ringWrap = document.querySelector('.progress-ring-wrap');
+            if (ringFill && totalTarget > 0) {
+                const pct = Math.min(1, totalDone / totalTarget);
+                ringFill.setAttribute('stroke-dashoffset', (175.9 * (1 - pct)).toFixed(1));
+                ringValue.textContent = totalDone + '/' + totalTarget;
+                ringWrap.setAttribute('aria-label', totalDone + ' de ' + totalTarget + ' series registradas');
+            }
         }
     </script>
 {% endblock %}
