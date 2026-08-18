@@ -363,7 +363,13 @@ def workout_detail(workout_id):
             .order_by(RoutineExercise.order_index)
         ).all()
         for re in routine_exercises:
-            done = len(grouped_sets.get(re.exercise.strip().lower(), []))
+            # "Hecho" = series marcadas con el tick, no series que simplemente
+            # existen -- desde que start_routine() precarga las series del
+            # plan, contar solo la existencia haría que esto marcara 100% nada
+            # más iniciar el entrenamiento, sin haber rellenado nada todavía.
+            done = sum(
+                1 for s in grouped_sets.get(re.exercise.strip().lower(), []) if s.completed
+            )
             routine_plan.append(
                 {
                     "exercise": re.exercise,
@@ -895,6 +901,31 @@ def start_routine(routine_id):
 
     workout = Workout(note=routine.name, routine_id=routine.id, author=current_user)
     db.session.add(workout)
+    db.session.flush()
+
+    # Precarga ejercicios y series desde el plan de la rutina, en vez de dejar
+    # el entrenamiento vacío -- el usuario solo rellena peso/reps y marca el
+    # tick. El nombre se copia tal cual de RoutineExercise (ya fijado al crear
+    # la rutina), nunca se retipea, así que no hay riesgo de que no coincida
+    # con el plan. Peso/reps se dejan a 0 (a rellenar) -- no se adivinan
+    # valores; la columna "Anterior" ya da la referencia de la sesión pasada.
+    routine_exercises = db.session.scalars(
+        sa.select(RoutineExercise)
+        .where(RoutineExercise.routine_id == routine.id)
+        .order_by(RoutineExercise.order_index)
+    ).all()
+    for re_ in routine_exercises:
+        for _ in range(re_.target_sets):
+            db.session.add(
+                SetEntry(
+                    exercise=re_.exercise,
+                    weight=0.0,
+                    reps=0,
+                    set_type="normal",
+                    workout=workout,
+                )
+            )
+
     db.session.commit()
     flash(f"¡Entrenamiento '{routine.name}' iniciado!")
     return redirect(url_for("workout_detail", workout_id=workout.id))

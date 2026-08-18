@@ -41,9 +41,10 @@
     <h2>Añadir ejercicio</h2>
     <form action="" method="post">
         {{ form.hidden_tag() }}
-        <p>
+        <p style="position:relative;">
             {{ form.exercise.label }}<br>
-            {{ form.exercise(size=32) }}
+            {{ form.exercise(size=32, autocomplete="off", oninput="searchExercises(this.value)") }}
+            <div id="exerciseSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #e0e0e0; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.12); z-index:50; max-height:280px; overflow-y:auto;"></div>
         </p>
         <p>
             {{ form.target_sets.label }}<br>
@@ -55,6 +56,38 @@
         </p>
         <p><input type="submit" value="Añadir ejercicio" class="btn"></p>
     </form>
+
+    <script>
+        let searchTimeout;
+        function searchExercises(query) {
+            clearTimeout(searchTimeout);
+            const box = document.getElementById('exerciseSuggestions');
+            if (query.trim().length < 2) { box.style.display = 'none'; return; }
+            searchTimeout = setTimeout(() => {
+                fetch('/api/exercises/search?q=' + encodeURIComponent(query))
+                    .then(r => r.json())
+                    .then(results => {
+                        if (!results.length) { box.style.display = 'none'; return; }
+                        box.innerHTML = results.map(ex =>
+                            '<div onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')" style="display:flex; align-items:center; gap:10px; padding:8px 12px; cursor:pointer;" onmouseover="this.style.background=\'#f5f3ff\'" onmouseout="this.style.background=\'white\'">' +
+                            (ex.image ? '<img src="' + ex.image + '" style="width:44px; height:44px; object-fit:cover; border-radius:6px;">' : '<div style="width:44px;height:44px;background:#ececf7;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="19" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="5" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="17" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="7" y="11" width="10" height="2" fill="#7c4dff"/></svg></div>') +
+                            '<div><div style="font-weight:600; font-size:0.9rem;">' + ex.name + '</div>' +
+                            (ex.muscles ? '<div style="font-size:0.75rem; color:#888;">' + ex.muscles + '</div>' : '') +
+                            '</div></div>'
+                        ).join('');
+                        box.style.display = 'block';
+                    });
+            }, 250);
+        }
+        function selectExercise(name) {
+            document.querySelector('[name="exercise"]').value = name;
+            document.getElementById('exerciseSuggestions').style.display = 'none';
+        }
+        document.addEventListener('click', function(e) {
+            const box = document.getElementById('exerciseSuggestions');
+            if (box && !e.target.closest('form')) box.style.display = 'none';
+        });
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
