@@ -694,6 +694,11 @@ def request_ai_analysis():
     try:
         how_you_feel = checkin_form.how_you_feel.data if checkin_form.validate_on_submit() else None
         content = generate_ai_analysis(how_you_feel=how_you_feel)
+        json.loads(content)  # validar antes de guardar -- ver nota en ai_analysis()
+        # sobre por qué un JSON truncado/inválido no debe llegar a AiAnalysis:
+        # si esto falla no se gasta el cupo semanal (no se guarda nada) y el
+        # usuario ve el mismo aviso de "vuelve a intentarlo" que un fallo de
+        # la API, en vez de una tarjeta rota con JSON crudo sin renderizar.
     except Exception:
         flash("No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos minutos.")
         return redirect(url_for("ai_analysis"))
@@ -1501,7 +1506,7 @@ def generate_ai_analysis(how_you_feel=None):
                 "strict": True,
             }
         },
-        max_output_tokens=1500,
+        max_output_tokens=3000,
     )
     return response.output_text
 
