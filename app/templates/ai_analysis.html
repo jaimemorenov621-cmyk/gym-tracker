@@ -54,7 +54,13 @@
     {% endif %}
 
     <form action="{{ url_for('request_ai_analysis') }}" method="post">
-        {{ empty_form.hidden_tag() }}
+        {{ checkin_form.hidden_tag() }}
+        {% if not next_available %}
+            <p>
+                {{ checkin_form.how_you_feel.label }}<br>
+                {{ checkin_form.how_you_feel(rows=3, style="width:100%; box-sizing:border-box;", placeholder="Opcional. Ej: esta semana he dormido poco y tengo agujetas fuertes en piernas.") }}
+            </p>
+        {% endif %}
         {% if next_available %}
             <button type="submit" class="btn" disabled>Disponible el {{ next_available.strftime('%d/%m/%Y') }}</button>
         {% else %}

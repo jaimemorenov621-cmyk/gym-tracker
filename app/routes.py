@@ -21,6 +21,7 @@ from app.forms import (
     NewExerciseForm,
     ExerciseTranslationForm,
     WeightForm,
+    AiCheckinForm,
 )
 from app.models import (
     User,
@@ -672,13 +673,14 @@ def ai_analysis():
         latest=latest,
         analysis=analysis,
         next_available=next_available,
-        empty_form=EmptyForm(),
+        checkin_form=AiCheckinForm(),
     )
 
 
 @app.route("/ai/analyze", methods=["POST"])
 @login_required
 def request_ai_analysis():
+    checkin_form = AiCheckinForm()
     cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=7)
     has_recent = db.session.scalar(
         sa.select(AiAnalysis.id)
@@ -690,7 +692,8 @@ def request_ai_analysis():
         return redirect(url_for("ai_analysis"))
 
     try:
-        content = generate_ai_analysis()
+        how_you_feel = checkin_form.how_you_feel.data if checkin_form.validate_on_submit() else None
+        content = generate_ai_analysis(how_you_feel=how_you_feel)
     except Exception:
         flash("No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos minutos.")
         return redirect(url_for("ai_analysis"))
@@ -1278,6 +1281,16 @@ def build_progress_summary():
         session_list, stagnation, _ = get_exercise_sessions(name)
         if not session_list:
             continue
+        catalog = find_catalog_exercise(name)
+        muscle_group = None
+        if catalog and catalog.primary_muscles:
+            for muscle in catalog.primary_muscles.split(", "):
+                muscle_group = MUSCLE_GROUP_MAP.get(muscle)
+                if muscle_group:
+                    break
+        recent = session_list[-current_user.stagnation_threshold :]
+        rirs = [s["best_set"].rir for s in recent if s["best_set"].rir is not None]
+        rpes = [s["best_set"].rpe for s in recent if s["best_set"].rpe is not None]
         exercises.append(
             {
                 "name": name.title(),
@@ -1285,6 +1298,9 @@ def build_progress_summary():
                 "best_1rm": round(max(s["best_1rm"] for s in session_list), 1),
                 "stagnation": stagnation,
                 "last_trained": session_list[-1]["timestamp"].strftime("%d/%m/%Y"),
+                "muscle_group": muscle_group,
+                "avg_rir": round(sum(rirs) / len(rirs), 1) if rirs else None,
+                "avg_rpe": round(sum(rpes) / len(rpes), 1) if rpes else None,
             }
         )
 
@@ -1347,7 +1363,7 @@ AI_ANALYSIS_SCHEMA = {
 }
 
 
-def generate_ai_analysis():
+def generate_ai_analysis(how_you_feel=None):
     """Llama a la IA con el resumen de progreso de current_user y devuelve el texto generado."""
     summary = build_progress_summary()
 
@@ -1377,13 +1393,56 @@ def generate_ai_analysis():
 
     lines += [
         "",
-        "Ejercicios registrados (nombre: nº sesiones, mejor 1RM estimado, estado, última vez):",
+        "Ejercicios registrados (nombre: nº sesiones, mejor 1RM estimado, estado, última vez, "
+        "grupo muscular, esfuerzo medio reciente):",
     ]
     for ex in summary["exercises"]:
         estado = "ESTANCADO" if ex["stagnation"] else "progresando"
+        parts = [
+            f"{ex['sessions']} sesiones",
+            f"1RM est. {ex['best_1rm']}kg",
+            estado,
+            f"última vez {ex['last_trained']}",
+        ]
+        if ex["muscle_group"]:
+            parts.append(f"grupo: {ex['muscle_group']}")
+        if ex["avg_rir"] is not None:
+            parts.append(f"RIR medio reciente: {ex['avg_rir']}")
+        elif ex["avg_rpe"] is not None:
+            parts.append(f"RPE medio reciente: {ex['avg_rpe']}")
+        lines.append(f"- {ex['name']}: " + ", ".join(parts))
+
+    stagnant_groups = {
+        ex["muscle_group"] for ex in summary["exercises"] if ex["stagnation"] and ex["muscle_group"]
+    }
+    if stagnant_groups:
+        volumes = compute_muscle_volumes(days=14)
+        max_volume = max(volumes.values()) if volumes else 0
+        lines.append("")
         lines.append(
-            f"- {ex['name']}: {ex['sessions']} sesiones, "
-            f"1RM est. {ex['best_1rm']}kg, {estado}, última vez {ex['last_trained']}"
+            "Volumen relativo por grupo muscular en los últimos 14 días (100% = grupo más "
+            "trabajado; solo se listan los grupos de ejercicios estancados, para valorar si "
+            "conviene más volumen/frecuencia para ese grupo, o si ya está muy trabajado y lo "
+            "que hace falta es una descarga):"
+        )
+        for group in stagnant_groups:
+            pct = round(volumes.get(group, 0) / max_volume * 100) if max_volume else 0
+            lines.append(f"- {group}: {pct}%")
+
+    weight_entries = db.session.scalars(
+        sa.select(BodyWeightEntry)
+        .where(BodyWeightEntry.user_id == current_user.id)
+        .order_by(BodyWeightEntry.timestamp.asc())
+    ).all()
+    if len(weight_entries) >= 2:
+        first, last = weight_entries[0], weight_entries[-1]
+        delta = round(last.weight - first.weight, 1)
+        days_span = (last.timestamp - first.timestamp).days
+        lines.append("")
+        lines.append(
+            f"Peso corporal: de {first.weight}kg ({first.timestamp.strftime('%d/%m/%Y')}) a "
+            f"{last.weight}kg ({last.timestamp.strftime('%d/%m/%Y')}), {delta:+}kg en "
+            f"{days_span} días."
         )
 
     lines.append("")
@@ -1396,6 +1455,10 @@ def generate_ai_analysis():
         if w["comment"]:
             parts.append(f"comentario: {w['comment']}")
         lines.append("- " + " · ".join(parts))
+
+    if how_you_feel:
+        lines.append("")
+        lines.append(f"Cómo dice sentirse el usuario ahora mismo: {how_you_feel}")
 
     prompt = "\n".join(lines)
 
@@ -1413,7 +1476,21 @@ def generate_ai_analysis():
             "inventes datos que no se te han dado. Evita consejos genéricos ('sigue "
             "esforzándote'); sé específico sobre qué ejercicios necesitan atención y por qué. "
             "Si de verdad no hay suficiente historial para alguna sección, devuelve esa lista "
-            "vacía en vez de rellenarla con generalidades sin base en los datos."
+            "vacía en vez de rellenarla con generalidades sin base en los datos.\n\n"
+            "Para los ejercicios marcados como ESTANCADOS, el usuario ya sabe lo que es la "
+            "sobrecarga progresiva -- NUNCA respondas simplemente 'sube el peso' o 'progresa "
+            "de forma progresiva': si no ha subido el peso es porque no ha podido. En su lugar, "
+            "usa los datos que tienes para razonar sobre la causa probable y proponer algo más "
+            "específico, por ejemplo: si el RIR/RPE medio reciente indica que las series no van "
+            "cerca del fallo, sugiere ajustar la intensidad; si el grupo muscular de ese "
+            "ejercicio tiene un volumen relativo bajo frente a otros grupos, sugiere añadir más "
+            "volumen o frecuencia para ese grupo; si el esfuerzo ya es alto y lleva muchas "
+            "sesiones sin PR, considera si conviene una semana de descarga; si el peso corporal "
+            "muestra una tendencia a la baja, considera si el problema puede ser un déficit "
+            "calórico y sugiere revisar la ingesta. Si el usuario ha descrito cómo se siente "
+            "(fatiga, agujetas, sueño...), ténlo en cuenta como una señal más, no la ignores. "
+            "No propongas varias causas a la vez sin justificarlas con los datos -- elige la "
+            "explicación mejor respaldada por lo que tienes."
         ),
         input=prompt,
         text={
@@ -1612,10 +1689,12 @@ def _effort_factor(entry):
     return 0.5 + proximity * 0.5
 
 
-def compute_muscle_intensity(days=14):
-    """Color por grupo muscular según el volumen (peso × reps × cercanía al fallo)
-    entrenado en los últimos `days` días. Relativo al grupo más trabajado, no a
-    un umbral absoluto."""
+def compute_muscle_volumes(days=14):
+    """Volumen bruto (peso × reps × cercanía al fallo) por grupo muscular en
+    los últimos `days` días. Números absolutos, sin normalizar -- lo comparten
+    compute_muscle_intensity() (colores del mapa muscular) y
+    generate_ai_analysis() (para razonar sobre qué músculos están poco
+    trabajados en relación al resto, no solo por ejercicio suelto)."""
     cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
     entries = db.session.scalars(
         sa.select(SetEntry)
@@ -1636,7 +1715,13 @@ def compute_muscle_intensity(days=14):
             group = MUSCLE_GROUP_MAP.get(muscle)
             if group:
                 volumes[group] += stress
+    return volumes
 
+
+def compute_muscle_intensity(days=14):
+    """Color por grupo muscular según el volumen entrenado en los últimos
+    `days` días. Relativo al grupo más trabajado, no a un umbral absoluto."""
+    volumes = compute_muscle_volumes(days)
     max_volume = max(volumes.values()) if volumes else 0
     return {
         group: _interpolate_muscle_color(group, volume / max_volume if max_volume else 0)

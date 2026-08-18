@@ -90,6 +90,14 @@ class EmptyForm(FlaskForm):
     submit = SubmitField("Submit")
 
 
+class AiCheckinForm(FlaskForm):
+    how_you_feel = TextAreaField(
+        "¿Cómo te sientes? (fatiga, agujetas, sueño, estrés...)",
+        validators=[Optional(), Length(max=500)],
+    )
+    submit = SubmitField("🔍 Analizar mi progreso")
+
+
 class WeightForm(FlaskForm):
     weight = FloatField(
         "Peso (kg)", validators=[DataRequired(), NumberRange(min=20, max=400)]
