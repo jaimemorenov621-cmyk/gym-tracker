@@ -373,6 +373,13 @@ def workout_detail(workout_id):
                 }
             )
 
+    # Total de series registradas vs. planeadas en toda la sesión, para el
+    # anillo de progreso -- solo tiene sentido si hay un plan de rutina (un
+    # entrenamiento libre no tiene "objetivo" contra el que medir progreso).
+    ring_done = sum(p["done"] for p in routine_plan)
+    ring_target = sum(p["target_sets"] for p in routine_plan)
+    ring_pct = min(1.0, ring_done / ring_target) if ring_target else 0.0
+
     empty_form = EmptyForm()
     new_exercise_form = NewExerciseForm()
     previous_sets_map = get_previous_sets_map(workout, exercise_order)
@@ -386,6 +393,9 @@ def workout_detail(workout_id):
         effort_scale=current_user.effort_scale,
         exercise_notes_map=exercise_notes_map,
         routine_plan=routine_plan,
+        ring_done=ring_done,
+        ring_target=ring_target,
+        ring_pct=ring_pct,
         new_exercise_form=new_exercise_form,
         previous_sets_map=previous_sets_map,
     )

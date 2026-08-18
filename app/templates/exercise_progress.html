@@ -1,13 +1,12 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block content %}
     <h1 style="display:flex; align-items:center; gap:12px;">
         {% set img = get_exercise_image(exercise) %}
         {% if img %}
             <img src="{{ img }}" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
         {% else %}
-            <div style="width:64px; height:64px; border-radius:10px; background:#ececf7; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="19" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="5" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="17" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="7" y="11" width="10" height="2" fill="#7c4dff"/></svg>
-            </div>
+            {{ macros.exercise_icon_fallback(64, 10) }}
         {% endif %}
         {{ exercise|title }}
     </h1>
