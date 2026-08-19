@@ -127,6 +127,7 @@
                     {% endfor %}
                 </tbody>
             </table>
+            <div class="swipe-delete-zone"><button type="button" aria-label="Eliminar serie">{{ macros.icon('trash') }}</button></div>
             </div>
             <button type="button" class="btn-outline" onclick="addSet('{{ exercise }}')">+ Agregar serie</button>
         </div>
@@ -253,6 +254,7 @@
                     '<td><button type="button" class="delete-set-btn" onclick="deleteSet(' + data.id + ')" aria-label="Eliminar serie"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6h12z"/></svg></button></td>';
                 tbody.appendChild(tr);
                 tr.querySelector('select').value = lastType;
+                attachSwipeHandlers(tr);
             });
         }
 
@@ -318,5 +320,87 @@
                 ringWrap.setAttribute('aria-label', totalDone + ' de ' + totalTarget + ' series registradas');
             }
         }
+
+        let swipeState = null;
+
+        function attachSwipeHandlers(tr) {
+            tr.addEventListener('touchstart', onSwipeStart, {passive: true});
+            tr.addEventListener('touchmove', onSwipeMove, {passive: true});
+            tr.addEventListener('touchend', onSwipeEnd);
+            tr.addEventListener('touchcancel', onSwipeEnd);
+        }
+
+        function onSwipeStart(e) {
+            if (e.touches.length !== 1) return;
+            const tr = e.currentTarget;
+            closeOpenSwipe(tr);
+            swipeState = {
+                tr: tr,
+                startX: e.touches[0].clientX,
+                startY: e.touches[0].clientY,
+                currentX: 0,
+                horizontal: null
+            };
+        }
+
+        function onSwipeMove(e) {
+            if (!swipeState || e.touches.length !== 1) return;
+            const dx = e.touches[0].clientX - swipeState.startX;
+            const dy = e.touches[0].clientY - swipeState.startY;
+            if (swipeState.horizontal === null) {
+                if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+                swipeState.horizontal = Math.abs(dx) > Math.abs(dy);
+                if (!swipeState.horizontal) { swipeState = null; return; }
+            }
+            const clamped = Math.max(-64, Math.min(0, dx));
+            swipeState.currentX = clamped;
+            swipeState.tr.style.transform = 'translateX(' + clamped + 'px)';
+        }
+
+        function onSwipeEnd() {
+            if (!swipeState || !swipeState.horizontal) { swipeState = null; return; }
+            const tr = swipeState.tr;
+            const id = tr.id.replace('row-', '');
+            if (swipeState.currentX < -32) {
+                openSwipe(tr, id);
+            } else {
+                tr.style.transform = '';
+            }
+            swipeState = null;
+        }
+
+        function openSwipe(tr, id) {
+            tr.style.transform = 'translateX(-64px)';
+            const wrap = tr.closest('.set-table-wrap');
+            const zone = wrap.querySelector('.swipe-delete-zone');
+            const trRect = tr.getBoundingClientRect();
+            const wrapRect = wrap.getBoundingClientRect();
+            zone.style.top = (trRect.top - wrapRect.top) + 'px';
+            zone.style.height = trRect.height + 'px';
+            zone.style.display = 'flex';
+            zone.currentTr = tr;
+            zone.querySelector('button').onclick = function() {
+                tr.style.transform = '';
+                zone.style.display = 'none';
+                zone.currentTr = null;
+                deleteSet(id);
+            };
+        }
+
+        function closeOpenSwipe(exceptTr) {
+            document.querySelectorAll('.swipe-delete-zone').forEach(function(zone) {
+                if (zone.style.display !== 'none' && zone.currentTr && zone.currentTr !== exceptTr) {
+                    zone.currentTr.style.transform = '';
+                    zone.style.display = 'none';
+                    zone.currentTr = null;
+                }
+            });
+        }
+
+        document.addEventListener('touchstart', function(e) {
+            if (!e.target.closest('tr')) closeOpenSwipe(null);
+        }, {passive: true});
+
+        document.querySelectorAll('.set-table tbody tr').forEach(attachSwipeHandlers);
     </script>
 {% endblock %}

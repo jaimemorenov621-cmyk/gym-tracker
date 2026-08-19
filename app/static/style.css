@@ -14,6 +14,16 @@
     --shadow-elevated: 0 8px 28px rgba(124, 77, 255, 0.18);
 }
 
+html {
+    /* Evita que Chrome Android "infle" el tamaño de letra dentro de celdas
+    estrechas (font boosting) -- sin esto, el texto en columnas comprimidas
+    de .set-table puede renderizar más grande que el font-size declarado,
+    y solo se ve en un móvil real: Chrome de escritorio no reproduce este
+    comportamiento, así que no se puede verificar aquí, solo en el móvil. */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
 body {
     font-family: system-ui, -apple-system, sans-serif;
     max-width: 700px;
@@ -417,6 +427,54 @@ select.cell-input {
     0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.6); }
     40% { transform: scale(1.35); box-shadow: 0 0 0 8px rgba(124, 77, 255, 0); }
     100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 77, 255, 0); }
+}
+
+/* En móvil, la tabla de series no debe necesitar scroll horizontal -- se
+oculta la columna "Anterior" (solo referencia, no se rellena) y se
+comprimen el resto de columnas para que quepan todas a la vez. La papelera
+de cada fila se sustituye por deslizar la fila hacia la izquierda (ver
+.swipe-delete-zone / JS en workout_detail.html) -- libera la columna entera
+en vez de solo encogerla, que era lo que seguía sin caber.  */
+@media (max-width: 600px) {
+    .card-elevated { padding-left: 8px; padding-right: 8px; }
+    .set-table th:nth-child(2), .set-table td:nth-child(2) { display: none; }
+    .set-table th:last-child, .set-table td:last-child { display: none; }
+    .set-table th, .set-table td { padding: 3px 0; }
+    .cell-input { width: 26px; min-width: 0; font-size: 0.8rem; padding: 6px 0; }
+    .cell-input-weight { width: 40px; }
+    select.cell-input {
+        width: 36px;
+        min-width: 0;
+        padding-right: 8px;
+        font-size: 0.6rem;
+        text-overflow: ellipsis;
+    }
+    .set-check-btn { width: 24px; height: 24px; border-radius: 6px; }
+
+    .set-table-wrap { position: relative; }
+    .set-table tr[id^="row-"] { transition: transform 0.2s ease; touch-action: pan-y; }
+    .swipe-delete-zone {
+        display: none;
+        position: absolute;
+        right: 0;
+        width: 64px;
+        background: #ff5252;
+        border-radius: 0 8px 8px 0;
+        z-index: 1;
+        align-items: center;
+        justify-content: center;
+    }
+    .swipe-delete-zone button {
+        background: none;
+        border: none;
+        color: white;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
 }
 
 .confetti-piece {
