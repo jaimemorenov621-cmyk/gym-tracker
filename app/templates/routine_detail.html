@@ -20,7 +20,7 @@
         {% for ex in exercises %}
             <li class="exercise-row" data-id="{{ ex.id }}">
                 <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span class="drag-handle">{{ macros.icon('grip') }}</span>
+                    <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
                     <strong>{{ ex.exercise|title }}</strong>
                     <span class="set-tag">{{ ex.target_sets }}x{{ ex.target_reps }}</span>
                     {% set n = exercise_notes_map.get(ex.exercise) %}

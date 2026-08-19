@@ -223,9 +223,12 @@ body {
 .drag-handle {
     cursor: grab;
     color: #999;
-    margin-right: 10px;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    padding: 12px;
+    margin: -12px -2px -12px -14px;
+    touch-action: none;
 }
 .exercise-row .set-tag {
     display: inline-block;
