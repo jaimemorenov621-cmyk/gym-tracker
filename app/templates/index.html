@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block content %}
-    <h1>Mis entrenamientos</h1>
+    <h1 style="font-weight:800; letter-spacing:-0.02em;">Mis entrenamientos</h1>
     <p style="color:#5a4fcf; font-style:italic; font-weight:600; margin:4px 0 20px;">
         "Lo que no se mide, no se puede mejorar."
     </p>
@@ -130,18 +131,23 @@
     </div>
 
     {% for group in grouped %}
-        <h3 style="color:#888; margin-top:24px;">Semana {{ group.label }}</h3>
+        <h3 class="week-divider">Semana {{ group.label }}</h3>
         {% for item in group.workouts %}
             <a class="workout-card" href="{{ url_for('workout_detail', workout_id=item.workout.id) }}">
                 <span class="wc-date">{{ item.workout.timestamp.strftime('%d/%m/%Y · %H:%M') }}</span>
                 <span class="wc-title">{{ item.workout.note or "Entrenamiento" }}</span>
                 {% if item.exercise_names %}
-                    <div style="margin-top:6px; font-size:0.85rem; color:#666;">
-                        {{ item.exercise_names|join(', ') }}
+                    <div class="wc-exercises">
+                        {% for name in item.exercise_names[:4] %}
+                            <span class="set-tag">{{ name }}</span>
+                        {% endfor %}
+                        {% if item.exercise_names|length > 4 %}
+                            <span class="set-tag wc-more-tag">+{{ item.exercise_names|length - 4 }}</span>
+                        {% endif %}
                     </div>
                 {% endif %}
-                <div style="margin-top:6px; font-size:0.8rem; color:#999;">
-                    {% if item.duration %}⏱ {{ item.duration }} · {% endif %}🏋️ {{ item.volume }}kg volumen
+                <div class="wc-meta">
+                    {% if item.duration %}{{ macros.icon('stopwatch', 14) }} {{ item.duration }} · {% endif %}🏋️ {{ item.volume }}kg volumen
                 </div>
             </a>
         {% endfor %}

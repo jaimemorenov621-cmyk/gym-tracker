@@ -146,18 +146,18 @@ body {
 
 .workout-card {
     display: block;
-    background: #f8f8fc;
-    border: 1px solid #e5e5ee;
-    border-radius: 10px;
+    background: var(--color-neutral-bg);
+    border: 1px solid #e0d9ff;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-elevated);
     padding: 14px 18px;
     margin-bottom: 10px;
     text-decoration: none;
-    color: #222;
-    transition: transform 0.1s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    color: var(--color-text);
+    transition: transform 0.1s ease, border-color 0.15s ease;
 }
 .workout-card:hover {
-    border-color: #7c4dff;
-    box-shadow: 0 4px 12px rgba(124,77,255,0.15);
+    border-color: var(--color-brand);
     transform: translateY(-1px);
 }
 .workout-card .wc-title {
@@ -622,8 +622,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .dashboard-panel {
     background: #fbfaff;
     border: 1px solid #e0d9ff;
-    border-radius: 18px;
-    box-shadow: 0 4px 20px rgba(124, 77, 255, 0.08);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-elevated);
     padding: 22px 24px;
     margin-bottom: 20px;
 }
@@ -1253,6 +1253,58 @@ v4 trae responsive:true por defecto y debería reescalarlo solo, pero eso
 depende de que el script del CDN cargue bien -- esto cubre el caso de
 que falle o vaya lento, coste cero. */
 .progress-chart {
+    max-width: 100%;
+    height: auto;
+}
+
+/* ===== Piloto de rediseño: index.html ===== */
+
+.week-divider {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9a8fd6;
+    margin: 24px 0 10px;
+}
+
+.wc-exercises {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.wc-exercises .set-tag {
+    display: inline-block;
+    background: #f5f3ff;
+    color: #5a4fcf;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.wc-exercises .set-tag.wc-more-tag {
+    background: transparent;
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+.wc-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+.wc-meta .icon {
+    color: #b7b2c9;
+}
+
+/* Misma red de seguridad que .progress-chart para el <canvas> del gráfico
+de peso: sin width/height HTML fijos y con maintainAspectRatio:false,
+depende de que Chart.js cargue bien -- coste cero. */
+#weightMiniChart {
     max-width: 100%;
     height: auto;
 }
