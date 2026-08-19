@@ -35,5 +35,26 @@
 <svg class="icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5-13-7.5z"/></svg>
 {% elif name == 'grip' %}
 <svg class="icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>
+{% elif name == 'search' %}
+<svg class="icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+{% elif name == 'close' %}
+<svg class="icon" width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
 {% endif %}
+{% endmacro %}
+
+{% macro exercise_picker_sheet() %}
+<div class="sheet-backdrop" id="exercisePickerBackdrop" onclick="closeExercisePicker()"></div>
+<div class="bottom-sheet" id="exercisePickerSheet" role="dialog" aria-modal="true" aria-labelledby="exercisePickerTitle">
+    <div class="bottom-sheet-grabber" aria-hidden="true"></div>
+    <div class="bottom-sheet-header">
+        <h3 id="exercisePickerTitle" class="bottom-sheet-title">Elegir ejercicio</h3>
+        <button type="button" class="sheet-close-btn" onclick="closeExercisePicker()" aria-label="Cerrar">{{ icon('close', 20) }}</button>
+    </div>
+    <div class="bottom-sheet-search-wrap">
+        {{ icon('search', 18) }}
+        <input type="text" id="exercisePickerSearchInput" class="bottom-sheet-search-input"
+               placeholder="Buscar en el catálogo..." autocomplete="off" oninput="searchExercises(this.value)">
+    </div>
+    <div class="bottom-sheet-body" id="exercisePickerResults"></div>
+</div>
 {% endmacro %}

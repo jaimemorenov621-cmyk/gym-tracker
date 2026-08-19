@@ -1012,7 +1012,7 @@ def api_search_exercises():
         for word in q.split()
     ]
     results = db.session.scalars(
-        sa.select(Exercise).where(sa.and_(*word_conditions)).limit(8)
+        sa.select(Exercise).where(sa.and_(*word_conditions)).limit(24)
     ).all()
     return jsonify(
         [
