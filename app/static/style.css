@@ -1177,3 +1177,56 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     opacity: 1;
 }
 
+/* ===== Piloto de rediseño: routines.html ===== */
+
+.routine-card .exercise-header {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.routine-exercise-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+.routine-exercise-tags .set-tag {
+    display: inline-block;
+    background: #f5f3ff;
+    color: #5a4fcf;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.routine-exercise-tags-empty {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.routine-card-last {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+.routine-card-last .icon {
+    color: #b7b2c9;
+}
+
+.routine-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    color: var(--color-text-muted);
+    padding: 32px 18px;
+}
+.routine-empty-state p {
+    margin: 0;
+    font-style: italic;
+}
+
