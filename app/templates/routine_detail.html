@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block content %}
-    <h1>{{ routine.name }}</h1>
+    <h1 style="font-weight:800; letter-spacing:-0.02em;">{{ routine.name }}</h1>
 
     <form action="{{ url_for('start_routine', routine_id=routine.id) }}" method="post" style="display:inline">
         {{ empty_form.hidden_tag() }}
-        <button type="submit" class="btn">▶ Iniciar entrenamiento</button>
+        <button type="submit" class="btn">{{ macros.icon('play', 16) }} Iniciar entrenamiento</button>
     </form>
     <form action="{{ url_for('delete_routine', routine_id=routine.id) }}" method="post" style="display:inline"
         onsubmit="return confirm('¿Eliminar esta rutina?');">
@@ -14,22 +15,22 @@
 
     <hr>
     <h2>Ejercicios planificados</h2>
-    <p><small>Arrastra ⠿ para reordenar.</small></p>
+    <p><small>Arrastra {{ macros.icon('grip', 14) }} para reordenar.</small></p>
     <ul id="exerciseList" style="list-style:none; padding:0;">
         {% for ex in exercises %}
             <li class="exercise-row" data-id="{{ ex.id }}">
                 <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span class="drag-handle">⠿</span>
+                    <span class="drag-handle">{{ macros.icon('grip') }}</span>
                     <strong>{{ ex.exercise|title }}</strong>
                     <span class="set-tag">{{ ex.target_sets }}x{{ ex.target_reps }}</span>
                     {% set n = exercise_notes_map.get(ex.exercise) %}
                     <a class="rest-badge" href="{{ url_for('exercise_notes', name=ex.exercise) }}">
-                        ⏱ {{ format_rest(n.default_rest_seconds) if n and n.default_rest_seconds else '1min 30s' }}
+                        {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) if n and n.default_rest_seconds else '1min 30s' }}
                     </a>
                 </span>
                 <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" style="display:inline">
                     {{ empty_form.hidden_tag() }}
-                    <button type="submit" class="btn-icon" title="Quitar ejercicio">🗑️</button>
+                    <button type="submit" class="btn-icon" title="Quitar ejercicio" aria-label="Quitar ejercicio">{{ macros.icon('trash') }}</button>
                 </form>
             </li>
         {% else %}

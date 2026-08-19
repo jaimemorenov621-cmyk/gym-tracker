@@ -213,17 +213,28 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #f8f8fc;
-    border: 1px solid #e5e5ee;
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 8px;
+    background: white;
+    border: 1px solid #e0d9ff;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-elevated);
+    padding: 14px 18px;
+    margin-bottom: 10px;
 }
 .drag-handle {
     cursor: grab;
     color: #999;
     margin-right: 10px;
-    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+}
+.exercise-row .set-tag {
+    display: inline-block;
+    background: #f5f3ff;
+    color: #5a4fcf;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
 }
 
 .btn-icon {
