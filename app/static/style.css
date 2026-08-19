@@ -1230,3 +1230,30 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     font-style: italic;
 }
 
+/* ===== Piloto de rediseño: exercise_progress.html ===== */
+
+/* .notes-list también se usa en workout_detail.html -- estas reglas solo
+tocan espaciado vertical (quitan el margen por defecto del <ul> del
+navegador), no ancho/bullets/color, así que son seguras -- y una mejora,
+no una regresión -- para ambas plantillas. */
+.notes-list {
+    margin: 0;
+    padding-left: 20px;
+}
+.notes-list li {
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+.notes-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* Red de seguridad CSS para el <canvas width="600"> del gráfico: Chart.js
+v4 trae responsive:true por defecto y debería reescalarlo solo, pero eso
+depende de que el script del CDN cargue bien -- esto cubre el caso de
+que falle o vaya lento, coste cero. */
+.progress-chart {
+    max-width: 100%;
+    height: auto;
+}
+

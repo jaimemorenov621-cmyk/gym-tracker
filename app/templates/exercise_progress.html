@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1 style="display:flex; align-items:center; gap:12px;">
+    <h1 style="display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:-0.02em;">
         {% set img = get_exercise_image(exercise) %}
         {% if img %}
             <img src="{{ img }}" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
@@ -12,18 +12,18 @@
     </h1>
 
     {% if stagnation %}
-        <div class="card" style="border-left:4px solid #c62828;">
+        <div class="card card-elevated" style="border-left:4px solid #c62828;">
             ⚠️ <strong>Posible estancamiento:</strong> no has batido tu récord en las últimas {{ threshold }} sesiones de {{ exercise|title }}.
         </div>
     {% endif %}
     {% if improvement %}
-        <div class="card" style="border-left:4px solid #22c98c;">
+        <div class="card card-elevated" style="border-left:4px solid #22c98c;">
             🎉 <strong>¡Nuevo récord!</strong> Tu última sesión superó tu mejor marca anterior.
         </div>
     {% endif %}
 
     {% if catalog_exercise %}
-        <div class="card">
+        <div class="card card-elevated">
             <h3 style="margin-top:0;">🌐 Nombre en español</h3>
             <form action="{{ url_for('update_exercise_translation', name=exercise) }}" method="post" style="display:flex; gap:8px;">
                 {{ translation_form.hidden_tag() }}
@@ -33,7 +33,7 @@
         </div>
     {% endif %}
 
-    <div class="card">
+    <div class="card card-elevated">
         <h3 style="margin-top:0;">📝 Notas técnicas</h3>
         {% if exercise_note and exercise_note.notes %}
             <ul class="notes-list">
@@ -45,12 +45,12 @@
             <p><em>Sin notas todavía.</em></p>
         {% endif %}
         <a class="btn-outline" href="{{ url_for('exercise_notes', name=exercise) }}">
-            📝 Editar notas y descanso{% if exercise_note and exercise_note.default_rest_seconds %} (⏱ {{ format_rest(exercise_note.default_rest_seconds) }}){% endif %}
+            {{ macros.icon('note') }} Editar notas y descanso{% if exercise_note and exercise_note.default_rest_seconds %} ({{ macros.icon('stopwatch') }} {{ format_rest(exercise_note.default_rest_seconds) }}){% endif %}
         </a>
     </div>
 
-    <div class="card">
-        <canvas id="progressChart" width="600" height="280"></canvas>
+    <div class="card card-elevated">
+        <canvas id="progressChart" class="progress-chart" width="600" height="280"></canvas>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
@@ -73,7 +73,7 @@
 
     <hr>
     {% for s in sessions %}
-        <div class="card">
+        <div class="card card-elevated">
             <h3 style="margin-top:0;">{{ s.timestamp.strftime('%d/%m/%Y %H:%M') }} {% if s.is_pr %}<span style="color:#ffb300;">🏆</span>{% endif %}</h3>
             {% for e in s.sets %}
                 <div class="set-row">

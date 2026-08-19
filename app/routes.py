@@ -511,7 +511,7 @@ def exercise_progress(name):
     chart_colors = []
     for s in session_list:
         if s["is_pr"]:
-            chart_colors.append("#2e7d32")
+            chart_colors.append("#17a973")
         elif id(s) in lastN_ids and stagnation:
             chart_colors.append("#c62828")
         else:
