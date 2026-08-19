@@ -379,7 +379,20 @@ select.cell-input {
     appearance: menulist;
 }
 .cell-input:focus { background: #ece7ff; outline: none; }
-.set-num { font-weight: 700; color: #3d2b8a; }
+.set-num { font-weight: 700; color: #3d2b8a; position: relative; }
+.pr-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin: 2px auto 0;
+    border-radius: 50%;
+    background: #ffb300;
+    font-size: 0.65rem;
+    line-height: 1;
+    box-shadow: 0 1px 3px rgba(255, 179, 0, 0.5);
+}
 .set-previous { font-size: 0.8rem; color: #999; white-space: nowrap; }
 .delete-set-btn { background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; }
 .set-check-btn {
@@ -450,6 +463,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
         text-overflow: ellipsis;
     }
     .set-check-btn { width: 24px; height: 24px; border-radius: 6px; }
+    .pr-badge { width: 13px; height: 13px; font-size: 0.55rem; margin-top: 1px; }
 
     .set-table-wrap { position: relative; }
     .set-table tr[id^="row-"] { transition: transform 0.2s ease; touch-action: pan-y; }

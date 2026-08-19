@@ -285,10 +285,13 @@ def api_update_set(set_id):
         return jsonify({"ok": False}), 403
     data = request.get_json(silent=True) or {}
     scale = current_user.effort_scale
+    pr_relevant_changed = False
     if "weight" in data:
         entry.weight = max(0, min(500, float(data["weight"] or 0)))
+        pr_relevant_changed = True
     if "reps" in data:
         entry.reps = max(0, min(30, int(float(data["reps"] or 0))))
+        pr_relevant_changed = True
     if "effort" in data:
         effort = data["effort"]
         if scale == "rir":
@@ -297,23 +300,33 @@ def api_update_set(set_id):
         elif scale == "rpe":
             entry.rpe = int(effort) if effort not in (None, "") else None
             entry.rir = None
+        pr_relevant_changed = True
     if "set_type" in data:
         entry.set_type = data["set_type"]
+
+    just_completed = False
     if "completed" in data:
         if data["completed"] and entry.reps == 0:
             db.session.rollback()
             return jsonify(
                 {"ok": False, "error": "No puedes confirmar una serie con 0 repeticiones."}
             ), 400
+        was_completed = entry.completed
         entry.completed = bool(data["completed"])
+        just_completed = entry.completed and not was_completed
+        if not entry.completed and entry.is_pr:
+            entry.is_pr = False
+
+    # Mismo recálculo tanto al completar como al corregir peso/reps/esfuerzo
+    # de una serie ya completada -- nunca al editar una que no lo está.
+    if entry.completed and (just_completed or pr_relevant_changed):
+        recompute_pr_badges(entry)
+
     db.session.commit()
 
-    response = {"ok": True}
-    if data.get("completed"):
+    response = {"ok": True, "is_pr": bool(entry.is_pr)}
+    if just_completed:
         response["rest_seconds"] = get_rest_seconds(entry.exercise)
-        session_list, _, _ = get_exercise_sessions(entry.exercise)
-        if session_list and session_list[-1]["is_pr"] and session_list[-1]["best_set"].id == entry.id:
-            response["is_pr"] = True
     return jsonify(response)
 
 
@@ -1261,12 +1274,20 @@ def get_previous_sets_map(workout, exercise_names):
     return result
 
 
-def get_exercise_sessions(name):
-    """Sesiones históricas de `name` para current_user, con 1RM estimado, PRs y estancamiento."""
+def get_exercise_sessions(name, user_id=None):
+    """Sesiones históricas de `name`, con 1RM estimado, PRs y estancamiento.
+    Por defecto usa current_user; acepta user_id explícito para poder
+    llamarse fuera de un request autenticado (backfill)."""
+    if user_id is None:
+        user_id = current_user.id
+        threshold = current_user.stagnation_threshold
+    else:
+        threshold = db.session.get(User, user_id).stagnation_threshold
+
     query = (
         sa.select(Workout, SetEntry)
         .join(SetEntry, SetEntry.workout_id == Workout.id)
-        .where(Workout.user_id == current_user.id, SetEntry.exercise == name)
+        .where(Workout.user_id == user_id, SetEntry.exercise == name)
         .order_by(Workout.timestamp.asc())
     )
     rows = db.session.execute(query).all()
@@ -1285,7 +1306,6 @@ def get_exercise_sessions(name):
         s["is_pr"] = s["best_1rm"] > running_max
         running_max = max(running_max, s["best_1rm"])
 
-    threshold = current_user.stagnation_threshold
     stagnation = False
     improvement = False
     if len(session_list) >= threshold:
@@ -1294,6 +1314,40 @@ def get_exercise_sessions(name):
         improvement = lastN[-1]["is_pr"]
 
     return session_list, stagnation, improvement
+
+
+def apply_pr_flags_for_session(session):
+    """Persiste is_pr en la serie ganadora de una sesión (dict de
+    get_exercise_sessions) y lo limpia en el resto de esa MISMA sesión.
+    Compartida entre completar/editar una serie y el backfill masivo."""
+    changed = 0
+    for s in session["sets"]:
+        should_be_pr = session["is_pr"] and s.id == session["best_set"].id
+        if s.is_pr != should_be_pr:
+            s.is_pr = should_be_pr
+            changed += 1
+    return changed
+
+
+def count_pending_pr_changes(session):
+    """Versión de solo lectura de apply_pr_flags_for_session -- no muta
+    nada, solo cuenta. Para el modo simulación del backfill."""
+    return sum(
+        1
+        for s in session["sets"]
+        if s.is_pr != (session["is_pr"] and s.id == session["best_set"].id)
+    )
+
+
+def recompute_pr_badges(entry):
+    """Recalcula y persiste qué SetEntry de la sesión de `entry` (mismo
+    workout+ejercicio) debe lucir la medalla. Se llama tanto al completar
+    una serie como al editar peso/reps/esfuerzo de una ya completada.
+    No hace commit -- el llamador decide cuándo."""
+    session_list, _, _ = get_exercise_sessions(entry.exercise, user_id=entry.workout.user_id)
+    current = next((s for s in session_list if s["sets"][0].workout_id == entry.workout_id), None)
+    if current is not None:
+        apply_pr_flags_for_session(current)
 
 
 def compute_strength_change():
