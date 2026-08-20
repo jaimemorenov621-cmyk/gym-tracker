@@ -319,10 +319,29 @@ body {
     min-width: 220px;
     text-align: center;
 }
+.rt-ring-wrap {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    margin: 6px auto;
+}
+.rt-ring-track { stroke: #ece7ff; }
+.rt-ring-fill {
+    stroke: var(--color-brand);
+    stroke-linecap: round;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .rt-ring-fill { transition: stroke-dashoffset 1s linear; }
+}
 .rest-toast .rt-time {
-    font-size: 1.8rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.1rem;
     font-weight: 800;
-    margin: 6px 0;
 }
 .rest-toast .rt-adjust {
     display: flex;
