@@ -175,6 +175,10 @@ class FinishWorkoutForm(FlaskForm):
     submit = SubmitField("Guardar entrenamiento")
 
 
+class NotesForm(FlaskForm):
+    notes = TextAreaField("Notas generales", validators=[Length(max=1000)])
+
+
 class ExerciseNoteForm(FlaskForm):
     notes = TextAreaField("Notas (una línea = un punto)", validators=[Length(max=1000)])
     rest_minutes = IntegerField(

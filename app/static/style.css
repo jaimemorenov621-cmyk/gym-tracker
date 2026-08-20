@@ -91,15 +91,6 @@ body {
         box-shadow: none;
     }
 }
-.btn-nav-primary {
-    background: linear-gradient(135deg, #7c4dff, #536dfe);
-    color: white;
-}
-@media (hover: hover) {
-    .btn-nav-primary:hover {
-        color: white;
-    }
-}
 
 .top-nav a { margin-right: 6px; }
 
@@ -301,7 +292,9 @@ body {
     border-radius: 8px;
     margin-bottom: 12px;
     font-weight: 600;
+    transition: opacity 0.4s ease-out;
 }
+.flash.flash-fade { opacity: 0; }
 
 
 .rest-toast {
@@ -760,6 +753,25 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 .dash-weight-empty a { color: #7c4dff; font-weight: 600; }
 
+.dash-notes {
+    margin-top: 14px;
+    background: white;
+    border: 1px solid #ece7ff;
+    border-radius: 14px;
+    padding: 10px 14px;
+}
+.dash-notes textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ece7ff;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: vertical;
+    margin-bottom: 8px;
+}
+
 .calendar-grid { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 6px; }
 .calendar-col { display: flex; flex-direction: column; gap: 3px; }
 .calendar-col.new-month { margin-left: 8px; }
@@ -902,8 +914,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 @media (max-width: 600px) {
     body { padding-bottom: 76px; }
 
-    .top-nav .btn-nav,
-    .top-nav .btn-nav-primary {
+    .top-nav .btn-nav {
         display: none;
     }
 
@@ -988,6 +999,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 @media (hover: hover) {
     .bottom-nav-profile-menu a:hover { background: #f5f3ff; }
 }
+.bottom-nav-profile-menu a:active { background: #ece7ff; }
 
 /* ===== Selector de ejercicios (bottom sheet) ===== */
 

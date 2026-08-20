@@ -22,6 +22,7 @@ from app.forms import (
     ExerciseTranslationForm,
     WeightForm,
     AiCheckinForm,
+    NotesForm,
 )
 from app.models import (
     User,
@@ -142,6 +143,9 @@ def index():
     strength_result = compute_strength_change()
     strength_change, strength_window_days = strength_result if strength_result else (None, None)
 
+    notes_form = NotesForm()
+    notes_form.notes.data = current_user.notes or ""
+
     return render_template(
         "index.html",
         title="Inicio",
@@ -157,7 +161,19 @@ def index():
         weight_chart_values=[e.weight for e in weight_entries],
         muscle_colors=compute_muscle_intensity(),
         muscle_svg=build_muscle_svg_parts(current_user.sex),
+        notes_form=notes_form,
     )
+
+
+@app.route("/notes", methods=["POST"])
+@login_required
+def update_notes():
+    form = NotesForm()
+    if form.validate_on_submit():
+        current_user.notes = form.notes.data
+        db.session.commit()
+        flash("Notas guardadas.")
+    return redirect(url_for("index"))
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -314,11 +330,6 @@ def api_update_set(set_id):
 
     just_completed = False
     if "completed" in data:
-        if data["completed"] and entry.reps == 0:
-            db.session.rollback()
-            return jsonify(
-                {"ok": False, "error": "No puedes confirmar una serie con 0 repeticiones."}
-            ), 400
         was_completed = entry.completed
         entry.completed = bool(data["completed"])
         just_completed = entry.completed and not was_completed

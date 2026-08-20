@@ -19,6 +19,7 @@ class User(UserMixin, db.Model):
     sex: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10))
     height_cm: so.Mapped[Optional[int]] = so.mapped_column()
     training_goal: so.Mapped[Optional[str]] = so.mapped_column(sa.String(20))
+    notes: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

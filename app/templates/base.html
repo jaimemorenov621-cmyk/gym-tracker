@@ -24,7 +24,6 @@
         {% if current_user.is_anonymous %}
             <a class="btn btn-nav" href="{{ url_for('login') }}">Login</a>
         {% else %}
-            <a class="btn btn-nav-primary" href="{{ url_for('new_workout') }}">+ Nuevo entrenamiento</a>
             <a class="btn btn-nav" href="{{ url_for('routines') }}">Rutinas</a>
             <a class="btn btn-nav" href="{{ url_for('ai_analysis') }}">IA</a>
             <a class="btn btn-nav" href="{{ url_for('weight') }}">Peso</a>
@@ -34,16 +33,11 @@
     </nav>
 
     {% if current_user.is_authenticated %}
-        {% set routine_endpoints = ('routines', 'routine_detail', 'new_routine') %}
-        {% set workout_endpoints = ('new_workout', 'workout_detail') %}
+        {% set routine_endpoints = ('routines', 'routine_detail', 'new_routine', 'new_workout', 'workout_detail') %}
         <nav class="bottom-nav">
             <a class="bottom-nav-item{% if request.endpoint == 'index' %} active{% endif %}" href="{{ url_for('index') }}">
                 {{ macros.icon('home', 22) }}
                 <span>Inicio</span>
-            </a>
-            <a class="bottom-nav-item{% if request.endpoint in workout_endpoints %} active{% endif %}" href="{{ url_for('new_workout') }}">
-                {{ macros.icon('plus-circle', 22) }}
-                <span>Nuevo</span>
             </a>
             <a class="bottom-nav-item{% if request.endpoint in routine_endpoints %} active{% endif %}" href="{{ url_for('routines') }}">
                 {{ macros.icon('list', 22) }}
@@ -63,14 +57,17 @@
                     <span>Más</span>
                 </button>
                 <div class="bottom-nav-profile-menu" id="bottomNavProfileMenu">
-                    <a href="{{ url_for('settings') }}">Configuración</a>
-                    <a href="{{ url_for('logout') }}">Salir</a>
+                    <a href="{{ url_for('settings') }}" onclick="closeProfileMenu()">Configuración</a>
+                    <a href="{{ url_for('logout') }}" onclick="closeProfileMenu()">Salir</a>
                 </div>
             </div>
         </nav>
         <script>
             function toggleProfileMenu() {
                 document.getElementById('bottomNavProfileMenu').classList.toggle('open');
+            }
+            function closeProfileMenu() {
+                document.getElementById('bottomNavProfileMenu').classList.remove('open');
             }
             document.addEventListener('click', function (e) {
                 const wrap = document.querySelector('.bottom-nav-profile');
@@ -92,6 +89,14 @@
             {% for message in messages %}
                 <div class="flash">{{ message }}</div>
             {% endfor %}
+            <script>
+                setTimeout(function () {
+                    document.querySelectorAll('.flash').forEach(function (el) {
+                        el.classList.add('flash-fade');
+                        setTimeout(function () { el.remove(); }, 400);
+                    });
+                }, 4000);
+            </script>
         {% endif %}
     {% endwith %}
     {% block content %}
