@@ -1,6 +1,6 @@
 {% macro exercise_icon_fallback(size=56, radius=8) %}
 <div style="width:{{ size }}px; height:{{ size }}px; border-radius:{{ radius }}px; background:#ececf7; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-    <svg width="{{ (size / 2) | round | int }}" height="{{ (size / 2) | round | int }}" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="19" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="5" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="17" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="7" y="11" width="10" height="2" fill="#7c4dff"/></svg>
+    <img src="{{ url_for('static', filename='icons/logo-mark.png') }}" alt="" style="max-width:{{ (size * 0.6) | round | int }}px; max-height:{{ (size * 0.6) | round | int }}px; object-fit:contain;">
 </div>
 {% endmacro %}
 

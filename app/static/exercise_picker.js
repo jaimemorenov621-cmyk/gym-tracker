@@ -12,7 +12,7 @@ const MUSCLE_OPTIONS = [
 
 function resultRowHTML(ex) {
     return '<div class="exercise-result-row" onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')">' +
-        (ex.image ? '<img class="exercise-result-thumb" src="' + ex.image + '">' : '<div class="exercise-result-thumb-fallback"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="19" y="10" width="3" height="4" rx="1" fill="#7c4dff"/><rect x="5" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="17" y="8" width="2" height="8" rx="1" fill="#7c4dff"/><rect x="7" y="11" width="10" height="2" fill="#7c4dff"/></svg></div>') +
+        (ex.image ? '<img class="exercise-result-thumb" src="' + ex.image + '">' : '<div class="exercise-result-thumb-fallback"><img src="/static/icons/logo-mark.png" alt="" style="max-width:26px; max-height:26px; object-fit:contain;"></div>') +
         '<div><div class="exercise-result-name">' + ex.name + '</div>' +
         (ex.muscles ? '<div class="exercise-result-muscles">' + ex.muscles + '</div>' : '') +
         '</div></div>';
