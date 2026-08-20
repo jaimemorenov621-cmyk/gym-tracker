@@ -239,10 +239,13 @@ def add_exercise_to_workout(workout_id):
         return redirect(url_for("index"))
     form = NewExerciseForm()
     if form.validate_on_submit():
+        scale = current_user.effort_scale
         entry = SetEntry(
             exercise=canonicalize_exercise_name(form.exercise.data),
             weight=0,
             reps=0,
+            rir=2 if scale == "rir" else None,
+            rpe=8 if scale == "rpe" else None,
             set_type="normal",
             workout=workout,
         )
@@ -262,7 +265,7 @@ def api_create_set(workout_id):
     if not exercise:
         return jsonify({"ok": False}), 400
 
-    weight = max(0, min(500, float(data.get("weight") or 0)))
+    weight = max(0, min(500, float(str(data.get("weight") or 0).replace(",", "."))))
     reps = max(0, min(30, int(float(data.get("reps") or 0))))
     effort = data.get("effort")
     scale = current_user.effort_scale
@@ -271,8 +274,8 @@ def api_create_set(workout_id):
         exercise=exercise,
         weight=weight,
         reps=reps,
-        rir=int(effort) if scale == "rir" and effort not in (None, "") else None,
-        rpe=int(effort) if scale == "rpe" and effort not in (None, "") else None,
+        rir=max(0, min(10, int(effort))) if scale == "rir" and effort not in (None, "") else None,
+        rpe=max(0, min(10, int(effort))) if scale == "rpe" and effort not in (None, "") else None,
         set_type=data.get("set_type", "normal"),
         workout=workout,
     )
@@ -292,7 +295,7 @@ def api_update_set(set_id):
     scale = current_user.effort_scale
     pr_relevant_changed = False
     if "weight" in data:
-        entry.weight = max(0, min(500, float(data["weight"] or 0)))
+        entry.weight = max(0, min(500, float(str(data["weight"] or 0).replace(",", "."))))
         pr_relevant_changed = True
     if "reps" in data:
         entry.reps = max(0, min(30, int(float(data["reps"] or 0))))
@@ -300,10 +303,10 @@ def api_update_set(set_id):
     if "effort" in data:
         effort = data["effort"]
         if scale == "rir":
-            entry.rir = int(effort) if effort not in (None, "") else None
+            entry.rir = max(0, min(10, int(effort))) if effort not in (None, "") else None
             entry.rpe = None
         elif scale == "rpe":
-            entry.rpe = int(effort) if effort not in (None, "") else None
+            entry.rpe = max(0, min(10, int(effort))) if effort not in (None, "") else None
             entry.rir = None
         pr_relevant_changed = True
     if "set_type" in data:

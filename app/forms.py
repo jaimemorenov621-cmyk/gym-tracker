@@ -9,6 +9,15 @@ from wtforms import (
     SelectField,
     TextAreaField,
 )
+
+
+class CommaFloatField(FloatField):
+    """FloatField que acepta coma o punto como separador decimal."""
+
+    def process_formdata(self, valuelist):
+        if valuelist and valuelist[0]:
+            valuelist = [valuelist[0].replace(",", ".")]
+        super().process_formdata(valuelist)
 from wtforms.validators import (
     DataRequired,
     InputRequired,
@@ -99,7 +108,7 @@ class AiCheckinForm(FlaskForm):
 
 
 class WeightForm(FlaskForm):
-    weight = FloatField(
+    weight = CommaFloatField(
         "Peso (kg)", validators=[DataRequired(), NumberRange(min=20, max=400)]
     )
     submit = SubmitField("Guardar")
