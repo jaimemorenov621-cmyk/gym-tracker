@@ -139,10 +139,10 @@
                 {% if item.exercise_names %}
                     <div class="wc-exercises">
                         {% for name in item.exercise_names[:4] %}
-                            <span class="set-tag">{{ name }}</span>
+                            <span class="pill">{{ name }}</span>
                         {% endfor %}
                         {% if item.exercise_names|length > 4 %}
-                            <span class="set-tag wc-more-tag">+{{ item.exercise_names|length - 4 }}</span>
+                            <span class="pill pill-muted">+{{ item.exercise_names|length - 4 }}</span>
                         {% endif %}
                     </div>
                 {% endif %}

@@ -3,7 +3,7 @@
     <h1>🔍 Análisis de IA</h1>
 
     {% if latest %}
-        <p class="set-tag">📅 {{ latest.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        <p class="pill">📅 {{ latest.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
 
         {% if analysis %}
             <div class="card analysis-summary">

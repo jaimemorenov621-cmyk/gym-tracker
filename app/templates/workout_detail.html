@@ -55,9 +55,9 @@
             <h3 style="margin-top:0;">📋 Plan de la rutina</h3>
             {% for p in routine_plan %}
                 <div class="plan-row">
-                    <span class="set-tag">{{ p.exercise|title }}</span>
-                    <span class="set-tag">{{ p.target_sets }}x{{ p.target_reps }}</span>
-                    <span class="set-tag{% if p.done >= p.target_sets %} plan-row-done{% endif %}"
+                    <span class="pill pill-label">{{ p.exercise|title }}</span>
+                    <span class="pill">{{ p.target_sets }}x{{ p.target_reps }}</span>
+                    <span class="pill{% if p.done >= p.target_sets %} pill-success{% endif %}"
                           data-plan-exercise="{{ p.exercise|trim|lower }}"
                           data-done="{{ p.done }}"
                           data-target="{{ p.target_sets }}">{{ p.done }}/{{ p.target_sets }}</span>
@@ -330,7 +330,7 @@
             const done = Math.max(0, Math.min(target, parseInt(pill.dataset.done, 10) + delta));
             pill.dataset.done = done;
             pill.textContent = done + '/' + target;
-            pill.classList.toggle('plan-row-done', done >= target);
+            pill.classList.toggle('pill-success', done >= target);
 
             let totalDone = 0, totalTarget = 0;
             document.querySelectorAll('.plan-row [data-plan-exercise]').forEach(p => {

@@ -22,7 +22,7 @@
                 <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
                     <strong>{{ ex.exercise|title }}</strong>
-                    <span class="set-tag">{{ ex.target_sets }}x{{ ex.target_reps }}</span>
+                    <span class="pill">{{ ex.target_sets }}x{{ ex.target_reps }}</span>
                     {% set n = exercise_notes_map.get(ex.exercise) %}
                     <a class="rest-badge" href="{{ url_for('exercise_notes', name=ex.exercise) }}">
                         {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) if n and n.default_rest_seconds else '1min 30s' }}

@@ -79,10 +79,10 @@
                 <div class="set-row">
                     <span class="set-weight">{{ e.weight }}kg</span>
                     <span>x {{ e.reps }} reps</span>
-                    {% if e.rir is not none %}<span class="set-tag">RIR {{ e.rir }}</span>{% elif e.rpe is not none %}<span class="set-tag">RPE {{ e.rpe }}</span>{% endif %}
+                    {% if e.rir is not none %}<span class="pill">RIR {{ e.rir }}</span>{% elif e.rpe is not none %}<span class="pill">RPE {{ e.rpe }}</span>{% endif %}
                 </div>
             {% endfor %}
-            <span class="set-tag">1RM: {{ s.best_1rm|round(1) }}kg</span>
+            <span class="pill">1RM: {{ s.best_1rm|round(1) }}kg</span>
         </div>
     {% endfor %}
 {% endblock %}

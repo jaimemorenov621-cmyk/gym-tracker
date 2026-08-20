@@ -254,13 +254,28 @@ body {
     margin: -12px -2px -12px -14px;
     touch-action: none;
 }
-.exercise-row .set-tag {
+.pill {
     display: inline-block;
     background: #f5f3ff;
     color: #5a4fcf;
     padding: 4px 12px;
     border-radius: 999px;
     font-size: 0.85rem;
+    font-weight: 600;
+}
+.pill-label {
+    background: transparent;
+    color: var(--color-text, #222);
+    font-weight: 700;
+    padding: 4px 4px 4px 0;
+}
+.pill-success {
+    background: #e8f8f0;
+    color: var(--color-success-dark);
+}
+.pill-muted {
+    background: transparent;
+    color: var(--color-text-muted);
     font-weight: 600;
 }
 
@@ -342,15 +357,6 @@ body {
     font-size: 0.95rem;
 }
 .set-row .set-weight { font-weight: 700; color: #3d2b8a; min-width: 70px; }
-.set-row .set-tag {
-    display: inline-block;
-    background: #f5f3ff;
-    color: #5a4fcf;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600
-}
 
 .form-table {
     display: grid;
@@ -825,25 +831,6 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     margin-bottom: 6px;
     flex-wrap: wrap;
 }
-.plan-row .set-tag {
-    display: inline-block;
-    background: #f5f3ff;
-    color: #5a4fcf;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-.plan-row .set-tag:first-child {
-    background: transparent;
-    color: var(--color-text, #222);
-    font-weight: 700;
-    padding: 4px 4px 4px 0;
-}
-.plan-row .set-tag.plan-row-done {
-    background: #e8f8f0;
-    color: var(--color-success-dark);
-}
 
 .exercise-header {
     display: flex;
@@ -1224,15 +1211,6 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     gap: 6px;
     margin-top: 10px;
 }
-.routine-exercise-tags .set-tag {
-    display: inline-block;
-    background: #f5f3ff;
-    color: #5a4fcf;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
 .routine-exercise-tags-empty {
     color: var(--color-text-muted);
     font-size: 0.9rem;
@@ -1307,20 +1285,6 @@ que falle o vaya lento, coste cero. */
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 8px;
-}
-.wc-exercises .set-tag {
-    display: inline-block;
-    background: #f5f3ff;
-    color: #5a4fcf;
-    padding: 4px 12px;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-}
-.wc-exercises .set-tag.wc-more-tag {
-    background: transparent;
-    color: var(--color-text-muted);
-    font-weight: 600;
 }
 
 .wc-meta {
