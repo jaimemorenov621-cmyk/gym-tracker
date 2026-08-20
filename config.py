@@ -8,4 +8,5 @@ class Config:
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         "DATABASE_URL"
     ) or "sqlite:///" + os.path.join(basedir, "app.db")
+    SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
