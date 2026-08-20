@@ -64,14 +64,19 @@ function startCreateExercise() {
 
 function renderCreateExerciseForm() {
     const box = document.getElementById('exercisePickerResults');
-    const muscleCheckboxes = MUSCLE_OPTIONS.map(([value, label]) =>
-        '<label><input type="checkbox" value="' + value + '"> ' + label + '</label>'
+    const primaryCheckboxes = MUSCLE_OPTIONS.map(([value, label]) =>
+        '<label><input type="checkbox" class="new-ex-primary" value="' + value + '"> ' + label + '</label>'
+    ).join('');
+    const secondaryCheckboxes = MUSCLE_OPTIONS.map(([value, label]) =>
+        '<label><input type="checkbox" class="new-ex-secondary" value="' + value + '"> ' + label + '</label>'
     ).join('');
     box.innerHTML =
         '<div class="exercise-picker-create-form">' +
         '<input id="newExName" type="text" value="' + lastSearchQuery.replace(/"/g, '&quot;') + '" placeholder="Nombre del ejercicio">' +
-        '<div style="font-size:0.75rem; color:#888; margin-bottom:4px;">Músculos principales</div>' +
-        '<div class="exercise-picker-muscle-grid">' + muscleCheckboxes + '</div>' +
+        '<div style="font-size:0.75rem; color:#888; margin-bottom:4px;">Músculos primarios (los que más trabajan)</div>' +
+        '<div class="exercise-picker-muscle-grid">' + primaryCheckboxes + '</div>' +
+        '<div style="font-size:0.75rem; color:#888; margin:8px 0 4px;">Músculos secundarios (opcional)</div>' +
+        '<div class="exercise-picker-muscle-grid">' + secondaryCheckboxes + '</div>' +
         '<input id="newExCategory" type="text" placeholder="Categoría (opcional)">' +
         '<input id="newExEquipment" type="text" placeholder="Equipo (opcional)">' +
         '<div id="newExError" class="exercise-picker-error"></div>' +
@@ -82,10 +87,11 @@ function renderCreateExerciseForm() {
 function submitNewExercise() {
     const box = document.getElementById('exercisePickerResults');
     const name = document.getElementById('newExName').value.trim();
-    const muscles = Array.from(box.querySelectorAll('input[type=checkbox]:checked')).map(c => c.value);
+    const muscles = Array.from(box.querySelectorAll('input.new-ex-primary:checked')).map(c => c.value);
+    const secondaryMuscles = Array.from(box.querySelectorAll('input.new-ex-secondary:checked')).map(c => c.value);
     const errorBox = document.getElementById('newExError');
     if (!name || !muscles.length) {
-        errorBox.textContent = !name ? 'El nombre es obligatorio.' : 'Elige al menos un músculo.';
+        errorBox.textContent = !name ? 'El nombre es obligatorio.' : 'Elige al menos un músculo primario.';
         errorBox.style.display = 'block';
         return;
     }
@@ -95,6 +101,7 @@ function submitNewExercise() {
         body: JSON.stringify({
             name: name,
             muscles: muscles,
+            secondary_muscles: secondaryMuscles,
             category: document.getElementById('newExCategory').value.trim(),
             equipment: document.getElementById('newExEquipment').value.trim(),
         })

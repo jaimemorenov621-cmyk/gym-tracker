@@ -1091,13 +1091,16 @@ def api_create_exercise():
     data = request.get_json(silent=True) or {}
     name = (data.get("name") or "").strip()
     muscles = [m for m in (data.get("muscles") or []) if m in MUSCLE_GROUP_MAP]
+    secondary_muscles = [
+        m for m in (data.get("secondary_muscles") or []) if m in MUSCLE_GROUP_MAP and m not in muscles
+    ]
     category = (data.get("category") or "").strip() or None
     equipment = (data.get("equipment") or "").strip() or None
 
     if not name:
         return jsonify({"ok": False, "error": "El nombre es obligatorio."}), 400
     if not muscles:
-        return jsonify({"ok": False, "error": "Elige al menos un músculo."}), 400
+        return jsonify({"ok": False, "error": "Elige al menos un músculo primario."}), 400
 
     base_slug = _slugify_exercise_name(name)
     new_id = base_slug
@@ -1112,6 +1115,7 @@ def api_create_exercise():
         name_es=name,
         category=category,
         primary_muscles=", ".join(muscles),
+        secondary_muscles=", ".join(secondary_muscles) or None,
         equipment=equipment,
         image_url=None,
     )
@@ -1903,6 +1907,15 @@ def compute_muscle_volumes(days=14):
             group = MUSCLE_GROUP_MAP.get(muscle)
             if group:
                 volumes[group] += stress
+        if catalog.secondary_muscles:
+            for muscle in catalog.secondary_muscles.split(", "):
+                group = MUSCLE_GROUP_MAP.get(muscle)
+                if group:
+                    # Un músculo secundario recibe estímulo real pero no es el
+                    # motor principal del movimiento -- se cuenta a una
+                    # fracción del volumen (40%) en vez de a la par que los
+                    # primarios, para no igualar "protagonista" con "asiste".
+                    volumes[group] += stress * 0.4
     return volumes
 
 

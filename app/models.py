@@ -184,6 +184,7 @@ class Exercise(db.Model):
     name_es: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True)
     category: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     primary_muscles: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
+    secondary_muscles: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
     equipment: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     image_url: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
 
