@@ -36,24 +36,24 @@
         {% set routine_endpoints = ('routines', 'routine_detail', 'new_routine', 'new_workout', 'workout_detail') %}
         <nav class="bottom-nav">
             <a class="bottom-nav-item{% if request.endpoint == 'index' %} active{% endif %}" href="{{ url_for('index') }}">
-                {{ macros.icon('home', 22) }}
+                <span class="nav-icon-wrap">{{ macros.icon('home', 22) }}</span>
                 <span>Inicio</span>
             </a>
             <a class="bottom-nav-item{% if request.endpoint in routine_endpoints %} active{% endif %}" href="{{ url_for('routines') }}">
-                {{ macros.icon('list', 22) }}
+                <span class="nav-icon-wrap">{{ macros.icon('list', 22) }}</span>
                 <span>Rutinas</span>
             </a>
             <a class="bottom-nav-item{% if request.endpoint == 'ai_analysis' %} active{% endif %}" href="{{ url_for('ai_analysis') }}">
-                {{ macros.icon('sparkle', 22) }}
+                <span class="nav-icon-wrap">{{ macros.icon('sparkle', 22) }}</span>
                 <span>IA</span>
             </a>
             <a class="bottom-nav-item{% if request.endpoint == 'weight' %} active{% endif %}" href="{{ url_for('weight') }}">
-                {{ macros.icon('scale', 22) }}
+                <span class="nav-icon-wrap">{{ macros.icon('scale', 22) }}</span>
                 <span>Peso</span>
             </a>
             <div class="bottom-nav-item bottom-nav-profile">
                 <button type="button" class="bottom-nav-profile-btn{% if request.endpoint == 'settings' %} active{% endif %}" onclick="toggleProfileMenu()">
-                    {{ macros.icon('user', 22) }}
+                    <span class="nav-icon-wrap">{{ macros.icon('user', 22) }}</span>
                     <span>Más</span>
                 </button>
                 <div class="bottom-nav-profile-menu" id="bottomNavProfileMenu">
@@ -74,6 +74,18 @@
                 if (wrap && !wrap.contains(e.target)) {
                     document.getElementById('bottomNavProfileMenu').classList.remove('open');
                 }
+            });
+
+            // :active por sí solo no se pinta de forma fiable en todos los
+            // Android/WebView al tocar -- se fuerza a mano con touchstart/
+            // touchend, en vez de depender de que el navegador lo aplique.
+            document.querySelectorAll('.bottom-nav-profile-btn, .bottom-nav-profile-menu a').forEach(function (el) {
+                el.addEventListener('touchstart', function () { el.classList.add('touch-pressed'); }, { passive: true });
+                ['touchend', 'touchcancel'].forEach(function (evt) {
+                    el.addEventListener(evt, function () {
+                        setTimeout(function () { el.classList.remove('touch-pressed'); }, 150);
+                    });
+                });
             });
         </script>
     {% endif %}
@@ -103,20 +115,22 @@
     {% endblock %}
 
     <div id="restTimerBox" class="rest-toast" style="display:none;">
-        <div><strong>⏱ Descanso</strong> <span id="restExerciseName"></span></div>
         <div class="rt-ring-wrap">
-            <svg width="52" height="52" viewBox="0 0 52 52">
-                <circle class="rt-ring-track" cx="26" cy="26" r="22" fill="none" stroke-width="4"/>
-                <circle class="rt-ring-fill" id="restRingFill" cx="26" cy="26" r="22" fill="none" stroke-width="4"
-                        stroke-dasharray="138.2" stroke-dashoffset="0"/>
+            <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle class="rt-ring-track" cx="32" cy="32" r="28" fill="none" stroke-width="5"/>
+                <circle class="rt-ring-fill" id="restRingFill" cx="32" cy="32" r="28" fill="none" stroke-width="5"
+                        stroke-dasharray="175.9" stroke-dashoffset="0"/>
             </svg>
             <span class="rt-time" id="timerDisplay">00:00</span>
         </div>
-        <div class="rt-adjust">
-            <button type="button" class="btn-outline" onclick="adjustTimer(-15)">−15s</button>
-            <button type="button" class="btn-outline" onclick="adjustTimer(15)">+15s</button>
+        <div class="rt-controls">
+            <div class="rt-label"><strong>⏱ Descanso</strong> <span id="restExerciseName"></span></div>
+            <div class="rt-adjust">
+                <button type="button" class="btn-outline" onclick="adjustTimer(-15)">−15s</button>
+                <button type="button" class="btn-outline" onclick="adjustTimer(15)">+15s</button>
+                <button type="button" class="btn-outline" onclick="stopRestTimer()" aria-label="Parar descanso">⏹</button>
+            </div>
         </div>
-        <button type="button" class="btn-outline" onclick="stopRestTimer()">⏹ Parar</button>
     </div>
 
     <script>
@@ -124,7 +138,7 @@
         let restTotalSeconds = parseInt(localStorage.getItem('restTotalSeconds')) || 0;
         const hasActiveWorkout = {{ 'true' if active_workout else 'false' }};
         const restWorker = ('Worker' in window) ? new Worker("{{ url_for('static', filename='rest_timer_worker.js') }}") : null;
-        const RING_CIRCUMFERENCE = 138.2;
+        const RING_CIRCUMFERENCE = 175.9;
 
         function beep() {
             try {
@@ -192,7 +206,7 @@
 
         function startRestTimer(totalSeconds) {
             if (totalSeconds <= 0) return;
-            document.getElementById('restTimerBox').style.display = 'block';
+            document.getElementById('restTimerBox').style.display = 'flex';
             document.getElementById('restExerciseName').textContent = currentTimerExercise ? '— ' + currentTimerExercise : '';
 
             if (currentTimerExercise) {
@@ -289,7 +303,7 @@
             if (savedEnd && parseInt(savedEnd) > Date.now()) {
                 currentTimerExercise = localStorage.getItem('restExercise') || '';
                 restTotalSeconds = parseInt(localStorage.getItem('restTotalSeconds')) || Math.round((parseInt(savedEnd) - Date.now()) / 1000);
-                document.getElementById('restTimerBox').style.display = 'block';
+                document.getElementById('restTimerBox').style.display = 'flex';
                 document.getElementById('restExerciseName').textContent = currentTimerExercise ? '— ' + currentTimerExercise : '';
                 const remaining = Math.round((parseInt(savedEnd) - Date.now()) / 1000);
                 document.getElementById('timerDisplay').textContent = formatMMSS(remaining);

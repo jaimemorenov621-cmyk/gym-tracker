@@ -309,19 +309,20 @@ body {
     background: white;
     border: 1.5px solid #7c4dff;
     color: #3d2b8a;
-    padding: 8px 12px;
-    border-radius: 12px;
+    padding: 8px 10px;
+    border-radius: 14px;
     box-shadow: 0 6px 18px rgba(124,77,255,0.25);
     z-index: 1002;
-    font-size: 0.78rem;
-    min-width: 150px;
-    text-align: center;
+    font-size: 0.75rem;
+    align-items: center;
+    gap: 10px;
+    max-width: 240px;
 }
 .rt-ring-wrap {
     position: relative;
-    width: 52px;
-    height: 52px;
-    margin: 4px auto;
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
 }
 .rt-ring-track { stroke: #ece7ff; }
 .rt-ring-fill {
@@ -338,19 +339,30 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 0.78rem;
+    font-size: 1rem;
     font-weight: 800;
+}
+.rt-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+.rt-label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .rest-toast .rt-adjust {
     display: flex;
-    justify-content: center;
     gap: 4px;
-    margin-bottom: 6px;
+    margin-bottom: 0;
 }
-.rest-toast .rt-adjust .btn-outline,
-.rest-toast > .btn-outline {
-    padding: 4px 8px;
-    font-size: 0.72rem;
+.rest-toast .rt-adjust .btn-outline {
+    padding: 4px 6px;
+    font-size: 0.68rem;
+    flex: 1;
 }
 .rest-badge {
     display: inline-block;
@@ -965,6 +977,18 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     font-family: inherit;
 }
 .bottom-nav-item.active { color: var(--color-brand, #7c4dff); }
+.nav-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 26px;
+    border-radius: 999px;
+}
+.bottom-nav-item.active .nav-icon-wrap,
+.bottom-nav-profile-btn.active .nav-icon-wrap {
+    background: #ece3ff;
+}
 
 .bottom-nav-profile {
     position: relative;
@@ -1009,7 +1033,10 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 @media (hover: hover) {
     .bottom-nav-profile-menu a:hover { background: #f5f3ff; }
 }
-.bottom-nav-profile-menu a:active { background: #ece7ff; }
+.bottom-nav-profile-menu a:active,
+.bottom-nav-profile-menu a.touch-pressed { background: #ece7ff; }
+.bottom-nav-profile-btn:active .nav-icon-wrap,
+.bottom-nav-profile-btn.touch-pressed .nav-icon-wrap { background: #ece3ff; }
 
 /* ===== Selector de ejercicios (bottom sheet) ===== */
 
@@ -1148,20 +1175,43 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     .effort-chip { padding: 3px 6px; font-size: 0.7rem; min-width: 24px; }
     .effort-chip-empty { font-size: 0.55rem; }
 }
-.effort-picker-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+.effort-picker-subtitle {
+    margin: 0;
+    padding: 0 16px;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+.effort-picker-preview {
+    text-align: center;
     padding: 16px;
-    padding-bottom: 24px;
-    overflow-y: auto;
+}
+.effort-picker-big {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-brand-dark);
+    line-height: 1;
+}
+.effort-picker-desc {
+    margin-top: 6px;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+.effort-picker-row {
+    display: flex;
+    gap: 8px;
+    padding: 4px 16px 16px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
 }
 .effort-picker-option {
-    padding: 14px 0;
-    border-radius: 12px;
+    flex-shrink: 0;
+    scroll-snap-align: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
     border: 1.5px solid #ece7ff;
     background: white;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
     font-family: inherit;
     color: var(--color-text);
@@ -1171,6 +1221,13 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     background: var(--color-brand);
     border-color: var(--color-brand);
     color: white;
+}
+.effort-picker-clear { color: var(--color-text-muted); }
+.effort-picker-confirm {
+    display: block;
+    width: calc(100% - 32px);
+    margin: 0 16px 16px;
+    text-align: center;
 }
 
 .exercise-result-row {
