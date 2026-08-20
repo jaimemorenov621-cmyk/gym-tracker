@@ -54,10 +54,12 @@ body {
     transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
-.btn:hover, button:hover, input[type="submit"]:hover {
-    background: linear-gradient(135deg, #6a3dff, #3d5afe);
-    color: white;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+@media (hover: hover) {
+    .btn:hover, button:hover, input[type="submit"]:hover {
+        background: linear-gradient(135deg, #6a3dff, #3d5afe);
+        color: white;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    }
 }
 
 .btn:disabled, button:disabled, input[type="submit"]:disabled {
@@ -70,8 +72,10 @@ body {
 .btn-danger, input[type="submit"].btn-danger {
     background: linear-gradient(135deg, #ff5252, #d32f2f);
 }
-.btn-danger:hover {
-    background: linear-gradient(135deg, #e04848, #b71c1c);
+@media (hover: hover) {
+    .btn-danger:hover {
+        background: linear-gradient(135deg, #e04848, #b71c1c);
+    }
 }
 
 .btn-nav {
@@ -80,17 +84,21 @@ body {
     box-shadow: none;
     padding: 8px 12px;
 }
-.btn-nav:hover {
-    background: rgba(0,0,0,0.06);
-    color: #111;
-    box-shadow: none;
+@media (hover: hover) {
+    .btn-nav:hover {
+        background: rgba(0,0,0,0.06);
+        color: #111;
+        box-shadow: none;
+    }
 }
 .btn-nav-primary {
     background: linear-gradient(135deg, #7c4dff, #536dfe);
     color: white;
 }
-.btn-nav-primary:hover {
-    color: white;
+@media (hover: hover) {
+    .btn-nav-primary:hover {
+        color: white;
+    }
 }
 
 .top-nav a { margin-right: 6px; }
@@ -156,9 +164,11 @@ body {
     color: var(--color-text);
     transition: transform 0.1s ease, border-color 0.15s ease;
 }
-.workout-card:hover {
-    border-color: var(--color-brand);
-    transform: translateY(-1px);
+@media (hover: hover) {
+    .workout-card:hover {
+        border-color: var(--color-brand);
+        transform: translateY(-1px);
+    }
 }
 .workout-card .wc-title {
     font-weight: 700;
@@ -188,7 +198,9 @@ body {
     margin: 2px 4px 2px 0;
     transition: background 0.15s ease;
 }
-.btn-outline:hover { background: #ececf7; }
+@media (hover: hover) {
+    .btn-outline:hover { background: #ececf7; }
+}
 
 .active-toast {
     position: fixed;
@@ -216,7 +228,9 @@ body {
     background: #22c98c;
     display: inline-block;
 }
-.active-toast:hover { background: #f5f3ff; color: #3d2b8a; }
+@media (hover: hover) {
+    .active-toast:hover { background: #f5f3ff; color: #3d2b8a; }
+}
 
 
 .exercise-row {
@@ -259,7 +273,9 @@ body {
     padding: 6px 10px;
     border-radius: 6px;
 }
-.btn-icon:hover { background: #fdecea; }
+@media (hover: hover) {
+    .btn-icon:hover { background: #fdecea; }
+}
 
 
 .flash {
@@ -310,7 +326,9 @@ body {
     font-weight: 600;
     text-decoration: none;
 }
-.rest-badge:hover { background: #ece7ff; }
+@media (hover: hover) {
+    .rest-badge:hover { background: #ece7ff; }
+}
 
 
 .set-row {
@@ -407,7 +425,9 @@ select.cell-input {
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
-.set-check-btn:hover { border-color: #7c4dff; }
+@media (hover: hover) {
+    .set-check-btn:hover { border-color: #7c4dff; }
+}
 .set-check-btn.checked {
     background: linear-gradient(135deg, #7c4dff, #536dfe);
     border-color: transparent;
@@ -547,8 +567,10 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     color: #333;
     font-family: inherit;
 }
-.action-menu-content button:hover, .action-menu-content input[type=submit]:hover {
-    background: #f5f3ff;
+@media (hover: hover) {
+    .action-menu-content button:hover, .action-menu-content input[type=submit]:hover {
+        background: #f5f3ff;
+    }
 }
 .action-menu-content .danger { color: #c62828; }
 .action-menu-btn .icon { color: var(--color-brand); }
@@ -568,10 +590,12 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     box-shadow: 0 6px 16px rgba(34,201,140,0.35);
     transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
-.btn-finish:hover {
-    color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(34,201,140,0.45);
+@media (hover: hover) {
+    .btn-finish:hover {
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px rgba(34,201,140,0.45);
+    }
 }
 .btn-finish::before {
     content: "";
@@ -597,9 +621,11 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     text-decoration: none !important;
     font-family: inherit;
 }
-.btn-text-danger:hover {
-    color: #8e0000 !important;
-    text-decoration: none !important;
+@media (hover: hover) {
+    .btn-text-danger:hover {
+        color: #8e0000 !important;
+        text-decoration: none !important;
+    }
 }
 
 .btn-danger-outline {
@@ -614,9 +640,11 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     border-radius: 8px;
     text-decoration: none;
 }
-.btn-danger-outline:hover {
-    background: #fdecea;
-    color: #8e0000;
+@media (hover: hover) {
+    .btn-danger-outline:hover {
+        background: #fdecea;
+        color: #8e0000;
+    }
 }
 
 .dashboard-panel {
@@ -951,7 +979,9 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     text-decoration: none;
     font-size: 0.85rem;
 }
-.bottom-nav-profile-menu a:hover { background: #f5f3ff; }
+@media (hover: hover) {
+    .bottom-nav-profile-menu a:hover { background: #f5f3ff; }
+}
 
 /* ===== Selector de ejercicios (bottom sheet) ===== */
 
@@ -1021,7 +1051,9 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     cursor: pointer;
     display: flex;
 }
-.sheet-close-btn:hover { background: #f5f3ff; }
+@media (hover: hover) {
+    .sheet-close-btn:hover { background: #f5f3ff; }
+}
 
 .bottom-sheet-search-wrap {
     position: relative;
@@ -1070,8 +1102,10 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     padding: 10px 16px;
     cursor: pointer;
 }
-.exercise-result-row:hover,
 .exercise-result-row:focus-visible { background: #f5f3ff; }
+@media (hover: hover) {
+    .exercise-result-row:hover { background: #f5f3ff; }
+}
 .exercise-result-thumb {
     width: 44px;
     height: 44px;
