@@ -682,9 +682,24 @@ def weight():
         "weight.html",
         title="Peso corporal",
         form=form,
+        empty_form=EmptyForm(),
+        entries=list(reversed(entries)),
         chart_labels=[e.timestamp.strftime("%d/%m/%Y") for e in entries],
         chart_values=[e.weight for e in entries],
     )
+
+
+@app.route("/weight/<int:entry_id>/delete", methods=["POST"])
+@login_required
+def delete_weight_entry(entry_id):
+    entry = db.get_or_404(BodyWeightEntry, entry_id)
+    if entry.user_id != current_user.id:
+        flash("No tienes acceso a ese registro de peso.")
+        return redirect(url_for("weight"))
+    db.session.delete(entry)
+    db.session.commit()
+    flash("Registro de peso eliminado.")
+    return redirect(url_for("weight"))
 
 
 @app.route("/ai/analysis")
@@ -1814,6 +1829,13 @@ _MUSCLE_SIGNATURE_RGB = {
 
 def _interpolate_muscle_color(group, t):
     t = max(0.0, min(1.0, t))
+    # Raíz cuadrada en vez de lineal: sin esto, solo el grupo con más volumen
+    # (t=1) se ve realmente vivo y el resto queda casi en el gris neutro,
+    # aunque se hayan entrenado con cierta intensidad relativa. Con la curva,
+    # un grupo a la mitad del volumen máximo (t=0.5) ya llega a ~71% de
+    # saturación en vez de quedarse en el 50% lineal -- el mapa se ve
+    # colorido de verdad, no solo el pico.
+    t = t ** 0.5
     target = _MUSCLE_SIGNATURE_RGB[group]
     r = round(_MUSCLE_NEUTRAL_RGB[0] + (target[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
     g = round(_MUSCLE_NEUTRAL_RGB[1] + (target[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)

@@ -112,7 +112,8 @@
                         <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="{{ '%g' % s.weight }}" onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
                         <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="{{ s.reps }}" onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
-                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="{{ s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') }}" onfocus="this.select()" onchange="updateSet({{ s.id }}, 'effort', this.value)"></td>
+                        {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
+                        <td><button type="button" class="pill effort-chip{% if effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val }}')">{{ effort_val if effort_val != '' else effort_scale|upper }}</button></td>
                         {% endif %}
                         <td>
                             <select class="cell-input" onchange="updateSet({{ s.id }}, 'set_type', this.value)">
@@ -149,6 +150,55 @@
     </div>
     {{ macros.exercise_picker_sheet() }}
     <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
+
+    {% if effort_scale != 'none' %}
+    <div class="sheet-backdrop" id="effortPickerBackdrop" onclick="closeEffortPicker()"></div>
+    <div class="bottom-sheet effort-picker-sheet" id="effortPickerSheet" role="dialog" aria-modal="true" aria-labelledby="effortPickerTitle">
+        <div class="bottom-sheet-grabber" aria-hidden="true"></div>
+        <div class="bottom-sheet-header">
+            <h3 id="effortPickerTitle" class="bottom-sheet-title">{{ effort_scale|upper }}</h3>
+            <button type="button" class="sheet-close-btn" onclick="closeEffortPicker()" aria-label="Cerrar">{{ macros.icon('close', 20) }}</button>
+        </div>
+        <div class="effort-picker-grid" id="effortPickerGrid"></div>
+    </div>
+    <script>
+        let effortPickerSetId = null;
+
+        function openEffortPicker(setId, currentValue) {
+            effortPickerSetId = setId;
+            currentValue = String(currentValue);
+            const grid = document.getElementById('effortPickerGrid');
+            let html = '<button type="button" class="effort-picker-option' + (currentValue === '' ? ' selected' : '') + '" onclick="chooseEffort(\'\')">—</button>';
+            for (let i = 0; i <= 10; i++) {
+                html += '<button type="button" class="effort-picker-option' + (String(i) === currentValue ? ' selected' : '') + '" onclick="chooseEffort(' + i + ')">' + i + '</button>';
+            }
+            grid.innerHTML = html;
+            document.getElementById('effortPickerBackdrop').classList.add('open');
+            document.getElementById('effortPickerSheet').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEffortPicker() {
+            document.getElementById('effortPickerBackdrop').classList.remove('open');
+            document.getElementById('effortPickerSheet').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function chooseEffort(value) {
+            const chip = document.querySelector('.effort-chip[data-set-id="' + effortPickerSetId + '"]');
+            if (chip) {
+                chip.textContent = value === '' ? '{{ effort_scale|upper }}' : value;
+                chip.classList.toggle('effort-chip-empty', value === '');
+            }
+            updateSet(effortPickerSetId, 'effort', value);
+            closeEffortPicker();
+        }
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeEffortPicker();
+        });
+    </script>
+    {% endif %}
 
     <hr>
     <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -271,7 +321,7 @@
                     '<td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="' + lastWeight + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'weight\', this.value.replace(\',\', \'.\'))"></td>' +
                     '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="' + lastReps + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
                     '{% if effort_scale != "none" %}' +
-                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="' + lastEffort + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'effort\', this.value)"></td>' +
+                    '<td><button type="button" class="pill effort-chip' + (lastEffort === '' ? ' effort-chip-empty' : '') + '" data-set-id="' + data.id + '" onclick="openEffortPicker(' + data.id + ', \'' + lastEffort + '\')">' + (lastEffort === '' ? '{{ effort_scale|upper }}' : lastEffort) + '</button></td>' +
                     '{% endif %}' +
                     '<td><select class="cell-input" onchange="updateSet(' + data.id + ', \'set_type\', this.value)">' +
                     '<option value="normal">Normal</option><option value="calentamiento">Calent.</option>' +

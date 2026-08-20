@@ -22,6 +22,11 @@ html {
     comportamiento, así que no se puede verificar aquí, solo en el móvil. */
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    /* El "flash" táctil gris nativo de Android compite con nuestros propios
+    estilos :active (p.ej. hacía que el menú "Más" pareciera seguir pulsado
+    tras tocar un enlace de dentro) -- se desactiva globalmente y se deja
+    el feedback táctil enteramente en manos de las reglas :active propias. */
+    -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -304,19 +309,19 @@ body {
     background: white;
     border: 1.5px solid #7c4dff;
     color: #3d2b8a;
-    padding: 14px 18px;
+    padding: 8px 12px;
     border-radius: 12px;
     box-shadow: 0 6px 18px rgba(124,77,255,0.25);
     z-index: 1002;
-    font-size: 0.9rem;
-    min-width: 220px;
+    font-size: 0.78rem;
+    min-width: 150px;
     text-align: center;
 }
 .rt-ring-wrap {
     position: relative;
-    width: 72px;
-    height: 72px;
-    margin: 6px auto;
+    width: 52px;
+    height: 52px;
+    margin: 4px auto;
 }
 .rt-ring-track { stroke: #ece7ff; }
 .rt-ring-fill {
@@ -333,14 +338,19 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 1.1rem;
+    font-size: 0.78rem;
     font-weight: 800;
 }
 .rest-toast .rt-adjust {
     display: flex;
     justify-content: center;
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 4px;
+    margin-bottom: 6px;
+}
+.rest-toast .rt-adjust .btn-outline,
+.rest-toast > .btn-outline {
+    padding: 4px 8px;
+    font-size: 0.72rem;
 }
 .rest-badge {
     display: inline-block;
@@ -1113,6 +1123,56 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     text-align: center;
 }
 
+/* ===== Selector de RIR/RPE (bottom sheet) ===== */
+
+.effort-chip {
+    display: inline-block;
+    background: #f5f3ff;
+    color: #5a4fcf;
+    border: none;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    min-width: 32px;
+}
+.effort-chip-empty {
+    background: transparent;
+    color: var(--color-text-muted);
+    border: 1.5px dashed #d9d2ff;
+    font-size: 0.65rem;
+}
+@media (max-width: 600px) {
+    .effort-chip { padding: 3px 6px; font-size: 0.7rem; min-width: 24px; }
+    .effort-chip-empty { font-size: 0.55rem; }
+}
+.effort-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 16px;
+    padding-bottom: 24px;
+    overflow-y: auto;
+}
+.effort-picker-option {
+    padding: 14px 0;
+    border-radius: 12px;
+    border: 1.5px solid #ece7ff;
+    background: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: var(--color-text);
+    cursor: pointer;
+}
+.effort-picker-option.selected {
+    background: var(--color-brand);
+    border-color: var(--color-brand);
+    color: white;
+}
+
 .exercise-result-row {
     display: flex;
     align-items: center;
@@ -1279,6 +1339,23 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 tocan espaciado vertical (quitan el margen por defecto del <ul> del
 navegador), no ancho/bullets/color, así que son seguras -- y una mejora,
 no una regresión -- para ambas plantillas. */
+.weight-entry-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.weight-entry-list li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0eefa;
+}
+.weight-entry-list li:last-child { border-bottom: none; }
+.weight-entry-date { color: var(--color-text-muted); font-size: 0.85rem; }
+.weight-entry-value { font-weight: 700; margin-left: auto; }
+.weight-entry-list form { display: flex; }
+
 .notes-list {
     margin: 0;
     padding-left: 20px;
