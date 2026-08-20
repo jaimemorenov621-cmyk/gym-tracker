@@ -39,6 +39,11 @@ from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from datetime import datetime, timezone, timedelta
 
 
+@app.route("/sw.js")
+def service_worker():
+    return app.send_static_file("sw.js")
+
+
 @app.route("/")
 @app.route("/index")
 @login_required
