@@ -724,6 +724,16 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     color: #888;
     margin-top: 2px;
 }
+@media (max-width: 600px) {
+    .dash-eyebrow { margin-bottom: 10px; }
+    .dash-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px 16px;
+        margin-bottom: 14px;
+    }
+    .dash-metric-primary .dash-metric-value { font-size: 1.7rem; }
+}
 .dash-body {
     display: flex;
     gap: 20px;
@@ -775,7 +785,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .dash-toggle[aria-expanded="true"] .icon { transform: rotate(180deg); }
 @media (max-width: 600px) {
     .dash-body { flex-direction: column; }
-    .dash-muscle-map { flex-basis: auto; }
+    .dash-muscle-map { flex-basis: auto; padding: 8px; }
+    .mm-figure { width: 108px; }
     .dashboard-panel:not(.dash-expanded) .dash-calendar,
     .dashboard-panel:not(.dash-expanded) .dash-weight,
     .dashboard-panel:not(.dash-expanded) .dash-notes {
