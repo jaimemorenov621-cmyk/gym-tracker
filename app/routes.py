@@ -66,6 +66,9 @@ def landing_cta():
 @app.route("/landing/stats")
 @login_required
 def landing_stats():
+    if current_user.username != "Jaime_309":
+        flash("No tienes acceso a esta página.")
+        return redirect(url_for("index"))
     visits = db.session.scalar(
         sa.select(sa.func.count())
         .select_from(LandingEvent)
