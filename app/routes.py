@@ -1866,38 +1866,48 @@ assert set(LIBRARY_SLUG_TO_GROUP) | AUXILIARY_SLUGS >= {
 }, "hay un slug del dataset vectorial sin clasificar como grupo real o auxiliar"
 
 _MUSCLE_NEUTRAL_RGB = (217, 213, 239)  # #d9d5ef, mismo tono neutro de la silueta base
-# Color de "firma" por grupo muscular (a intensidad máxima) — un color vivo y
-# distinto por cada uno de los 15 grupos, en un barrido de matiz tipo arcoíris
-# para que sean fácilmente distinguibles entre sí. A intensidad 0 todas
-# convergen al mismo gris neutro de arriba.
+# Color de "firma" por grupo muscular (a intensidad máxima). Asignado a mano
+# a partir del grafo real de adyacencia anatómica (qué grupos aparecen como
+# manchas vecinas en la silueta, delante y detrás) en vez de un barrido
+# lineal o de ángulo áureo genérico -- un barrido por índice puede separar
+# bien "vecinos en la lista" sin darse cuenta de que agrupa mal "vecinos en
+# el cuerpo" (ej. hombros/pecho/biceps quedaban los tres en la franja
+# naranja-amarilla, la más afectada por daltonismo rojo-verde). Cada tono
+# se eligió para maximizar el hueco frente a SUS vecinos reales; los
+# ángulos más próximos entre sí se reservan a pares que nunca se tocan en
+# el cuerpo (ej. cuádriceps/pecho, a 10°, pero en zonas que no compiten
+# visualmente). A intensidad 0 todos convergen al mismo gris neutro de arriba.
 _MUSCLE_SIGNATURE_RGB = {
-    "trapecios": (239, 68, 68),
-    "hombros": (249, 115, 22),
-    "pecho": (245, 158, 11),
-    "biceps": (234, 179, 8),
-    "antebrazos": (132, 204, 22),
-    "cuello": (34, 197, 94),
-    "abdomen": (16, 185, 129),
-    "dorsales": (20, 184, 166),
-    "espalda_baja": (6, 182, 212),
-    "cuadriceps": (14, 165, 233),
-    "aductores": (59, 130, 246),
-    "isquiotibiales": (99, 102, 241),
-    "triceps": (139, 92, 246),
-    "gluteos": (168, 85, 247),
-    "pantorrillas": (236, 72, 153),
+    "trapecios": (253, 253, 18),
+    "hombros": (174, 18, 253),
+    "pecho": (96, 253, 18),
+    "biceps": (18, 174, 253),
+    "antebrazos": (253, 96, 18),
+    "cuello": (18, 253, 213),
+    "dorsales": (57, 18, 253),
+    "espalda_baja": (253, 135, 18),
+    "triceps": (18, 253, 76),
+    "abdomen": (253, 18, 253),
+    "cuadriceps": (135, 253, 18),
+    "aductores": (96, 18, 253),
+    "gluteos": (18, 253, 174),
+    "isquiotibiales": (253, 18, 96),
+    "pantorrillas": (18, 135, 253),
 }
 
 
 def _interpolate_muscle_color(group, t):
     t = max(0.0, min(1.0, t))
-    # Raíz cuadrada en vez de lineal: sin esto, solo el grupo con más volumen
-    # (t=1) se ve realmente vivo y el resto queda casi en el gris neutro,
-    # aunque se hayan entrenado con cierta intensidad relativa. Con la curva,
-    # un grupo a la mitad del volumen máximo (t=0.5) ya llega a ~71% de
-    # saturación en vez de quedarse en el 50% lineal -- el mapa se ve
-    # colorido de verdad, no solo el pico.
-    t = t ** 0.5
+    # La curva raíz cuadrada anterior seguía dejando pálido/apagado a
+    # cualquier grupo que no fuera el más entrenado -- solo el pico (t=1)
+    # se veía realmente vivo. Ahora, en cuanto un grupo tiene *algo* de
+    # volumen relativo (t>0), salta a un mínimo de 45% de mezcla hacia su
+    # color de firma (en vez de arrancar del 0%), y el resto de la subida
+    # usa una curva todavía más agresiva (raíz cúbica) -- para que "se
+    # entrenó, aunque sea poco" ya se vea claramente de color, no gris con
+    # un tinte.
+    if t > 0:
+        t = 0.45 + 0.55 * (t ** (1 / 3))
     target = _MUSCLE_SIGNATURE_RGB[group]
     r = round(_MUSCLE_NEUTRAL_RGB[0] + (target[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
     g = round(_MUSCLE_NEUTRAL_RGB[1] + (target[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
