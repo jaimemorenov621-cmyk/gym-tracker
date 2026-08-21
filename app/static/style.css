@@ -759,7 +759,30 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 @media (max-width: 600px) {
     .dash-body { flex-direction: column; }
     .dash-muscle-map { flex-basis: auto; }
+    .dashboard-panel:not(.dash-expanded) .dash-calendar,
+    .dashboard-panel:not(.dash-expanded) .dash-weight,
+    .dashboard-panel:not(.dash-expanded) .dash-notes {
+        display: none;
+    }
+    .dash-toggle { display: flex; }
 }
+.dash-toggle {
+    display: none;
+    width: 100%;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 1px dashed #d9d2ff;
+    border-radius: 10px;
+    padding: 8px;
+    margin-top: 14px;
+    color: #7c4dff;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.dash-toggle .icon { transition: transform 0.2s; }
+.dash-toggle[aria-expanded="true"] .icon { transform: rotate(180deg); }
 .dash-weight {
     margin-top: 14px;
     background: white;

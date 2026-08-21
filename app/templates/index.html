@@ -81,7 +81,7 @@
                 </div>
                 <span class="dash-muscle-caption">Frente · Espalda — últimos 14 días</span>
             </div>
-            <div class="dash-calendar">
+            <div class="dash-calendar" id="dashCalendar">
                 <div class="calendar-grid">
                     {% for week in calendar_weeks %}
                         <div class="calendar-col {% if week.new_month %}new-month{% endif %}">
@@ -97,29 +97,20 @@
                 </div>
             </div>
         </div>
-        <div class="dash-weight">
+        <button type="button" class="dash-toggle" aria-expanded="false"
+                aria-controls="dashCalendar dashWeight dashNotes" onclick="toggleDashExtra(this)">
+            <span class="dash-toggle-label">Ver calendario, peso y notas</span>
+            {{ macros.icon('chevron-down', 14) }}
+        </button>
+        <div class="dash-weight" id="dashWeight">
             {% if weight_chart_labels %}
                 <canvas id="weightMiniChart" height="70"></canvas>
                 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
                 <script>
-                    new Chart(document.getElementById('weightMiniChart'), {
-                        type: 'line',
-                        data: {
-                            labels: {{ weight_chart_labels|tojson }},
-                            datasets: [{
-                                label: 'Peso (kg)',
-                                data: {{ weight_chart_values|tojson }},
-                                borderColor: '#7c4dff',
-                                pointBackgroundColor: '#7c4dff',
-                                pointRadius: 3,
-                                tension: 0.25
-                            }]
-                        },
-                        options: {
-                            maintainAspectRatio: false,
-                            plugins: { legend: { display: false } }
-                        }
-                    });
+                    const weightChartData = {
+                        labels: {{ weight_chart_labels|tojson }},
+                        values: {{ weight_chart_values|tojson }}
+                    };
                 </script>
             {% else %}
                 <p class="dash-weight-empty">
@@ -128,7 +119,7 @@
                 </p>
             {% endif %}
         </div>
-        <div class="dash-notes">
+        <div class="dash-notes" id="dashNotes">
             <form action="{{ url_for('update_notes') }}" method="post">
                 {{ notes_form.hidden_tag() }}
                 {{ notes_form.notes(rows=3, placeholder="Notas rápidas para ti mismo...") }}
@@ -172,4 +163,56 @@
         });
     </script>
     {% endif %}
+
+    <script>
+        // Chart.js medido contra un contenedor display:none al construirse
+        // se queda con el canvas a 0x0 de forma permanente -- un resize()
+        // posterior no lo recupera (comprobado: el propio Chart.js vuelve a
+        // fijar 0x0 al reintentar). Por eso el gráfico no se crea hasta que
+        // el contenedor está realmente visible por primera vez.
+        let weightMiniChart = null;
+        function createWeightChart() {
+            if (weightMiniChart || typeof weightChartData === 'undefined') return;
+            weightMiniChart = new Chart(document.getElementById('weightMiniChart'), {
+                type: 'line',
+                data: {
+                    labels: weightChartData.labels,
+                    datasets: [{
+                        label: 'Peso (kg)',
+                        data: weightChartData.values,
+                        borderColor: '#7c4dff',
+                        pointBackgroundColor: '#7c4dff',
+                        pointRadius: 3,
+                        tension: 0.25
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function toggleDashExtra(btn) {
+            const panel = document.querySelector('.dashboard-panel');
+            const expanded = panel.classList.toggle('dash-expanded');
+            btn.setAttribute('aria-expanded', expanded);
+            btn.querySelector('.dash-toggle-label').textContent =
+                expanded ? 'Ocultar calendario, peso y notas' : 'Ver calendario, peso y notas';
+            if (expanded) {
+                if (weightMiniChart) {
+                    weightMiniChart.resize();
+                } else {
+                    createWeightChart();
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const dashWeight = document.getElementById('dashWeight');
+            if (dashWeight && getComputedStyle(dashWeight).display !== 'none') {
+                createWeightChart();
+            }
+        });
+    </script>
 {% endblock %}
