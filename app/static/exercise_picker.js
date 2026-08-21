@@ -25,11 +25,12 @@ function resultRowHTML(ex) {
 
 function toggleFavorite(event, id) {
     event.stopPropagation();
+    const btn = event.currentTarget; // capturar ya -- tras el primer microtask event.currentTarget pasa a null
     fetch('/api/exercises/' + encodeURIComponent(id) + '/favorite', { method: 'POST' })
         .then(r => r.json())
         .then(data => {
             if (!data.ok) return;
-            event.currentTarget.classList.toggle('is-favorite', data.favorite);
+            btn.classList.toggle('is-favorite', data.favorite);
         });
 }
 
