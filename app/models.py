@@ -194,7 +194,9 @@ class Exercise(db.Model):
 
 class ExerciseFavorite(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    exercise_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Exercise.id), index=True)
+    exercise_id: so.Mapped[str] = so.mapped_column(
+        sa.ForeignKey(Exercise.id, ondelete="CASCADE"), index=True
+    )
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
 
     __table_args__ = (
