@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1>🔍 Análisis de IA</h1>
+    <h1 style="font-weight:800; letter-spacing:-0.02em;">🔍 Análisis de IA</h1>
 
     {% if latest %}
         <p class="pill">📅 {{ latest.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
 
         {% if analysis %}
-            <div class="card analysis-summary">
+            <div class="card card-elevated analysis-summary">
                 {{ analysis.resumen }}
             </div>
 
-            <div class="card analysis-section analysis-fortalezas">
+            <div class="card card-elevated analysis-section analysis-fortalezas">
                 <h3>💪 Fortalezas</h3>
                 {% if analysis.fortalezas %}
                     <ul>
@@ -21,7 +21,7 @@
                 {% endif %}
             </div>
 
-            <div class="card analysis-section analysis-areas-mejora">
+            <div class="card card-elevated analysis-section analysis-areas-mejora">
                 <h3>⚠️ Áreas de mejora</h3>
                 {% if analysis.areas_mejora %}
                     <ul>
@@ -32,7 +32,7 @@
                 {% endif %}
             </div>
 
-            <div class="card analysis-section analysis-proximos-pasos">
+            <div class="card card-elevated analysis-section analysis-proximos-pasos">
                 <h3>🎯 Próximos pasos</h3>
                 {% if analysis.proximos_pasos %}
                     <ol>
@@ -43,28 +43,32 @@
                 {% endif %}
             </div>
         {% else %}
-            <div class="card">
+            <div class="card card-elevated">
                 <div class="notes-box" style="white-space:pre-wrap;">{{ latest.content }}</div>
             </div>
         {% endif %}
     {% else %}
-        <div class="card">
+        <div class="card card-elevated">
             <p><em>Todavía no has generado ningún análisis. Pulsa el botón para que la IA revise tu progreso.</em></p>
         </div>
     {% endif %}
 
-    <form action="{{ url_for('request_ai_analysis') }}" method="post">
-        {{ checkin_form.hidden_tag() }}
-        {% if not next_available %}
-            <p>
-                {{ checkin_form.how_you_feel.label }}<br>
-                {{ checkin_form.how_you_feel(rows=3, style="width:100%; box-sizing:border-box;", placeholder="Opcional. Ej: esta semana he dormido poco y tengo agujetas fuertes en piernas.") }}
-            </p>
-        {% endif %}
-        {% if next_available %}
-            <button type="submit" class="btn" disabled>Disponible el {{ next_available.strftime('%d/%m/%Y') }}</button>
-        {% else %}
-            <input type="submit" value="🔍 Analizar mi progreso" class="btn">
-        {% endif %}
-    </form>
+    <div class="card card-elevated">
+        <form action="{{ url_for('request_ai_analysis') }}" method="post">
+            {{ checkin_form.hidden_tag() }}
+            {% if not next_available and total_workouts >= min_workouts %}
+                <p>
+                    {{ checkin_form.how_you_feel.label }}<br>
+                    {{ checkin_form.how_you_feel(rows=3, style="width:100%; box-sizing:border-box;", placeholder="Opcional. Ej: esta semana he dormido poco y tengo agujetas fuertes en piernas.") }}
+                </p>
+            {% endif %}
+            {% if total_workouts < min_workouts %}
+                <button type="submit" class="btn" disabled>Necesitas al menos {{ min_workouts }} entrenamientos (llevas {{ total_workouts }})</button>
+            {% elif next_available %}
+                <button type="submit" class="btn" disabled>Disponible el {{ next_available.strftime('%d/%m/%Y') }}</button>
+            {% else %}
+                <input type="submit" value="🔍 Analizar mi progreso" class="btn">
+            {% endif %}
+        </form>
+    </div>
 {% endblock %}

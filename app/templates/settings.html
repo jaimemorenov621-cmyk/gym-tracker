@@ -1,43 +1,54 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1>Configuración</h1>
+    <h1 style="font-weight:800; letter-spacing:-0.02em;">Configuración</h1>
     <form action="" method="post">
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.stagnation_threshold.label }}<br>
-            {{ form.stagnation_threshold() }}
-        </p>
-        <p>
-            {{ form.effort_scale.label }}<br>
-            <small>
-                <strong>RIR</strong> (Repeticiones en Reserva): cuántas repeticiones más podrías haber hecho antes de fallar. 0 = al fallo, 3 = con bastante margen.<br>
-                <strong>RPE</strong> (Percepción de Esfuerzo): escala inversa, de 0 a 10, donde 10 = esfuerzo máximo (equivale a RIR 0).
-            </small><br>
-            {{ form.effort_scale() }}
-        </p>
-        <h3>Perfil</h3>
-        <p>
-            {{ form.sex.label }}<br>
-            {{ form.sex() }}
-        </p>
-        <p>
-            {{ form.height_cm.label }}<br>
-            {{ form.height_cm() }}
-        </p>
-        <p>
-            {{ form.training_goal.label }}<br>
-            {{ form.training_goal() }}
-        </p>
-        <h3>Racha</h3>
-        <p>
-            {{ form.weekly_workout_goal.label }}<br>
-            <small>Si lo rellenas, la racha del panel pasa a contar semanas consecutivas cumpliendo este objetivo en vez de días consecutivos entrenando.</small><br>
-            {{ form.weekly_workout_goal() }}
-        </p>
-        <p>
-            {{ form.disable_weekly_goal() }}
-            {{ form.disable_weekly_goal.label }}
-        </p>
+
+        <div class="card card-elevated">
+            <h3 style="margin-top:0;">Preferencias de entrenamiento</h3>
+            <p>
+                {{ form.stagnation_threshold.label }}<br>
+                {{ form.stagnation_threshold() }}
+            </p>
+            <p>
+                {{ form.effort_scale.label }}<br>
+                <small>
+                    <strong>RIR</strong> (Repeticiones en Reserva): cuántas repeticiones más podrías haber hecho antes de fallar. 0 = al fallo, 3 = con bastante margen.<br>
+                    <strong>RPE</strong> (Percepción de Esfuerzo): escala inversa, de 0 a 10, donde 10 = esfuerzo máximo (equivale a RIR 0).
+                </small><br>
+                {{ form.effort_scale() }}
+            </p>
+        </div>
+
+        <div class="card card-elevated">
+            <h3 style="margin-top:0;">Perfil</h3>
+            <p>
+                {{ form.sex.label }}<br>
+                {{ form.sex() }}
+            </p>
+            <p>
+                {{ form.height_cm.label }}<br>
+                {{ form.height_cm() }}
+            </p>
+            <p>
+                {{ form.training_goal.label }}<br>
+                {{ form.training_goal() }}
+            </p>
+        </div>
+
+        <div class="card card-elevated">
+            <h3 style="margin-top:0;">Racha</h3>
+            <p>
+                {{ form.weekly_workout_goal.label }}<br>
+                <small>Si lo rellenas, la racha del panel pasa a contar semanas consecutivas cumpliendo este objetivo en vez de días consecutivos entrenando.</small><br>
+                {{ form.weekly_workout_goal() }}
+            </p>
+            <p>
+                {{ form.disable_weekly_goal() }}
+                {{ form.disable_weekly_goal.label }}
+            </p>
+        </div>
+
         <p>{{ form.submit() }}</p>
     </form>
 {% endblock %}

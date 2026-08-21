@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1>⚖️ Peso corporal</h1>
+    <h1 style="font-weight:800; letter-spacing:-0.02em;">⚖️ Peso corporal</h1>
 
-    <div class="card">
+    <div class="card card-elevated">
         <form action="" method="post" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
             {{ form.hidden_tag() }}
             <p style="margin:0;">
@@ -15,8 +15,8 @@
     </div>
 
     {% if chart_labels %}
-        <div class="card">
-            <canvas id="weightChart" width="600" height="280"></canvas>
+        <div class="card card-elevated">
+            <canvas id="weightChart" class="progress-chart" width="600" height="280"></canvas>
         </div>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <script>
@@ -41,7 +41,7 @@
     {% endif %}
 
     {% if entries %}
-        <div class="card">
+        <div class="card card-elevated">
             <ul class="weight-entry-list">
                 {% for e in entries %}
                     <li>

@@ -702,9 +702,17 @@ def delete_weight_entry(entry_id):
     return redirect(url_for("weight"))
 
 
+MIN_WORKOUTS_FOR_AI_ANALYSIS = 3
+
+
 @app.route("/ai/analysis")
 @login_required
 def ai_analysis():
+    total_workouts = db.session.scalar(
+        sa.select(sa.func.count())
+        .select_from(Workout)
+        .where(Workout.user_id == current_user.id)
+    )
     latest = db.session.scalar(
         sa.select(AiAnalysis)
         .where(AiAnalysis.user_id == current_user.id)
@@ -736,6 +744,8 @@ def ai_analysis():
         latest=latest,
         analysis=analysis,
         next_available=next_available,
+        total_workouts=total_workouts,
+        min_workouts=MIN_WORKOUTS_FOR_AI_ANALYSIS,
         checkin_form=AiCheckinForm(),
     )
 
@@ -752,6 +762,18 @@ def request_ai_analysis():
     )
     if has_recent:
         flash("Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante.")
+        return redirect(url_for("ai_analysis"))
+
+    total_workouts = db.session.scalar(
+        sa.select(sa.func.count())
+        .select_from(Workout)
+        .where(Workout.user_id == current_user.id)
+    )
+    if total_workouts < MIN_WORKOUTS_FOR_AI_ANALYSIS:
+        flash(
+            f"Necesitas al menos {MIN_WORKOUTS_FOR_AI_ANALYSIS} entrenamientos registrados "
+            f"para generar un análisis (llevas {total_workouts})."
+        )
         return redirect(url_for("ai_analysis"))
 
     try:
