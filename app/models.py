@@ -190,3 +190,16 @@ class Exercise(db.Model):
 
     def __repr__(self):
         return f"<Exercise {self.name}>"
+
+
+class ExerciseFavorite(db.Model):
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    exercise_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Exercise.id), index=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+
+    __table_args__ = (
+        sa.UniqueConstraint("user_id", "exercise_id", name="uq_user_exercise_favorite"),
+    )
+
+    def __repr__(self):
+        return f"<ExerciseFavorite user={self.user_id} exercise={self.exercise_id}>"

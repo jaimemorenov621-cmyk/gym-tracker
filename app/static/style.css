@@ -1299,6 +1299,17 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     font-size: 0.75rem;
     color: var(--color-text-muted);
 }
+.exercise-favorite-star {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 6px;
+    color: #ccc;
+    cursor: pointer;
+    display: flex;
+}
+.exercise-favorite-star.is-favorite { color: #ffb300; }
+.exercise-favorite-star.is-favorite .icon { fill: #ffb300; }
 
 .exercise-picker-footer {
     border-top: 1px solid #eee;

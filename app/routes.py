@@ -32,6 +32,7 @@ from app.models import (
     Routine,
     RoutineExercise,
     Exercise,
+    ExerciseFavorite,
     AiAnalysis,
     BodyWeightEntry,
     WeeklyGoalHistory,
@@ -1074,25 +1075,60 @@ def inject_active_workout():
 @login_required
 def api_search_exercises():
     q = request.args.get("q", "").strip()
+    favorite_ids = set(
+        db.session.scalars(
+            sa.select(ExerciseFavorite.exercise_id).where(
+                ExerciseFavorite.user_id == current_user.id
+            )
+        )
+    )
     if len(q) < 2:
-        return jsonify([])
-    word_conditions = [
-        sa.or_(Exercise.name.ilike(f"%{word}%"), Exercise.name_es.ilike(f"%{word}%"))
-        for word in q.split()
-    ]
-    results = db.session.scalars(
-        sa.select(Exercise).where(sa.and_(*word_conditions)).limit(24)
-    ).all()
+        if not favorite_ids:
+            return jsonify([])
+        results = db.session.scalars(
+            sa.select(Exercise).where(Exercise.id.in_(favorite_ids))
+        ).all()
+    else:
+        word_conditions = [
+            sa.or_(Exercise.name.ilike(f"%{word}%"), Exercise.name_es.ilike(f"%{word}%"))
+            for word in q.split()
+        ]
+        results = db.session.scalars(
+            sa.select(Exercise).where(sa.and_(*word_conditions)).limit(24)
+        ).all()
+        results = sorted(results, key=lambda e: e.id not in favorite_ids)
     return jsonify(
         [
             {
+                "id": e.id,
                 "name": e.name_es or e.name,
                 "image": e.image_url,
                 "muscles": e.primary_muscles,
+                "is_favorite": e.id in favorite_ids,
             }
             for e in results
         ]
     )
+
+
+@app.route("/api/exercises/<exercise_id>/favorite", methods=["POST"])
+@login_required
+def toggle_exercise_favorite(exercise_id):
+    if not db.session.get(Exercise, exercise_id):
+        return jsonify({"ok": False, "error": "Ejercicio no encontrado."}), 404
+    existing = db.session.scalar(
+        sa.select(ExerciseFavorite).where(
+            ExerciseFavorite.user_id == current_user.id,
+            ExerciseFavorite.exercise_id == exercise_id,
+        )
+    )
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        return jsonify({"ok": True, "favorite": False})
+    db.session.add(ExerciseFavorite(user_id=current_user.id, exercise_id=exercise_id))
+    db.session.commit()
+    return jsonify({"ok": True, "favorite": True})
 
 
 def _slugify_exercise_name(name):

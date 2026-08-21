@@ -10,21 +10,33 @@ const MUSCLE_OPTIONS = [
     ['calves', 'Pantorrillas'],
 ];
 
+const STAR_ICON_SVG = '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+
 function resultRowHTML(ex) {
     return '<div class="exercise-result-row" onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')">' +
         (ex.image ? '<img class="exercise-result-thumb" src="' + ex.image + '">' : '<div class="exercise-result-thumb-fallback"><img src="/static/icons/logo-mark.png" alt="" style="max-width:26px; max-height:26px; object-fit:contain;"></div>') +
         '<div><div class="exercise-result-name">' + ex.name + '</div>' +
         (ex.muscles ? '<div class="exercise-result-muscles">' + ex.muscles + '</div>' : '') +
-        '</div></div>';
+        '</div>' +
+        (ex.id ? '<button type="button" class="exercise-favorite-star' + (ex.is_favorite ? ' is-favorite' : '') +
+            '" onclick="toggleFavorite(event, \'' + ex.id + '\')" aria-label="Marcar como favorito">' + STAR_ICON_SVG + '</button>' : '') +
+        '</div>';
+}
+
+function toggleFavorite(event, id) {
+    event.stopPropagation();
+    fetch('/api/exercises/' + encodeURIComponent(id) + '/favorite', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) return;
+            event.currentTarget.classList.toggle('is-favorite', data.favorite);
+        });
 }
 
 function searchExercises(query) {
     clearTimeout(searchTimeout);
     if (query.trim().length < 2) {
-        lastSearchResults = [];
-        lastSearchQuery = '';
-        document.getElementById('exercisePickerResults').innerHTML =
-            '<div class="exercise-picker-hint">Escribe al menos 2 letras para buscar.</div>';
+        resetExercisePickerResults();
         return;
     }
     searchTimeout = setTimeout(() => {
@@ -128,8 +140,15 @@ function selectExercise(name) {
 function resetExercisePickerResults() {
     lastSearchResults = [];
     lastSearchQuery = '';
-    document.getElementById('exercisePickerResults').innerHTML =
-        '<div class="exercise-picker-hint">Escribe al menos 2 letras para buscar.</div>';
+    const box = document.getElementById('exercisePickerResults');
+    box.innerHTML = '<div class="exercise-picker-hint">Escribe al menos 2 letras para buscar.</div>';
+    fetch('/api/exercises/search?q=')
+        .then(r => r.json())
+        .then(results => {
+            if (!results.length) return;
+            box.innerHTML = '<div class="exercise-picker-hint" style="text-align:left; padding:10px 16px; font-weight:600;">Favoritos</div>' +
+                results.map(resultRowHTML).join('');
+        });
 }
 
 function openExercisePicker() {
