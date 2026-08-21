@@ -756,16 +756,6 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     padding: 14px;
     overflow-x: auto;
 }
-@media (max-width: 600px) {
-    .dash-body { flex-direction: column; }
-    .dash-muscle-map { flex-basis: auto; }
-    .dashboard-panel:not(.dash-expanded) .dash-calendar,
-    .dashboard-panel:not(.dash-expanded) .dash-weight,
-    .dashboard-panel:not(.dash-expanded) .dash-notes {
-        display: none;
-    }
-    .dash-toggle { display: flex; }
-}
 .dash-toggle {
     display: none;
     width: 100%;
@@ -783,6 +773,16 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 .dash-toggle .icon { transition: transform 0.2s; }
 .dash-toggle[aria-expanded="true"] .icon { transform: rotate(180deg); }
+@media (max-width: 600px) {
+    .dash-body { flex-direction: column; }
+    .dash-muscle-map { flex-basis: auto; }
+    .dashboard-panel:not(.dash-expanded) .dash-calendar,
+    .dashboard-panel:not(.dash-expanded) .dash-weight,
+    .dashboard-panel:not(.dash-expanded) .dash-notes {
+        display: none;
+    }
+    .dash-toggle { display: flex; }
+}
 .dash-weight {
     margin-top: 14px;
     background: white;
