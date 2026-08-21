@@ -97,9 +97,16 @@
                 </div>
             </div>
         </div>
+        <div class="dash-notes" id="dashNotes">
+            <form action="{{ url_for('update_notes') }}" method="post">
+                {{ notes_form.hidden_tag() }}
+                {{ notes_form.notes(rows=3, placeholder="Notas rápidas para ti mismo...") }}
+                <button type="submit" class="btn-outline">Guardar nota</button>
+            </form>
+        </div>
         <button type="button" class="dash-toggle" aria-expanded="false"
-                aria-controls="dashCalendar dashWeight dashNotes" onclick="toggleDashExtra(this)">
-            <span class="dash-toggle-label">Ver calendario, peso y notas</span>
+                aria-controls="dashCalendar dashWeight" onclick="toggleDashExtra(this)">
+            <span class="dash-toggle-label">Ver calendario y peso</span>
             {{ macros.icon('chevron-down', 14) }}
         </button>
         <div class="dash-weight" id="dashWeight">
@@ -118,13 +125,6 @@
                     <a href="{{ url_for('weight') }}">Registrar peso →</a>
                 </p>
             {% endif %}
-        </div>
-        <div class="dash-notes" id="dashNotes">
-            <form action="{{ url_for('update_notes') }}" method="post">
-                {{ notes_form.hidden_tag() }}
-                {{ notes_form.notes(rows=3, placeholder="Notas rápidas para ti mismo...") }}
-                <button type="submit" class="btn-outline">Guardar nota</button>
-            </form>
         </div>
     </div>
 
@@ -198,7 +198,7 @@
             const expanded = panel.classList.toggle('dash-expanded');
             btn.setAttribute('aria-expanded', expanded);
             btn.querySelector('.dash-toggle-label').textContent =
-                expanded ? 'Ocultar calendario, peso y notas' : 'Ver calendario, peso y notas';
+                expanded ? 'Ocultar calendario y peso' : 'Ver calendario y peso';
             if (expanded) {
                 if (weightMiniChart) {
                     weightMiniChart.resize();

@@ -788,8 +788,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     .dash-muscle-map { flex-basis: auto; padding: 8px; }
     .mm-figure { width: 108px; }
     .dashboard-panel:not(.dash-expanded) .dash-calendar,
-    .dashboard-panel:not(.dash-expanded) .dash-weight,
-    .dashboard-panel:not(.dash-expanded) .dash-notes {
+    .dashboard-panel:not(.dash-expanded) .dash-weight {
         display: none;
     }
     .dash-toggle { display: flex; }
