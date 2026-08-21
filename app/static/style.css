@@ -863,24 +863,27 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+    padding: 10px 14px;
 }
 .workout-meta .icon {
     color: #726c8a; /* gris con un toque de morado, no un gris neutro puro -- contraste ~4.1:1 sobre el chip, verificado */
     background: rgba(124, 77, 255, 0.12);
     border-radius: 50%;
-    padding: 4px;
+    padding: 3px;
     box-sizing: content-box;
 }
 .workout-meta-tags {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
     align-items: center;
 }
 .workout-meta .set-tag {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
+    font-size: 0.82rem;
+    white-space: nowrap;
 }
 
 .progress-ring-wrap {

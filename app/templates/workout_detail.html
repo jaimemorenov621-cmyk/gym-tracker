@@ -4,14 +4,14 @@
     <h1 style="font-weight:800; letter-spacing:-0.02em;">{{ workout.note or "Entrenamiento" }}</h1>
     <div class="card card-elevated workout-meta">
         <div class="workout-meta-tags">
-            <span class="set-tag">{{ macros.icon('calendar') }} {{ workout.timestamp.strftime('%d/%m/%Y') }}</span>
-            <span class="set-tag">{{ macros.icon('clock') }} {{ workout.timestamp.strftime('%H:%M') }}</span>
+            <span class="set-tag">{{ macros.icon('calendar', 14) }} {{ workout.timestamp.strftime('%d/%m/%Y') }}</span>
+            <span class="set-tag">{{ macros.icon('clock', 14) }} {{ workout.timestamp.strftime('%H:%M') }}</span>
             {% if workout.ended_at %}
-                <span class="set-tag">{{ macros.icon('stopwatch') }} {{ workout.duration_str() }}</span>
+                <span class="set-tag">{{ macros.icon('stopwatch', 14) }} {{ workout.duration_str() }}</span>
             {% else %}
-                <span class="set-tag">{{ macros.icon('stopwatch') }} <span id="liveDuration">0min 00s</span></span>
+                <span class="set-tag">{{ macros.icon('stopwatch', 14) }} <span id="liveDuration">0min 00s</span></span>
             {% endif %}
-            {% if workout.performance_rating %}<span class="set-tag">{{ macros.icon('note') }} {{ workout.performance_rating }}/10</span>{% endif %}
+            {% if workout.performance_rating %}<span class="set-tag">{{ macros.icon('note', 14) }} {{ workout.performance_rating }}/10</span>{% endif %}
             <span class="set-tag">{% if effort_scale == 'none' %}Sin esfuerzo{% else %}{{ effort_scale|upper }}{% endif %}</span>
         </div>
         {% if routine_plan %}
