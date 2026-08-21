@@ -33,6 +33,7 @@ from app.models import (
     RoutineExercise,
     Exercise,
     ExerciseFavorite,
+    LandingEvent,
     AiAnalysis,
     BodyWeightEntry,
     WeeklyGoalHistory,
@@ -47,6 +48,37 @@ def service_worker():
 
 
 @app.route("/")
+def landing():
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+    db.session.add(LandingEvent(event_type="visit"))
+    db.session.commit()
+    return render_template("landing.html")
+
+
+@app.route("/landing/cta")
+def landing_cta():
+    db.session.add(LandingEvent(event_type="cta_click"))
+    db.session.commit()
+    return redirect(url_for("register"))
+
+
+@app.route("/landing/stats")
+@login_required
+def landing_stats():
+    visits = db.session.scalar(
+        sa.select(sa.func.count())
+        .select_from(LandingEvent)
+        .where(LandingEvent.event_type == "visit")
+    )
+    clicks = db.session.scalar(
+        sa.select(sa.func.count())
+        .select_from(LandingEvent)
+        .where(LandingEvent.event_type == "cta_click")
+    )
+    return render_template("landing_stats.html", visits=visits, clicks=clicks)
+
+
 @app.route("/index")
 @login_required
 def index():

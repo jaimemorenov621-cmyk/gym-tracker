@@ -1520,3 +1520,75 @@ depende de que Chart.js cargue bien -- coste cero. */
     height: auto;
 }
 
+/* ===== Landing pública (/) ===== */
+.landing-hero {
+    text-align: center;
+    padding: 40px 16px 32px;
+}
+.landing-hero-logo {
+    width: 96px;
+    height: auto;
+    margin-bottom: 12px;
+}
+.landing-hero-title {
+    font-size: 2.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--color-brand-dark);
+    margin: 0 0 12px;
+}
+.landing-hero-tagline {
+    max-width: 480px;
+    margin: 0 auto 24px;
+    color: var(--color-text-muted);
+    font-size: 1.05rem;
+    line-height: 1.5;
+}
+.landing-hero-cta {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.landing-features {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+.landing-feature-card h3 {
+    margin: 0 0 8px;
+    color: var(--color-brand-dark);
+}
+.landing-feature-card p {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+.landing-final-cta {
+    text-align: center;
+    padding: 36px 16px 48px;
+}
+@media (max-width: 600px) {
+    .landing-features { grid-template-columns: 1fr; }
+}
+
+.landing-stats-card {
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+.landing-stat { display: flex; flex-direction: column; }
+.landing-stat-value {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--color-brand-dark);
+}
+.landing-stat-label {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+

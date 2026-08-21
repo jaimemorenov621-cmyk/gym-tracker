@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block head %}
+    <meta property="og:title" content="Gyre">
+    <meta property="og:description" content="Sigue tu progreso de verdad: mapa muscular en tiempo real, PRs automáticos y análisis con IA.">
+    <meta property="og:image" content="{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='icons/og-image.png') }}">
+    <meta property="og:type" content="website">
+    <meta name="description" content="Sigue tu progreso de verdad: mapa muscular en tiempo real, PRs automáticos y análisis con IA.">
+{% endblock %}
+{% block content %}
+    <div class="landing-hero">
+        <img src="{{ url_for('static', filename='icons/logo-mark.png') }}" alt="" class="landing-hero-logo">
+        <h1 class="landing-hero-title">Gyre</h1>
+        <p class="landing-hero-tagline">
+            Sigue tu progreso de verdad: mapa muscular en tiempo real, PRs automáticos
+            y análisis con IA — no otra app de cronómetro.
+        </p>
+        <div class="landing-hero-cta">
+            <a class="btn" href="{{ url_for('landing_cta') }}">Crear cuenta gratis</a>
+            <a class="btn-outline" href="{{ url_for('login') }}">Iniciar sesión</a>
+        </div>
+    </div>
+
+    <div class="landing-features">
+        <div class="card card-elevated landing-feature-card">
+            <h3>Mapa muscular real</h3>
+            <p>Cada grupo muscular se colorea según lo que de verdad has entrenado en las últimas semanas, no una estimación genérica.</p>
+        </div>
+        <div class="card card-elevated landing-feature-card">
+            <h3>Análisis con IA</h3>
+            <p>Un análisis semanal que razona sobre tu progreso real — qué ejercicios están estancados y por qué, no consejos genéricos.</p>
+        </div>
+        <div class="card card-elevated landing-feature-card">
+            <h3>PRs y 1RM automáticos</h3>
+            <p>Cada serie se compara con tu historial real. Las marcas personales se detectan y quedan guardadas solas.</p>
+        </div>
+        <div class="card card-elevated landing-feature-card">
+            <h3>Rutinas reutilizables</h3>
+            <p>Crea tus rutinas una vez y arráncalas con un toque — los pesos y series de la última vez ya están precargados.</p>
+        </div>
+    </div>
+
+    <div class="landing-final-cta">
+        <a class="btn" href="{{ url_for('landing_cta') }}">Crear cuenta gratis</a>
+    </div>
+{% endblock %}

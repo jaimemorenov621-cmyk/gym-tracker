@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1 style="font-weight:800; letter-spacing:-0.02em;">Estadísticas de la landing</h1>
+    <div class="card card-elevated landing-stats-card">
+        <div class="landing-stat">
+            <span class="landing-stat-value">{{ visits }}</span>
+            <span class="landing-stat-label">Visitas</span>
+        </div>
+        <div class="landing-stat">
+            <span class="landing-stat-value">{{ clicks }}</span>
+            <span class="landing-stat-label">Clics en "Crear cuenta gratis"</span>
+        </div>
+    </div>
+{% endblock %}

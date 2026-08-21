@@ -1,6 +1,6 @@
 {
-  "name": "GymTracker",
-  "short_name": "GymTracker",
+  "name": "Gyre",
+  "short_name": "Gyre",
   "description": "Registro de entrenamientos, rutinas y progreso",
   "start_url": "/index",
   "scope": "/",

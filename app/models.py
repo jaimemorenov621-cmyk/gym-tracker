@@ -205,3 +205,14 @@ class ExerciseFavorite(db.Model):
 
     def __repr__(self):
         return f"<ExerciseFavorite user={self.user_id} exercise={self.exercise_id}>"
+
+
+class LandingEvent(db.Model):
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    event_type: so.Mapped[str] = so.mapped_column(sa.String(20), index=True)  # "visit" | "cta_click"
+    timestamp: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc), index=True
+    )
+
+    def __repr__(self):
+        return f"<LandingEvent {self.event_type} {self.timestamp}>"

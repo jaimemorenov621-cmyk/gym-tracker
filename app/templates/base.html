@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% if title %}
-        <title>{{ title }} - GymTracker</title>
+        <title>{{ title }} - Gyre</title>
     {% else %}
-        <title>GymTracker</title>
+        <title>Gyre</title>
     {% endif %}
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
@@ -15,11 +15,12 @@
     <meta name="theme-color" content="#7c4dff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    {% block head %}{% endblock %}
 </head>
 <body>
     {% import "_macros.html" as macros %}
     <nav class="top-nav">
-        <strong>GymTracker</strong>
+        <strong>Gyre</strong>
         <a class="btn btn-nav" href="{{ url_for('index') }}">Inicio</a>
         {% if current_user.is_anonymous %}
             <a class="btn btn-nav" href="{{ url_for('login') }}">Login</a>
