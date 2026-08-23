@@ -1,4 +1,4 @@
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, request, jsonify, make_response
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlsplit
 from collections import defaultdict
@@ -52,15 +52,21 @@ def service_worker():
 def landing():
     if current_user.is_authenticated:
         return redirect(url_for("index"))
-    db.session.add(LandingEvent(event_type="visit"))
-    db.session.commit()
-    return render_template("landing.html")
+    no_contar = request.cookies.get("no_contar") == "1" or request.args.get("no_contar") == "1"
+    if not no_contar:
+        db.session.add(LandingEvent(event_type="visit"))
+        db.session.commit()
+    resp = make_response(render_template("landing.html"))
+    if request.args.get("no_contar") == "1":
+        resp.set_cookie("no_contar", "1", max_age=60 * 60 * 24 * 365 * 5)
+    return resp
 
 
 @app.route("/landing/cta")
 def landing_cta():
-    db.session.add(LandingEvent(event_type="cta_click"))
-    db.session.commit()
+    if request.cookies.get("no_contar") != "1":
+        db.session.add(LandingEvent(event_type="cta_click"))
+        db.session.commit()
     return redirect(url_for("register"))
 
 
