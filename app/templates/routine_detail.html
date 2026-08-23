@@ -30,7 +30,7 @@
                 </span>
                 <span style="display:inline-flex; gap:4px;">
                     <button type="button" class="btn-icon" title="Reemplazar ejercicio" aria-label="Reemplazar ejercicio"
-                        onclick="openExercisePicker('{{ url_for('replace_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}')">{{ macros.icon('repeat') }}</button>
+                        onclick="startReplaceExercise({{ ex.id }}, '{{ ex.exercise }}', {{ ex.target_sets }}, '{{ ex.target_reps }}', '{{ ex.rir if ex.rir is not none else (ex.rpe if ex.rpe is not none else '') }}')">{{ macros.icon('repeat') }}</button>
                     <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" style="display:inline">
                         {{ empty_form.hidden_tag() }}
                         <button type="submit" class="btn-icon" title="Quitar ejercicio" aria-label="Quitar ejercicio">{{ macros.icon('trash') }}</button>
@@ -43,10 +43,11 @@
     </ul>
 
     <hr>
-    <h2>Añadir ejercicio</h2>
-    <form action="" method="post" onsubmit="return validateExerciseChosen();">
+    <h2 id="exerciseFormTitle">Añadir ejercicio</h2>
+    <form id="exerciseForm" action="" method="post" onsubmit="return validateExerciseChosen();">
         {{ form.hidden_tag() }}
         {{ form.exercise(type="hidden") }}
+        {{ form.replace_ex_id() }}
         <div class="exercise-picker-field">
             <button type="button" class="btn-outline" onclick="openExercisePicker()">
                 {{ macros.icon('search', 16) }} Elegir ejercicio del catálogo
@@ -67,8 +68,23 @@
             {{ form.effort_value() }}
         </p>
         {% endif %}
-        <p><input type="submit" value="Añadir ejercicio" class="btn"></p>
+        <p><input type="submit" id="exerciseFormSubmit" value="Añadir ejercicio" class="btn"></p>
     </form>
+    <script>
+        function startReplaceExercise(exId, exercise, sets, reps, effort) {
+            document.getElementById('replace_ex_id').value = exId;
+            document.querySelector('[name="exercise"]').value = exercise;
+            document.getElementById('selectedExerciseChip').textContent = exercise;
+            document.getElementById('selectedExerciseChip').classList.add('visible');
+            document.getElementById('target_sets').value = sets;
+            document.getElementById('target_reps').value = reps;
+            const effortInput = document.getElementById('effort_value');
+            if (effortInput) effortInput.value = effort;
+            document.getElementById('exerciseFormTitle').textContent = 'Editar ' + exercise;
+            document.getElementById('exerciseFormSubmit').value = 'Guardar cambios';
+            document.getElementById('exerciseForm').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
     {{ macros.exercise_picker_sheet() }}
     <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
 

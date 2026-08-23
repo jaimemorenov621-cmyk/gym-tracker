@@ -908,23 +908,42 @@ def routine_detail(routine_id):
 
     form = RoutineExerciseForm()
     if form.validate_on_submit():
-        count = db.session.scalar(
-            sa.select(sa.func.count())
-            .select_from(RoutineExercise)
-            .where(RoutineExercise.routine_id == routine.id)
-        )
-        ex = RoutineExercise(
-            exercise=canonicalize_exercise_name(form.exercise.data),
-            target_sets=form.target_sets.data,
-            target_reps=form.target_reps.data,
-            rir=form.effort_value.data if current_user.effort_scale == "rir" else None,
-            rpe=form.effort_value.data if current_user.effort_scale == "rpe" else None,
-            order_index=count,
-            routine_id=routine.id,
-        )
-        db.session.add(ex)
-        db.session.commit()
-        flash("Ejercicio añadido a la rutina.")
+        rir = form.effort_value.data if current_user.effort_scale == "rir" else None
+        rpe = form.effort_value.data if current_user.effort_scale == "rpe" else None
+
+        replace_ex = None
+        if form.replace_ex_id.data:
+            replace_ex = db.session.get(RoutineExercise, int(form.replace_ex_id.data))
+            if not replace_ex or replace_ex.routine_id != routine.id:
+                flash("No se pudo actualizar ese ejercicio.")
+                return redirect(url_for("routine_detail", routine_id=routine.id))
+
+        if replace_ex:
+            replace_ex.exercise = canonicalize_exercise_name(form.exercise.data)
+            replace_ex.target_sets = form.target_sets.data
+            replace_ex.target_reps = form.target_reps.data
+            replace_ex.rir = rir
+            replace_ex.rpe = rpe
+            db.session.commit()
+            flash("Ejercicio actualizado.")
+        else:
+            count = db.session.scalar(
+                sa.select(sa.func.count())
+                .select_from(RoutineExercise)
+                .where(RoutineExercise.routine_id == routine.id)
+            )
+            ex = RoutineExercise(
+                exercise=canonicalize_exercise_name(form.exercise.data),
+                target_sets=form.target_sets.data,
+                target_reps=form.target_reps.data,
+                rir=rir,
+                rpe=rpe,
+                order_index=count,
+                routine_id=routine.id,
+            )
+            db.session.add(ex)
+            db.session.commit()
+            flash("Ejercicio añadido a la rutina.")
         return redirect(url_for("routine_detail", routine_id=routine.id))
 
     exercises = db.session.scalars(
@@ -987,24 +1006,6 @@ def delete_routine_exercise(routine_id, ex_id):
     db.session.commit()
     flash("Ejercicio eliminado de la rutina.")
     return redirect(url_for("routine_detail", routine_id=routine.id))
-
-
-@app.route("/routines/<int:routine_id>/exercise/<int:ex_id>/replace", methods=["POST"])
-@login_required
-def replace_routine_exercise(routine_id, ex_id):
-    routine = db.get_or_404(Routine, routine_id)
-    if routine.author != current_user:
-        return jsonify({"ok": False}), 403
-    ex = db.get_or_404(RoutineExercise, ex_id)
-    if ex.routine_id != routine.id:
-        return jsonify({"ok": False}), 404
-    data = request.get_json(silent=True) or {}
-    name = (data.get("exercise") or "").strip()
-    if not name:
-        return jsonify({"ok": False}), 400
-    ex.exercise = canonicalize_exercise_name(name)
-    db.session.commit()
-    return jsonify({"ok": True, "exercise": ex.exercise})
 
 
 @app.route("/routines/<int:routine_id>/delete", methods=["POST"])
@@ -2014,16 +2015,17 @@ _MUSCLE_SIGNATURE_RGB = {
 
 def _interpolate_muscle_color(group, t):
     t = max(0.0, min(1.0, t))
-    # La curva raíz cuadrada anterior seguía dejando pálido/apagado a
-    # cualquier grupo que no fuera el más entrenado -- solo el pico (t=1)
-    # se veía realmente vivo. Ahora, en cuanto un grupo tiene *algo* de
-    # volumen relativo (t>0), salta a un mínimo de 45% de mezcla hacia su
-    # color de firma (en vez de arrancar del 0%), y el resto de la subida
-    # usa una curva todavía más agresiva (raíz cúbica) -- para que "se
-    # entrenó, aunque sea poco" ya se vea claramente de color, no gris con
-    # un tinte.
+    # Dos rondas anteriores de esta curva se pasaron cada una para el lado
+    # contrario: la raíz cuadrada original dejaba pálido cualquier grupo que
+    # no fuera el más entrenado; el "mínimo 45% + raíz cúbica" que la
+    # sustituyó se pasó de frenada -- con solo t=0.2 (20% del volumen del
+    # grupo más trabajado) ya daba ~77% de mezcla, así que casi cualquier
+    # músculo entrenado se veía "a tope" y no había gradiente real entre
+    # "un poco" y "el más trabajado". Este suavizado (suelo del 10% +
+    # exponente 0.65) reparte mejor el rango completo: t=0.05->~23%,
+    # t=0.2->~42%, t=0.5->~67%, t=0.8->~88%, t=1->100%.
     if t > 0:
-        t = 0.45 + 0.55 * (t ** (1 / 3))
+        t = 0.10 + 0.90 * (t ** 0.65)
     target = _MUSCLE_SIGNATURE_RGB[group]
     r = round(_MUSCLE_NEUTRAL_RGB[0] + (target[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
     g = round(_MUSCLE_NEUTRAL_RGB[1] + (target[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)

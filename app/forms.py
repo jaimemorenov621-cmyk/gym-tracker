@@ -8,6 +8,7 @@ from wtforms import (
     IntegerField,
     SelectField,
     TextAreaField,
+    HiddenField,
 )
 
 
@@ -218,6 +219,7 @@ class RoutineExerciseForm(FlaskForm):
         validators=[Optional(), NumberRange(min=0, max=10)],
         render_kw={"min": 0, "max": 10},
     )
+    replace_ex_id = HiddenField(validators=[Optional()])
     submit = SubmitField("Añadir ejercicio")
 
 
