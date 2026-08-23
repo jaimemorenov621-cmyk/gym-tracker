@@ -2,6 +2,8 @@ let searchTimeout;
 let lastSearchResults = [];
 let lastSearchQuery = '';
 let pickerErrorTimeout;
+let pickerReplaceUrl = null;
+let pickerReplaceExtra = null;
 const MUSCLE_OPTIONS = [
     ['shoulders', 'Hombros'], ['neck', 'Cuello'], ['chest', 'Pecho'], ['abdominals', 'Abdomen'],
     ['biceps', 'Bíceps'], ['triceps', 'Tríceps'], ['forearms', 'Antebrazos'], ['quadriceps', 'Cuádriceps'],
@@ -131,6 +133,24 @@ function submitNewExercise() {
 }
 
 function selectExercise(name) {
+    if (pickerReplaceUrl) {
+        const payload = Object.assign({exercise: name}, pickerReplaceExtra || {});
+        fetch(pickerReplaceUrl, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.ok) {
+                showPickerErrorToast('No se pudo reemplazar el ejercicio.');
+                return;
+            }
+            window.location.reload();
+        });
+        closeExercisePicker();
+        return;
+    }
     document.querySelector('[name="exercise"]').value = name;
     const chip = document.getElementById('selectedExerciseChip');
     chip.textContent = name;
@@ -152,7 +172,9 @@ function resetExercisePickerResults() {
         });
 }
 
-function openExercisePicker() {
+function openExercisePicker(replaceUrl, replaceExtra) {
+    pickerReplaceUrl = replaceUrl || null;
+    pickerReplaceExtra = replaceExtra || null;
     document.getElementById('exercisePickerBackdrop').classList.add('open');
     document.getElementById('exercisePickerSheet').classList.add('open');
     document.body.style.overflow = 'hidden';

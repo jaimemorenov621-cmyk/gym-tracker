@@ -105,6 +105,7 @@ class ExerciseNote(db.Model):
 class Routine(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(64))
+    order_index: so.Mapped[int] = so.mapped_column(default=0)
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
 
     author: so.Mapped[User] = so.relationship(back_populates="routines")
@@ -124,6 +125,8 @@ class RoutineExercise(db.Model):
     exercise: so.Mapped[str] = so.mapped_column(sa.String(64))
     target_sets: so.Mapped[int] = so.mapped_column(default=3)
     target_reps: so.Mapped[str] = so.mapped_column(sa.String(16), default="8-10")
+    rir: so.Mapped[Optional[int]] = so.mapped_column()
+    rpe: so.Mapped[Optional[int]] = so.mapped_column()
     order_index: so.Mapped[int] = so.mapped_column(default=0)
     routine_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Routine.id), index=True)
 

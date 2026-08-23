@@ -7,10 +7,12 @@
         <a class="btn-outline" href="{{ url_for('new_routine') }}">{{ macros.icon('plus-circle', 16) }} Nueva rutina</a>
     </p>
 
+    <div id="routinesList">
     {% for info in routines_info %}
-        <div class="card card-elevated routine-card">
+        <div class="card card-elevated routine-card" data-id="{{ info.routine.id }}">
             <div class="exercise-header">
                 <h3>
+                    <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
                     {{ macros.exercise_icon_fallback(48, 10) }}
                     <a class="btn-outline" href="{{ url_for('routine_detail', routine_id=info.routine.id) }}">{{ info.routine.name }}</a>
                 </h3>
@@ -42,4 +44,26 @@
             <p>Todavía no tienes rutinas guardadas.</p>
         </div>
     {% endfor %}
+    </div>
+
+    {% if routines_info %}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        const routinesList = document.getElementById('routinesList');
+        if (routinesList) {
+            new Sortable(routinesList, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: function() {
+                    const order = Array.from(routinesList.children).map(el => parseInt(el.dataset.id));
+                    fetch("{{ url_for('reorder_routines') }}", {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({order: order})
+                    });
+                }
+            });
+        }
+    </script>
+    {% endif %}
 {% endblock %}

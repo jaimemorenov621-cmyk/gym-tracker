@@ -22,16 +22,20 @@
                 <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
                     <strong>{{ ex.exercise|title }}</strong>
-                    <span class="pill">{{ ex.target_sets }}x{{ ex.target_reps }}</span>
+                    <span class="pill">{{ ex.target_sets }}x{{ ex.target_reps }}{% if ex.rir is not none %} @RIR{{ ex.rir }}{% elif ex.rpe is not none %} @RPE{{ ex.rpe }}{% endif %}</span>
                     {% set n = exercise_notes_map.get(ex.exercise) %}
                     <a class="rest-badge" href="{{ url_for('exercise_notes', name=ex.exercise) }}">
                         {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) if n and n.default_rest_seconds else '1min 30s' }}
                     </a>
                 </span>
-                <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" style="display:inline">
-                    {{ empty_form.hidden_tag() }}
-                    <button type="submit" class="btn-icon" title="Quitar ejercicio" aria-label="Quitar ejercicio">{{ macros.icon('trash') }}</button>
-                </form>
+                <span style="display:inline-flex; gap:4px;">
+                    <button type="button" class="btn-icon" title="Reemplazar ejercicio" aria-label="Reemplazar ejercicio"
+                        onclick="openExercisePicker('{{ url_for('replace_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}')">{{ macros.icon('repeat') }}</button>
+                    <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" style="display:inline">
+                        {{ empty_form.hidden_tag() }}
+                        <button type="submit" class="btn-icon" title="Quitar ejercicio" aria-label="Quitar ejercicio">{{ macros.icon('trash') }}</button>
+                    </form>
+                </span>
             </li>
         {% else %}
             <p><em>Todavía no has añadido ejercicios.</em></p>
@@ -57,6 +61,12 @@
             {{ form.target_reps.label }}<br>
             {{ form.target_reps() }}
         </p>
+        {% if effort_scale != 'none' %}
+        <p>
+            <label for="{{ form.effort_value.id }}">{{ effort_scale|upper }} objetivo</label><br>
+            {{ form.effort_value() }}
+        </p>
+        {% endif %}
         <p><input type="submit" value="Añadir ejercicio" class="btn"></p>
     </form>
     {{ macros.exercise_picker_sheet() }}

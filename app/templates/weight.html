@@ -45,7 +45,7 @@
             <ul class="weight-entry-list">
                 {% for e in entries %}
                     <li>
-                        <span class="weight-entry-date">{{ e.timestamp.strftime('%d/%m/%Y') }}</span>
+                        <span class="weight-entry-date">{{ to_local(e.timestamp).strftime('%d/%m/%Y') }}</span>
                         <span class="weight-entry-value">{{ '%g' % e.weight }}kg</span>
                         <form action="{{ url_for('delete_weight_entry', entry_id=e.id) }}" method="post" onsubmit="return confirm('¿Eliminar este registro de peso?');">
                             {{ empty_form.hidden_tag() }}

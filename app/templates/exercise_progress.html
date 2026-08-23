@@ -74,7 +74,7 @@
     <hr>
     {% for s in sessions %}
         <div class="card card-elevated">
-            <h3 style="margin-top:0;">{{ s.timestamp.strftime('%d/%m/%Y %H:%M') }} {% if s.is_pr %}<span style="color:#ffb300;">🏆</span>{% endif %}</h3>
+            <h3 style="margin-top:0;">{{ to_local(s.timestamp).strftime('%d/%m/%Y %H:%M') }} {% if s.is_pr %}<span style="color:#ffb300;">🏆</span>{% endif %}</h3>
             {% for e in s.sets %}
                 <div class="set-row">
                     <span class="set-weight">{{ e.weight }}kg</span>

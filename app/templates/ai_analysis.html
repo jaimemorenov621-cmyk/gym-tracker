@@ -3,7 +3,7 @@
     <h1 style="font-weight:800; letter-spacing:-0.02em;">🔍 Análisis de IA</h1>
 
     {% if latest %}
-        <p class="pill">📅 {{ latest.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+        <p class="pill">📅 {{ to_local(latest.created_at).strftime('%d/%m/%Y %H:%M') }}</p>
 
         {% if analysis %}
             <div class="card card-elevated analysis-summary">
@@ -65,7 +65,7 @@
             {% if total_workouts < min_workouts %}
                 <button type="submit" class="btn" disabled>Necesitas al menos {{ min_workouts }} entrenamientos (llevas {{ total_workouts }})</button>
             {% elif next_available %}
-                <button type="submit" class="btn" disabled>Disponible el {{ next_available.strftime('%d/%m/%Y') }}</button>
+                <button type="submit" class="btn" disabled>Disponible el {{ to_local(next_available).strftime('%d/%m/%Y') }}</button>
             {% else %}
                 <input type="submit" value="🔍 Analizar mi progreso" class="btn">
             {% endif %}

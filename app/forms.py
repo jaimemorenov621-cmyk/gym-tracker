@@ -213,6 +213,11 @@ class RoutineExerciseForm(FlaskForm):
         validators=[DataRequired(), Length(max=16)],
         default="8-10",
     )
+    effort_value = IntegerField(
+        "RIR/RPE objetivo",
+        validators=[Optional(), NumberRange(min=0, max=10)],
+        render_kw={"min": 0, "max": 10},
+    )
     submit = SubmitField("Añadir ejercicio")
 
 

@@ -40,6 +40,7 @@ from app.models import (
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 
 
 @app.route("/sw.js")
@@ -193,7 +194,7 @@ def index():
         strength_change=strength_change,
         strength_window_days=strength_window_days,
         latest_weight=latest_weight,
-        weight_chart_labels=[e.timestamp.strftime("%d/%m") for e in weight_entries],
+        weight_chart_labels=[to_local(e.timestamp).strftime("%d/%m") for e in weight_entries],
         weight_chart_values=[e.weight for e in weight_entries],
         muscle_colors=compute_muscle_intensity(),
         muscle_svg=build_muscle_svg_parts(current_user.sex),
@@ -304,6 +305,27 @@ def add_exercise_to_workout(workout_id):
         db.session.add(entry)
         db.session.commit()
     return redirect(url_for("workout_detail", workout_id=workout.id))
+
+
+@app.route("/workout/<int:workout_id>/exercise/replace", methods=["POST"])
+@login_required
+def replace_workout_exercise(workout_id):
+    workout = db.get_or_404(Workout, workout_id)
+    if workout.author != current_user:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    old_name = (data.get("old_exercise") or "").strip().lower()
+    new_name = (data.get("exercise") or "").strip()
+    if not old_name or not new_name:
+        return jsonify({"ok": False}), 400
+    new_name = canonicalize_exercise_name(new_name)
+    sets = db.session.scalars(
+        workout.sets.select().where(SetEntry.exercise == old_name)
+    ).all()
+    for s in sets:
+        s.exercise = new_name
+    db.session.commit()
+    return jsonify({"ok": True, "exercise": new_name})
 
 
 @app.route("/workout/<int:workout_id>/set", methods=["POST"])
@@ -443,6 +465,8 @@ def workout_detail(workout_id):
                     "exercise": re.exercise,
                     "target_sets": re.target_sets,
                     "target_reps": re.target_reps,
+                    "rir": re.rir,
+                    "rpe": re.rpe,
                     "done": done,
                 }
             )
@@ -561,7 +585,7 @@ def exercise_progress(name):
         else set()
     )
 
-    chart_labels = [s["timestamp"].strftime("%d/%m %H:%M") for s in session_list]
+    chart_labels = [to_local(s["timestamp"]).strftime("%d/%m %H:%M") for s in session_list]
     chart_values = [round(s["best_1rm"], 1) for s in session_list]
     chart_colors = []
     for s in session_list:
@@ -720,7 +744,7 @@ def weight():
         form=form,
         empty_form=EmptyForm(),
         entries=list(reversed(entries)),
-        chart_labels=[e.timestamp.strftime("%d/%m/%Y") for e in entries],
+        chart_labels=[to_local(e.timestamp).strftime("%d/%m/%Y") for e in entries],
         chart_values=[e.weight for e in entries],
     )
 
@@ -834,7 +858,7 @@ def request_ai_analysis():
 @login_required
 def routines():
     routine_list = db.session.scalars(
-        current_user.routines.select().order_by(Routine.name)
+        current_user.routines.select().order_by(Routine.order_index)
     ).all()
 
     routines_info = []
@@ -851,14 +875,14 @@ def routines():
             .where(Workout.routine_id == r.id)
             .order_by(Workout.timestamp.desc())
         )
-        last_day = dias[last_workout.timestamp.weekday()] if last_workout else None
+        last_day = dias[to_local(last_workout.timestamp).weekday()] if last_workout else None
         routines_info.append(
             {
                 "routine": r,
                 "exercise_names": [e.exercise.title() for e in exercises],
                 "last_day": last_day,
                 "last_date": (
-                    last_workout.timestamp.strftime("%d/%m/%Y")
+                    to_local(last_workout.timestamp).strftime("%d/%m/%Y")
                     if last_workout
                     else None
                 ),
@@ -893,6 +917,8 @@ def routine_detail(routine_id):
             exercise=canonicalize_exercise_name(form.exercise.data),
             target_sets=form.target_sets.data,
             target_reps=form.target_reps.data,
+            rir=form.effort_value.data if current_user.effort_scale == "rir" else None,
+            rpe=form.effort_value.data if current_user.effort_scale == "rpe" else None,
             order_index=count,
             routine_id=routine.id,
         )
@@ -927,6 +953,7 @@ def routine_detail(routine_id):
         form=form,
         empty_form=empty_form,
         exercise_notes_map=exercise_notes_map,
+        effort_scale=current_user.effort_scale,
     )
 
 
@@ -935,7 +962,12 @@ def routine_detail(routine_id):
 def new_routine():
     form = RoutineForm()
     if form.validate_on_submit():
-        routine = Routine(name=form.name.data, author=current_user)
+        count = db.session.scalar(
+            sa.select(sa.func.count())
+            .select_from(Routine)
+            .where(Routine.user_id == current_user.id)
+        )
+        routine = Routine(name=form.name.data, order_index=count, author=current_user)
         db.session.add(routine)
         db.session.commit()
         flash("Rutina creada. Añade ejercicios.")
@@ -955,6 +987,24 @@ def delete_routine_exercise(routine_id, ex_id):
     db.session.commit()
     flash("Ejercicio eliminado de la rutina.")
     return redirect(url_for("routine_detail", routine_id=routine.id))
+
+
+@app.route("/routines/<int:routine_id>/exercise/<int:ex_id>/replace", methods=["POST"])
+@login_required
+def replace_routine_exercise(routine_id, ex_id):
+    routine = db.get_or_404(Routine, routine_id)
+    if routine.author != current_user:
+        return jsonify({"ok": False}), 403
+    ex = db.get_or_404(RoutineExercise, ex_id)
+    if ex.routine_id != routine.id:
+        return jsonify({"ok": False}), 404
+    data = request.get_json(silent=True) or {}
+    name = (data.get("exercise") or "").strip()
+    if not name:
+        return jsonify({"ok": False}), 400
+    ex.exercise = canonicalize_exercise_name(name)
+    db.session.commit()
+    return jsonify({"ok": True, "exercise": ex.exercise})
 
 
 @app.route("/routines/<int:routine_id>/delete", methods=["POST"])
@@ -1026,6 +1076,8 @@ def start_routine(routine_id):
                     exercise=re_.exercise,
                     weight=0.0,
                     reps=0,
+                    rir=re_.rir,
+                    rpe=re_.rpe,
                     set_type="normal",
                     workout=workout,
                 )
@@ -1085,6 +1137,24 @@ def reorder_routine(routine_id):
     for index, ex_id in enumerate(order):
         if ex_id in exercises:
             exercises[ex_id].order_index = index
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/routines/reorder", methods=["POST"])
+@login_required
+def reorder_routines():
+    data = request.get_json(silent=True) or {}
+    order = data.get("order", [])
+    routines_by_id = {
+        r.id: r
+        for r in db.session.scalars(
+            sa.select(Routine).where(Routine.user_id == current_user.id)
+        ).all()
+    }
+    for index, routine_id in enumerate(order):
+        if routine_id in routines_by_id:
+            routines_by_id[routine_id].order_index = index
     db.session.commit()
     return jsonify({"ok": True})
 
@@ -1575,7 +1645,7 @@ def build_progress_summary():
                 "sessions": n_sessions,
                 "best_1rm": round(max(s["best_1rm"] for s in session_list), 1),
                 "stagnation": stagnation,
-                "last_trained": session_list[-1]["timestamp"].strftime("%d/%m/%Y"),
+                "last_trained": to_local(session_list[-1]["timestamp"]).strftime("%d/%m/%Y"),
                 "muscle_group": muscle_group,
                 "avg_rir": round(sum(rirs) / len(rirs), 1) if rirs else None,
                 "avg_rpe": round(sum(rpes) / len(rpes), 1) if rpes else None,
@@ -1587,7 +1657,7 @@ def build_progress_summary():
         sets = db.session.scalars(w.sets.select()).all()
         recent_workouts.append(
             {
-                "date": w.timestamp.strftime("%d/%m/%Y"),
+                "date": to_local(w.timestamp).strftime("%d/%m/%Y"),
                 "note": w.note or "Entrenamiento",
                 "rating": w.performance_rating,
                 "comment": w.performance_comment,
@@ -1718,8 +1788,8 @@ def generate_ai_analysis(how_you_feel=None):
         days_span = (last.timestamp - first.timestamp).days
         lines.append("")
         lines.append(
-            f"Peso corporal: de {first.weight}kg ({first.timestamp.strftime('%d/%m/%Y')}) a "
-            f"{last.weight}kg ({last.timestamp.strftime('%d/%m/%Y')}), {delta:+}kg en "
+            f"Peso corporal: de {first.weight}kg ({to_local(first.timestamp).strftime('%d/%m/%Y')}) a "
+            f"{last.weight}kg ({to_local(last.timestamp).strftime('%d/%m/%Y')}), {delta:+}kg en "
             f"{days_span} días."
         )
 
@@ -1791,6 +1861,17 @@ def get_rest_seconds(exercise):
         )
     )
     return note.default_rest_seconds if note and note.default_rest_seconds else 120
+
+
+LOCAL_TZ = ZoneInfo("Europe/Madrid")
+
+
+def to_local(dt):
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(LOCAL_TZ)
 
 
 def format_rest(seconds):

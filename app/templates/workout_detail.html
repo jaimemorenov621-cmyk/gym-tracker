@@ -4,8 +4,8 @@
     <h1 style="font-weight:800; letter-spacing:-0.02em;">{{ workout.note or "Entrenamiento" }}</h1>
     <div class="card card-elevated workout-meta">
         <div class="workout-meta-tags">
-            <span class="set-tag">{{ macros.icon('calendar', 17) }} {{ workout.timestamp.strftime('%d/%m/%Y') }}</span>
-            <span class="set-tag">{{ macros.icon('clock', 17) }} {{ workout.timestamp.strftime('%H:%M') }}</span>
+            <span class="set-tag">{{ macros.icon('calendar', 17) }} {{ to_local(workout.timestamp).strftime('%d/%m/%Y') }}</span>
+            <span class="set-tag">{{ macros.icon('clock', 17) }} {{ to_local(workout.timestamp).strftime('%H:%M') }}</span>
             {% if workout.ended_at %}
                 <span class="set-tag">{{ macros.icon('stopwatch', 17) }} {{ workout.duration_str() }}</span>
             {% else %}
@@ -56,7 +56,7 @@
             {% for p in routine_plan %}
                 <div class="plan-row">
                     <span class="pill pill-label">{{ p.exercise|title }}</span>
-                    <span class="pill">{{ p.target_sets }}x{{ p.target_reps }}</span>
+                    <span class="pill">{{ p.target_sets }}x{{ p.target_reps }}{% if p.rir is not none %} @RIR{{ p.rir }}{% elif p.rpe is not none %} @RPE{{ p.rpe }}{% endif %}</span>
                     <span class="pill{% if p.done >= p.target_sets %} pill-success{% endif %}"
                           data-plan-exercise="{{ p.exercise|trim|lower }}"
                           data-done="{{ p.done }}"
@@ -80,9 +80,13 @@
                     {% endif %}
                     <a class="btn-outline" href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a>
                 </h3>
-                <a class="rest-badge" href="{{ url_for('exercise_notes', name=exercise) }}">
-                    {{ macros.icon('note') }} notas{% if n and n.default_rest_seconds %} · {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) }}{% endif %}
-                </a>
+                <span style="display:flex; align-items:center; gap:6px;">
+                    <a class="rest-badge" href="{{ url_for('exercise_notes', name=exercise) }}">
+                        {{ macros.icon('note') }} notas{% if n and n.default_rest_seconds %} · {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) }}{% endif %}
+                    </a>
+                    <button type="button" class="btn-icon" title="Reemplazar ejercicio" aria-label="Reemplazar ejercicio"
+                        onclick="openExercisePicker('{{ url_for('replace_workout_exercise', workout_id=workout.id) }}', {old_exercise: '{{ exercise }}'})">{{ macros.icon('repeat') }}</button>
+                </span>
             </div>
             {% if n and n.notes %}
                 <div class="notes-box">
@@ -324,15 +328,14 @@
             let lastWeight = 0, lastReps = 0, lastEffort = '', lastType = 'normal';
             if (rows.length) {
                 const last = rows[rows.length - 1];
-                const inputs = last.querySelectorAll('input, select');
-                lastWeight = inputs[0].value.replace(',', '.');
-                lastReps = inputs[1].value;
+                lastWeight = last.querySelector('.cell-input-weight').value.replace(',', '.');
+                lastReps = last.querySelector('.cell-input-number:not(.cell-input-weight)').value;
                 {% if effort_scale != 'none' %}
-                lastEffort = inputs[2].value;
-                lastType = inputs[3].value;
-                {% else %}
-                lastType = inputs[2].value;
+                const lastEffortBtn = last.querySelector('.effort-chip');
+                lastEffort = lastEffortBtn && !lastEffortBtn.classList.contains('effort-chip-empty')
+                    ? lastEffortBtn.textContent.trim() : '';
                 {% endif %}
+                lastType = last.querySelector('select').value;
             }
 
             fetch("{{ url_for('api_create_set', workout_id=workout.id) }}", {

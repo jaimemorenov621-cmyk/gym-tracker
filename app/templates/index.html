@@ -132,7 +132,7 @@
         <h3 class="week-divider">Semana {{ group.label }}</h3>
         {% for item in group.workouts %}
             <a class="workout-card" href="{{ url_for('workout_detail', workout_id=item.workout.id) }}">
-                <span class="wc-date">{{ item.workout.timestamp.strftime('%d/%m/%Y · %H:%M') }}</span>
+                <span class="wc-date">{{ to_local(item.workout.timestamp).strftime('%d/%m/%Y · %H:%M') }}</span>
                 <span class="wc-title">{{ item.workout.note or "Entrenamiento" }}</span>
                 {% if item.exercise_names %}
                     <div class="wc-exercises">

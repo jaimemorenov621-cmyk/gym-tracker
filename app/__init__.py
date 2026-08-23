@@ -12,7 +12,8 @@ login = LoginManager(app)
 login.login_view = "login"
 
 from app import routes, models
-from app.routes import format_rest, get_exercise_image
+from app.routes import format_rest, get_exercise_image, to_local
 
 app.jinja_env.globals["format_rest"] = format_rest
 app.jinja_env.globals["get_exercise_image"] = get_exercise_image
+app.jinja_env.globals["to_local"] = to_local
