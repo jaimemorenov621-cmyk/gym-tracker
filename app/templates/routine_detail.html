@@ -21,6 +21,12 @@
             <li class="exercise-row" data-id="{{ ex.id }}">
                 <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                     <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
+                    {% set img = get_exercise_image(ex.exercise) %}
+                    {% if img %}
+                        <img src="{{ img }}" style="width:40px; height:40px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+                    {% else %}
+                        {{ macros.exercise_icon_fallback(40, 8) }}
+                    {% endif %}
                     <strong>{{ ex.exercise|title }}</strong>
                     <span class="pill">{{ ex.target_sets }}x{{ ex.target_reps }}{% if ex.rir is not none %} @RIR{{ ex.rir }}{% elif ex.rpe is not none %} @RPE{{ ex.rpe }}{% endif %}</span>
                     {% set n = exercise_notes_map.get(ex.exercise) %}

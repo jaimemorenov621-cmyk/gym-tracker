@@ -526,7 +526,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     .pr-badge { width: 13px; height: 13px; font-size: 0.55rem; margin-top: 1px; }
 
     .set-table-wrap { position: relative; }
-    .set-table tr[id^="row-"] { transition: transform 0.2s ease; touch-action: pan-y; }
+    .set-table tr[id^="row-"] { position: relative; left: 0; transition: left 0.2s ease; touch-action: pan-y; }
     .swipe-delete-zone {
         display: none;
         position: absolute;

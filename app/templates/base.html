@@ -138,6 +138,8 @@
         let currentTimerExercise = "{{ just_added or '' }}";
         let restTotalSeconds = parseInt(localStorage.getItem('restTotalSeconds')) || 0;
         const hasActiveWorkout = {{ 'true' if active_workout else 'false' }};
+        const restSoundEnabled = {{ current_user.rest_sound_enabled|tojson if current_user.is_authenticated else 'true' }};
+        const restVibrationEnabled = {{ current_user.rest_vibration_enabled|tojson if current_user.is_authenticated else 'true' }};
         const restWorker = ('Worker' in window) ? new Worker("{{ url_for('static', filename='rest_timer_worker.js') }}") : null;
         const RING_CIRCUMFERENCE = 232.5;
 
@@ -192,9 +194,9 @@
                     body: body,
                     tag: 'rest-timer',
                     renotify: done,
-                    silent: !done,
+                    silent: !done || !restSoundEnabled,
                     icon: '/static/icons/icon-192.png',
-                    vibrate: done ? [200, 100, 200] : undefined
+                    vibrate: (done && restVibrationEnabled) ? [200, 100, 200] : undefined
                 });
             });
         }
@@ -257,8 +259,8 @@
                     localStorage.removeItem('restExercise');
                     localStorage.removeItem('restTotalSeconds');
                     document.getElementById('restTimerBox').style.display = 'none';
-                    beep();
-                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                    if (restSoundEnabled) beep();
+                    if (navigator.vibrate && restVibrationEnabled) navigator.vibrate([200, 100, 200]);
                     if (window.Notification && Notification.permission === 'granted') {
                         showRestNotification(0, currentTimerExercise);
                     } else {

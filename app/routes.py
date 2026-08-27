@@ -54,7 +54,7 @@ def landing():
         return redirect(url_for("index"))
     no_contar = request.cookies.get("no_contar") == "1" or request.args.get("no_contar") == "1"
     if not no_contar:
-        db.session.add(LandingEvent(event_type="visit"))
+        db.session.add(LandingEvent(event_type="visit", referrer=(request.referrer[:255] if request.referrer else None)))
         db.session.commit()
     resp = make_response(render_template("landing.html"))
     if request.args.get("no_contar") == "1":
@@ -65,7 +65,7 @@ def landing():
 @app.route("/landing/cta")
 def landing_cta():
     if request.cookies.get("no_contar") != "1":
-        db.session.add(LandingEvent(event_type="cta_click"))
+        db.session.add(LandingEvent(event_type="cta_click", referrer=(request.referrer[:255] if request.referrer else None)))
         db.session.commit()
     return redirect(url_for("register"))
 
@@ -86,7 +86,18 @@ def landing_stats():
         .select_from(LandingEvent)
         .where(LandingEvent.event_type == "cta_click")
     )
-    return render_template("landing_stats.html", visits=visits, clicks=clicks)
+    referrers = db.session.scalars(
+        sa.select(LandingEvent.referrer).where(LandingEvent.event_type == "visit")
+    ).all()
+    referrer_counts = {}
+    for r in referrers:
+        key = urlsplit(r).netloc if r else None
+        key = key or "Directo / sin referrer"
+        referrer_counts[key] = referrer_counts.get(key, 0) + 1
+    referrer_counts = dict(sorted(referrer_counts.items(), key=lambda kv: -kv[1]))
+    return render_template(
+        "landing_stats.html", visits=visits, clicks=clicks, referrer_counts=referrer_counts
+    )
 
 
 @app.route("/index")
@@ -397,8 +408,13 @@ def api_update_set(set_id):
         was_completed = entry.completed
         entry.completed = bool(data["completed"])
         just_completed = entry.completed and not was_completed
+        just_uncompleted = was_completed and not entry.completed
         if not entry.completed and entry.is_pr:
             entry.is_pr = False
+        if just_uncompleted and entry.reps == 0:
+            db.session.delete(entry)
+            db.session.commit()
+            return jsonify({"ok": True, "deleted": True})
 
     # Mismo recálculo tanto al completar como al corregir peso/reps/esfuerzo
     # de una serie ya completada -- nunca al editar una que no lo está.
@@ -697,6 +713,8 @@ def settings():
     if form.validate_on_submit():
         current_user.stagnation_threshold = form.stagnation_threshold.data
         current_user.effort_scale = form.effort_scale.data
+        current_user.rest_sound_enabled = form.rest_sound_enabled.data
+        current_user.rest_vibration_enabled = form.rest_vibration_enabled.data
         current_user.sex = form.sex.data or None
         current_user.height_cm = form.height_cm.data
         current_user.training_goal = form.training_goal.data or None
@@ -719,6 +737,8 @@ def settings():
     elif request.method == "GET":
         form.stagnation_threshold.data = current_user.stagnation_threshold
         form.effort_scale.data = current_user.effort_scale
+        form.rest_sound_enabled.data = current_user.rest_sound_enabled
+        form.rest_vibration_enabled.data = current_user.rest_vibration_enabled
         form.sex.data = current_user.sex or ""
         form.height_cm.data = current_user.height_cm
         form.training_goal.data = current_user.training_goal or ""

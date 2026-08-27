@@ -20,6 +20,8 @@ class User(UserMixin, db.Model):
     height_cm: so.Mapped[Optional[int]] = so.mapped_column()
     training_goal: so.Mapped[Optional[str]] = so.mapped_column(sa.String(20))
     notes: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
+    rest_sound_enabled: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    rest_vibration_enabled: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -218,6 +220,7 @@ class LandingEvent(db.Model):
     timestamp: so.Mapped[datetime] = so.mapped_column(
         default=lambda: datetime.now(timezone.utc), index=True
     )
+    referrer: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
 
     def __repr__(self):
         return f"<LandingEvent {self.event_type} {self.timestamp}>"

@@ -397,6 +397,11 @@
                     if (data.error) alert(data.error);
                     return;
                 }
+                if (data.deleted) {
+                    updateRoutineProgress(exercise, -1);
+                    btn.closest('tr').remove();
+                    return;
+                }
                 btn.classList.toggle('checked', willComplete);
                 const row = btn.closest('tr');
                 if (row) row.classList.toggle('set-row-done', willComplete);
@@ -481,7 +486,7 @@
             }
             const clamped = Math.max(-64, Math.min(0, dx));
             swipeState.currentX = clamped;
-            swipeState.tr.style.transform = 'translateX(' + clamped + 'px)';
+            swipeState.tr.style.left = clamped + 'px';
         }
 
         function onSwipeEnd() {
@@ -491,13 +496,13 @@
             if (swipeState.currentX < -32) {
                 openSwipe(tr, id);
             } else {
-                tr.style.transform = '';
+                tr.style.left = '';
             }
             swipeState = null;
         }
 
         function openSwipe(tr, id) {
-            tr.style.transform = 'translateX(-64px)';
+            tr.style.left = '-64px';
             const wrap = tr.closest('.set-table-wrap');
             const zone = wrap.querySelector('.swipe-delete-zone');
             const trRect = tr.getBoundingClientRect();
@@ -507,7 +512,7 @@
             zone.style.display = 'flex';
             zone.currentTr = tr;
             zone.querySelector('button').onclick = function() {
-                tr.style.transform = '';
+                tr.style.left = '';
                 zone.style.display = 'none';
                 zone.currentTr = null;
                 deleteSet(id);
@@ -517,7 +522,7 @@
         function closeOpenSwipe(exceptTr) {
             document.querySelectorAll('.swipe-delete-zone').forEach(function(zone) {
                 if (zone.style.display !== 'none' && zone.currentTr && zone.currentTr !== exceptTr) {
-                    zone.currentTr.style.transform = '';
+                    zone.currentTr.style.left = '';
                     zone.style.display = 'none';
                     zone.currentTr = null;
                 }

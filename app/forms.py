@@ -125,6 +125,8 @@ class SettingsForm(FlaskForm):
         choices=[("rir", "RIR"), ("rpe", "RPE"), ("none", "No anotar")],
         default="rir",
     )
+    rest_sound_enabled = BooleanField("Sonido de notificación del descanso")
+    rest_vibration_enabled = BooleanField("Vibración del descanso")
     sex = SelectField(
         "Sexo",
         choices=[("", "Prefiero no decirlo"), ("hombre", "Hombre"), ("mujer", "Mujer")],
