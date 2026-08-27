@@ -268,7 +268,7 @@
                 }
                 document.getElementById('timerDisplay').textContent = formatMMSS(remaining);
                 updateRestRing(remaining);
-                if (remaining % 15 === 0) {
+                if (remaining % 5 === 0) {
                     showRestNotification(remaining, currentTimerExercise);
                 }
             };

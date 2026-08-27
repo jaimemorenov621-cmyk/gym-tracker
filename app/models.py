@@ -77,7 +77,9 @@ class SetEntry(db.Model):
     reps: so.Mapped[int] = so.mapped_column()
     rir: so.Mapped[Optional[int]] = so.mapped_column()
     rpe: so.Mapped[Optional[int]] = so.mapped_column()
-    workout_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Workout.id), index=True)
+    workout_id: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey(Workout.id, ondelete="CASCADE"), index=True
+    )
     workout: so.Mapped[Workout] = so.relationship(back_populates="sets")
     set_type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
     completed: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())

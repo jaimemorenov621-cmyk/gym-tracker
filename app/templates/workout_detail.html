@@ -110,7 +110,7 @@
                 </thead>
                 <tbody>
                     {% for s in group %}
-                    <tr id="row-{{ s.id }}"{% if s.completed %} class="set-row-done"{% endif %}>
+                    <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}"{% if s.completed %} class="set-row-done"{% endif %}>
                         <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" title="Récord personal" aria-label="Récord personal">🏅</span>{% endif %}</td>
                         <td class="set-previous">{{ prev[loop.index0] if prev and loop.index0 < prev|length else "—" }}</td>
                         <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="{{ '%g' % s.weight }}" onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
@@ -315,11 +315,21 @@
 
         function deleteSet(id) {
             if (!confirm('¿Eliminar esta serie?')) return;
+            const row = document.getElementById('row-' + id);
+            if (!row) return;
+            const exercise = row.dataset.exercise;
+            const wasCompleted = row.classList.contains('set-row-done');
             fetch("/set/" + id + "/delete", { method: 'POST' })
-                .then(r => r.json())
+                .then(r => r.json().catch(() => ({ ok: false })))
                 .then(data => {
-                    if (data.ok) document.getElementById('row-' + id).remove();
-                });
+                    if (data.ok) {
+                        row.remove();
+                        if (wasCompleted && exercise) updateRoutineProgress(exercise, -1);
+                    } else {
+                        showPickerErrorToast('No se pudo eliminar la serie.');
+                    }
+                })
+                .catch(() => showPickerErrorToast('No se pudo eliminar la serie.'));
         }
 
         function addSet(exercise) {
@@ -352,6 +362,7 @@
                 const tbody = table.querySelector('tbody');
                 const tr = document.createElement('tr');
                 tr.id = 'row-' + data.id;
+                tr.dataset.exercise = exercise;
                 const prevForExercise = previousSetsMap[exercise];
                 const previousLabel = (prevForExercise && prevForExercise[rows.length]) || '—';
                 tr.innerHTML =

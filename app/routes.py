@@ -1509,10 +1509,16 @@ def get_exercise_sessions(name, user_id=None):
 
     running_max = float("-inf")
     for s in session_list:
-        s["best_set"] = max(s["sets"], key=estimated_1rm)
-        s["best_1rm"] = estimated_1rm(s["best_set"])
-        s["is_pr"] = s["best_1rm"] > running_max
-        running_max = max(running_max, s["best_1rm"])
+        candidates = [st for st in s["sets"] if st.completed and st.weight > 0 and st.reps > 0]
+        if candidates:
+            s["best_set"] = max(candidates, key=estimated_1rm)
+            s["best_1rm"] = estimated_1rm(s["best_set"])
+            s["is_pr"] = s["best_1rm"] > running_max
+            running_max = max(running_max, s["best_1rm"])
+        else:
+            s["best_set"] = None
+            s["best_1rm"] = 0
+            s["is_pr"] = False
 
     stagnation = False
     improvement = False
@@ -1530,7 +1536,7 @@ def apply_pr_flags_for_session(session):
     Compartida entre completar/editar una serie y el backfill masivo."""
     changed = 0
     for s in session["sets"]:
-        should_be_pr = session["is_pr"] and s.id == session["best_set"].id
+        should_be_pr = session["best_set"] is not None and session["is_pr"] and s.id == session["best_set"].id
         if s.is_pr != should_be_pr:
             s.is_pr = should_be_pr
             changed += 1
@@ -1543,7 +1549,8 @@ def count_pending_pr_changes(session):
     return sum(
         1
         for s in session["sets"]
-        if s.is_pr != (session["is_pr"] and s.id == session["best_set"].id)
+        if s.is_pr
+        != (session["best_set"] is not None and session["is_pr"] and s.id == session["best_set"].id)
     )
 
 
@@ -1644,8 +1651,9 @@ def build_progress_summary():
                 if muscle_group:
                     break
         recent = session_list[-current_user.stagnation_threshold :]
-        rirs = [s["best_set"].rir for s in recent if s["best_set"].rir is not None]
-        rpes = [s["best_set"].rpe for s in recent if s["best_set"].rpe is not None]
+        completed_sets = [st for sess in recent for st in sess["sets"] if st.completed]
+        rirs = [st.rir for st in completed_sets if st.rir is not None]
+        rpes = [st.rpe for st in completed_sets if st.rpe is not None]
         exercises.append(
             {
                 "name": name.title(),
