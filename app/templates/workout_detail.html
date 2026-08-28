@@ -428,11 +428,6 @@
                     if (data.error) alert(data.error);
                     return;
                 }
-                if (data.deleted) {
-                    updateRoutineProgress(exercise, -1);
-                    btn.closest('tr').remove();
-                    return;
-                }
                 btn.classList.toggle('checked', willComplete);
                 const row = btn.closest('tr');
                 if (row) row.classList.toggle('set-row-done', willComplete);

@@ -374,6 +374,7 @@ body {
     font-size: 0.8rem;
     font-weight: 600;
     text-decoration: none;
+    white-space: nowrap;
 }
 @media (hover: hover) {
     .rest-badge:hover { background: #ece7ff; }
@@ -927,6 +928,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     justify-content: space-between;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
 }
 .exercise-header h3 {
     margin: 0;

@@ -427,13 +427,8 @@ def api_update_set(set_id):
         was_completed = entry.completed
         entry.completed = bool(data["completed"])
         just_completed = entry.completed and not was_completed
-        just_uncompleted = was_completed and not entry.completed
         if not entry.completed and entry.is_pr:
             entry.is_pr = False
-        if just_uncompleted and entry.reps == 0:
-            db.session.delete(entry)
-            db.session.commit()
-            return jsonify({"ok": True, "deleted": True})
 
     # Mismo recálculo tanto al completar como al corregir peso/reps/esfuerzo
     # de una serie ya completada -- nunca al editar una que no lo está.
@@ -1508,6 +1503,7 @@ def get_previous_sets_map(workout, exercise_names):
             Workout.user_id == current_user.id,
             Workout.timestamp < workout.timestamp,
             SetEntry.exercise.in_(exercise_names),
+            SetEntry.completed.is_(True),
         )
         .order_by(SetEntry.exercise, Workout.timestamp.desc(), SetEntry.id)
     ).all()
