@@ -318,10 +318,9 @@
         function deleteSet(id, skipConfirm) {
             const doDelete = function () {
                 const row = document.getElementById('row-' + id);
-                if (!row) { showDebugError('DEBUG 2/4: no se encontró la fila row-' + id + ' en el DOM.'); return; }
+                if (!row) return;
                 const exercise = row.dataset.exercise;
                 const wasCompleted = row.classList.contains('set-row-done');
-                showDebugError('DEBUG 3/4: enviando borrado de la serie ' + id + ' al servidor...');
                 fetch("/set/" + id + "/delete", { method: 'POST' })
                     .then(r => {
                         if (!r.ok) throw new Error('El servidor respondió ' + r.status + ' al borrar la serie ' + id + '.');
@@ -329,7 +328,6 @@
                     })
                     .then(data => {
                         if (data.ok) {
-                            showDebugError('DEBUG 4/4: borrado confirmado, quitando la fila ' + id + '.');
                             row.remove();
                             if (wasCompleted && exercise) updateRoutineProgress(exercise, -1);
                         } else {
@@ -543,7 +541,6 @@
             zone.style.display = 'flex';
             zone.currentTr = tr;
             zone.querySelector('button').onclick = function() {
-                showDebugError('DEBUG 1/4: se pulsó la papelera de la serie ' + id + ', llamando a deleteSet...');
                 tr.style.left = '';
                 zone.style.display = 'none';
                 zone.currentTr = null;
