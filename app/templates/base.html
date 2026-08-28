@@ -169,6 +169,17 @@
             });
         }
 
+        // Para <form onsubmit="return confirmFormSubmit(this, '...')">. Usa
+        // HTMLFormElement.prototype.submit (no form.submit()) porque estos
+        // formularios llevan un SubmitField de WTForms llamado "submit" --
+        // eso crea una propiedad form.submit que tapa al método nativo.
+        function confirmFormSubmit(form, message) {
+            customConfirm(message).then(function (confirmed) {
+                if (confirmed) HTMLFormElement.prototype.submit.call(form);
+            });
+            return false;
+        }
+
         let currentTimerExercise = "{{ just_added or '' }}";
         let restTotalSeconds = parseInt(localStorage.getItem('restTotalSeconds')) || 0;
         const hasActiveWorkout = {{ 'true' if active_workout else 'false' }};

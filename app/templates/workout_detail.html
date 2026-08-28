@@ -256,7 +256,7 @@
                     <button type="submit">{{ macros.icon('save') }} Guardar como rutina</button>
                 </form>
                 <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post"
-                      onsubmit="return confirm('¿Seguro que quieres eliminar este entrenamiento? No se puede deshacer.');">
+                      onsubmit="return confirmFormSubmit(this, '¿Seguro que quieres eliminar este entrenamiento? No se puede deshacer.');">
                     {{ empty_form.hidden_tag() }}
                     <button type="submit" class="danger">{{ macros.icon('trash') }} Eliminar entrenamiento</button>
                 </form>
@@ -316,22 +316,30 @@
         }
 
         function deleteSet(id, skipConfirm) {
-            if (!skipConfirm && !confirm('¿Eliminar esta serie?')) return;
-            const row = document.getElementById('row-' + id);
-            if (!row) return;
-            const exercise = row.dataset.exercise;
-            const wasCompleted = row.classList.contains('set-row-done');
-            fetch("/set/" + id + "/delete", { method: 'POST' })
-                .then(r => r.json().catch(() => ({ ok: false })))
-                .then(data => {
-                    if (data.ok) {
-                        row.remove();
-                        if (wasCompleted && exercise) updateRoutineProgress(exercise, -1);
-                    } else {
-                        showPickerErrorToast('No se pudo eliminar la serie.');
-                    }
-                })
-                .catch(() => showPickerErrorToast('No se pudo eliminar la serie.'));
+            const doDelete = function () {
+                const row = document.getElementById('row-' + id);
+                if (!row) return;
+                const exercise = row.dataset.exercise;
+                const wasCompleted = row.classList.contains('set-row-done');
+                fetch("/set/" + id + "/delete", { method: 'POST' })
+                    .then(r => r.json().catch(() => ({ ok: false })))
+                    .then(data => {
+                        if (data.ok) {
+                            row.remove();
+                            if (wasCompleted && exercise) updateRoutineProgress(exercise, -1);
+                        } else {
+                            showPickerErrorToast('No se pudo eliminar la serie.');
+                        }
+                    })
+                    .catch(() => showPickerErrorToast('No se pudo eliminar la serie.'));
+            };
+            if (skipConfirm) {
+                doDelete();
+            } else {
+                customConfirm('¿Eliminar esta serie?').then(function (confirmed) {
+                    if (confirmed) doDelete();
+                });
+            }
         }
 
         function deleteWorkoutExercise(exercise) {
