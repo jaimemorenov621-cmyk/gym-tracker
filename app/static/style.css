@@ -963,6 +963,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
 }
+.swipe-delete-zone { display: none; }
 
 /* ===== Barra de navegación inferior (solo móvil) ===== */
 
