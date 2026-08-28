@@ -562,7 +562,7 @@
         }
 
         document.addEventListener('touchstart', function(e) {
-            if (!e.target.closest('tr')) closeOpenSwipe(null);
+            if (!e.target.closest('tr') && !e.target.closest('.swipe-delete-zone')) closeOpenSwipe(null);
         }, {passive: true});
 
         document.querySelectorAll('.set-table tbody tr').forEach(attachSwipeHandlers);
