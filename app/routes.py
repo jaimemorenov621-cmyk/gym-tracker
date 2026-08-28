@@ -345,6 +345,25 @@ def replace_workout_exercise(workout_id):
     return jsonify({"ok": True, "exercise": new_name})
 
 
+@app.route("/workout/<int:workout_id>/exercise/delete", methods=["POST"])
+@login_required
+def delete_workout_exercise(workout_id):
+    workout = db.get_or_404(Workout, workout_id)
+    if workout.author != current_user:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    exercise = (data.get("exercise") or "").strip().lower()
+    if not exercise:
+        return jsonify({"ok": False}), 400
+    sets = db.session.scalars(
+        workout.sets.select().where(SetEntry.exercise == exercise)
+    ).all()
+    for s in sets:
+        db.session.delete(s)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
 @app.route("/workout/<int:workout_id>/set", methods=["POST"])
 @login_required
 def api_create_set(workout_id):

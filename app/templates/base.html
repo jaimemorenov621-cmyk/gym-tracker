@@ -134,7 +134,41 @@
         </div>
     </div>
 
+    <div id="customConfirmOverlay" class="confirm-overlay" style="display:none;">
+        <div class="card card-elevated confirm-box">
+            <p id="customConfirmMessage"></p>
+            <div class="confirm-actions">
+                <button type="button" class="btn-outline" id="customConfirmCancel">Cancelar</button>
+                <button type="button" class="btn-danger-outline" id="customConfirmOk">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // window.confirm() no muestra nada y devuelve false al instante en
+        // Android con la app instalada como PWA (display:standalone) --
+        // reemplazo propio en HTML/CSS para que la confirmación funcione
+        // igual en cualquier contexto.
+        function customConfirm(message) {
+            return new Promise(function (resolve) {
+                const overlay = document.getElementById('customConfirmOverlay');
+                document.getElementById('customConfirmMessage').textContent = message;
+                overlay.style.display = 'flex';
+                const okBtn = document.getElementById('customConfirmOk');
+                const cancelBtn = document.getElementById('customConfirmCancel');
+                function cleanup(result) {
+                    overlay.style.display = 'none';
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                    resolve(result);
+                }
+                function onOk() { cleanup(true); }
+                function onCancel() { cleanup(false); }
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
         let currentTimerExercise = "{{ just_added or '' }}";
         let restTotalSeconds = parseInt(localStorage.getItem('restTotalSeconds')) || 0;
         const hasActiveWorkout = {{ 'true' if active_workout else 'false' }};

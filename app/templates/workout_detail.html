@@ -86,6 +86,8 @@
                     </a>
                     <button type="button" class="btn-icon" title="Reemplazar ejercicio" aria-label="Reemplazar ejercicio"
                         onclick="openExercisePicker('{{ url_for('replace_workout_exercise', workout_id=workout.id) }}', {old_exercise: '{{ exercise }}'})">{{ macros.icon('repeat') }}</button>
+                    <button type="button" class="btn-icon" title="Eliminar ejercicio" aria-label="Eliminar ejercicio"
+                        onclick="deleteWorkoutExercise('{{ exercise }}')">{{ macros.icon('trash') }}</button>
                 </span>
             </div>
             {% if n and n.notes %}
@@ -313,8 +315,8 @@
             });
         }
 
-        function deleteSet(id) {
-            if (!confirm('¿Eliminar esta serie?')) return;
+        function deleteSet(id, skipConfirm) {
+            if (!skipConfirm && !confirm('¿Eliminar esta serie?')) return;
             const row = document.getElementById('row-' + id);
             if (!row) return;
             const exercise = row.dataset.exercise;
@@ -330,6 +332,27 @@
                     }
                 })
                 .catch(() => showPickerErrorToast('No se pudo eliminar la serie.'));
+        }
+
+        function deleteWorkoutExercise(exercise) {
+            customConfirm('¿Eliminar todo "' + exercise + '" de este entrenamiento? Se borrarán todas sus series.')
+                .then(function (confirmed) {
+                    if (!confirmed) return;
+                    fetch("{{ url_for('delete_workout_exercise', workout_id=workout.id) }}", {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({exercise: exercise})
+                    })
+                    .then(r => r.json().catch(() => ({ ok: false })))
+                    .then(data => {
+                        if (data.ok) {
+                            location.reload();
+                        } else {
+                            showPickerErrorToast('No se pudo eliminar el ejercicio.');
+                        }
+                    })
+                    .catch(() => showPickerErrorToast('No se pudo eliminar el ejercicio.'));
+                });
         }
 
         function addSet(exercise) {
@@ -515,7 +538,7 @@
                 tr.style.left = '';
                 zone.style.display = 'none';
                 zone.currentTr = null;
-                deleteSet(id);
+                deleteSet(id, true);
             };
         }
 

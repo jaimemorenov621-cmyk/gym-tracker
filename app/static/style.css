@@ -1078,6 +1078,28 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 
 /* ===== Selector de ejercicios (bottom sheet) ===== */
 
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20, 12, 40, 0.45);
+    z-index: 1100;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.confirm-box {
+    max-width: 340px;
+    width: 100%;
+}
+.confirm-box p {
+    margin-top: 0;
+}
+.confirm-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
 .sheet-backdrop {
     position: fixed;
     inset: 0;
