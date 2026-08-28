@@ -1398,6 +1398,28 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     display: inline-flex;
 }
 
+.debug-error-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: #a11f1f;
+    color: white;
+    padding: 12px 16px;
+    z-index: 2000;
+    font-size: 0.8rem;
+    word-break: break-word;
+}
+.debug-error-banner button {
+    margin-top: 8px;
+    background: white;
+    color: #a11f1f;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-weight: 700;
+}
+
 .picker-error-toast {
     position: fixed;
     top: 20px;

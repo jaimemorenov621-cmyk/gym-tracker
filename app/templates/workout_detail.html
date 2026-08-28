@@ -322,16 +322,19 @@
                 const exercise = row.dataset.exercise;
                 const wasCompleted = row.classList.contains('set-row-done');
                 fetch("/set/" + id + "/delete", { method: 'POST' })
-                    .then(r => r.json().catch(() => ({ ok: false })))
+                    .then(r => {
+                        if (!r.ok) throw new Error('El servidor respondió ' + r.status + ' al borrar la serie ' + id + '.');
+                        return r.json();
+                    })
                     .then(data => {
                         if (data.ok) {
                             row.remove();
                             if (wasCompleted && exercise) updateRoutineProgress(exercise, -1);
                         } else {
-                            showPickerErrorToast('No se pudo eliminar la serie.');
+                            showDebugError('El servidor no confirmó el borrado de la serie ' + id + ' (ok:false).');
                         }
                     })
-                    .catch(() => showPickerErrorToast('No se pudo eliminar la serie.'));
+                    .catch(e => showDebugError('Fallo al borrar la serie ' + id + ': ' + e.message));
             };
             if (skipConfirm) {
                 doDelete();

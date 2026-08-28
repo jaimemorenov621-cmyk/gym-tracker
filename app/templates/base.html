@@ -134,6 +134,11 @@
         </div>
     </div>
 
+    <div id="debugErrorBanner" class="debug-error-banner" style="display:none;">
+        <div id="debugErrorText"></div>
+        <button type="button" onclick="document.getElementById('debugErrorBanner').style.display='none'">Cerrar aviso</button>
+    </div>
+
     <div id="customConfirmOverlay" class="confirm-overlay" style="display:none;">
         <div class="card card-elevated confirm-box">
             <p id="customConfirmMessage"></p>
@@ -145,6 +150,20 @@
     </div>
 
     <script>
+        // Aviso persistente en pantalla para cualquier error de JS, para
+        // poder diagnosticar en el móvil sin depender de chrome://inspect.
+        function showDebugError(message) {
+            document.getElementById('debugErrorText').textContent = message;
+            document.getElementById('debugErrorBanner').style.display = 'block';
+        }
+        window.addEventListener('error', function (e) {
+            showDebugError('Error de JS: ' + e.message + ' (' + (e.filename || '').split('/').pop() + ':' + e.lineno + ')');
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+            const reason = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+            showDebugError('Promesa sin capturar: ' + reason);
+        });
+
         // window.confirm() no muestra nada y devuelve false al instante en
         // Android con la app instalada como PWA (display:standalone) --
         // reemplazo propio en HTML/CSS para que la confirmación funcione
