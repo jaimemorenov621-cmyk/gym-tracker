@@ -1420,6 +1420,27 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     font-weight: 700;
 }
 
+.rest-finished-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    color: #3d2b8a;
+    border: 1.5px solid #7c4dff;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 6px 18px rgba(124,77,255,0.25);
+    z-index: 1003;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.rest-finished-toast.visible {
+    opacity: 1;
+}
+
 .picker-error-toast {
     position: fixed;
     top: 20px;

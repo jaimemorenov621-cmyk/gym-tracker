@@ -139,6 +139,8 @@
         <button type="button" onclick="document.getElementById('debugErrorBanner').style.display='none'">Cerrar aviso</button>
     </div>
 
+    <div id="restFinishedToast" class="rest-finished-toast" style="display:none;"></div>
+
     <div id="customConfirmOverlay" class="confirm-overlay" style="display:none;">
         <div class="card card-elevated confirm-box">
             <p id="customConfirmMessage"></p>
@@ -150,6 +152,23 @@
     </div>
 
     <script>
+        // Toast propio (no alert() nativo -- se ve muy cutre con el nombre
+        // del dominio) para cuando termina el descanso sin permiso de
+        // notificaciones concedido.
+        function showRestFinishedToast(exercise) {
+            const toast = document.getElementById('restFinishedToast');
+            toast.textContent = '⏱ ¡Descanso terminado!' + (exercise ? ' — ' + exercise : '');
+            toast.style.display = 'block';
+            toast.classList.remove('visible');
+            void toast.offsetWidth;
+            toast.classList.add('visible');
+            clearTimeout(showRestFinishedToast._t);
+            showRestFinishedToast._t = setTimeout(function () {
+                toast.classList.remove('visible');
+                setTimeout(function () { toast.style.display = 'none'; }, 250);
+            }, 3000);
+        }
+
         // Aviso persistente en pantalla para cualquier error de JS, para
         // poder diagnosticar en el móvil sin depender de chrome://inspect.
         function showDebugError(message) {
@@ -328,7 +347,7 @@
                     if (window.Notification && Notification.permission === 'granted') {
                         showRestNotification(0, currentTimerExercise);
                     } else {
-                        alert('¡Descanso terminado!');
+                        showRestFinishedToast(currentTimerExercise);
                     }
                     return;
                 }
