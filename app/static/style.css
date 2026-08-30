@@ -997,7 +997,14 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     /* En escritorio va a la derecha; en móvil se mueve a la izquierda porque a la
     derecha, en la fila inferior, está el botón "Más" y su menú desplegable se
     abre justo encima -- se solapaban. */
-    .active-toast { bottom: 84px; left: 16px; right: auto; }
+    .active-toast {
+        bottom: 84px;
+        left: 16px;
+        right: auto;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+    }
+    .active-toast::before { width: 7px; height: 7px; }
     .rest-toast { bottom: 154px; }
 }
 
