@@ -613,18 +613,19 @@ def exercise_progress(name):
     name = name.strip().lower()
 
     session_list, stagnation, improvement = get_exercise_sessions(name)
+    display_sessions = qualifying_sessions(session_list)
 
     threshold = current_user.stagnation_threshold
     lastN_ids = (
-        {id(s) for s in session_list[-threshold:]}
-        if len(session_list) >= threshold
+        {id(s) for s in display_sessions[-threshold:]}
+        if len(display_sessions) >= threshold
         else set()
     )
 
-    chart_labels = [to_local(s["timestamp"]).strftime("%d/%m %H:%M") for s in session_list]
-    chart_values = [round(s["best_1rm"], 1) for s in session_list]
+    chart_labels = [to_local(s["timestamp"]).strftime("%d/%m %H:%M") for s in display_sessions]
+    chart_values = [round(s["best_1rm"], 1) for s in display_sessions]
     chart_colors = []
-    for s in session_list:
+    for s in display_sessions:
         if s["is_pr"]:
             chart_colors.append("#17a973")
         elif id(s) in lastN_ids and stagnation:
@@ -647,7 +648,7 @@ def exercise_progress(name):
         "exercise_progress.html",
         title=name.title(),
         exercise=name,
-        sessions=list(reversed(session_list)),
+        sessions=list(reversed(display_sessions)),
         stagnation=stagnation,
         improvement=improvement,
         threshold=threshold,
@@ -948,8 +949,10 @@ def routine_detail(routine_id):
 
     form = RoutineExerciseForm()
     if form.validate_on_submit():
-        rir = form.effort_value.data if current_user.effort_scale == "rir" else None
-        rpe = form.effort_value.data if current_user.effort_scale == "rpe" else None
+        # StringField deja "" (no None) cuando el campo queda vacío -- normalizar,
+        # las plantillas comprueban "is not none" para decidir si mostrar @RIR/@RPE.
+        rir = (form.effort_value.data or None) if current_user.effort_scale == "rir" else None
+        rpe = (form.effort_value.data or None) if current_user.effort_scale == "rpe" else None
 
         replace_ex = None
         if form.replace_ex_id.data:
@@ -1071,6 +1074,18 @@ def delete_routine(routine_id):
     return redirect(url_for("routines"))
 
 
+def _parse_single_int(value):
+    """Convierte un objetivo de RIR/RPE en un entero 0-10 solo si es un
+    número simple (ej. "2") -- un rango (ej. "2-3") u otro texto no
+    parseable devuelve None, para no adivinar qué extremo usar."""
+    if value is None:
+        return None
+    try:
+        return max(0, min(10, int(value)))
+    except (TypeError, ValueError):
+        return None
+
+
 @app.route("/routines/<int:routine_id>/start", methods=["POST"])
 @login_required
 def start_routine(routine_id):
@@ -1117,8 +1132,8 @@ def start_routine(routine_id):
                     exercise=re_.exercise,
                     weight=0.0,
                     reps=0,
-                    rir=re_.rir,
-                    rpe=re_.rpe,
+                    rir=_parse_single_int(re_.rir),
+                    rpe=_parse_single_int(re_.rpe),
                     set_type="normal",
                     workout=workout,
                 )
@@ -1555,14 +1570,21 @@ def get_exercise_sessions(name, user_id=None):
             s["best_1rm"] = 0
             s["is_pr"] = False
 
+    qualifying = qualifying_sessions(session_list)
     stagnation = False
     improvement = False
-    if len(session_list) >= threshold:
-        lastN = session_list[-threshold:]
+    if len(qualifying) >= threshold:
+        lastN = qualifying[-threshold:]
         stagnation = not any(s["is_pr"] for s in lastN)
         improvement = lastN[-1]["is_pr"]
 
     return session_list, stagnation, improvement
+
+
+def qualifying_sessions(session_list):
+    """Sesiones con al menos una serie que cuenta (completada, peso>0, reps>0).
+    Filtra sobre el best_set que get_exercise_sessions ya calcula por sesión."""
+    return [s for s in session_list if s["best_set"] is not None]
 
 
 def apply_pr_flags_for_session(session):
@@ -1633,9 +1655,10 @@ def compute_strength_change():
     total_weight = 0
     for name in exercises:
         session_list, _, _ = get_exercise_sessions(name)
-        current_sessions = [s for s in session_list if s["timestamp"] >= current_start]
+        qualifying = qualifying_sessions(session_list)
+        current_sessions = [s for s in qualifying if s["timestamp"] >= current_start]
         previous_sessions = [
-            s for s in session_list if previous_start <= s["timestamp"] < current_start
+            s for s in qualifying if previous_start <= s["timestamp"] < current_start
         ]
         if len(current_sessions) < 2 or len(previous_sessions) < 2:
             continue
@@ -1676,7 +1699,8 @@ def build_progress_summary():
     exercises = []
     for name, n_sessions in exercise_rows:
         session_list, stagnation, _ = get_exercise_sessions(name)
-        if not session_list:
+        qualifying = qualifying_sessions(session_list)
+        if not qualifying:
             continue
         catalog = find_catalog_exercise(name)
         muscle_group = None
@@ -1685,7 +1709,7 @@ def build_progress_summary():
                 muscle_group = MUSCLE_GROUP_MAP.get(muscle)
                 if muscle_group:
                     break
-        recent = session_list[-current_user.stagnation_threshold :]
+        recent = qualifying[-current_user.stagnation_threshold :]
         completed_sets = [st for sess in recent for st in sess["sets"] if st.completed]
         rirs = [st.rir for st in completed_sets if st.rir is not None]
         rpes = [st.rpe for st in completed_sets if st.rpe is not None]
@@ -1693,9 +1717,9 @@ def build_progress_summary():
             {
                 "name": name.title(),
                 "sessions": n_sessions,
-                "best_1rm": round(max(s["best_1rm"] for s in session_list), 1),
+                "best_1rm": round(max(s["best_1rm"] for s in qualifying), 1),
                 "stagnation": stagnation,
-                "last_trained": to_local(session_list[-1]["timestamp"]).strftime("%d/%m/%Y"),
+                "last_trained": to_local(qualifying[-1]["timestamp"]).strftime("%d/%m/%Y"),
                 "muscle_group": muscle_group,
                 "avg_rir": round(sum(rirs) / len(rirs), 1) if rirs else None,
                 "avg_rpe": round(sum(rpes) / len(rpes), 1) if rpes else None,

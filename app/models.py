@@ -129,8 +129,8 @@ class RoutineExercise(db.Model):
     exercise: so.Mapped[str] = so.mapped_column(sa.String(64))
     target_sets: so.Mapped[int] = so.mapped_column(default=3)
     target_reps: so.Mapped[str] = so.mapped_column(sa.String(16), default="8-10")
-    rir: so.Mapped[Optional[int]] = so.mapped_column()
-    rpe: so.Mapped[Optional[int]] = so.mapped_column()
+    rir: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
+    rpe: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
     order_index: so.Mapped[int] = so.mapped_column(default=0)
     routine_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Routine.id), index=True)
 

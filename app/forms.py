@@ -28,6 +28,7 @@ from wtforms.validators import (
     ValidationError,
     NumberRange,
     Length,
+    Regexp,
 )
 import sqlalchemy as sa
 from app import db
@@ -216,10 +217,13 @@ class RoutineExerciseForm(FlaskForm):
         validators=[DataRequired(), Length(max=16)],
         default="8-10",
     )
-    effort_value = IntegerField(
-        "RIR/RPE objetivo",
-        validators=[Optional(), NumberRange(min=0, max=10)],
-        render_kw={"min": 0, "max": 10},
+    effort_value = StringField(
+        "RIR/RPE objetivo (ej: 2 o 2-3)",
+        validators=[
+            Optional(),
+            Length(max=16),
+            Regexp(r"^\d{1,2}(-\d{1,2})?$", message="Usa un número (ej. 2) o un rango (ej. 2-3)"),
+        ],
     )
     replace_ex_id = HiddenField(validators=[Optional()])
     submit = SubmitField("Añadir ejercicio")
