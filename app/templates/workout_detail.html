@@ -112,11 +112,13 @@
                 </thead>
                 <tbody>
                     {% for s in group %}
+                    {% set p = prev[loop.index0] if prev and loop.index0 < prev|length else none %}
+                    {% set untouched = (not s.completed and s.weight == 0 and s.reps == 0) %}
                     <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}"{% if s.completed %} class="set-row-done"{% endif %}>
                         <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" title="Récord personal" aria-label="Récord personal">🏅</span>{% endif %}</td>
-                        <td class="set-previous">{{ prev[loop.index0] if prev and loop.index0 < prev|length else "—" }}</td>
-                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="{{ '%g' % s.weight }}" onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
-                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="{{ s.reps }}" onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
+                        <td class="set-previous">{{ p.label if p else "—" }}</td>
+                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="{{ '' if untouched else ('%g' % s.weight) }}"{% if untouched and p %} placeholder="{{ '%g' % p.weight }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
+                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="{{ '' if untouched else s.reps }}"{% if untouched and p %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
                         {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
                         <td><button type="button" class="pill effort-chip{% if effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val }}', '{{ exercise|title }} · Serie {{ loop.index }}')">{{ effort_val if effort_val != '' else effort_scale|upper }}</button></td>
@@ -370,10 +372,12 @@
             const table = document.getElementById('table-' + exercise.replace(/ /g, '_'));
             const rows = table.querySelectorAll('tbody tr');
             let lastWeight = 0, lastReps = 0, lastEffort = '', lastType = 'normal';
+            let lastRowDone = false;
             if (rows.length) {
                 const last = rows[rows.length - 1];
                 lastWeight = last.querySelector('.cell-input-weight').value.replace(',', '.');
                 lastReps = last.querySelector('.cell-input-number:not(.cell-input-weight)').value;
+                lastRowDone = last.classList.contains('set-row-done');
                 {% if effort_scale != 'none' %}
                 const lastEffortBtn = last.querySelector('.effort-chip');
                 lastEffort = lastEffortBtn && !lastEffortBtn.classList.contains('effort-chip-empty')
@@ -398,12 +402,16 @@
                 tr.id = 'row-' + data.id;
                 tr.dataset.exercise = exercise;
                 const prevForExercise = previousSetsMap[exercise];
-                const previousLabel = (prevForExercise && prevForExercise[rows.length]) || '—';
+                const prevEntry = prevForExercise && prevForExercise[rows.length];
+                const previousLabel = (prevEntry && prevEntry.label) || '—';
+                const untouched = !lastRowDone && lastWeight === '' && lastReps === '';
+                const weightPlaceholder = (untouched && prevEntry) ? prevEntry.weight : '';
+                const repsPlaceholder = (untouched && prevEntry) ? prevEntry.reps : '';
                 tr.innerHTML =
                     '<td class="set-num">' + (rows.length + 1) + '</td>' +
                     '<td class="set-previous">' + previousLabel + '</td>' +
-                    '<td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="' + lastWeight + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'weight\', this.value.replace(\',\', \'.\'))"></td>' +
-                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="' + lastReps + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
+                    '<td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="' + lastWeight + '" placeholder="' + weightPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'weight\', this.value.replace(\',\', \'.\'))"></td>' +
+                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="' + lastReps + '" placeholder="' + repsPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
                     '{% if effort_scale != "none" %}' +
                     '<td><button type="button" class="pill effort-chip' + (lastEffort === '' ? ' effort-chip-empty' : '') + '" data-set-id="' + data.id + '" onclick="openEffortPicker(' + data.id + ', \'' + lastEffort + '\', \'' + exercise.replace(/\b\w/g, c => c.toUpperCase()).replace(/'/g, "\\'") + ' · Serie ' + (rows.length + 1) + '\')">' + (lastEffort === '' ? '{{ effort_scale|upper }}' : lastEffort) + '</button></td>' +
                     '{% endif %}' +

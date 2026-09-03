@@ -1508,27 +1508,32 @@ def compute_smart_streak(user_id, workouts):
 
 def get_previous_sets_map(workout, exercise_names):
     """Para cada ejercicio de `exercise_names`, las series (peso×reps) de la última vez
-    que current_user lo entrenó antes de `workout`. Una sola consulta, sin N+1."""
+    que current_user lo entrenó antes de `workout`. Una sola consulta, sin N+1.
+    Cada serie es un dict {weight, reps, label} -- label para la columna
+    "Anterior", weight/reps sueltos para el placeholder de los inputs."""
     if not exercise_names:
         return {}
     rows = db.session.execute(
-        sa.select(Workout.id, SetEntry.exercise, SetEntry.weight, SetEntry.reps)
+        sa.select(Workout.id, SetEntry)
         .join(SetEntry, SetEntry.workout_id == Workout.id)
         .where(
             Workout.user_id == current_user.id,
             Workout.timestamp < workout.timestamp,
             SetEntry.exercise.in_(exercise_names),
-            SetEntry.completed.is_(True),
         )
         .order_by(SetEntry.exercise, Workout.timestamp.desc(), SetEntry.id)
     ).all()
 
     result = {}
     last_workout_id = {}
-    for wid, exercise, weight, reps in rows:
-        last_workout_id.setdefault(exercise, wid)
-        if last_workout_id[exercise] == wid:
-            result.setdefault(exercise, []).append(f"{weight:g}kg×{reps}")
+    for wid, entry in rows:
+        if not is_real_set(entry):
+            continue
+        last_workout_id.setdefault(entry.exercise, wid)
+        if last_workout_id[entry.exercise] == wid:
+            result.setdefault(entry.exercise, []).append(
+                {"weight": entry.weight, "reps": entry.reps, "label": f"{entry.weight:g}kg×{entry.reps}"}
+            )
     return result
 
 
@@ -1559,7 +1564,7 @@ def get_exercise_sessions(name, user_id=None):
 
     running_max = float("-inf")
     for s in session_list:
-        candidates = [st for st in s["sets"] if st.completed and st.weight > 0 and st.reps > 0]
+        candidates = [st for st in s["sets"] if is_real_set(st)]
         if candidates:
             s["best_set"] = max(candidates, key=estimated_1rm)
             s["best_1rm"] = estimated_1rm(s["best_set"])
@@ -1585,6 +1590,14 @@ def qualifying_sessions(session_list):
     """Sesiones con al menos una serie que cuenta (completada, peso>0, reps>0).
     Filtra sobre el best_set que get_exercise_sessions ya calcula por sesión."""
     return [s for s in session_list if s["best_set"] is not None]
+
+
+def is_real_set(entry):
+    """Serie que cuenta como dato real: completada, con peso y reps > 0.
+    Único criterio para decidir qué serie de una sesión "cuenta" -- lo usan
+    get_exercise_sessions() (para 1RM/PR) y get_previous_sets_map() (para
+    la referencia "Anterior"), evita mantener el mismo criterio dos veces."""
+    return entry.completed and entry.weight > 0 and entry.reps > 0
 
 
 def apply_pr_flags_for_session(session):

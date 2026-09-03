@@ -430,6 +430,10 @@ body {
     padding: 6px 2px;
     border-radius: 6px;
 }
+.cell-input::placeholder {
+    color: var(--color-text-muted);
+    opacity: 1;
+}
 select.cell-input {
     width: 100px;
     padding-right: 22px;
