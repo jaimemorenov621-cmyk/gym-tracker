@@ -69,7 +69,7 @@
     {% for exercise in exercise_order %}
         {% set group = grouped_sets[exercise] %}
         {% set n = exercise_notes_map.get(exercise) %}
-        <div class="card card-elevated">
+        <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}" data-exercise="{{ exercise }}">
             <div class="exercise-header">
                 <h3>
                     {% set img = get_exercise_image(exercise) %}
@@ -114,14 +114,16 @@
                     {% for s in group %}
                     {% set p = prev[loop.index0] if prev and loop.index0 < prev|length else none %}
                     {% set untouched = (not s.completed and s.weight == 0 and s.reps == 0) %}
+                    {% set ghost = untouched and p %}
                     <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}"{% if s.completed %} class="set-row-done"{% endif %}>
                         <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" title="Récord personal" aria-label="Récord personal">🏅</span>{% endif %}</td>
                         <td class="set-previous">{{ p.label if p else "—" }}</td>
-                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="{{ '' if untouched else ('%g' % s.weight) }}"{% if untouched and p %} placeholder="{{ '%g' % p.weight }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
-                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="{{ '' if untouched else s.reps }}"{% if untouched and p %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
+                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="{{ '' if ghost else ('%g' % s.weight) }}"{% if ghost %} placeholder="{{ '%g' % p.weight }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
+                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
                         {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
-                        <td><button type="button" class="pill effort-chip{% if effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val }}', '{{ exercise|title }} · Serie {{ loop.index }}')">{{ effort_val if effort_val != '' else effort_scale|upper }}</button></td>
+                        {% set effort_ghost = (effort_val == '' and p and p.effort is not none and p.effort_scale == effort_scale) %}
+                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', '{{ exercise|title }} · Serie {{ loop.index }}')">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
                         {% endif %}
                         <td>
                             <select class="cell-input" onchange="updateSet({{ s.id }}, 'set_type', this.value)">
@@ -232,6 +234,7 @@
             const chip = document.querySelector('.effort-chip[data-set-id="' + effortPickerSetId + '"]');
             if (chip) {
                 chip.textContent = value === '' ? '{{ effort_scale|upper }}' : value;
+                chip.classList.remove('effort-chip-placeholder');
                 chip.classList.toggle('effort-chip-empty', value === '');
             }
             updateSet(effortPickerSetId, 'effort', value);
@@ -332,6 +335,7 @@
                         if (data.ok) {
                             row.remove();
                             if (wasCompleted && exercise) updateRoutineProgress(exercise, -1);
+                            if (exercise) updateExerciseCardState(exercise);
                         } else {
                             showDebugError('El servidor no confirmó el borrado de la serie ' + id + ' (ok:false).');
                         }
@@ -381,6 +385,7 @@
                 {% if effort_scale != 'none' %}
                 const lastEffortBtn = last.querySelector('.effort-chip');
                 lastEffort = lastEffortBtn && !lastEffortBtn.classList.contains('effort-chip-empty')
+                    && !lastEffortBtn.classList.contains('effort-chip-placeholder')
                     ? lastEffortBtn.textContent.trim() : '';
                 {% endif %}
                 lastType = last.querySelector('select').value;
@@ -405,15 +410,24 @@
                 const prevEntry = prevForExercise && prevForExercise[rows.length];
                 const previousLabel = (prevEntry && prevEntry.label) || '—';
                 const untouched = !lastRowDone && lastWeight === '' && lastReps === '';
-                const weightPlaceholder = (untouched && prevEntry) ? prevEntry.weight : '';
-                const repsPlaceholder = (untouched && prevEntry) ? prevEntry.reps : '';
+                const ghost = untouched && !!prevEntry;
+                const weightValue = ghost ? '' : (lastWeight === '' ? '0' : lastWeight);
+                const repsValue = ghost ? '' : (lastReps === '' ? '0' : lastReps);
+                const weightPlaceholder = ghost ? prevEntry.weight : '';
+                const repsPlaceholder = ghost ? prevEntry.reps : '';
+                {% if effort_scale != 'none' %}
+                const effortGhost = lastEffort === '' && prevEntry && prevEntry.effort != null && prevEntry.effort_scale === '{{ effort_scale }}';
+                const effortDisplay = lastEffort !== '' ? lastEffort : (effortGhost ? prevEntry.effort : '{{ effort_scale|upper }}');
+                const effortClass = lastEffort !== '' ? '' : (effortGhost ? ' effort-chip-placeholder' : ' effort-chip-empty');
+                const effortCurrentValue = lastEffort !== '' ? lastEffort : (effortGhost ? prevEntry.effort : '');
+                {% endif %}
                 tr.innerHTML =
                     '<td class="set-num">' + (rows.length + 1) + '</td>' +
                     '<td class="set-previous">' + previousLabel + '</td>' +
-                    '<td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="' + lastWeight + '" placeholder="' + weightPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'weight\', this.value.replace(\',\', \'.\'))"></td>' +
-                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="' + lastReps + '" placeholder="' + repsPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
+                    '<td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="' + weightValue + '" placeholder="' + weightPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'weight\', this.value.replace(\',\', \'.\'))"></td>' +
+                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="' + repsValue + '" placeholder="' + repsPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
                     '{% if effort_scale != "none" %}' +
-                    '<td><button type="button" class="pill effort-chip' + (lastEffort === '' ? ' effort-chip-empty' : '') + '" data-set-id="' + data.id + '" onclick="openEffortPicker(' + data.id + ', \'' + lastEffort + '\', \'' + exercise.replace(/\b\w/g, c => c.toUpperCase()).replace(/'/g, "\\'") + ' · Serie ' + (rows.length + 1) + '\')">' + (lastEffort === '' ? '{{ effort_scale|upper }}' : lastEffort) + '</button></td>' +
+                    '<td><button type="button" class="pill effort-chip' + effortClass + '" data-set-id="' + data.id + '" onclick="openEffortPicker(' + data.id + ', \'' + effortCurrentValue + '\', \'' + exercise.replace(/\b\w/g, c => c.toUpperCase()).replace(/'/g, "\\'") + ' · Serie ' + (rows.length + 1) + '\')">' + effortDisplay + '</button></td>' +
                     '{% endif %}' +
                     '<td><select class="cell-input" onchange="updateSet(' + data.id + ', \'set_type\', this.value)">' +
                     '<option value="normal">Normal</option><option value="calentamiento">Calent.</option>' +
@@ -423,15 +437,36 @@
                 tbody.appendChild(tr);
                 tr.querySelector('select').value = lastType;
                 attachSwipeHandlers(tr);
+                updateExerciseCardState(exercise);
             });
         }
 
         function toggleSetComplete(id, btn, exercise) {
             const willComplete = !btn.classList.contains('checked');
+            const row = btn.closest('tr');
+            const payload = {completed: willComplete};
+
+            if (willComplete && row) {
+                const weightInput = row.querySelector('.cell-input-weight');
+                const repsInput = row.querySelector('.cell-input-number:not(.cell-input-weight)');
+                if (weightInput && weightInput.value === '' && weightInput.placeholder !== '') {
+                    payload.weight = weightInput.placeholder;
+                }
+                if (repsInput && repsInput.value === '' && repsInput.placeholder !== '') {
+                    payload.reps = repsInput.placeholder;
+                }
+                {% if effort_scale != 'none' %}
+                const effortBtn = row.querySelector('.effort-chip');
+                if (effortBtn && effortBtn.classList.contains('effort-chip-placeholder')) {
+                    payload.effort = effortBtn.textContent.trim();
+                }
+                {% endif %}
+            }
+
             fetch("/set/" + id, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({completed: willComplete})
+                body: JSON.stringify(payload)
             })
             .then(r => r.json())
             .then(data => {
@@ -440,8 +475,14 @@
                     return;
                 }
                 btn.classList.toggle('checked', willComplete);
-                const row = btn.closest('tr');
                 if (row) row.classList.toggle('set-row-done', willComplete);
+                if (willComplete && row) {
+                    if ('weight' in payload) row.querySelector('.cell-input-weight').value = payload.weight;
+                    if ('reps' in payload) row.querySelector('.cell-input-number:not(.cell-input-weight)').value = payload.reps;
+                    {% if effort_scale != 'none' %}
+                    if ('effort' in payload) row.querySelector('.effort-chip').classList.remove('effort-chip-placeholder');
+                    {% endif %}
+                }
                 if (willComplete) {
                     btn.classList.remove('just-checked');
                     void btn.offsetWidth;
@@ -462,6 +503,7 @@
                     celebrate(70);
                 }
                 updateRoutineProgress(exercise, willComplete ? 1 : -1);
+                updateExerciseCardState(exercise);
             });
         }
 
@@ -488,6 +530,14 @@
                 ringValue.textContent = totalDone + '/' + totalTarget;
                 ringWrap.setAttribute('aria-label', totalDone + ' de ' + totalTarget + ' series registradas');
             }
+        }
+
+        function updateExerciseCardState(exercise) {
+            const card = document.querySelector('.card[data-exercise="' + CSS.escape(exercise) + '"]');
+            if (!card) return;
+            const rows = document.querySelectorAll('tr[data-exercise="' + CSS.escape(exercise) + '"]');
+            const allDone = rows.length > 0 && Array.from(rows).every(r => r.classList.contains('set-row-done'));
+            card.classList.toggle('exercise-card-complete', allDone);
         }
 
         let swipeState = null;

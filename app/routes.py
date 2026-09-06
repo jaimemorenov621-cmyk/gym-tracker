@@ -1509,8 +1509,12 @@ def compute_smart_streak(user_id, workouts):
 def get_previous_sets_map(workout, exercise_names):
     """Para cada ejercicio de `exercise_names`, las series (peso×reps) de la última vez
     que current_user lo entrenó antes de `workout`. Una sola consulta, sin N+1.
-    Cada serie es un dict {weight, reps, label} -- label para la columna
-    "Anterior", weight/reps sueltos para el placeholder de los inputs."""
+    Cada serie es un dict {weight, reps, effort, effort_scale, label} -- label para la
+    columna "Anterior", weight/reps/effort sueltos para el placeholder de los inputs.
+    effort_scale guarda con qué escala (rir/rpe) se grabó esa serie en su momento --
+    no tiene por qué coincidir con la escala activa ahora si el usuario la cambió
+    después en Configuración, y RIR/RPE no son intercambiables (mismo rango 0-10,
+    significado opuesto), así que el consumidor debe comparar antes de usar `effort`."""
     if not exercise_names:
         return {}
     rows = db.session.execute(
@@ -1531,8 +1535,16 @@ def get_previous_sets_map(workout, exercise_names):
             continue
         last_workout_id.setdefault(entry.exercise, wid)
         if last_workout_id[entry.exercise] == wid:
+            effort_value = entry.rir if entry.rir is not None else entry.rpe
+            entry_scale = "rir" if entry.rir is not None else ("rpe" if entry.rpe is not None else None)
             result.setdefault(entry.exercise, []).append(
-                {"weight": entry.weight, "reps": entry.reps, "label": f"{entry.weight:g}kg×{entry.reps}"}
+                {
+                    "weight": entry.weight,
+                    "reps": entry.reps,
+                    "effort": effort_value,
+                    "effort_scale": entry_scale,
+                    "label": f"{entry.weight:g}kg×{entry.reps}",
+                }
             )
     return result
 

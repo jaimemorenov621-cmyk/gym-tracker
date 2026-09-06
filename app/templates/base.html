@@ -58,8 +58,8 @@
                     <span>Más</span>
                 </button>
                 <div class="bottom-nav-profile-menu" id="bottomNavProfileMenu">
-                    <a href="{{ url_for('settings') }}" onclick="closeProfileMenu()">Configuración</a>
-                    <a href="{{ url_for('logout') }}" onclick="closeProfileMenu()">Salir</a>
+                    <a href="{{ url_for('settings') }}" onclick="closeProfileMenu()">{{ macros.icon('settings', 18) }}<span>Configuración</span></a>
+                    <a href="{{ url_for('logout') }}" class="danger" onclick="closeProfileMenu()">{{ macros.icon('log-out', 18) }}<span>Salir</span></a>
                 </div>
             </div>
         </nav>
