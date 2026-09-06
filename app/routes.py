@@ -716,9 +716,21 @@ def _latest_weekly_goal_row(user_id):
     return db.session.scalar(
         sa.select(WeeklyGoalHistory)
         .where(WeeklyGoalHistory.user_id == user_id)
-        .order_by(WeeklyGoalHistory.effective_from.desc())
+        .order_by(WeeklyGoalHistory.effective_from.desc(), WeeklyGoalHistory.id.desc())
         .limit(1)
     )
+
+
+def _current_week_start_naive():
+    """Lunes 00:00 (naive) de la semana en curso -- mismo criterio que
+    compute_smart_streak() para "semana". Un objetivo guardado a mitad de
+    semana debe contar como vigente desde el lunes de ESA semana, no desde
+    el instante exacto en que se guarda -- si no, la semana en que se
+    activa o se cambia el objetivo nunca tiene un objetivo "vigente" según
+    goal_for_week() y compute_smart_streak() devuelve 0 de inmediato, sin
+    mirar siquiera semanas anteriores ya cumplidas."""
+    today = datetime.now(timezone.utc).date()
+    return datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
 
 
 @app.route("/settings", methods=["GET", "POST"])
@@ -738,11 +750,17 @@ def settings():
         current_goal = latest.goal if latest else None
         if form.disable_weekly_goal.data:
             if current_goal is not None:
-                db.session.add(WeeklyGoalHistory(user_id=current_user.id, goal=None))
+                db.session.add(
+                    WeeklyGoalHistory(
+                        user_id=current_user.id, goal=None, effective_from=_current_week_start_naive()
+                    )
+                )
         elif form.weekly_workout_goal.data and form.weekly_workout_goal.data != current_goal:
             db.session.add(
                 WeeklyGoalHistory(
-                    user_id=current_user.id, goal=form.weekly_workout_goal.data
+                    user_id=current_user.id,
+                    goal=form.weekly_workout_goal.data,
+                    effective_from=_current_week_start_naive(),
                 )
             )
 
@@ -1452,7 +1470,7 @@ def compute_smart_streak(user_id, workouts):
     history = db.session.scalars(
         sa.select(WeeklyGoalHistory)
         .where(WeeklyGoalHistory.user_id == user_id)
-        .order_by(WeeklyGoalHistory.effective_from.desc())
+        .order_by(WeeklyGoalHistory.effective_from.desc(), WeeklyGoalHistory.id.desc())
     ).all()
     if not history or history[0].goal is None:
         return compute_streak(workouts), "días"
