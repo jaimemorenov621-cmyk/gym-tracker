@@ -1674,7 +1674,15 @@ def compute_strength_change():
     exigir siempre 90+91 días de historial deja el dato en "—" durante meses sin
     remedio posible, por mucho que se entrene. En su lugar se parte el historial
     real del usuario por la mitad (mínimo 7 días de ventana), y ese reparto crece
-    hasta el estándar de 90 días según se acumula historial."""
+    hasta el estándar de 90 días según se acumula historial.
+
+    Basta con 1 sesión cualificada en cada mitad (no 2+): con una ventana corta
+    (cuenta reciente) y un ejercicio entrenado ~1 vez por semana -- lo normal en
+    la mayoría de rutinas --, exigir 2+ repeticiones del mismo ejercicio dentro
+    de una sola mitad nunca se cumple, y el dato se queda en "—" indefinidamente
+    aunque se entrene con total regularidad. El `weight = len(current_sessions)`
+    de abajo ya descuenta proporcionalmente a los ejercicios con poco dato frente
+    a los que tienen más, así que no hace falta además vetarlos por completo."""
     now = datetime.now(timezone.utc).replace(tzinfo=None)
 
     oldest = db.session.scalar(
@@ -1703,7 +1711,7 @@ def compute_strength_change():
         previous_sessions = [
             s for s in qualifying if previous_start <= s["timestamp"] < current_start
         ]
-        if len(current_sessions) < 2 or len(previous_sessions) < 2:
+        if not current_sessions or not previous_sessions:
             continue
         best_current = max(s["best_1rm"] for s in current_sessions)
         best_previous = max(s["best_1rm"] for s in previous_sessions)
