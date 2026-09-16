@@ -176,6 +176,16 @@ class FinishWorkoutForm(FlaskForm):
     performance_comment = TextAreaField(
         "Comentario (opcional)", validators=[Length(max=255)]
     )
+    duration_hours = IntegerField(
+        "Horas",
+        validators=[InputRequired(), NumberRange(min=0, max=23)],
+        render_kw={"min": 0, "max": 23},
+    )
+    duration_minutes = IntegerField(
+        "Minutos",
+        validators=[InputRequired(), NumberRange(min=0, max=59)],
+        render_kw={"min": 0, "max": 59},
+    )
     submit = SubmitField("Guardar entrenamiento")
 
 

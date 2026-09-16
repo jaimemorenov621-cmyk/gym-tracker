@@ -187,13 +187,16 @@
         // Android con la app instalada como PWA (display:standalone) --
         // reemplazo propio en HTML/CSS para que la confirmación funcione
         // igual en cualquier contexto.
-        function customConfirm(message) {
+        function customConfirm(message, okLabel) {
             return new Promise(function (resolve) {
                 const overlay = document.getElementById('customConfirmOverlay');
                 document.getElementById('customConfirmMessage').textContent = message;
                 overlay.style.display = 'flex';
                 const okBtn = document.getElementById('customConfirmOk');
                 const cancelBtn = document.getElementById('customConfirmCancel');
+                okBtn.textContent = okLabel || 'Eliminar';
+                okBtn.classList.toggle('btn-danger-outline', !okLabel);
+                okBtn.classList.toggle('btn-outline', !!okLabel);
                 function cleanup(result) {
                     overlay.style.display = 'none';
                     okBtn.removeEventListener('click', onOk);
@@ -211,8 +214,8 @@
         // HTMLFormElement.prototype.submit (no form.submit()) porque estos
         // formularios llevan un SubmitField de WTForms llamado "submit" --
         // eso crea una propiedad form.submit que tapa al método nativo.
-        function confirmFormSubmit(form, message) {
-            customConfirm(message).then(function (confirmed) {
+        function confirmFormSubmit(form, message, okLabel) {
+            customConfirm(message, okLabel).then(function (confirmed) {
                 if (confirmed) HTMLFormElement.prototype.submit.call(form);
             });
             return false;

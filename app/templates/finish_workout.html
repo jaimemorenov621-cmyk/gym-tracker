@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
     <h1>Finalizar: {{ workout.note or "Entrenamiento" }}</h1>
-    <form action="" method="post">
+    <form action="" method="post" onsubmit="return confirmLongDuration(this);">
         {{ form.hidden_tag() }}
         <p>
             {{ form.performance_rating.label }}<br>
@@ -11,6 +11,20 @@
             {{ form.performance_comment.label }}<br>
             {{ form.performance_comment(cols=50, rows=3) }}
         </p>
+        <p>
+            <label>Duración de la sesión</label><br>
+            {{ form.duration_hours(style="width:4em;") }} h
+            {{ form.duration_minutes(style="width:4em;") }} min
+        </p>
         <p>{{ form.submit(class="btn-finish") }}</p>
     </form>
+    <script>
+        function confirmLongDuration(form) {
+            const hours = parseInt(form.duration_hours.value) || 0;
+            const minutes = parseInt(form.duration_minutes.value) || 0;
+            if (hours * 60 + minutes < 180) return true;
+            confirmFormSubmit(form, '¿Estás seguro de que esta fue la duración del entrenamiento? Llevas marcadas ' + hours + 'h ' + minutes + 'min.', 'Sí, guardar');
+            return false;
+        }
+    </script>
 {% endblock %}

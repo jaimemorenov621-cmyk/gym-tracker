@@ -309,13 +309,12 @@ def add_exercise_to_workout(workout_id):
         return redirect(url_for("index"))
     form = NewExerciseForm()
     if form.validate_on_submit():
-        scale = current_user.effort_scale
         entry = SetEntry(
             exercise=canonicalize_exercise_name(form.exercise.data),
             weight=0,
             reps=0,
-            rir=2 if scale == "rir" else None,
-            rpe=8 if scale == "rpe" else None,
+            rir=None,
+            rpe=None,
             set_type="normal",
             workout=workout,
         )
@@ -567,7 +566,9 @@ def finish_workout(workout_id):
 
         workout.performance_rating = form.performance_rating.data
         workout.performance_comment = form.performance_comment.data
-        workout.ended_at = datetime.now(timezone.utc)
+        workout.ended_at = workout.timestamp + timedelta(
+            hours=form.duration_hours.data, minutes=form.duration_minutes.data
+        )
         db.session.commit()
 
         if empty_sets:
@@ -579,9 +580,17 @@ def finish_workout(workout_id):
         else:
             flash("Entrenamiento guardado.")
         return redirect(url_for("index", celebrate=1))
-    elif request.method == "GET" and workout.performance_rating is not None:
-        form.performance_rating.data = workout.performance_rating
-        form.performance_comment.data = workout.performance_comment
+    elif request.method == "GET":
+        if workout.performance_rating is not None:
+            form.performance_rating.data = workout.performance_rating
+            form.performance_comment.data = workout.performance_comment
+        # workout.timestamp llega naive (mismo patrón que el resto del
+        # código -- ver comentario en WeeklyGoalHistory.effective_from), así
+        # que se compara contra "ahora" también naive.
+        elapsed_end = workout.ended_at or datetime.now(timezone.utc).replace(tzinfo=None)
+        elapsed = max(elapsed_end - workout.timestamp, timedelta(0))
+        total_minutes = int(elapsed.total_seconds() // 60)
+        form.duration_hours.data, form.duration_minutes.data = divmod(total_minutes, 60)
 
     return render_template(
         "finish_workout.html",
@@ -2145,17 +2154,18 @@ _MUSCLE_TARGET_RGB = (124, 77, 255)  # #7c4dff, morado de marca -- mismo tono en
 
 def _interpolate_muscle_color(t):
     t = max(0.0, min(1.0, t))
-    # Dos rondas anteriores de esta curva se pasaron cada una para el lado
-    # contrario: la raíz cuadrada original dejaba pálido cualquier grupo que
-    # no fuera el más entrenado; el "mínimo 45% + raíz cúbica" que la
-    # sustituyó se pasó de frenada -- con solo t=0.2 (20% del volumen del
-    # grupo más trabajado) ya daba ~77% de mezcla, así que casi cualquier
-    # músculo entrenado se veía "a tope" y no había gradiente real entre
-    # "un poco" y "el más trabajado". Este suavizado (suelo del 10% +
-    # exponente 0.65) reparte mejor el rango completo: t=0.05->~23%,
-    # t=0.2->~42%, t=0.5->~67%, t=0.8->~88%, t=1->100%.
+    # Las dos curvas anteriores comprimían el rango medio/alto (con
+    # exponente < 1, t=0.65 ya daba ~88% de mezcla) para que ningún músculo
+    # entrenado se viera "pálido" -- pero eso aplanaba la diferencia visual
+    # entre un músculo al 50% de volumen y otro al 80-100%, que es
+    # precisamente la comparación que este mapa debe transmitir. Un suelo
+    # pequeño (5%, solo para separar "algo" de "nada") + mezcla lineal en el
+    # resto reparte la diferencia de color en proporción directa a la
+    # diferencia de volumen real: t=0.05->~10%, t=0.2->~24%, t=0.5->~53%,
+    # t=0.8->~81%, t=1->100%. El coste: un músculo con muy poco volumen
+    # relativo (5-10%) se ve casi neutro, no "un poco morado".
     if t > 0:
-        t = 0.10 + 0.90 * (t ** 0.65)
+        t = 0.05 + 0.95 * t
     r = round(_MUSCLE_NEUTRAL_RGB[0] + (_MUSCLE_TARGET_RGB[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
     g = round(_MUSCLE_NEUTRAL_RGB[1] + (_MUSCLE_TARGET_RGB[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
     b = round(_MUSCLE_NEUTRAL_RGB[2] + (_MUSCLE_TARGET_RGB[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
