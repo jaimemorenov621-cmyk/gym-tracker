@@ -1279,9 +1279,10 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     min-width: 32px;
 }
 .effort-chip-empty {
-    background: transparent;
-    color: var(--color-text-muted);
-    border: 1.5px dashed #d9d2ff;
+    background: #fdecea;
+    color: var(--color-danger);
+    border: 1.5px solid var(--color-danger);
+    font-weight: 600;
     font-size: 0.65rem;
 }
 .effort-chip-placeholder {

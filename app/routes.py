@@ -379,15 +379,13 @@ def api_create_set(workout_id):
     reps = max(0, min(30, int(float(data.get("reps") or 0))))
     effort = data.get("effort")
     scale = current_user.effort_scale
-    default_effort = 2 if scale == "rir" else 8
-    effort_value = max(0, min(10, int(effort))) if effort not in (None, "") else default_effort
 
     entry = SetEntry(
         exercise=exercise,
         weight=weight,
         reps=reps,
-        rir=effort_value if scale == "rir" else None,
-        rpe=effort_value if scale == "rpe" else None,
+        rir=max(0, min(10, int(effort))) if scale == "rir" and effort not in (None, "") else None,
+        rpe=max(0, min(10, int(effort))) if scale == "rpe" and effort not in (None, "") else None,
         set_type=data.get("set_type", "normal"),
         workout=workout,
     )
@@ -414,13 +412,11 @@ def api_update_set(set_id):
         pr_relevant_changed = True
     if "effort" in data:
         effort = data["effort"]
-        default_effort = 2 if scale == "rir" else 8
-        effort_value = max(0, min(10, int(effort))) if effort not in (None, "") else default_effort
         if scale == "rir":
-            entry.rir = effort_value
+            entry.rir = max(0, min(10, int(effort))) if effort not in (None, "") else None
             entry.rpe = None
         elif scale == "rpe":
-            entry.rpe = effort_value
+            entry.rpe = max(0, min(10, int(effort))) if effort not in (None, "") else None
             entry.rir = None
         pr_relevant_changed = True
     if "set_type" in data:
