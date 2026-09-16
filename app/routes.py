@@ -2159,13 +2159,14 @@ def _interpolate_muscle_color(t):
     # entrenado se viera "pálido" -- pero eso aplanaba la diferencia visual
     # entre un músculo al 50% de volumen y otro al 80-100%, que es
     # precisamente la comparación que este mapa debe transmitir. Un suelo
-    # pequeño (5%, solo para separar "algo" de "nada") + mezcla lineal en el
-    # resto reparte la diferencia de color en proporción directa a la
-    # diferencia de volumen real: t=0.05->~10%, t=0.2->~24%, t=0.5->~53%,
-    # t=0.8->~81%, t=1->100%. El coste: un músculo con muy poco volumen
-    # relativo (5-10%) se ve casi neutro, no "un poco morado".
+    # pequeño (5%) + mezcla lineal solucionaba eso pero creaba el problema
+    # contrario: cualquier músculo con poco volumen relativo quedaba casi
+    # pegado al gris neutro de la silueta (#d9d5ef ya es un lavanda pálido,
+    # muy cerca en tono del morado de marca al 5-10% de mezcla). Suelo del
+    # 20% (separación clara entre "nada" y "algo") + lineal en el resto:
+    # t=0.05->~24%, t=0.2->~36%, t=0.5->~60%, t=0.8->~84%, t=1->100%.
     if t > 0:
-        t = 0.05 + 0.95 * t
+        t = 0.20 + 0.80 * t
     r = round(_MUSCLE_NEUTRAL_RGB[0] + (_MUSCLE_TARGET_RGB[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
     g = round(_MUSCLE_NEUTRAL_RGB[1] + (_MUSCLE_TARGET_RGB[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
     b = round(_MUSCLE_NEUTRAL_RGB[2] + (_MUSCLE_TARGET_RGB[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
