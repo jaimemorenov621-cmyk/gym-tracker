@@ -2146,10 +2146,15 @@ assert set(LIBRARY_SLUG_TO_GROUP) | AUXILIARY_SLUGS >= {
 }, "hay un slug del dataset vectorial sin clasificar como grupo real o auxiliar"
 
 _MUSCLE_NEUTRAL_RGB = (217, 213, 239)  # #d9d5ef, mismo tono neutro de la silueta base
-_MUSCLE_TARGET_RGB = (124, 77, 255)  # #7c4dff, morado de marca -- mismo tono en
+_MUSCLE_TARGET_RGB = (34, 201, 140)  # #22c98c, verde "success" ya usado en la
+# app (calendario de días entrenados, tarjeta de fortalezas) -- mismo tono en
 # todos los grupos (antes había un color de "firma" distinto por grupo) para
 # poder comparar la intensidad de cada músculo a simple vista contra el más
-# entrenado, en vez de tener que distinguir 15 tonos.
+# entrenado, en vez de tener que distinguir 15 tonos. Se cambió de #7c4dff
+# (morado de marca) a este verde porque, al partir de un neutro ya lavanda
+# (#d9d5ef), quedarse en la misma familia de tono que el destino hacía muy
+# difícil separar "poco entrenado" de "nada" por más que se ajustara la
+# curva -- un salto de tono (no solo de saturación) da más contraste real.
 
 
 def _interpolate_muscle_color(t):
