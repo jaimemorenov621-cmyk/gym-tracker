@@ -2146,20 +2146,30 @@ assert set(LIBRARY_SLUG_TO_GROUP) | AUXILIARY_SLUGS >= {
 }, "hay un slug del dataset vectorial sin clasificar como grupo real o auxiliar"
 
 _MUSCLE_NEUTRAL_RGB = (217, 213, 239)  # #d9d5ef, mismo tono neutro de la silueta base
-_MUSCLE_TARGET_RGB = (124, 77, 255)  # #7c4dff, morado de marca -- mismo tono en
-# todos los grupos (antes había un color de "firma" distinto por grupo) para
-# poder comparar la intensidad de cada músculo a simple vista contra el más
-# entrenado, en vez de tener que distinguir 15 tonos. Se probó también con
-# verde "success" (#22c98c) para separar mejor del neutro lavanda -- volvió
-# a pedirse el morado de marca. Con el suelo del 15% + exponente 2 (ver
-# _interpolate_muscle_color) un músculo con volumen relativo muy bajo
-# (t~0.05) se distingue algo menos del neutro que con verde (mismo tono que
-# el neutro, solo cambia saturación/luminosidad), pero sigue siendo visible;
-# si vuelve a costar diferenciar "casi nada" de "nada", la solución es subir
-# ese suelo, no cambiar de tono otra vez.
+# Paleta "de firma" (un color distinto por grupo) que había antes del morado
+# único -- restaurada a modo de comparación (a petición explícita), con la
+# curva actual (suelo 15% + exponente 2) en vez de la curva vieja que traía,
+# para no mezclar dos variables distintas en la comparación.
+_MUSCLE_SIGNATURE_RGB = {
+    "trapecios": (253, 253, 18),
+    "hombros": (174, 18, 253),
+    "pecho": (96, 253, 18),
+    "biceps": (18, 174, 253),
+    "antebrazos": (253, 96, 18),
+    "cuello": (18, 253, 213),
+    "dorsales": (57, 18, 253),
+    "espalda_baja": (253, 135, 18),
+    "triceps": (18, 253, 76),
+    "abdomen": (253, 18, 253),
+    "cuadriceps": (135, 253, 18),
+    "aductores": (96, 18, 253),
+    "gluteos": (18, 253, 174),
+    "isquiotibiales": (253, 18, 96),
+    "pantorrillas": (18, 135, 253),
+}
 
 
-def _interpolate_muscle_color(t):
+def _interpolate_muscle_color(group, t):
     t = max(0.0, min(1.0, t))
     # t es relativo al músculo MÁS trabajado de la ventana, no a un umbral
     # absoluto -- y en una rutina bien repartida (push/pull/legs, no solo
@@ -2176,9 +2186,10 @@ def _interpolate_muscle_color(t):
     # los que solo reciben trabajo secundario.
     if t > 0:
         t = 0.15 + 0.85 * (t ** 2)
-    r = round(_MUSCLE_NEUTRAL_RGB[0] + (_MUSCLE_TARGET_RGB[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
-    g = round(_MUSCLE_NEUTRAL_RGB[1] + (_MUSCLE_TARGET_RGB[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
-    b = round(_MUSCLE_NEUTRAL_RGB[2] + (_MUSCLE_TARGET_RGB[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
+    target = _MUSCLE_SIGNATURE_RGB[group]
+    r = round(_MUSCLE_NEUTRAL_RGB[0] + (target[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
+    g = round(_MUSCLE_NEUTRAL_RGB[1] + (target[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
+    b = round(_MUSCLE_NEUTRAL_RGB[2] + (target[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
@@ -2260,6 +2271,6 @@ def compute_muscle_intensity(days=14):
     volumes = compute_muscle_volumes(days)
     max_volume = max(volumes.values()) if volumes else 0
     return {
-        group: _interpolate_muscle_color(volume / max_volume if max_volume else 0)
+        group: _interpolate_muscle_color(group, volume / max_volume if max_volume else 0)
         for group, volume in volumes.items()
     }
