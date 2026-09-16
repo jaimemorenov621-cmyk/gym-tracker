@@ -40,9 +40,14 @@ body {
     color: #222;
 }
 
-/* 16px evita que iOS/Android hagan zoom automático al enfocar el campo. */
+/* font-size 16px evita el zoom automático de iOS al enfocar el campo; width
+100%+box-sizing evita que un <textarea cols=N> sin más CSS (como el de
+exercise_notes.html) se renderice más ancho que la pantalla en móvil -- eso
+desborda horizontalmente y se percibe como "zoom" (confirmado en Android). */
 textarea {
     font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .top-nav {
@@ -770,6 +775,21 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     color: #aaa;
     margin-top: 8px;
     text-align: center;
+}
+.dash-muscle-legend {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 0.65rem;
+    color: #aaa;
+}
+.dash-muscle-legend-bar {
+    width: 48px;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #d9d5ef, #7c4dff);
 }
 .dash-calendar {
     flex: 1;

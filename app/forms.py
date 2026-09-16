@@ -123,7 +123,7 @@ class SettingsForm(FlaskForm):
     )
     effort_scale = SelectField(
         "¿Cómo quieres medir el esfuerzo?",
-        choices=[("rir", "RIR"), ("rpe", "RPE"), ("none", "No anotar")],
+        choices=[("rir", "RIR"), ("rpe", "RPE")],
         default="rir",
     )
     rest_sound_enabled = BooleanField("Sonido de notificación del descanso")

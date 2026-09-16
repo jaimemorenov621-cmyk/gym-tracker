@@ -379,13 +379,15 @@ def api_create_set(workout_id):
     reps = max(0, min(30, int(float(data.get("reps") or 0))))
     effort = data.get("effort")
     scale = current_user.effort_scale
+    default_effort = 2 if scale == "rir" else 8
+    effort_value = max(0, min(10, int(effort))) if effort not in (None, "") else default_effort
 
     entry = SetEntry(
         exercise=exercise,
         weight=weight,
         reps=reps,
-        rir=max(0, min(10, int(effort))) if scale == "rir" and effort not in (None, "") else None,
-        rpe=max(0, min(10, int(effort))) if scale == "rpe" and effort not in (None, "") else None,
+        rir=effort_value if scale == "rir" else None,
+        rpe=effort_value if scale == "rpe" else None,
         set_type=data.get("set_type", "normal"),
         workout=workout,
     )
@@ -412,11 +414,13 @@ def api_update_set(set_id):
         pr_relevant_changed = True
     if "effort" in data:
         effort = data["effort"]
+        default_effort = 2 if scale == "rir" else 8
+        effort_value = max(0, min(10, int(effort))) if effort not in (None, "") else default_effort
         if scale == "rir":
-            entry.rir = max(0, min(10, int(effort))) if effort not in (None, "") else None
+            entry.rir = effort_value
             entry.rpe = None
         elif scale == "rpe":
-            entry.rpe = max(0, min(10, int(effort))) if effort not in (None, "") else None
+            entry.rpe = effort_value
             entry.rir = None
         pr_relevant_changed = True
     if "set_type" in data:
@@ -1431,8 +1435,38 @@ def effective_reps(entry):
     return entry.reps
 
 
+# Tabla RTS (Tuchscherer): % del 1RM real según reps × RIR, para reps 1-12 y
+# RIR 0-4 (RPE 10-6). A diferencia de Epley, da el peso exacto en el caso
+# reps=1/RIR=0 (un intento real a 1RM no necesita estimarse).
+_RTS_PERCENT_1RM = {
+    1: {0: 1.000, 1: 0.955, 2: 0.922, 3: 0.892, 4: 0.863},
+    2: {0: 0.955, 1: 0.922, 2: 0.892, 3: 0.863, 4: 0.837},
+    3: {0: 0.922, 1: 0.892, 2: 0.863, 3: 0.837, 4: 0.811},
+    4: {0: 0.892, 1: 0.863, 2: 0.837, 3: 0.811, 4: 0.786},
+    5: {0: 0.863, 1: 0.837, 2: 0.811, 3: 0.786, 4: 0.762},
+    6: {0: 0.837, 1: 0.811, 2: 0.786, 3: 0.762, 4: 0.739},
+    7: {0: 0.811, 1: 0.786, 2: 0.762, 3: 0.739, 4: 0.715},
+    8: {0: 0.786, 1: 0.762, 2: 0.739, 3: 0.715, 4: 0.694},
+    9: {0: 0.762, 1: 0.739, 2: 0.715, 3: 0.694, 4: 0.675},
+    10: {0: 0.739, 1: 0.715, 2: 0.694, 3: 0.675, 4: 0.653},
+    11: {0: 0.715, 1: 0.694, 2: 0.675, 3: 0.653, 4: 0.633},
+    12: {0: 0.694, 1: 0.675, 2: 0.653, 3: 0.633, 4: 0.616},
+}
+
+
 def estimated_1rm(entry):
-    """Fórmula de Epley, usando repeticiones efectivas en vez de las repeticiones hechas."""
+    """1RM real vía tabla RTS cuando reps/RIR caen en el rango cubierto
+    (1-12 reps, RIR 0-4); si no (RIR>=5, reps>12, o sin RIR/RPE anotado),
+    respaldo con Epley y repeticiones efectivas. En el límite RIR4/RIR5 el
+    valor puede dar un salto pequeño no suave (Epley no empalma exacto con
+    la tabla ahí) -- conocido, no corregido."""
+    rir = entry.rir if entry.rir is not None else (
+        10 - entry.rpe if entry.rpe is not None else None
+    )
+    row = _RTS_PERCENT_1RM.get(entry.reps)
+    pct = row.get(rir) if row else None
+    if pct is not None:
+        return entry.weight / pct
     return entry.weight * (1 + effective_reps(entry) / 30)
 
 
@@ -2107,37 +2141,13 @@ assert set(LIBRARY_SLUG_TO_GROUP) | AUXILIARY_SLUGS >= {
 }, "hay un slug del dataset vectorial sin clasificar como grupo real o auxiliar"
 
 _MUSCLE_NEUTRAL_RGB = (217, 213, 239)  # #d9d5ef, mismo tono neutro de la silueta base
-# Color de "firma" por grupo muscular (a intensidad máxima). Asignado a mano
-# a partir del grafo real de adyacencia anatómica (qué grupos aparecen como
-# manchas vecinas en la silueta, delante y detrás) en vez de un barrido
-# lineal o de ángulo áureo genérico -- un barrido por índice puede separar
-# bien "vecinos en la lista" sin darse cuenta de que agrupa mal "vecinos en
-# el cuerpo" (ej. hombros/pecho/biceps quedaban los tres en la franja
-# naranja-amarilla, la más afectada por daltonismo rojo-verde). Cada tono
-# se eligió para maximizar el hueco frente a SUS vecinos reales; los
-# ángulos más próximos entre sí se reservan a pares que nunca se tocan en
-# el cuerpo (ej. cuádriceps/pecho, a 10°, pero en zonas que no compiten
-# visualmente). A intensidad 0 todos convergen al mismo gris neutro de arriba.
-_MUSCLE_SIGNATURE_RGB = {
-    "trapecios": (253, 253, 18),
-    "hombros": (174, 18, 253),
-    "pecho": (96, 253, 18),
-    "biceps": (18, 174, 253),
-    "antebrazos": (253, 96, 18),
-    "cuello": (18, 253, 213),
-    "dorsales": (57, 18, 253),
-    "espalda_baja": (253, 135, 18),
-    "triceps": (18, 253, 76),
-    "abdomen": (253, 18, 253),
-    "cuadriceps": (135, 253, 18),
-    "aductores": (96, 18, 253),
-    "gluteos": (18, 253, 174),
-    "isquiotibiales": (253, 18, 96),
-    "pantorrillas": (18, 135, 253),
-}
+_MUSCLE_TARGET_RGB = (124, 77, 255)  # #7c4dff, morado de marca -- mismo tono en
+# todos los grupos (antes había un color de "firma" distinto por grupo) para
+# poder comparar la intensidad de cada músculo a simple vista contra el más
+# entrenado, en vez de tener que distinguir 15 tonos.
 
 
-def _interpolate_muscle_color(group, t):
+def _interpolate_muscle_color(t):
     t = max(0.0, min(1.0, t))
     # Dos rondas anteriores de esta curva se pasaron cada una para el lado
     # contrario: la raíz cuadrada original dejaba pálido cualquier grupo que
@@ -2150,10 +2160,9 @@ def _interpolate_muscle_color(group, t):
     # t=0.2->~42%, t=0.5->~67%, t=0.8->~88%, t=1->100%.
     if t > 0:
         t = 0.10 + 0.90 * (t ** 0.65)
-    target = _MUSCLE_SIGNATURE_RGB[group]
-    r = round(_MUSCLE_NEUTRAL_RGB[0] + (target[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
-    g = round(_MUSCLE_NEUTRAL_RGB[1] + (target[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
-    b = round(_MUSCLE_NEUTRAL_RGB[2] + (target[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
+    r = round(_MUSCLE_NEUTRAL_RGB[0] + (_MUSCLE_TARGET_RGB[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
+    g = round(_MUSCLE_NEUTRAL_RGB[1] + (_MUSCLE_TARGET_RGB[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
+    b = round(_MUSCLE_NEUTRAL_RGB[2] + (_MUSCLE_TARGET_RGB[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
@@ -2235,6 +2244,6 @@ def compute_muscle_intensity(days=14):
     volumes = compute_muscle_volumes(days)
     max_volume = max(volumes.values()) if volumes else 0
     return {
-        group: _interpolate_muscle_color(group, volume / max_volume if max_volume else 0)
+        group: _interpolate_muscle_color(volume / max_volume if max_volume else 0)
         for group, volume in volumes.items()
     }

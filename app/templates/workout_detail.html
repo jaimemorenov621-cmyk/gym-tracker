@@ -212,7 +212,6 @@
             for (let i = 10; i >= 0; i--) {
                 html += '<button type="button" class="effort-picker-option" data-value="' + i + '" onclick="renderEffortPreview(\'' + i + '\')">' + i + '</button>';
             }
-            html += '<button type="button" class="effort-picker-option effort-picker-clear" data-value="" onclick="renderEffortPreview(\'\')">—</button>';
             row.innerHTML = html;
             renderEffortPreview(effortPickerPending);
             document.getElementById('effortPickerBackdrop').classList.add('open');
