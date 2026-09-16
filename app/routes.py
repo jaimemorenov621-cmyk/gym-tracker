@@ -2146,15 +2146,17 @@ assert set(LIBRARY_SLUG_TO_GROUP) | AUXILIARY_SLUGS >= {
 }, "hay un slug del dataset vectorial sin clasificar como grupo real o auxiliar"
 
 _MUSCLE_NEUTRAL_RGB = (217, 213, 239)  # #d9d5ef, mismo tono neutro de la silueta base
-_MUSCLE_TARGET_RGB = (34, 201, 140)  # #22c98c, verde "success" ya usado en la
-# app (calendario de días entrenados, tarjeta de fortalezas) -- mismo tono en
+_MUSCLE_TARGET_RGB = (124, 77, 255)  # #7c4dff, morado de marca -- mismo tono en
 # todos los grupos (antes había un color de "firma" distinto por grupo) para
 # poder comparar la intensidad de cada músculo a simple vista contra el más
-# entrenado, en vez de tener que distinguir 15 tonos. Se cambió de #7c4dff
-# (morado de marca) a este verde porque, al partir de un neutro ya lavanda
-# (#d9d5ef), quedarse en la misma familia de tono que el destino hacía muy
-# difícil separar "poco entrenado" de "nada" por más que se ajustara la
-# curva -- un salto de tono (no solo de saturación) da más contraste real.
+# entrenado, en vez de tener que distinguir 15 tonos. Se probó también con
+# verde "success" (#22c98c) para separar mejor del neutro lavanda -- volvió
+# a pedirse el morado de marca. Con el suelo del 15% + exponente 2 (ver
+# _interpolate_muscle_color) un músculo con volumen relativo muy bajo
+# (t~0.05) se distingue algo menos del neutro que con verde (mismo tono que
+# el neutro, solo cambia saturación/luminosidad), pero sigue siendo visible;
+# si vuelve a costar diferenciar "casi nada" de "nada", la solución es subir
+# ese suelo, no cambiar de tono otra vez.
 
 
 def _interpolate_muscle_color(t):

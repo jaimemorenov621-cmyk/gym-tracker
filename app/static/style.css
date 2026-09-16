@@ -789,7 +789,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     width: 48px;
     height: 6px;
     border-radius: 3px;
-    background: linear-gradient(to right, #d9d5ef, #22c98c);
+    background: linear-gradient(to right, #d9d5ef, #7c4dff);
 }
 .dash-calendar {
     flex: 1;
