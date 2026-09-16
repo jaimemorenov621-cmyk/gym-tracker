@@ -2159,19 +2159,21 @@ _MUSCLE_TARGET_RGB = (34, 201, 140)  # #22c98c, verde "success" ya usado en la
 
 def _interpolate_muscle_color(t):
     t = max(0.0, min(1.0, t))
-    # Las dos curvas anteriores comprimían el rango medio/alto (con
-    # exponente < 1, t=0.65 ya daba ~88% de mezcla) para que ningún músculo
-    # entrenado se viera "pálido" -- pero eso aplanaba la diferencia visual
-    # entre un músculo al 50% de volumen y otro al 80-100%, que es
-    # precisamente la comparación que este mapa debe transmitir. Un suelo
-    # pequeño (5%) + mezcla lineal solucionaba eso pero creaba el problema
-    # contrario: cualquier músculo con poco volumen relativo quedaba casi
-    # pegado al gris neutro de la silueta (#d9d5ef ya es un lavanda pálido,
-    # muy cerca en tono del morado de marca al 5-10% de mezcla). Suelo del
-    # 20% (separación clara entre "nada" y "algo") + lineal en el resto:
-    # t=0.05->~24%, t=0.2->~36%, t=0.5->~60%, t=0.8->~84%, t=1->100%.
+    # t es relativo al músculo MÁS trabajado de la ventana, no a un umbral
+    # absoluto -- y en una rutina bien repartida (push/pull/legs, no solo
+    # "brazo") eso significa que la mayoría de grupos caen razonablemente
+    # cerca del máximo, no solo el propio grupo estrella. Verificado con una
+    # rutina de ejemplo de 3 días: con suelo+lineal, 8 de 10 grupos
+    # entrenados quedaban por encima del 50% de mezcla -- de ahí la queja de
+    # "parece que todo está fatigado". Cambiar el suelo no lo arregla (el
+    # problema está en el tramo medio-alto, no en el bajo); hace falta una
+    # curva más cóncava (exponente > 1) que separe más ese tramo. Suelo
+    # pequeño (15%, solo para no confundir "casi nada" con "nada") + cuadrado
+    # en el resto: t=0.15->~17%, t=0.4->~29%, t=0.6->~46%, t=0.85->~76%,
+    # t=1->100% -- ahora el grupo estrella destaca claramente por encima de
+    # los que solo reciben trabajo secundario.
     if t > 0:
-        t = 0.20 + 0.80 * t
+        t = 0.15 + 0.85 * (t ** 2)
     r = round(_MUSCLE_NEUTRAL_RGB[0] + (_MUSCLE_TARGET_RGB[0] - _MUSCLE_NEUTRAL_RGB[0]) * t)
     g = round(_MUSCLE_NEUTRAL_RGB[1] + (_MUSCLE_TARGET_RGB[1] - _MUSCLE_NEUTRAL_RGB[1]) * t)
     b = round(_MUSCLE_NEUTRAL_RGB[2] + (_MUSCLE_TARGET_RGB[2] - _MUSCLE_NEUTRAL_RGB[2]) * t)
