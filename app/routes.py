@@ -3,10 +3,11 @@ from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlsplit
 from collections import defaultdict
 import json
+import re
 import unicodedata
 import sqlalchemy as sa
 from openai import OpenAI
-from app import app, db
+from app import app, db, oauth
 from app.forms import (
     LoginForm,
     RegistrationForm,
@@ -254,6 +255,59 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("index"))
+
+
+def _unique_username_from_email(email):
+    """Genera un username libre a partir de la parte local del email (antes de
+    la @) para cuentas creadas por Google, que no piden username propio."""
+    base = re.sub(r"[^a-z0-9_]", "", email.split("@")[0].lower()) or "usuario"
+    candidate = base
+    suffix = 1
+    while db.session.scalar(sa.select(User).where(User.username == candidate)) is not None:
+        suffix += 1
+        candidate = f"{base}{suffix}"
+    return candidate
+
+
+@app.route("/login/google")
+def login_google():
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+    redirect_uri = url_for("login_google_callback", _external=True)
+    return oauth.google.authorize_redirect(redirect_uri)
+
+
+@app.route("/login/google/callback")
+def login_google_callback():
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+    token = oauth.google.authorize_access_token()
+    userinfo = token.get("userinfo") or oauth.google.userinfo(token=token)
+    google_sub = userinfo["sub"]
+    email = userinfo["email"]
+
+    user = db.session.scalar(sa.select(User).where(User.google_sub == google_sub))
+    if user is None:
+        # Vincula automáticamente si ya existe una cuenta con ese email
+        # (registrada antes con usuario/contraseña) -- Google ya verificó
+        # la propiedad del email, así que es seguro enlazarla sin pedir nada más.
+        user = db.session.scalar(sa.select(User).where(User.email == email))
+        if user is not None:
+            user.google_sub = google_sub
+        else:
+            user = User(
+                username=_unique_username_from_email(email),
+                email=email,
+                google_sub=google_sub,
+            )
+            db.session.add(user)
+        db.session.commit()
+
+    login_user(user, remember=True)
+    next_page = request.args.get("next")
+    if not next_page or urlsplit(next_page).netloc != "":
+        next_page = url_for("index")
+    return redirect(next_page)
 
 
 @app.route("/register", methods=["GET", "POST"])

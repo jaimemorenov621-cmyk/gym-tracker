@@ -12,6 +12,7 @@ class User(UserMixin, db.Model):
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True)
     email: so.Mapped[str] = so.mapped_column(sa.String(120), index=True, unique=True)
     password_hash: so.Mapped[Optional[str]] = so.mapped_column(sa.String(256))
+    google_sub: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255), unique=True, index=True)
     workouts: so.WriteOnlyMapped["Workout"] = so.relationship(back_populates="author")
     routines: so.WriteOnlyMapped["Routine"] = so.relationship(back_populates="author")
     stagnation_threshold: so.Mapped[int] = so.mapped_column(default=3)
@@ -27,6 +28,9 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        if self.password_hash is None:
+            # Cuenta creada por Google -- no tiene contraseña que comprobar.
+            return False
         return check_password_hash(self.password_hash, password)
 
     def __repr__(self):

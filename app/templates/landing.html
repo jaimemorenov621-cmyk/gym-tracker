@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block head %}
     <meta property="og:title" content="Gyre">
     <meta property="og:description" content="Sigue tu progreso de verdad: mapa muscular en tiempo real, PRs automáticos y análisis con IA.">
@@ -18,6 +19,7 @@
             <a class="btn" href="{{ url_for('landing_cta') }}">Crear cuenta gratis</a>
             <a class="btn-outline" href="{{ url_for('login') }}">Iniciar sesión</a>
         </div>
+        <a class="btn-google" href="{{ url_for('login_google') }}">{{ macros.icon('google', 18) }} Continuar con Google</a>
     </div>
 
     <div class="landing-features">

@@ -866,6 +866,24 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     box-shadow: var(--shadow-elevated);
     border-color: var(--color-border-soft);
 }
+.btn-google {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: white;
+    color: #3c4043;
+    border: 1.5px solid #dadce0;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+@media (hover: hover) {
+    .btn-google:hover { background: #f7f8f8; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+}
 .card.exercise-card-complete {
     background: rgba(34, 201, 140, 0.07);
     border-color: var(--color-success);
@@ -1660,6 +1678,9 @@ depende de que Chart.js cargue bien -- coste cero. */
     justify-content: center;
     gap: 12px;
     flex-wrap: wrap;
+}
+.landing-hero .btn-google {
+    margin-top: 14px;
 }
 .landing-features {
     display: grid;

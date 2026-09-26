@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 
 {% block content %}
     <h1>Sign In</h1>
+    <a class="btn-google" href="{{ url_for('login_google') }}">{{ macros.icon('google', 18) }} Continuar con Google</a>
+    <p style="text-align:center; color:var(--color-text-muted); margin:12px 0;">o con tu usuario</p>
     <form action="" method="post" novalidate>
         {{ form.hidden_tag() }}
         <p>

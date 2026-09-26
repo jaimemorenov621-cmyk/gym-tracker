@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 
 {% block content %}
     <h1>Register</h1>
+    <a class="btn-google" href="{{ url_for('login_google') }}">{{ macros.icon('google', 18) }} Continuar con Google</a>
+    <p style="text-align:center; color:var(--color-text-muted); margin:12px 0;">o crea una cuenta con usuario y contraseña</p>
     <form action="" method="post">
         {{ form.hidden_tag() }}
         <p>
