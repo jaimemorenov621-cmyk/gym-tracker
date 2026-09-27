@@ -49,6 +49,11 @@ def service_worker():
     return app.send_static_file("sw.js")
 
 
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html", title="Política de privacidad")
+
+
 @app.route("/")
 def landing():
     if current_user.is_authenticated:
