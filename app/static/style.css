@@ -51,10 +51,21 @@ textarea {
 }
 
 .top-nav {
-    background: #f5f5f7;
-    padding: 12px 16px;
-    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: white;
+    border: 1px solid var(--color-border-soft);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-elevated);
+    padding: 10px 16px;
     margin-bottom: 16px;
+}
+.top-nav-brand {
+    font-weight: 800;
+    color: var(--color-brand-dark);
+    margin-right: 10px;
+    font-size: 1.05rem;
 }
 
 .btn, button, input[type="submit"] {
@@ -97,20 +108,27 @@ textarea {
 }
 
 .btn-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     background: transparent;
-    color: #444;
-    box-shadow: none;
+    color: #555;
+    text-decoration: none;
+    border-radius: 8px;
     padding: 8px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.15s ease, color 0.15s ease;
 }
+.btn-nav .icon { color: var(--color-brand); }
+.btn-nav.active { background: var(--color-surface-active); color: var(--color-brand-dark); }
+.btn-nav.active .icon { color: var(--color-brand-dark); }
+.btn-nav.btn-nav-danger { color: var(--color-danger); }
+.btn-nav.btn-nav-danger .icon { color: var(--color-danger); }
 @media (hover: hover) {
-    .btn-nav:hover {
-        background: rgba(0,0,0,0.06);
-        color: #111;
-        box-shadow: none;
-    }
+    .btn-nav:hover { background: var(--color-surface-hover); color: #222; }
+    .btn-nav.btn-nav-danger:hover { background: #fdecea; color: var(--color-danger); }
 }
-
-.top-nav a { margin-right: 6px; }
 
 .card {
     background: white;
