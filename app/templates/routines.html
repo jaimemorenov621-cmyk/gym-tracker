@@ -8,7 +8,9 @@
     </p>
 
     {% macro routine_card(info) %}
-        <div class="card card-elevated routine-card" data-id="{{ info.routine.id }}">
+        {% set color = info.routine.block.color if info.routine.block else none %}
+        <div class="card card-elevated routine-card" data-id="{{ info.routine.id }}"
+            {% if color %}style="border-color: color-mix(in srgb, {{ color }} 45%, white); background: color-mix(in srgb, {{ color }} 8%, white);"{% endif %}>
             <div class="exercise-header">
                 <h3>
                     <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
@@ -44,9 +46,9 @@
 
             <div class="routine-block-row">
                 <select class="cell-input routine-block-select" onchange="onBlockSelectChange({{ info.routine.id }}, this)">
-                    <option value="" {% if not info.routine.block %}selected{% endif %}>Sin bloque</option>
-                    {% for b in existing_blocks %}
-                        <option value="{{ b }}" {% if info.routine.block == b %}selected{% endif %}>{{ b }}</option>
+                    <option value="" {% if not info.routine.block_id %}selected{% endif %}>Sin bloque</option>
+                    {% for b in blocks %}
+                        <option value="{{ b.id }}" {% if info.routine.block_id == b.id %}selected{% endif %}>{{ b.name }}</option>
                     {% endfor %}
                     <option value="__new__">+ Crear nuevo bloque...</option>
                 </select>
@@ -61,19 +63,41 @@
         </div>
     {% endif %}
 
-    {% for block_name, infos in block_sections %}
-        <h3 class="routine-section-title">{{ block_name or "Sin bloque" }}</h3>
-        <div id="blockList{{ loop.index0 }}" class="routine-section" data-reorder-section="1">
-            {% for info in infos %}{{ routine_card(info) }}{% endfor %}
-        </div>
-    {% else %}
-        {% if not pinned_info %}
-        <div class="card card-elevated routine-empty-state">
-            {{ macros.exercise_icon_fallback(48, 10) }}
-            <p>Todavía no tienes rutinas guardadas.</p>
-        </div>
-        {% endif %}
+    {% for block, infos in block_sections %}
+        <details class="routine-block-details" data-block-id="{{ block.id }}" {% if block.is_default %}open{% endif %}>
+            <summary>
+                {{ macros.icon('chevron-down', 16) }}
+                <input type="color" class="routine-block-color-input" value="{{ block.color }}"
+                    onclick="event.stopPropagation()"
+                    onchange="setRoutineBlockColor({{ block.id }}, this.value)">
+                <span class="routine-block-name">{{ block.name }}</span>
+                <button type="button" class="routine-block-default-btn{% if block.is_default %} active{% endif %}"
+                    onclick="event.stopPropagation(); toggleRoutineBlockDefault({{ block.id }}, this)">
+                    {{ 'Predeterminado' if block.is_default else 'Hacer predeterminado' }}
+                </button>
+            </summary>
+            <div id="blockList{{ block.id }}" class="routine-section" data-reorder-section="1">
+                {% for info in infos %}{{ routine_card(info) }}{% endfor %}
+                {% if not infos %}
+                    <p class="routine-block-empty"><em>Sin rutinas en este bloque todavía.</em></p>
+                {% endif %}
+            </div>
+        </details>
     {% endfor %}
+
+    {% if no_block_info %}
+        <h3 class="routine-section-title">Sin bloque</h3>
+        <div id="noBlockList" class="routine-section" data-reorder-section="1">
+            {% for info in no_block_info %}{{ routine_card(info) }}{% endfor %}
+        </div>
+    {% endif %}
+
+    {% if not pinned_info and not block_sections and not no_block_info %}
+    <div class="card card-elevated routine-empty-state">
+        {{ macros.exercise_icon_fallback(48, 10) }}
+        <p>Todavía no tienes rutinas guardadas.</p>
+    </div>
+    {% endif %}
 
     {% if routines_info %}
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -84,7 +108,9 @@
                 handle: '.drag-handle',
                 animation: 150,
                 onEnd: function() {
-                    const order = Array.from(el.children).map(card => parseInt(card.dataset.id));
+                    const order = Array.from(el.children)
+                        .filter(card => card.dataset && card.dataset.id)
+                        .map(card => parseInt(card.dataset.id));
                     fetch("{{ url_for('reorder_routines') }}", {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
@@ -102,6 +128,27 @@
                 .then(data => {
                     if (data.ok) location.reload();
                 });
+        }
+
+        function setRoutineBlockColor(blockId, color) {
+            fetch('/routine-blocks/' + blockId + '/color', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({color: color})
+            }).then(r => r.json()).then(data => {
+                if (data.ok) location.reload();
+            });
+        }
+
+        function toggleRoutineBlockDefault(blockId, btn) {
+            const makeDefault = !btn.classList.contains('active');
+            fetch('/routine-blocks/' + blockId + '/default', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({is_default: makeDefault})
+            }).then(r => r.json()).then(data => {
+                if (data.ok) location.reload();
+            });
         }
 
         function onBlockSelectChange(id, select) {
@@ -128,18 +175,18 @@
                         input.remove();
                         return;
                     }
-                    saveRoutineBlock(id, value);
+                    saveRoutineBlock(id, {new_block_name: value});
                 });
                 return;
             }
-            saveRoutineBlock(id, select.value);
+            saveRoutineBlock(id, {block_id: select.value ? parseInt(select.value) : null});
         }
 
-        function saveRoutineBlock(id, block) {
+        function saveRoutineBlock(id, payload) {
             fetch('/routines/' + id + '/block', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({block: block})
+                body: JSON.stringify(payload)
             })
             .then(r => r.json())
             .then(data => {

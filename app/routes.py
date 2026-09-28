@@ -31,6 +31,7 @@ from app.models import (
     SetEntry,
     ExerciseNote,
     Routine,
+    RoutineBlock,
     RoutineExercise,
     Exercise,
     ExerciseFavorite,
@@ -1042,26 +1043,29 @@ def routines():
         )
 
     # Fijadas primero (cualquier bloque), luego el resto agrupado por bloque
-    # -- "Sin bloque" siempre al final, el resto en el orden en que aparece
-    # (ya viene ordenado por Routine.order_index). Arrastrar reordena dentro
-    # de cada sección por separado (ver reorder_routines(), ya funciona con
-    # subconjuntos de ids sin tocar el resto).
+    # -- cada RoutineBlock es su propia sección plegable (abierta de entrada
+    # solo si es la predeterminada), "Sin bloque" siempre visible y al final.
+    # Arrastrar reordena dentro de cada sección por separado (reorder_routines()
+    # ya funciona con subconjuntos de ids sin tocar el resto).
+    blocks = db.session.scalars(
+        sa.select(RoutineBlock)
+        .where(RoutineBlock.user_id == current_user.id)
+        .order_by(RoutineBlock.order_index)
+    ).all()
+
     pinned_info = [info for info in routines_info if info["routine"].pinned]
     unpinned_info = [info for info in routines_info if not info["routine"].pinned]
 
-    block_order = []
-    by_block = {}
+    by_block_id = defaultdict(list)
+    no_block_info = []
     for info in unpinned_info:
-        key = info["routine"].block
-        if key not in by_block:
-            by_block[key] = []
-            block_order.append(key)
-    for info in unpinned_info:
-        by_block[info["routine"].block].append(info)
-    block_order.sort(key=lambda k: k is None)  # sort estable: solo mueve None al final
-    block_sections = [(key, by_block[key]) for key in block_order]
+        block_id = info["routine"].block_id
+        if block_id is None:
+            no_block_info.append(info)
+        else:
+            by_block_id[block_id].append(info)
 
-    existing_blocks = sorted({r.block for r in routine_list if r.block})
+    block_sections = [(b, by_block_id.get(b.id, [])) for b in blocks]
 
     empty_form = EmptyForm()
     return render_template(
@@ -1070,7 +1074,8 @@ def routines():
         routines_info=routines_info,
         pinned_info=pinned_info,
         block_sections=block_sections,
-        existing_blocks=existing_blocks,
+        no_block_info=no_block_info,
+        blocks=blocks,
         empty_form=empty_form,
     )
 
@@ -1093,10 +1098,68 @@ def set_routine_block(routine_id):
     if routine.author != current_user:
         return jsonify({"ok": False}), 403
     data = request.get_json(silent=True) or {}
-    block = (data.get("block") or "").strip()[:64]
-    routine.block = block or None
+    new_name = (data.get("new_block_name") or "").strip()[:64]
+    if new_name:
+        max_order = db.session.scalar(
+            sa.select(sa.func.max(RoutineBlock.order_index)).where(
+                RoutineBlock.user_id == current_user.id
+            )
+        )
+        block = RoutineBlock(
+            name=new_name,
+            order_index=(max_order + 1) if max_order is not None else 0,
+            user_id=current_user.id,
+        )
+        db.session.add(block)
+        db.session.flush()
+        routine.block_id = block.id
+    else:
+        block_id = data.get("block_id")
+        if block_id:
+            block = db.get_or_404(RoutineBlock, block_id)
+            if block.user_id != current_user.id:
+                return jsonify({"ok": False}), 403
+            routine.block_id = block.id
+        else:
+            routine.block_id = None
     db.session.commit()
-    return jsonify({"ok": True, "block": routine.block})
+    return jsonify({"ok": True, "block_id": routine.block_id})
+
+
+@app.route("/routine-blocks/<int:block_id>/color", methods=["POST"])
+@login_required
+def set_routine_block_color(block_id):
+    block = db.get_or_404(RoutineBlock, block_id)
+    if block.user_id != current_user.id:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    color = (data.get("color") or "").strip()
+    if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+        return jsonify({"ok": False}), 400
+    block.color = color
+    db.session.commit()
+    return jsonify({"ok": True, "color": block.color})
+
+
+@app.route("/routine-blocks/<int:block_id>/default", methods=["POST"])
+@login_required
+def set_default_routine_block(block_id):
+    block = db.get_or_404(RoutineBlock, block_id)
+    if block.user_id != current_user.id:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    make_default = bool(data.get("is_default", True))
+    if make_default:
+        db.session.execute(
+            sa.update(RoutineBlock)
+            .where(RoutineBlock.user_id == current_user.id, RoutineBlock.id != block.id)
+            .values(is_default=False)
+        )
+        block.is_default = True
+    else:
+        block.is_default = False
+    db.session.commit()
+    return jsonify({"ok": True, "is_default": block.is_default})
 
 
 @app.route("/routines/<int:routine_id>", methods=["GET", "POST"])

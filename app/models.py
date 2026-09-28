@@ -114,15 +114,40 @@ class ExerciseNote(db.Model):
         return f"<ExerciseNote {self.exercise}>"
 
 
+class RoutineBlock(db.Model):
+    """Bloque de entrenamiento (Hipertrofia, Fuerza, Descarga...) -- entidad
+    propia (no solo texto libre en Routine) porque tiene atributos suyos:
+    color para sombrear sus rutinas, y cuál es el bloque predeterminado que
+    se abre solo en "Mis rutinas" (is_default, único por usuario -- ver
+    set_default_routine_block() en app/routes.py)."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(64))
+    color: so.Mapped[str] = so.mapped_column(sa.String(7), default="#7c4dff")
+    is_default: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
+    order_index: so.Mapped[int] = so.mapped_column(default=0)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+
+    routines: so.WriteOnlyMapped["Routine"] = so.relationship(
+        back_populates="block", passive_deletes=True
+    )
+
+    def __repr__(self):
+        return f"<RoutineBlock {self.name}>"
+
+
 class Routine(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(64))
     order_index: so.Mapped[int] = so.mapped_column(default=0)
-    block: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    block_id: so.Mapped[Optional[int]] = so.mapped_column(
+        sa.ForeignKey("routine_block.id", ondelete="SET NULL"), index=True
+    )
     pinned: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
 
     author: so.Mapped[User] = so.relationship(back_populates="routines")
+    block: so.Mapped[Optional[RoutineBlock]] = so.relationship(back_populates="routines")
     exercises: so.WriteOnlyMapped["RoutineExercise"] = so.relationship(
         back_populates="routine", passive_deletes=True
     )

@@ -1623,6 +1623,68 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     padding: 5px 8px;
 }
 
+.routine-block-details {
+    margin: 18px 0 8px;
+}
+.routine-block-details:first-of-type { margin-top: 0; }
+.routine-block-details > summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text);
+    padding: 4px 0;
+}
+.routine-block-details > summary::-webkit-details-marker { display: none; }
+.routine-block-details > summary .icon {
+    color: var(--color-text-muted);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+.routine-block-details[open] > summary .icon { transform: rotate(180deg); }
+.routine-block-name { flex: 1; }
+.routine-block-color-input {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: 1.5px solid #e0d9ff;
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.routine-block-color-input::-webkit-color-swatch-wrapper { padding: 0; }
+.routine-block-color-input::-webkit-color-swatch { border: none; border-radius: 50%; }
+.routine-block-default-btn {
+    background: none;
+    border: 1.5px solid #e0d9ff;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.routine-block-default-btn.active {
+    background: var(--color-surface-active);
+    border-color: transparent;
+    color: var(--color-brand-dark);
+}
+@media (hover: hover) {
+    .routine-block-default-btn:hover { border-color: var(--color-brand); color: var(--color-brand-dark); }
+}
+.routine-block-empty {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    padding: 4px 2px;
+}
+
 /* ===== Piloto de rediseño: exercise_progress.html ===== */
 
 /* .notes-list también se usa en workout_detail.html -- estas reglas solo
