@@ -2,6 +2,7 @@ from flask import render_template, flash, redirect, url_for, request, jsonify, m
 from flask_login import current_user, login_user, logout_user, login_required
 from urllib.parse import urlsplit
 from collections import defaultdict
+import colorsys
 import json
 import re
 import unicodedata
@@ -1126,6 +1127,22 @@ def set_routine_block(routine_id):
     return jsonify({"ok": True, "block_id": routine.block_id})
 
 
+def _normalize_block_color(hex_color):
+    """Recorta la luminosidad a una franja media (35%-55%) antes de guardar
+    un color de bloque -- elegido libremente con <input type=color>, un tono
+    casi blanco apenas se nota al mezclarlo como sombra de tarjeta (8%/45%
+    en CSS, ver .routine-card) y uno casi negro se ve demasiado duro de
+    borde. Solo se toca la luminosidad, nunca el matiz/saturación, para que
+    el color elegido siga siendo reconociblemente "ese" color, solo con
+    contraste garantizado."""
+    hex_color = hex_color.lstrip("#")
+    r, g, b = (int(hex_color[i : i + 2], 16) / 255 for i in (0, 2, 4))
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    l = min(max(l, 0.35), 0.55)
+    r, g, b = colorsys.hls_to_rgb(h, l, s)
+    return "#{:02x}{:02x}{:02x}".format(round(r * 255), round(g * 255), round(b * 255))
+
+
 @app.route("/routine-blocks/<int:block_id>/color", methods=["POST"])
 @login_required
 def set_routine_block_color(block_id):
@@ -1136,7 +1153,7 @@ def set_routine_block_color(block_id):
     color = (data.get("color") or "").strip()
     if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
         return jsonify({"ok": False}), 400
-    block.color = color
+    block.color = _normalize_block_color(color)
     db.session.commit()
     return jsonify({"ok": True, "color": block.color})
 

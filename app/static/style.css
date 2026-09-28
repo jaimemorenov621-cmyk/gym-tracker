@@ -1660,6 +1660,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     border-radius: var(--radius-card);
     background: color-mix(in srgb, var(--block-color) 16%, white);
     border: 1.5px solid color-mix(in srgb, var(--block-color) 45%, white);
+    margin-bottom: 14px;
 }
 .routine-block-details > summary::-webkit-details-marker { display: none; }
 .routine-block-details > summary .icon {
