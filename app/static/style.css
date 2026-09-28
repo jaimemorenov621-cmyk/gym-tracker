@@ -1552,6 +1552,10 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 
 /* ===== Piloto de rediseño: routines.html ===== */
 
+.routine-card {
+    border-color: color-mix(in srgb, var(--block-color, #ece7ff) 45%, white);
+    background: color-mix(in srgb, var(--block-color, #ece7ff) 8%, white);
+}
 .routine-card .exercise-header {
     flex-wrap: wrap;
     gap: 8px;
