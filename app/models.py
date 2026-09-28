@@ -51,6 +51,10 @@ class Workout(db.Model):
         index=True, default=lambda: datetime.now(timezone.utc)
     )
     ended_at: so.Mapped[Optional[datetime]] = so.mapped_column()
+    # Lista JSON de nombres de ejercicio, en el orden elegido a mano por el
+    # usuario (arrastrar en workout_detail.html). None -> orden por defecto
+    # (primera aparición del SetEntry más antiguo de cada ejercicio).
+    exercise_order: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
     routine_id: so.Mapped[Optional[int]] = so.mapped_column(
         sa.ForeignKey("routine.id"), index=True
     )
@@ -114,6 +118,8 @@ class Routine(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(64))
     order_index: so.Mapped[int] = so.mapped_column(default=0)
+    block: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
+    pinned: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
 
     author: so.Mapped[User] = so.relationship(back_populates="routines")

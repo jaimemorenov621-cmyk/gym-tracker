@@ -348,6 +348,15 @@ textarea {
     align-items: center;
     gap: 10px;
     max-width: 270px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+.rest-toast.rest-toast-dragging {
+    cursor: grabbing;
+}
+.rest-toast button {
+    touch-action: auto;
 }
 .rt-ring-wrap {
     position: relative;
@@ -1583,6 +1592,35 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .routine-empty-state p {
     margin: 0;
     font-style: italic;
+}
+
+.routine-section-title {
+    margin: 18px 0 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.routine-section-title .icon { color: #f0b400; }
+.routine-section:first-of-type { margin-top: 0; }
+
+.routine-pin-btn { color: var(--color-text-muted); }
+.routine-pin-btn.active { color: #f0b400; }
+@media (hover: hover) {
+    .routine-pin-btn:hover { background: var(--color-surface-hover); }
+}
+
+.routine-block-row {
+    margin-top: 10px;
+}
+.routine-block-select,
+.routine-block-input {
+    width: auto;
+    max-width: 220px;
+    font-size: 0.85rem;
+    padding: 5px 8px;
 }
 
 /* ===== Piloto de rediseño: exercise_progress.html ===== */

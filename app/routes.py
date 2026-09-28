@@ -422,6 +422,21 @@ def delete_workout_exercise(workout_id):
     return jsonify({"ok": True})
 
 
+@app.route("/workout/<int:workout_id>/exercise/reorder", methods=["POST"])
+@login_required
+def reorder_workout_exercises(workout_id):
+    workout = db.get_or_404(Workout, workout_id)
+    if workout.author != current_user:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    order = data.get("order", [])
+    if not isinstance(order, list) or not all(isinstance(x, str) for x in order):
+        return jsonify({"ok": False}), 400
+    workout.exercise_order = json.dumps(order)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
 @app.route("/workout/<int:workout_id>/set", methods=["POST"])
 @login_required
 def api_create_set(workout_id):
@@ -528,6 +543,16 @@ def workout_detail(workout_id):
             grouped_sets[s.exercise] = []
             exercise_order.append(s.exercise)
         grouped_sets[s.exercise].append(s)
+
+    if workout.exercise_order:
+        try:
+            custom_order = json.loads(workout.exercise_order)
+        except (ValueError, TypeError):
+            custom_order = []
+        known = set(exercise_order)
+        ordered = [name for name in custom_order if name in known]
+        ordered += [name for name in exercise_order if name not in ordered]
+        exercise_order = ordered
 
     exercise_notes_map = {}
     if grouped_sets:
@@ -1016,13 +1041,62 @@ def routines():
             }
         )
 
+    # Fijadas primero (cualquier bloque), luego el resto agrupado por bloque
+    # -- "Sin bloque" siempre al final, el resto en el orden en que aparece
+    # (ya viene ordenado por Routine.order_index). Arrastrar reordena dentro
+    # de cada sección por separado (ver reorder_routines(), ya funciona con
+    # subconjuntos de ids sin tocar el resto).
+    pinned_info = [info for info in routines_info if info["routine"].pinned]
+    unpinned_info = [info for info in routines_info if not info["routine"].pinned]
+
+    block_order = []
+    by_block = {}
+    for info in unpinned_info:
+        key = info["routine"].block
+        if key not in by_block:
+            by_block[key] = []
+            block_order.append(key)
+    for info in unpinned_info:
+        by_block[info["routine"].block].append(info)
+    block_order.sort(key=lambda k: k is None)  # sort estable: solo mueve None al final
+    block_sections = [(key, by_block[key]) for key in block_order]
+
+    existing_blocks = sorted({r.block for r in routine_list if r.block})
+
     empty_form = EmptyForm()
     return render_template(
         "routines.html",
         title="Mis rutinas",
         routines_info=routines_info,
+        pinned_info=pinned_info,
+        block_sections=block_sections,
+        existing_blocks=existing_blocks,
         empty_form=empty_form,
     )
+
+
+@app.route("/routines/<int:routine_id>/pin", methods=["POST"])
+@login_required
+def toggle_routine_pin(routine_id):
+    routine = db.get_or_404(Routine, routine_id)
+    if routine.author != current_user:
+        return jsonify({"ok": False}), 403
+    routine.pinned = not routine.pinned
+    db.session.commit()
+    return jsonify({"ok": True, "pinned": routine.pinned})
+
+
+@app.route("/routines/<int:routine_id>/block", methods=["POST"])
+@login_required
+def set_routine_block(routine_id):
+    routine = db.get_or_404(Routine, routine_id)
+    if routine.author != current_user:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    block = (data.get("block") or "").strip()[:64]
+    routine.block = block or None
+    db.session.commit()
+    return jsonify({"ok": True, "block": routine.block})
 
 
 @app.route("/routines/<int:routine_id>", methods=["GET", "POST"])

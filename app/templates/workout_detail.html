@@ -66,12 +66,14 @@
         </div>
     {% endif %}
 
+    <div id="workoutExercisesList">
     {% for exercise in exercise_order %}
         {% set group = grouped_sets[exercise] %}
         {% set n = exercise_notes_map.get(exercise) %}
         <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}" data-exercise="{{ exercise }}">
             <div class="exercise-header">
                 <h3>
+                    <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
                     {% set img = get_exercise_image(exercise) %}
                     {% if img %}
                         <img src="{{ img }}" style="width:56px; height:56px; object-fit:cover; border-radius:8px;">
@@ -143,6 +145,29 @@
             <button type="button" class="btn-outline" onclick="addSet('{{ exercise }}')">+ Agregar serie</button>
         </div>
     {% endfor %}
+    </div>
+
+    {% if exercise_order %}
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        (function () {
+            const list = document.getElementById('workoutExercisesList');
+            if (!list) return;
+            new Sortable(list, {
+                handle: '.drag-handle',
+                animation: 150,
+                onEnd: function () {
+                    const order = Array.from(list.children).map(card => card.dataset.exercise);
+                    fetch("{{ url_for('reorder_workout_exercises', workout_id=workout.id) }}", {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({order: order})
+                    });
+                }
+            });
+        })();
+    </script>
+    {% endif %}
 
     <div class="card card-elevated">
         <h3 style="margin-top:0;">Añadir ejercicio nuevo</h3>

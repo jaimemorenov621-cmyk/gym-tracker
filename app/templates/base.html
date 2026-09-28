@@ -376,6 +376,59 @@
             startRestTimer(seconds);
         }
 
+        (function setupDraggableRestTimer() {
+            const box = document.getElementById('restTimerBox');
+            if (!box) return;
+            let dragging = false, startX, startY, startLeft, startTop;
+
+            function applyPosition(left, top) {
+                const maxLeft = Math.max(4, window.innerWidth - box.offsetWidth - 4);
+                const maxTop = Math.max(4, window.innerHeight - box.offsetHeight - 4);
+                left = Math.min(Math.max(4, left), maxLeft);
+                top = Math.min(Math.max(4, top), maxTop);
+                box.style.left = left + 'px';
+                box.style.top = top + 'px';
+                box.style.right = 'auto';
+                box.style.bottom = 'auto';
+            }
+
+            window.restoreRestTimerPosition = function () {
+                const saved = localStorage.getItem('restTimerPos');
+                if (!saved) return;
+                try {
+                    const pos = JSON.parse(saved);
+                    if (typeof pos.left === 'number' && typeof pos.top === 'number') {
+                        applyPosition(pos.left, pos.top);
+                    }
+                } catch (e) {}
+            };
+
+            box.addEventListener('pointerdown', function (e) {
+                if (e.target.closest('button')) return;
+                dragging = true;
+                box.setPointerCapture(e.pointerId);
+                const rect = box.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = rect.left;
+                startTop = rect.top;
+                box.classList.add('rest-toast-dragging');
+            });
+            box.addEventListener('pointermove', function (e) {
+                if (!dragging) return;
+                applyPosition(startLeft + (e.clientX - startX), startTop + (e.clientY - startY));
+            });
+            function endDrag(e) {
+                if (!dragging) return;
+                dragging = false;
+                box.classList.remove('rest-toast-dragging');
+                const rect = box.getBoundingClientRect();
+                localStorage.setItem('restTimerPos', JSON.stringify({left: rect.left, top: rect.top}));
+            }
+            box.addEventListener('pointerup', endDrag);
+            box.addEventListener('pointercancel', endDrag);
+        })();
+
         function celebrate(count) {
             const colors = ['#7c4dff', '#536dfe', '#22c98c', '#ffb300', '#ff5252'];
             for (let i = 0; i < (count || 40); i++) {
@@ -391,6 +444,8 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            if (window.restoreRestTimerPosition) restoreRestTimerPosition();
+
             if (window.Notification && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
                 Notification.requestPermission();
             }
