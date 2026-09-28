@@ -1,10 +1,17 @@
 from datetime import datetime, timezone
 from typing import Optional
+import unicodedata
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app import db, login
+
+
+def _strip_accents(s):
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c)
+    ).lower()
 
 
 class User(UserMixin, db.Model):
@@ -224,6 +231,13 @@ class Exercise(db.Model):
     id: so.Mapped[str] = so.mapped_column(sa.String(64), primary_key=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(120), index=True)
     name_es: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True)
+    # Sin acentos y en minúsculas, mantenidas en sincronía automáticamente
+    # (ver el listener before_insert/before_update más abajo) -- permiten
+    # que find_catalog_exercise() (app/routes.py) busque coincidencias sin
+    # acentos con una consulta indexada, en vez de recorrer las 800+ filas
+    # del catálogo en Python en cada búsqueda que no coincide exacto.
+    name_normalized: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True)
+    name_es_normalized: so.Mapped[Optional[str]] = so.mapped_column(sa.String(120), index=True)
     category: so.Mapped[Optional[str]] = so.mapped_column(sa.String(64))
     primary_muscles: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
     secondary_muscles: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
@@ -232,6 +246,13 @@ class Exercise(db.Model):
 
     def __repr__(self):
         return f"<Exercise {self.name}>"
+
+
+@sa.event.listens_for(Exercise, "before_insert")
+@sa.event.listens_for(Exercise, "before_update")
+def _exercise_sync_normalized_names(mapper, connection, target):
+    target.name_normalized = _strip_accents(target.name)
+    target.name_es_normalized = _strip_accents(target.name_es) if target.name_es else None
 
 
 class ExerciseFavorite(db.Model):

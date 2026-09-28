@@ -2279,13 +2279,17 @@ def find_catalog_exercise(name):
     if match:
         return match
 
+    # Antes recorría las 800+ filas del catálogo en Python comparando cadena
+    # a cadena en cada llamada sin caché -- se nota cuando build_progress_summary()
+    # lo llama hasta 20 veces por petición. name_normalized/name_es_normalized
+    # (app/models.py) se mantienen en sincronía solas, así que esto es una
+    # consulta indexada normal.
     target = _strip_accents(name)
-    for ex in db.session.scalars(sa.select(Exercise)):
-        if _strip_accents(ex.name) == target:
-            return ex
-        if ex.name_es and _strip_accents(ex.name_es) == target:
-            return ex
-    return None
+    return db.session.scalar(
+        sa.select(Exercise).where(
+            sa.or_(Exercise.name_normalized == target, Exercise.name_es_normalized == target)
+        )
+    )
 
 
 def canonicalize_exercise_name(name):
