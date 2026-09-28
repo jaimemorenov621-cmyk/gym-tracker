@@ -1614,13 +1614,29 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 
 .routine-block-row {
     margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.routine-block-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
 }
 .routine-block-select,
 .routine-block-input {
-    width: auto;
-    max-width: 220px;
+    flex: 1;
+    min-width: 140px;
+    max-width: 260px;
     font-size: 0.85rem;
-    padding: 5px 8px;
+    padding: 6px 8px;
+    border: 1.5px solid var(--block-color, #e0d9ff);
+    border-radius: 8px;
 }
 
 .routine-block-details {
@@ -1632,15 +1648,18 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.95rem;
-    font-weight: 700;
+    gap: 10px;
+    font-size: 1.05rem;
+    font-weight: 800;
     color: var(--color-text);
-    padding: 4px 0;
+    padding: 10px 14px;
+    border-radius: var(--radius-card);
+    background: color-mix(in srgb, var(--block-color) 16%, white);
+    border: 1.5px solid color-mix(in srgb, var(--block-color) 45%, white);
 }
 .routine-block-details > summary::-webkit-details-marker { display: none; }
 .routine-block-details > summary .icon {
-    color: var(--color-text-muted);
+    color: color-mix(in srgb, var(--block-color) 70%, black);
     transition: transform 0.2s ease;
     flex-shrink: 0;
 }
@@ -1649,10 +1668,11 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .routine-block-color-input {
     -webkit-appearance: none;
     appearance: none;
-    width: 22px;
-    height: 22px;
+    width: 24px;
+    height: 24px;
     padding: 0;
-    border: 1.5px solid #e0d9ff;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--block-color) 60%, white);
     border-radius: 50%;
     overflow: hidden;
     cursor: pointer;

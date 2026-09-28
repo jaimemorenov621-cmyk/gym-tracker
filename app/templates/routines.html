@@ -10,7 +10,7 @@
     {% macro routine_card(info) %}
         {% set color = info.routine.block.color if info.routine.block else none %}
         <div class="card card-elevated routine-card" data-id="{{ info.routine.id }}"
-            {% if color %}style="border-color: color-mix(in srgb, {{ color }} 45%, white); background: color-mix(in srgb, {{ color }} 8%, white);"{% endif %}>
+            {% if color %}style="--block-color: {{ color }};"{% endif %}>
             <div class="exercise-header">
                 <h3>
                     <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
@@ -45,7 +45,8 @@
             {% endif %}
 
             <div class="routine-block-row">
-                <select class="cell-input routine-block-select" onchange="onBlockSelectChange({{ info.routine.id }}, this)">
+                <label class="routine-block-label" for="block-select-{{ info.routine.id }}">{{ macros.icon('list', 14) }} Bloque</label>
+                <select id="block-select-{{ info.routine.id }}" class="cell-input routine-block-select" onchange="onBlockSelectChange({{ info.routine.id }}, this)">
                     <option value="" {% if not info.routine.block_id %}selected{% endif %}>Sin bloque</option>
                     {% for b in blocks %}
                         <option value="{{ b.id }}" {% if info.routine.block_id == b.id %}selected{% endif %}>{{ b.name }}</option>
@@ -64,9 +65,10 @@
     {% endif %}
 
     {% for block, infos in block_sections %}
-        <details class="routine-block-details" data-block-id="{{ block.id }}" {% if block.is_default %}open{% endif %}>
+        <details class="routine-block-details" data-block-id="{{ block.id }}" {% if block.is_default %}open{% endif %}
+            style="--block-color: {{ block.color }};">
             <summary>
-                {{ macros.icon('chevron-down', 16) }}
+                {{ macros.icon('chevron-down', 18) }}
                 <input type="color" class="routine-block-color-input" value="{{ block.color }}"
                     onclick="event.stopPropagation()"
                     onchange="setRoutineBlockColor({{ block.id }}, this.value)">
