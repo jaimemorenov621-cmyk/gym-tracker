@@ -2194,14 +2194,45 @@ cierra): línea con etiqueta centrada para que no se lean como un mismo bloque. 
     .finish-cta-text strong { font-size: 1rem; }
 }
 
-/* ===== Acciones secundarias y "zona de peligro" (entreno y rutina) =====
-Eliminar va siempre al final de la página, separado de todo lo demás y con
-una frase que dice exactamente qué se borra -- antes "Eliminar rutina"
-estaba pegado a "Iniciar entrenamiento", y "Eliminar entrenamiento" justo
-debajo de "Guardar como rutina" en el mismo menú. */
+/* ===== Menú ⋮ del entreno: guardar como rutina / eliminar =====
+Cada opción con su propio sombreado (morado = guardar, rojo = eliminar),
+subtítulo que dice qué hace, y una línea entre ambas para no pulsar una
+por la otra. */
 
-.secondary-action { margin: 12px 0 0; }
-.secondary-action .btn-outline { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+.workout-actions-menu {
+    min-width: 250px;
+    padding: 6px;
+    border-color: var(--color-border-soft);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-elevated);
+}
+.workout-actions-menu form { margin: 0; }
+.workout-actions-menu button {
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 10px;
+}
+.workout-actions-menu .menu-item-save { background: var(--color-surface-hover); }
+.workout-actions-menu .menu-item-delete { background: #fff1f1; }
+.workout-actions-menu .menu-item-delete .icon { color: var(--color-danger); }
+.workout-actions-menu form + form {
+    margin-top: 7px;
+    padding-top: 7px;
+    border-top: 1.5px solid var(--color-border-soft);
+}
+.menu-item-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.menu-item-text strong { font-size: 0.9rem; }
+.menu-item-text small { font-size: 0.75rem; color: var(--color-text-muted); font-weight: 500; }
+.menu-item-delete .menu-item-text strong { color: var(--color-danger); }
+@media (hover: hover) {
+    .workout-actions-menu .menu-item-save:hover { background: var(--color-surface-active); }
+    .workout-actions-menu .menu-item-delete:hover { background: #ffe3e3; }
+}
+
+/* ===== "Zona de peligro" (rutina) =====
+"Eliminar rutina" va al final de la página, lejos de "Iniciar
+entrenamiento", con una frase que dice exactamente qué se borra. */
+
 .danger-zone {
     display: flex;
     align-items: center;
