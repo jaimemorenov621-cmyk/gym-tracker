@@ -151,11 +151,19 @@ function selectExercise(name) {
         closeExercisePicker();
         return;
     }
-    document.querySelector('[name="exercise"]').value = name;
+    const field = document.querySelector('[name="exercise"]');
+    field.value = name;
+    closeExercisePicker();
+    // En el entreno no hay nada más que rellenar: elegir = añadir. En
+    // rutinas (series/reps/RIR) el formulario no lleva data-autosubmit.
+    const form = field.closest('form');
+    if (form && form.dataset.autosubmit === '1') {
+        HTMLFormElement.prototype.submit.call(form);
+        return;
+    }
     const chip = document.getElementById('selectedExerciseChip');
     chip.textContent = name;
     chip.classList.add('visible');
-    closeExercisePicker();
 }
 
 function resetExercisePickerResults() {

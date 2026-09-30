@@ -1163,6 +1163,11 @@ def _normalize_block_color(hex_color):
     hex_color = hex_color.lstrip("#")
     r, g, b = (int(hex_color[i : i + 2], 16) / 255 for i in (0, 2, 4))
     h, l, s = colorsys.rgb_to_hls(r, g, b)
+    # Blanco (o casi, sin apenas saturación) es una elección válida: "bloque
+    # sin color", tarjetas sin sombrear. Se guarda tal cual en vez de
+    # oscurecerlo a gris -- la plantilla lo trata como neutro.
+    if l >= 0.9 and s <= 0.2:
+        return "#ffffff"
     l = min(max(l, 0.35), 0.55)
     r, g, b = colorsys.hls_to_rgb(h, l, s)
     return "#{:02x}{:02x}{:02x}".format(round(r * 255), round(g * 255), round(b * 255))

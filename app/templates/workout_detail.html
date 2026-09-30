@@ -69,13 +69,10 @@
     {% set type_short = {'normal': 'N', 'calentamiento': 'C', 'fallo': 'F', 'dropset': 'D'} %}
     {% set type_label = {'normal': 'Normal', 'calentamiento': 'Calentamiento', 'fallo': 'Fallo', 'dropset': 'Dropset'} %}
 
-    {% if exercise_order|length > 1 %}
-    <div class="reorder-bar">
-        <button type="button" class="btn-outline reorder-toggle" id="reorderToggle" onclick="toggleReorderMode()">
-            {{ macros.icon('sort', 16) }} <span>Ordenar ejercicios</span>
-        </button>
+    <div class="reorder-bar" id="reorderBar" hidden>
+        <span>{{ macros.icon('sort', 16) }} Arrastra para ordenar</span>
+        <button type="button" class="btn reorder-done" onclick="exitReorderMode()">Listo</button>
     </div>
-    {% endif %}
 
     <div id="workoutExercisesList">
     {% for exercise in exercise_order %}
@@ -84,7 +81,8 @@
         <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}" data-exercise="{{ exercise }}">
             <div class="exercise-header">
                 <h3>
-                    <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
+                    <span class="drag-handle" role="button" title="Ordenar ejercicios" aria-label="Ordenar ejercicios"
+                        onclick="enterReorderMode(this)">{{ macros.icon('grip', 20) }}</span>
                     {% set img = get_exercise_image(exercise) %}
                     {% if img %}
                         <img src="{{ img }}" style="width:56px; height:56px; object-fit:cover; border-radius:8px;">
@@ -192,16 +190,25 @@
                 }
             });
 
-            window.toggleReorderMode = function () {
-                const on = !list.classList.contains('reorder-mode');
+            // Al compactar/expandir, la página cambia mucho de altura: se
+            // mantiene la tarjeta de referencia en el mismo sitio de la
+            // pantalla para que no "salte" lo que el usuario estaba mirando.
+            function setReorderMode(on, anchor) {
+                const y = anchor ? anchor.getBoundingClientRect().top : null;
                 list.classList.toggle('reorder-mode', on);
                 sortable.option('disabled', !on);
-                const btn = document.getElementById('reorderToggle');
-                if (btn) {
-                    btn.classList.toggle('active', on);
-                    btn.querySelector('span').textContent = on ? 'Listo' : 'Ordenar ejercicios';
-                }
-                if (on) (btn || list).scrollIntoView({block: 'start', behavior: 'smooth'});
+                document.getElementById('reorderBar').hidden = !on;
+                if (anchor) window.scrollBy(0, anchor.getBoundingClientRect().top - y);
+            }
+
+            window.enterReorderMode = function (handle) {
+                if (list.classList.contains('reorder-mode')) return;
+                setReorderMode(true, handle.closest('.card'));
+            };
+
+            window.exitReorderMode = function () {
+                const anchor = Array.from(list.children).find(c => c.getBoundingClientRect().bottom > 80) || null;
+                setReorderMode(false, anchor);
             };
         })();
     </script>
@@ -209,16 +216,15 @@
 
     <div class="card card-elevated">
         <h3 style="margin-top:0;">Añadir ejercicio nuevo</h3>
-        <form action="{{ url_for('add_exercise_to_workout', workout_id=workout.id) }}" method="post" class="add-exercise-row" onsubmit="return validateExerciseChosen();">
+        <form action="{{ url_for('add_exercise_to_workout', workout_id=workout.id) }}" method="post" class="add-exercise-row" data-autosubmit="1">
             {{ new_exercise_form.hidden_tag() }}
             {{ new_exercise_form.exercise(type="hidden") }}
             <div class="exercise-picker-field">
                 <button type="button" class="btn-outline" onclick="openExercisePicker()">
-                    {{ macros.icon('search', 16) }} Elegir ejercicio del catálogo
+                    {{ macros.icon('search', 16) }} Buscar y añadir ejercicio
                 </button>
                 <span id="selectedExerciseChip" class="exercise-chip"></span>
             </div>
-            <input type="submit" value="+ Añadir" class="btn">
         </form>
     </div>
     {{ macros.exercise_picker_sheet() }}

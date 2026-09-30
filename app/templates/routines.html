@@ -8,7 +8,7 @@
     </p>
 
     {% macro routine_card(info) %}
-        {% set color = info.routine.block.color if info.routine.block else none %}
+        {% set color = info.routine.block.color if info.routine.block and info.routine.block.color|lower != '#ffffff' else none %}
         <div class="card card-elevated routine-card" data-id="{{ info.routine.id }}"
             {% if color %}style="--block-color: {{ color }};"{% endif %}>
             <div class="exercise-header">
@@ -65,7 +65,7 @@
     {% endif %}
 
     {% for block, infos in block_sections %}
-        <details class="routine-block-details" data-block-id="{{ block.id }}" {% if block.is_default %}open{% endif %}
+        <details class="routine-block-details{% if block.color|lower == '#ffffff' %} block-neutral{% endif %}" data-block-id="{{ block.id }}" {% if block.is_default %}open{% endif %}
             style="--block-color: {{ block.color }};">
             <summary>
                 {{ macros.icon('chevron-down', 18) }}
