@@ -17,9 +17,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     {% block head %}{% endblock %}
 </head>
-<body>
+<body{% block body_attrs %}{% endblock %}>
     {% import "_macros.html" as macros %}
     {% set routine_endpoints = ('routines', 'routine_detail', 'new_routine', 'new_workout', 'workout_detail') %}
+    {% block top_nav %}
     <nav class="top-nav">
         <strong class="top-nav-brand">Gyre</strong>
         <a class="btn-nav{% if request.endpoint == 'index' %} active{% endif %}" href="{{ url_for('index') }}">{{ macros.icon('home', 18) }}<span>Inicio</span></a>
@@ -33,6 +34,7 @@
             <a class="btn-nav btn-nav-danger" href="{{ url_for('logout') }}">{{ macros.icon('log-out', 18) }}<span>Salir</span></a>
         {% endif %}
     </nav>
+    {% endblock %}
 
     {% if current_user.is_authenticated %}
         <nav class="bottom-nav">

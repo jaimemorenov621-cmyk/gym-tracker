@@ -249,14 +249,14 @@ def login():
             sa.select(User).where(User.username == form.username.data)
         )
         if user is None or not user.check_password(form.password.data):
-            flash("Invalid username or password")
+            flash("Usuario o contraseña incorrectos.")
             return redirect(url_for("login"))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get("next")
         if not next_page or urlsplit(next_page).netloc != "":
             next_page = url_for("index")
         return redirect(next_page)
-    return render_template("login.html", title="Sign In", form=form)
+    return render_template("login.html", title="Iniciar sesión", form=form)
 
 
 @app.route("/logout")
@@ -328,9 +328,12 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash("¡Registro completado! Ya puedes iniciar sesión.")
-        return redirect(url_for("login"))
-    return render_template("register.html", title="Register", form=form)
+        # Entrar directamente: volver a pedir usuario y contraseña justo
+        # después de crearlos es un paso más en el que se pierde gente.
+        login_user(user, remember=True)
+        flash("¡Bienvenido a Gyre! Empieza un entreno o crea tu primera rutina.")
+        return redirect(url_for("index"))
+    return render_template("register.html", title="Crear cuenta", form=form)
 
 
 @app.route("/workout/new", methods=["GET", "POST"])

@@ -36,30 +36,37 @@ from app.models import User
 
 
 class LoginForm(FlaskForm):
-    username = StringField("Username", validators=[DataRequired()])
-    password = PasswordField("Password", validators=[DataRequired()])
-    remember_me = BooleanField("Remember Me")
-    submit = SubmitField("Sign In")
+    username = StringField("Usuario", validators=[DataRequired("Campo obligatorio.")])
+    password = PasswordField("Contraseña", validators=[DataRequired("Campo obligatorio.")])
+    remember_me = BooleanField("Recordarme")
+    submit = SubmitField("Iniciar sesión")
 
 
 class RegistrationForm(FlaskForm):
-    username = StringField("Username", validators=[DataRequired()])
-    email = StringField("Email", validators=[DataRequired(), Email()])
-    password = PasswordField("Password", validators=[DataRequired()])
-    password2 = PasswordField(
-        "Repeat Password", validators=[DataRequired(), EqualTo("password")]
+    username = StringField("Usuario", validators=[DataRequired("Elige un nombre de usuario.")])
+    email = StringField(
+        "Email",
+        validators=[DataRequired("Escribe tu email."), Email("Ese email no parece válido.")],
     )
-    submit = SubmitField("Register")
+    password = PasswordField("Contraseña", validators=[DataRequired("Elige una contraseña.")])
+    password2 = PasswordField(
+        "Repite la contraseña",
+        validators=[
+            DataRequired("Repite la contraseña."),
+            EqualTo("password", "Las contraseñas no coinciden."),
+        ],
+    )
+    submit = SubmitField("Crear cuenta gratis")
 
     def validate_username(self, username):
         user = db.session.scalar(sa.select(User).where(User.username == username.data))
         if user is not None:
-            raise ValidationError("Please use a different username.")
+            raise ValidationError("Ese usuario ya existe, prueba con otro.")
 
     def validate_email(self, email):
         user = db.session.scalar(sa.select(User).where(User.email == email.data))
         if user is not None:
-            raise ValidationError("Please use a different email address.")
+            raise ValidationError("Ya hay una cuenta con ese email. ¿Quieres iniciar sesión?")
 
 
 class WorkoutForm(FlaskForm):
