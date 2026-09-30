@@ -2173,3 +2173,41 @@ vivo. .btn-finish se mantiene para el botón de la propia página de cierre. */
     .finish-cta-icon { width: 40px; height: 40px; }
     .finish-cta-text strong { font-size: 1rem; }
 }
+
+/* ===== Acciones secundarias y "zona de peligro" (entreno y rutina) =====
+Eliminar va siempre al final de la página, separado de todo lo demás y con
+una frase que dice exactamente qué se borra -- antes "Eliminar rutina"
+estaba pegado a "Iniciar entrenamiento", y "Eliminar entrenamiento" justo
+debajo de "Guardar como rutina" en el mismo menú. */
+
+.secondary-action { margin: 12px 0 0; }
+.secondary-action .btn-outline { display: inline-flex; align-items: center; gap: 8px; margin: 0; }
+.danger-zone {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin: 56px 0 24px;
+    padding: 14px 16px;
+    border: 1.5px dashed #f0b8b8;
+    border-radius: var(--radius-card);
+    background: #fff8f8;
+}
+.danger-zone-text {
+    flex: 1 1 200px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.danger-zone-text strong {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-danger);
+    font-size: 0.95rem;
+}
+.danger-zone-text small { color: var(--color-text-muted); font-size: 0.8rem; line-height: 1.35; }
+.danger-zone form { margin: 0; }
+.danger-zone .btn-danger-outline { margin: 0; white-space: nowrap; }

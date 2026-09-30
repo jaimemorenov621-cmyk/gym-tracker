@@ -7,11 +7,6 @@
         {{ empty_form.hidden_tag() }}
         <button type="submit" class="btn">{{ macros.icon('play', 16) }} Iniciar entrenamiento</button>
     </form>
-    <form action="{{ url_for('delete_routine', routine_id=routine.id) }}" method="post" style="display:inline"
-        onsubmit="return confirmFormSubmit(this, '¿Eliminar esta rutina?');">
-        {{ empty_form.hidden_tag() }}
-        <button type="submit" class="btn-danger-outline">Eliminar rutina</button>
-    </form>
 
     <hr>
     <h2>Ejercicios planificados</h2>
@@ -112,4 +107,16 @@
             });
         }
     </script>
+
+    <div class="danger-zone">
+        <div class="danger-zone-text">
+            <strong>{{ macros.icon('trash', 16) }} Eliminar esta rutina</strong>
+            <small>Se borra la rutina y su plan de ejercicios. Los entrenamientos que ya hiciste con ella se conservan.</small>
+        </div>
+        <form action="{{ url_for('delete_routine', routine_id=routine.id) }}" method="post"
+            onsubmit="return confirmFormSubmit(this, '¿Eliminar esta rutina? Tus entrenamientos ya hechos no se borran.');">
+            {{ empty_form.hidden_tag() }}
+            <button type="submit" class="btn-danger-outline">Eliminar rutina</button>
+        </form>
+    </div>
 {% endblock %}

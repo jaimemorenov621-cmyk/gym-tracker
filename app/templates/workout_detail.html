@@ -314,34 +314,24 @@
             </span>
             <span class="finish-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
         </a>
-
-        <div class="action-menu">
-            <button type="button" class="action-menu-btn" onclick="toggleActionMenu()" aria-label="Más acciones">{{ macros.icon('menu-dots', 18) }}</button>
-            <div class="action-menu-content" id="actionMenuContent">
-                <form action="{{ url_for('save_as_routine', workout_id=workout.id) }}" method="post">
-                    {{ empty_form.hidden_tag() }}
-                    <button type="submit">{{ macros.icon('save') }} Guardar como rutina</button>
-                </form>
-                <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post"
-                      onsubmit="return confirmFormSubmit(this, '¿Seguro que quieres eliminar este entrenamiento? No se puede deshacer.');">
-                    {{ empty_form.hidden_tag() }}
-                    <button type="submit" class="danger">{{ macros.icon('trash') }} Eliminar entrenamiento</button>
-                </form>
-            </div>
-        </div>
     </div>
 
-    <script>
-        function toggleActionMenu() {
-            document.getElementById('actionMenuContent').classList.toggle('open');
-        }
-        document.addEventListener('click', function(e) {
-            const menu = document.querySelector('.action-menu');
-            if (menu && !menu.contains(e.target)) {
-                document.getElementById('actionMenuContent').classList.remove('open');
-            }
-        });
-    </script>
+    <form action="{{ url_for('save_as_routine', workout_id=workout.id) }}" method="post" class="secondary-action">
+        {{ empty_form.hidden_tag() }}
+        <button type="submit" class="btn-outline">{{ macros.icon('save', 16) }} Guardar este entreno como rutina</button>
+    </form>
+
+    <div class="danger-zone">
+        <div class="danger-zone-text">
+            <strong>{{ macros.icon('trash', 16) }} Eliminar este entrenamiento</strong>
+            <small>Se borran el entreno y todas sus series. No se puede deshacer.</small>
+        </div>
+        <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post"
+              onsubmit="return confirmFormSubmit(this, '¿Eliminar este entrenamiento y todas sus series? No se puede deshacer.');">
+            {{ empty_form.hidden_tag() }}
+            <button type="submit" class="btn-danger-outline">Eliminar entreno</button>
+        </form>
+    </div>
 
     <script>
         const previousSetsMap = {{ previous_sets_map|tojson }};
