@@ -2025,3 +2025,91 @@ transición de transform; el resto la gana aquí. */
     from { opacity: 0; transform: translateY(-4px); }
     to   { opacity: 1; transform: none; }
 }
+
+/* ===== Añadir ejercicio al entreno (workout_detail.html) =====
+Clases propias: .add-exercise-row/.exercise-picker-field siguen siendo las
+del formulario de rutinas, que no cambia. Es un <button>, así que se
+sobrescribe explícitamente todo lo que pone la regla global de button. */
+
+.add-exercise-form { margin: 4px 0 18px; }
+.add-exercise-tile {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    margin: 0;
+    padding: 16px 18px;
+    background: #faf9ff;
+    color: var(--color-brand-dark);
+    border: 2px dashed #cbbfff;
+    border-radius: var(--radius-card);
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: none;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.add-exercise-tile-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #7c4dff, #536dfe);
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(124, 77, 255, 0.3);
+}
+.add-exercise-tile-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.add-exercise-tile-text strong {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--color-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.add-exercise-tile-text small {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+}
+.add-exercise-tile-search { display: flex; color: var(--color-brand); flex-shrink: 0; }
+@media (hover: hover) {
+    .add-exercise-tile:hover {
+        background: #f3efff;
+        border-color: var(--color-brand);
+        color: var(--color-brand-dark);
+        box-shadow: none;
+    }
+}
+.add-exercise-tile:active { transform: scale(0.98); }
+.add-exercise-form.is-submitting .add-exercise-tile { pointer-events: none; opacity: 0.75; }
+@media (prefers-reduced-motion: no-preference) {
+    .add-exercise-form.is-submitting .add-exercise-tile-icon { animation: tile-pulse 0.8s ease-in-out infinite; }
+}
+@keyframes tile-pulse {
+    50% { transform: scale(0.9); }
+}
+@media (max-width: 600px) {
+    .add-exercise-tile { padding: 14px; gap: 12px; }
+    .add-exercise-tile-icon { width: 42px; height: 42px; border-radius: 12px; }
+}
+
+/* Al volver de añadir un ejercicio, la página salta a su tarjeta
+(#ex-<nombre>) y la resalta un momento para que se vea dónde ha caído. */
+.card[id^="ex-"] { scroll-margin-top: 16px; }
+@media (prefers-reduced-motion: no-preference) {
+    .card[id^="ex-"]:target { animation: target-flash 1.4s ease-out; }
+}
+@keyframes target-flash {
+    0%, 30% { box-shadow: 0 0 0 3px var(--color-brand), var(--shadow-elevated); }
+    100% { box-shadow: var(--shadow-elevated); }
+}

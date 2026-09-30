@@ -78,7 +78,7 @@
     {% for exercise in exercise_order %}
         {% set group = grouped_sets[exercise] %}
         {% set n = exercise_notes_map.get(exercise) %}
-        <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}" data-exercise="{{ exercise }}">
+        <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}" data-exercise="{{ exercise }}" id="ex-{{ exercise|replace(' ', '-') }}">
             <div class="exercise-header">
                 <h3>
                     <span class="drag-handle" role="button" title="Ordenar ejercicios" aria-label="Ordenar ejercicios"
@@ -214,19 +214,19 @@
     </script>
     {% endif %}
 
-    <div class="card card-elevated">
-        <h3 style="margin-top:0;">Añadir ejercicio nuevo</h3>
-        <form action="{{ url_for('add_exercise_to_workout', workout_id=workout.id) }}" method="post" class="add-exercise-row" data-autosubmit="1">
-            {{ new_exercise_form.hidden_tag() }}
-            {{ new_exercise_form.exercise(type="hidden") }}
-            <div class="exercise-picker-field">
-                <button type="button" class="btn-outline" onclick="openExercisePicker()">
-                    {{ macros.icon('search', 16) }} Buscar y añadir ejercicio
-                </button>
-                <span id="selectedExerciseChip" class="exercise-chip"></span>
-            </div>
-        </form>
-    </div>
+    <form action="{{ url_for('add_exercise_to_workout', workout_id=workout.id) }}" method="post" class="add-exercise-form" data-autosubmit="1">
+        {{ new_exercise_form.hidden_tag() }}
+        {{ new_exercise_form.exercise(type="hidden") }}
+        <button type="button" class="add-exercise-tile" onclick="openExercisePicker()">
+            <span class="add-exercise-tile-icon">{{ macros.icon('plus', 24) }}</span>
+            <span class="add-exercise-tile-text">
+                <strong>Añadir ejercicio</strong>
+                <small>Busca o crea uno nuevo</small>
+            </span>
+            <span class="add-exercise-tile-search">{{ macros.icon('search', 20) }}</span>
+        </button>
+        <span id="selectedExerciseChip" class="exercise-chip"></span>
+    </form>
     {{ macros.exercise_picker_sheet() }}
     <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
 

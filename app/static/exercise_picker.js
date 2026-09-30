@@ -158,6 +158,9 @@ function selectExercise(name) {
     // rutinas (series/reps/RIR) el formulario no lleva data-autosubmit.
     const form = field.closest('form');
     if (form && form.dataset.autosubmit === '1') {
+        form.classList.add('is-submitting');
+        const title = form.querySelector('.add-exercise-tile strong');
+        if (title) title.textContent = 'Añadiendo ' + name + '…';
         HTMLFormElement.prototype.submit.call(form);
         return;
     }

@@ -370,8 +370,9 @@ def add_exercise_to_workout(workout_id):
         return redirect(url_for("index"))
     form = NewExerciseForm()
     if form.validate_on_submit():
+        name = canonicalize_exercise_name(form.exercise.data)
         entry = SetEntry(
-            exercise=canonicalize_exercise_name(form.exercise.data),
+            exercise=name,
             weight=0,
             reps=0,
             rir=None,
@@ -381,6 +382,11 @@ def add_exercise_to_workout(workout_id):
         )
         db.session.add(entry)
         db.session.commit()
+        # Vuelve directamente a la tarjeta del ejercicio recién añadido (se
+        # resalta con :target en CSS) en vez de al principio de la página.
+        return redirect(
+            url_for("workout_detail", workout_id=workout.id, _anchor="ex-" + name.replace(" ", "-"))
+        )
     return redirect(url_for("workout_detail", workout_id=workout.id))
 
 
