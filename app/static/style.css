@@ -2228,6 +2228,13 @@ por la otra. */
     .workout-actions-menu .menu-item-save:hover { background: var(--color-surface-active); }
     .workout-actions-menu .menu-item-delete:hover { background: #ffe3e3; }
 }
+/* Mismo menú en routine_detail.html: ahí está arriba de la página, así que
+se abre hacia abajo en vez de hacia arriba. */
+.action-menu-content.drop-down { bottom: auto; top: calc(100% + 6px); }
+.routine-actions-bar { display: flex; align-items: center; gap: 8px; }
+.routine-actions-bar form { margin: 0; }
+.routine-actions-bar .btn { margin: 0; }
+.routine-actions-bar .action-menu-btn { height: 38px; display: grid; place-items: center; margin: 0; }
 
 /* ===== Botón del análisis de IA (ai_analysis.html) =====
 Antes era un .btn deshabilitado con "Disponible el dd/mm/aaaa" -- parecía

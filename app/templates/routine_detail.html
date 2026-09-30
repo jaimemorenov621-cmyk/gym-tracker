@@ -3,15 +3,36 @@
 {% block content %}
     <h1 style="font-weight:800; letter-spacing:-0.02em;">{{ routine.name }}</h1>
 
-    <form action="{{ url_for('start_routine', routine_id=routine.id) }}" method="post" style="display:inline">
-        {{ empty_form.hidden_tag() }}
-        <button type="submit" class="btn">{{ macros.icon('play', 16) }} Iniciar entrenamiento</button>
-    </form>
-    <form action="{{ url_for('delete_routine', routine_id=routine.id) }}" method="post" style="display:inline"
-        onsubmit="return confirmFormSubmit(this, '¿Eliminar esta rutina? Tus entrenamientos ya hechos no se borran.');">
-        {{ empty_form.hidden_tag() }}
-        <button type="submit" class="btn-danger-outline">Eliminar rutina</button>
-    </form>
+    <div class="routine-actions-bar">
+        <form action="{{ url_for('start_routine', routine_id=routine.id) }}" method="post">
+            {{ empty_form.hidden_tag() }}
+            <button type="submit" class="btn">{{ macros.icon('play', 16) }} Iniciar entrenamiento</button>
+        </form>
+        <div class="action-menu">
+            <button type="button" class="action-menu-btn" onclick="toggleActionMenu()" aria-label="Más acciones">{{ macros.icon('menu-dots', 18) }}</button>
+            <div class="action-menu-content workout-actions-menu drop-down" id="actionMenuContent">
+                <form action="{{ url_for('delete_routine', routine_id=routine.id) }}" method="post"
+                    onsubmit="return confirmFormSubmit(this, '¿Eliminar esta rutina? Tus entrenamientos ya hechos no se borran.');">
+                    {{ empty_form.hidden_tag() }}
+                    <button type="submit" class="danger menu-item-delete">
+                        {{ macros.icon('trash', 18) }}
+                        <span class="menu-item-text"><strong>Eliminar rutina</strong><small>Tus entrenos se conservan</small></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script>
+        function toggleActionMenu() {
+            document.getElementById('actionMenuContent').classList.toggle('open');
+        }
+        document.addEventListener('click', function(e) {
+            const menu = document.querySelector('.action-menu');
+            if (menu && !menu.contains(e.target)) {
+                document.getElementById('actionMenuContent').classList.remove('open');
+            }
+        });
+    </script>
 
     <hr>
     <h2>Ejercicios planificados</h2>
