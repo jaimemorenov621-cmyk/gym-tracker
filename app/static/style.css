@@ -1920,55 +1920,44 @@ depende de que Chart.js cargue bien -- coste cero. */
 }
 
 
-/* ===== Modo "ordenar ejercicios" (workout_detail.html) ===== */
+/* ===== Ordenar ejercicios arrastrando el asa (workout_detail.html) =====
+Mientras dura el arrastre, la lista (.reorder-mode) y el clon que sigue al
+dedo (.sortable-fallback, colgado de <body>) se compactan al título. */
 
-.reorder-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin: 0 0 10px;
-    padding: 8px 8px 8px 14px;
-    position: sticky;
-    top: 8px;
-    z-index: 30;
-    background: white;
-    border: 1px solid var(--color-border-soft);
-    border-radius: var(--radius-card);
-    box-shadow: var(--shadow-elevated);
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: var(--color-brand-dark);
-}
-.reorder-bar[hidden] { display: none; }
-.reorder-bar > span { display: flex; align-items: center; gap: 6px; }
-.reorder-done { margin: 0; }
-@media (prefers-reduced-motion: no-preference) {
-    .reorder-bar:not([hidden]) { animation: fade-down 0.2s ease-out; }
-}
-/* Asa pequeña en cada ejercicio: un toque entra en modo ordenar. */
-#workoutExercisesList .drag-handle { color: #b5b0c9; }
+#workoutExercisesList .drag-handle { color: #b5b0c9; cursor: grab; }
 #workoutExercisesList.reorder-mode .notes-box,
 #workoutExercisesList.reorder-mode .set-table-wrap,
-#workoutExercisesList.reorder-mode > .card > .btn-outline { display: none; }
+#workoutExercisesList.reorder-mode > .card > .btn-outline,
+.card.sortable-fallback .notes-box,
+.card.sortable-fallback .set-table-wrap,
+.card.sortable-fallback > .btn-outline { display: none; }
 /* !important: ese <span> de acciones lleva display:flex en línea. */
-#workoutExercisesList.reorder-mode .exercise-header > span { display: none !important; }
-#workoutExercisesList.reorder-mode > .card {
+#workoutExercisesList.reorder-mode .exercise-header > span,
+.card.sortable-fallback .exercise-header > span { display: none !important; }
+#workoutExercisesList.reorder-mode > .card,
+.card.sortable-fallback {
     padding-top: 8px;
     padding-bottom: 8px;
     margin-bottom: 8px;
-    animation: none;
+    animation: none !important;
 }
-#workoutExercisesList.reorder-mode .exercise-header { cursor: grab; }
+.card.sortable-fallback {
+    height: auto !important;
+    opacity: 0.96 !important;
+    cursor: grabbing;
+    box-shadow: 0 16px 36px rgba(124, 77, 255, 0.35) !important;
+}
 #workoutExercisesList.reorder-mode .exercise-header a { pointer-events: none; }
 #workoutExercisesList.reorder-mode .exercise-header h3 > img,
-#workoutExercisesList.reorder-mode .exercise-header h3 > div {
+#workoutExercisesList.reorder-mode .exercise-header h3 > div,
+.card.sortable-fallback .exercise-header h3 > img,
+.card.sortable-fallback .exercise-header h3 > div {
     width: 36px !important;
     height: 36px !important;
 }
-#workoutExercisesList.reorder-mode .drag-handle { color: var(--color-brand); }
+#workoutExercisesList.reorder-mode .drag-handle,
+.card.sortable-fallback .drag-handle { color: var(--color-brand); }
 .sortable-ghost { opacity: 0.35; }
-.sortable-chosen { box-shadow: 0 12px 28px rgba(124, 77, 255, 0.28) !important; }
 
 /* ===== Filas de series: entrar / salir ===== */
 
@@ -2112,4 +2101,75 @@ sobrescribe explícitamente todo lo que pone la regla global de button. */
 @keyframes target-flash {
     0%, 30% { box-shadow: 0 0 0 3px var(--color-brand), var(--shadow-elevated); }
     100% { box-shadow: var(--shadow-elevated); }
+}
+
+/* ===== Terminar entrenamiento (workout_detail.html) =====
+Sustituye al "✓ Guardar y finalizar" pequeño: botón ancho con icono de
+bandera, texto que dice claramente qué hace y el progreso de series en
+vivo. .btn-finish se mantiene para el botón de la propia página de cierre. */
+
+.finish-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 8px;
+}
+.finish-workout-cta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: var(--radius-card);
+    background: linear-gradient(135deg, #22c98c, #17a973);
+    color: #fff;
+    text-decoration: none;
+    box-shadow: 0 8px 22px rgba(34, 201, 140, 0.35);
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+.finish-cta-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.22);
+    flex-shrink: 0;
+}
+.finish-cta-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.finish-cta-text strong { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.01em; }
+.finish-cta-text small {
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0.88;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.finish-cta-arrow { display: flex; flex-shrink: 0; opacity: 0.9; }
+@media (hover: hover) {
+    .finish-workout-cta:hover { color: #fff; box-shadow: 0 10px 26px rgba(34, 201, 140, 0.45); }
+}
+.finish-workout-cta:active { transform: scale(0.97); }
+.finish-bar .action-menu-btn { height: 48px; }
+/* Todas las series hechas: el botón "llama" suavemente para cerrar el entreno. */
+@media (prefers-reduced-motion: no-preference) {
+    .finish-workout-cta.all-done { animation: finish-glow 1.8s ease-in-out infinite; }
+}
+@keyframes finish-glow {
+    0%, 100% { box-shadow: 0 8px 22px rgba(34, 201, 140, 0.35); }
+    50%      { box-shadow: 0 8px 22px rgba(34, 201, 140, 0.35), 0 0 0 6px rgba(34, 201, 140, 0.22); }
+}
+@media (max-width: 600px) {
+    .finish-workout-cta { padding: 12px 14px; gap: 12px; }
+    .finish-cta-icon { width: 40px; height: 40px; }
+    .finish-cta-text strong { font-size: 1rem; }
 }

@@ -69,10 +69,6 @@
     {% set type_short = {'normal': 'N', 'calentamiento': 'C', 'fallo': 'F', 'dropset': 'D'} %}
     {% set type_label = {'normal': 'Normal', 'calentamiento': 'Calentamiento', 'fallo': 'Fallo', 'dropset': 'Dropset'} %}
 
-    <div class="reorder-bar" id="reorderBar" hidden>
-        <span>{{ macros.icon('sort', 16) }} Arrastra para ordenar</span>
-        <button type="button" class="btn reorder-done" onclick="exitReorderMode()">Listo</button>
-    </div>
 
     <div id="workoutExercisesList">
     {% for exercise in exercise_order %}
@@ -81,8 +77,7 @@
         <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}" data-exercise="{{ exercise }}" id="ex-{{ exercise|replace(' ', '-') }}">
             <div class="exercise-header">
                 <h3>
-                    <span class="drag-handle" role="button" title="Ordenar ejercicios" aria-label="Ordenar ejercicios"
-                        onclick="enterReorderMode(this)">{{ macros.icon('grip', 20) }}</span>
+                    <span class="drag-handle" title="Mantén pulsado y arrastra para ordenar" aria-label="Arrastrar para ordenar">{{ macros.icon('grip', 20) }}</span>
                     {% set img = get_exercise_image(exercise) %}
                     {% if img %}
                         <img src="{{ img }}" style="width:56px; height:56px; object-fit:cover; border-radius:8px;">
@@ -167,20 +162,36 @@
         (function () {
             const list = document.getElementById('workoutExercisesList');
             if (!list) return;
-            // Solo se arrastra en "modo ordenar": las tarjetas se compactan al
-            // título (sin series ni notas) y toda la cabecera sirve de asa. En
-            // táctil hay que mantener pulsado un instante, así un deslizamiento
-            // rápido sigue haciendo scroll en vez de arrastrar sin querer.
-            const sortable = new Sortable(list, {
-                handle: '.exercise-header',
+            // Mantener el asa y arrastrar, directamente. En cuanto empieza el
+            // arrastre, todas las tarjetas se compactan al título (sin series ni
+            // notas) para ver la lista entera, y al soltar vuelven a su tamaño.
+            // Al compactar/expandir la página cambia mucho de altura: se ajusta
+            // el scroll para que la tarjeta agarrada no se mueva de debajo del
+            // dedo. forceFallback: el "fantasma" que sigue al dedo es un clon
+            // real del DOM (que se puede compactar por CSS), no la captura fija
+            // que hace el navegador en el arrastre nativo de escritorio.
+            function setCompact(on, anchor) {
+                const y = anchor.getBoundingClientRect().top;
+                list.classList.toggle('reorder-mode', on);
+                window.scrollBy(0, anchor.getBoundingClientRect().top - y);
+            }
+
+            new Sortable(list, {
+                handle: '.drag-handle',
+                forceFallback: true,
+                fallbackOnBody: true,
+                fallbackTolerance: 3,
                 animation: 180,
                 easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
-                delay: 150,
-                delayOnTouchOnly: true,
-                disabled: true,
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
-                onEnd: function () {
+                onStart: function (evt) {
+                    setCompact(true, evt.item);
+                    tapFeedback();
+                },
+                onEnd: function (evt) {
+                    setCompact(false, evt.item);
+                    if (evt.oldIndex === evt.newIndex) return;
                     const order = Array.from(list.children).map(card => card.dataset.exercise);
                     fetch("{{ url_for('reorder_workout_exercises', workout_id=workout.id) }}", {
                         method: 'POST',
@@ -189,27 +200,6 @@
                     });
                 }
             });
-
-            // Al compactar/expandir, la página cambia mucho de altura: se
-            // mantiene la tarjeta de referencia en el mismo sitio de la
-            // pantalla para que no "salte" lo que el usuario estaba mirando.
-            function setReorderMode(on, anchor) {
-                const y = anchor ? anchor.getBoundingClientRect().top : null;
-                list.classList.toggle('reorder-mode', on);
-                sortable.option('disabled', !on);
-                document.getElementById('reorderBar').hidden = !on;
-                if (anchor) window.scrollBy(0, anchor.getBoundingClientRect().top - y);
-            }
-
-            window.enterReorderMode = function (handle) {
-                if (list.classList.contains('reorder-mode')) return;
-                setReorderMode(true, handle.closest('.card'));
-            };
-
-            window.exitReorderMode = function () {
-                const anchor = Array.from(list.children).find(c => c.getBoundingClientRect().bottom > 80) || null;
-                setReorderMode(false, anchor);
-            };
         })();
     </script>
     {% endif %}
@@ -315,10 +305,14 @@
     </script>
     {% endif %}
 
-    <hr>
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <a class="btn-finish" href="{{ url_for('finish_workout', workout_id=workout.id) }}">
-            ✓ Guardar y finalizar
+    <div class="finish-bar">
+        <a class="finish-workout-cta" href="{{ url_for('finish_workout', workout_id=workout.id) }}">
+            <span class="finish-cta-icon">{{ macros.icon('flag', 22) }}</span>
+            <span class="finish-cta-text">
+                <strong>{{ 'Editar valoración' if workout.ended_at else 'Terminar entreno' }}</strong>
+                <small id="finishProgress">Guardar y valorar la sesión</small>
+            </span>
+            <span class="finish-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
         </a>
 
         <div class="action-menu">
@@ -661,6 +655,17 @@
             const rows = document.querySelectorAll('tr[data-exercise="' + CSS.escape(exercise) + '"]');
             const allDone = rows.length > 0 && Array.from(rows).every(r => r.classList.contains('set-row-done'));
             card.classList.toggle('exercise-card-complete', allDone);
+            updateFinishProgress();
+        }
+
+        function updateFinishProgress() {
+            const el = document.getElementById('finishProgress');
+            if (!el) return;
+            const total = document.querySelectorAll('.set-table tbody tr:not(.set-row-removing)').length;
+            const done = document.querySelectorAll('.set-table tbody tr.set-row-done:not(.set-row-removing)').length;
+            el.textContent = total ? done + ' de ' + total + ' series hechas' : 'Guardar y valorar la sesión';
+            const cta = el.closest('.finish-workout-cta');
+            if (cta) cta.classList.toggle('all-done', total > 0 && done === total);
         }
 
         let swipeState = null;
@@ -744,5 +749,6 @@
         }, {passive: true});
 
         document.querySelectorAll('.set-table tbody tr').forEach(attachSwipeHandlers);
+        updateFinishProgress();
     </script>
 {% endblock %}
