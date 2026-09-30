@@ -66,6 +66,17 @@
         </div>
     {% endif %}
 
+    {% set type_short = {'normal': 'N', 'calentamiento': 'C', 'fallo': 'F', 'dropset': 'D'} %}
+    {% set type_label = {'normal': 'Normal', 'calentamiento': 'Calentamiento', 'fallo': 'Fallo', 'dropset': 'Dropset'} %}
+
+    {% if exercise_order|length > 1 %}
+    <div class="reorder-bar">
+        <button type="button" class="btn-outline reorder-toggle" id="reorderToggle" onclick="toggleReorderMode()">
+            {{ macros.icon('sort', 16) }} <span>Ordenar ejercicios</span>
+        </button>
+    </div>
+    {% endif %}
+
     <div id="workoutExercisesList">
     {% for exercise in exercise_order %}
         {% set group = grouped_sets[exercise] %}
@@ -127,14 +138,19 @@
                         {% set effort_ghost = (effort_val == '' and p and p.effort is not none and p.effort_scale == effort_scale) %}
                         <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', '{{ exercise|title }} · Serie {{ loop.index }}')">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
                         {% endif %}
+                        {% set st = s.set_type if s.set_type in type_short else 'normal' %}
                         <td>
-                            <select class="cell-input" onchange="updateSet({{ s.id }}, 'set_type', this.value)">
-                                {% for val, label in [('normal','Normal'),('calentamiento','Calent.'),('fallo','Fallo'),('dropset','Dropset')] %}
-                                    <option value="{{ val }}" {% if s.set_type == val %}selected{% endif %}>{{ label }}</option>
-                                {% endfor %}
-                            </select>
+                            <label class="set-type-pill set-type-{{ st }}">
+                                <span class="set-type-short">{{ type_short[st] }}</span>
+                                <span class="set-type-long">{{ type_label[st] }}</span>
+                                <select class="set-type-select" aria-label="Tipo de serie" onchange="onSetTypeChange({{ s.id }}, this)">
+                                    {% for val, label in type_label.items() %}
+                                        <option value="{{ val }}" {% if st == val %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </label>
                         </td>
-                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" onclick="toggleSetComplete({{ s.id }}, this, '{{ exercise }}')">✓</button></td>
+                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" aria-label="Marcar serie como hecha" onclick="toggleSetComplete({{ s.id }}, this, '{{ exercise }}')">{{ macros.icon('check', 18) }}</button></td>
                         <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})" aria-label="Eliminar serie">{{ macros.icon('trash') }}</button></td>
                     </tr>
                     {% endfor %}
@@ -153,9 +169,19 @@
         (function () {
             const list = document.getElementById('workoutExercisesList');
             if (!list) return;
-            new Sortable(list, {
-                handle: '.drag-handle',
-                animation: 150,
+            // Solo se arrastra en "modo ordenar": las tarjetas se compactan al
+            // título (sin series ni notas) y toda la cabecera sirve de asa. En
+            // táctil hay que mantener pulsado un instante, así un deslizamiento
+            // rápido sigue haciendo scroll en vez de arrastrar sin querer.
+            const sortable = new Sortable(list, {
+                handle: '.exercise-header',
+                animation: 180,
+                easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+                delay: 150,
+                delayOnTouchOnly: true,
+                disabled: true,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
                 onEnd: function () {
                     const order = Array.from(list.children).map(card => card.dataset.exercise);
                     fetch("{{ url_for('reorder_workout_exercises', workout_id=workout.id) }}", {
@@ -165,6 +191,18 @@
                     });
                 }
             });
+
+            window.toggleReorderMode = function () {
+                const on = !list.classList.contains('reorder-mode');
+                list.classList.toggle('reorder-mode', on);
+                sortable.option('disabled', !on);
+                const btn = document.getElementById('reorderToggle');
+                if (btn) {
+                    btn.classList.toggle('active', on);
+                    btn.querySelector('span').textContent = on ? 'Listo' : 'Ordenar ejercicios';
+                }
+                if (on) (btn || list).scrollIntoView({block: 'start', behavior: 'smooth'});
+            };
         })();
     </script>
     {% endif %}
@@ -307,6 +345,37 @@
 
     <script>
         const previousSetsMap = {{ previous_sets_map|tojson }};
+        const restSecondsMap = {{ rest_seconds_map|tojson }};
+        const CHECK_ICON_HTML = {{ macros.icon('check', 18)|tojson }};
+        const SET_TYPE_SHORT = {{ type_short|tojson }};
+        const SET_TYPE_LABEL = {{ type_label|tojson }};
+
+        function setTypeCellHtml(id, type) {
+            let options = '';
+            Object.keys(SET_TYPE_LABEL).forEach(function (val) {
+                options += '<option value="' + val + '"' + (val === type ? ' selected' : '') + '>' + SET_TYPE_LABEL[val] + '</option>';
+            });
+            return '<td><label class="set-type-pill set-type-' + type + '">' +
+                '<span class="set-type-short">' + SET_TYPE_SHORT[type] + '</span>' +
+                '<span class="set-type-long">' + SET_TYPE_LABEL[type] + '</span>' +
+                '<select class="set-type-select" aria-label="Tipo de serie" onchange="onSetTypeChange(' + id + ', this)">' + options + '</select>' +
+                '</label></td>';
+        }
+
+        function onSetTypeChange(id, select) {
+            const pill = select.closest('.set-type-pill');
+            const type = SET_TYPE_LABEL[select.value] ? select.value : 'normal';
+            pill.className = 'set-type-pill set-type-' + type;
+            pill.querySelector('.set-type-short').textContent = SET_TYPE_SHORT[type];
+            pill.querySelector('.set-type-long').textContent = SET_TYPE_LABEL[type];
+            pill.classList.add('set-type-bump');
+            setTimeout(() => pill.classList.remove('set-type-bump'), 250);
+            updateSet(id, 'set_type', type);
+        }
+
+        function tapFeedback() {
+            if (navigator.vibrate && restVibrationEnabled) navigator.vibrate(10);
+        }
 
         function syncPrBadge(row, isPr) {
             if (!row) return;
@@ -350,21 +419,31 @@
                 if (!row) return;
                 const exercise = row.dataset.exercise;
                 const wasCompleted = row.classList.contains('set-row-done');
+                // La fila se desvanece ya; si el servidor falla, vuelve a aparecer.
+                row.classList.add('set-row-removing');
+                const started = Date.now();
+                const restore = function (msg) {
+                    row.classList.remove('set-row-removing');
+                    showPickerErrorToast(msg);
+                };
                 fetch("/set/" + id + "/delete", { method: 'POST' })
                     .then(r => {
-                        if (!r.ok) throw new Error('El servidor respondió ' + r.status + ' al borrar la serie ' + id + '.');
+                        if (!r.ok) throw new Error('status ' + r.status);
                         return r.json();
                     })
                     .then(data => {
                         if (data.ok) {
-                            row.remove();
-                            if (wasCompleted && exercise) updateRoutineProgress(exercise, -1);
-                            if (exercise) updateExerciseCardState(exercise);
+                            const finish = function () {
+                                row.remove();
+                                if (wasCompleted && exercise) updateRoutineProgress(exercise, -1);
+                                if (exercise) updateExerciseCardState(exercise);
+                            };
+                            setTimeout(finish, Math.max(0, 200 - (Date.now() - started)));
                         } else {
-                            showDebugError('El servidor no confirmó el borrado de la serie ' + id + ' (ok:false).');
+                            restore('No se pudo borrar la serie.');
                         }
                     })
-                    .catch(e => showDebugError('Fallo al borrar la serie ' + id + ': ' + e.message));
+                    .catch(() => restore('No se pudo borrar la serie. Revisa la conexión.'));
             };
             if (skipConfirm) {
                 doDelete();
@@ -453,40 +532,75 @@
                     '{% if effort_scale != "none" %}' +
                     '<td><button type="button" class="pill effort-chip' + effortClass + '" data-set-id="' + data.id + '" onclick="openEffortPicker(' + data.id + ', \'' + effortCurrentValue + '\', \'' + exercise.replace(/\b\w/g, c => c.toUpperCase()).replace(/'/g, "\\'") + ' · Serie ' + (rows.length + 1) + '\')">' + effortDisplay + '</button></td>' +
                     '{% endif %}' +
-                    '<td><select class="cell-input" onchange="updateSet(' + data.id + ', \'set_type\', this.value)">' +
-                    '<option value="normal">Normal</option><option value="calentamiento">Calent.</option>' +
-                    '<option value="fallo">Fallo</option><option value="dropset">Dropset</option></select></td>' +
-                    '<td><button type="button" class="set-check-btn" onclick="toggleSetComplete(' + data.id + ', this, \'' + exercise.replace(/'/g, "\\'") + '\')">✓</button></td>' +
+                    setTypeCellHtml(data.id, SET_TYPE_LABEL[lastType] ? lastType : 'normal') +
+                    '<td><button type="button" class="set-check-btn" aria-label="Marcar serie como hecha" onclick="toggleSetComplete(' + data.id + ', this, \'' + exercise.replace(/'/g, "\\'") + '\')">' + CHECK_ICON_HTML + '</button></td>' +
                     '<td><button type="button" class="delete-set-btn" onclick="deleteSet(' + data.id + ')" aria-label="Eliminar serie"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6h12z"/></svg></button></td>';
+                tr.classList.add('set-row-entering');
                 tbody.appendChild(tr);
-                tr.querySelector('select').value = lastType;
+                setTimeout(() => tr.classList.remove('set-row-entering'), 300);
                 attachSwipeHandlers(tr);
                 updateExerciseCardState(exercise);
             });
         }
 
         function toggleSetComplete(id, btn, exercise) {
+            // Evita dos PUT cruzados si se toca dos veces antes de que responda.
+            if (btn.dataset.pending) return;
             const willComplete = !btn.classList.contains('checked');
             const row = btn.closest('tr');
             const payload = {completed: willComplete};
+            const weightInput = row && row.querySelector('.cell-input-weight');
+            const repsInput = row && row.querySelector('.cell-input-number:not(.cell-input-weight)');
+            const effortBtn = row && row.querySelector('.effort-chip');
 
             if (willComplete && row) {
-                const weightInput = row.querySelector('.cell-input-weight');
-                const repsInput = row.querySelector('.cell-input-number:not(.cell-input-weight)');
                 if (weightInput && weightInput.value === '' && weightInput.placeholder !== '') {
                     payload.weight = weightInput.placeholder;
                 }
                 if (repsInput && repsInput.value === '' && repsInput.placeholder !== '') {
                     payload.reps = repsInput.placeholder;
                 }
-                {% if effort_scale != 'none' %}
-                const effortBtn = row.querySelector('.effort-chip');
                 if (effortBtn && effortBtn.classList.contains('effort-chip-placeholder')) {
                     payload.effort = effortBtn.textContent.trim();
                 }
-                {% endif %}
             }
 
+            // UI optimista: todo cambia al instante y el servidor confirma
+            // después. Antes el tick esperaba la respuesta (ida y vuelta a
+            // Oregón) antes de animar nada -- de ahí la sensación de lentitud.
+            function applyState(done) {
+                btn.classList.toggle('checked', done);
+                if (row) row.classList.toggle('set-row-done', done);
+                if ('weight' in payload) weightInput.value = done ? payload.weight : '';
+                if ('reps' in payload) repsInput.value = done ? payload.reps : '';
+                if ('effort' in payload) effortBtn.classList.toggle('effort-chip-placeholder', !done);
+                updateRoutineProgress(exercise, done ? 1 : -1);
+                updateExerciseCardState(exercise);
+            }
+
+            applyState(willComplete);
+            if (willComplete) {
+                tapFeedback();
+                btn.classList.remove('just-checked');
+                void btn.offsetWidth;
+                btn.classList.add('just-checked');
+                setTimeout(() => btn.classList.remove('just-checked'), 260);
+                if (row) {
+                    row.classList.remove('set-row-sweep');
+                    void row.offsetWidth;
+                    row.classList.add('set-row-sweep');
+                    setTimeout(() => row.classList.remove('set-row-sweep'), 380);
+                }
+                triggerRestTimer(exercise, restSecondsMap[exercise] || 120);
+            }
+
+            const rollback = function (msg) {
+                applyState(!willComplete);
+                if (willComplete) stopRestTimer();
+                showPickerErrorToast(msg || 'No se pudo guardar la serie. Revisa la conexión.');
+            };
+
+            btn.dataset.pending = '1';
             fetch("/set/" + id, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
@@ -494,40 +608,19 @@
             })
             .then(r => r.json())
             .then(data => {
+                delete btn.dataset.pending;
                 if (!data.ok) {
-                    if (data.error) alert(data.error);
+                    rollback(data.error);
                     return;
-                }
-                btn.classList.toggle('checked', willComplete);
-                if (row) row.classList.toggle('set-row-done', willComplete);
-                if (willComplete && row) {
-                    if ('weight' in payload) row.querySelector('.cell-input-weight').value = payload.weight;
-                    if ('reps' in payload) row.querySelector('.cell-input-number:not(.cell-input-weight)').value = payload.reps;
-                    {% if effort_scale != 'none' %}
-                    if ('effort' in payload) row.querySelector('.effort-chip').classList.remove('effort-chip-placeholder');
-                    {% endif %}
-                }
-                if (willComplete) {
-                    btn.classList.remove('just-checked');
-                    void btn.offsetWidth;
-                    btn.classList.add('just-checked');
-                    setTimeout(() => btn.classList.remove('just-checked'), 400);
-                    if (row) {
-                        row.classList.remove('set-row-sweep');
-                        void row.offsetWidth;
-                        row.classList.add('set-row-sweep');
-                        setTimeout(() => row.classList.remove('set-row-sweep'), 600);
-                    }
-                }
-                if (willComplete && data.rest_seconds) {
-                    triggerRestTimer(exercise, data.rest_seconds);
                 }
                 syncPrBadge(row, data.is_pr);
                 if (willComplete && data.is_pr) {
                     celebrate(70);
                 }
-                updateRoutineProgress(exercise, willComplete ? 1 : -1);
-                updateExerciseCardState(exercise);
+            })
+            .catch(() => {
+                delete btn.dataset.pending;
+                rollback();
             });
         }
 

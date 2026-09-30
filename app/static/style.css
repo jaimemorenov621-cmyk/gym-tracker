@@ -498,31 +498,41 @@ select.cell-input {
 }
 .set-previous { font-size: 0.8rem; color: #999; white-space: nowrap; }
 .delete-set-btn { background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; }
+/* Tick de serie: antes era un círculo blanco vacío sin pista de qué hacía.
+Ahora muestra siempre el check (tenue sin marcar, blanco sobre degradado
+al marcar) -- se entiende a la primera como "pulsa para completar". */
 .set-check-btn {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 1.5px solid #c9c4e8;
-    background: white;
-    color: transparent;
-    font-size: 0.8rem;
-    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    padding: 0;
+    border-radius: 10px;
+    border: 2px solid #ddd7f3;
+    background: #fff;
+    color: #cfc8e8;
     cursor: pointer;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    box-shadow: none;
+    transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease,
+                transform 0.12s ease, box-shadow 0.12s ease;
 }
+.set-check-btn .icon { width: 18px; height: 18px; }
 @media (hover: hover) {
-    .set-check-btn:hover { border-color: #7c4dff; }
+    .set-check-btn:hover { background: #f7f5ff; border-color: var(--color-brand); color: var(--color-brand); box-shadow: none; }
+    .set-check-btn.checked:hover { background: linear-gradient(135deg, #7c4dff, #536dfe); color: #fff; }
 }
+.set-check-btn:active { transform: scale(0.88); }
 .set-check-btn.checked {
     background: linear-gradient(135deg, #7c4dff, #536dfe);
     border-color: transparent;
     color: white;
-    transform: scale(1.08);
-    box-shadow: 0 2px 6px rgba(124, 77, 255, 0.45);
+    box-shadow: 0 3px 10px rgba(124, 77, 255, 0.4);
 }
 .set-table tr.set-row-done {
     background: rgba(124, 77, 255, 0.08);
-    transition: background 0.2s ease-out;
+    transition: background 0.15s ease-out;
 }
 @media (prefers-reduced-motion: no-preference) {
     .set-table tr.set-row-sweep {
@@ -531,21 +541,54 @@ select.cell-input {
             rgba(124, 77, 255, 0.35) 50%, rgba(255, 255, 255, 0.5) 55%, transparent 100%);
         background-repeat: no-repeat;
         background-size: 60% 100%;
-        animation: set-row-sweep-anim 550ms ease-out;
+        animation: set-row-sweep-anim 360ms ease-out;
+    }
+    .set-check-btn.just-checked {
+        animation: set-check-pop 0.25s cubic-bezier(0.2, 0.8, 0.2, 1.4);
     }
 }
 @keyframes set-row-sweep-anim {
     from { background-position: -150% 0; }
     to   { background-position: 250% 0; }
 }
-.set-check-btn.just-checked {
-    animation: set-check-pop 0.4s ease-out;
-}
 @keyframes set-check-pop {
-    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.6); }
-    40% { transform: scale(1.35); box-shadow: 0 0 0 8px rgba(124, 77, 255, 0); }
-    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(124, 77, 255, 0); }
+    0% { transform: scale(0.85); box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.55); }
+    60% { transform: scale(1.18); box-shadow: 0 0 0 7px rgba(124, 77, 255, 0); }
+    100% { transform: scale(1); box-shadow: 0 3px 10px rgba(124, 77, 255, 0.4); }
 }
+
+/* Tipo de serie: pastilla de color con la inicial (N/C/F/D) en móvil y el
+nombre completo en escritorio. El <select> nativo va encima, invisible,
+para que al tocar se abra el selector del sistema con los nombres enteros. */
+.set-type-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.set-type-short { display: none; }
+.set-type-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    font-size: 16px;
+}
+.set-type-normal        { background: #f0eef7; color: #6b6780; }
+.set-type-calentamiento { background: #fff1db; color: #c26a00; }
+.set-type-fallo         { background: #fde4e4; color: #c62828; }
+.set-type-dropset       { background: #dff3fb; color: #0277a0; }
+.set-type-bump { transform: scale(1.15); }
 
 /* En móvil, la tabla de series no debe necesitar scroll horizontal -- se
 oculta la columna "Anterior" (solo referencia, no se rellena) y se
@@ -567,7 +610,11 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
         font-size: 0.6rem;
         text-overflow: ellipsis;
     }
-    .set-check-btn { width: 24px; height: 24px; border-radius: 6px; }
+    .set-check-btn { width: 28px; height: 28px; border-radius: 8px; }
+    .set-check-btn .icon { width: 15px; height: 15px; }
+    .set-type-pill { min-width: 24px; height: 24px; padding: 0 7px; font-size: 0.72rem; }
+    .set-type-short { display: inline; }
+    .set-type-long { display: none; }
     .pr-badge { width: 13px; height: 13px; font-size: 0.55rem; margin-top: 1px; }
 
     .set-table-wrap { position: relative; }
@@ -1867,3 +1914,99 @@ depende de que Chart.js cargue bien -- coste cero. */
     font-size: 0.85rem;
 }
 
+
+/* ===== Modo "ordenar ejercicios" (workout_detail.html) ===== */
+
+.reorder-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 10px;
+    position: sticky;
+    top: 8px;
+    z-index: 30;
+}
+.reorder-toggle { background: white; }
+.reorder-toggle.active {
+    background: var(--color-brand);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: var(--shadow-elevated);
+}
+#workoutExercisesList:not(.reorder-mode) .drag-handle { display: none; }
+#workoutExercisesList.reorder-mode .notes-box,
+#workoutExercisesList.reorder-mode .set-table-wrap,
+#workoutExercisesList.reorder-mode > .card > .btn-outline { display: none; }
+/* !important: ese <span> de acciones lleva display:flex en línea. */
+#workoutExercisesList.reorder-mode .exercise-header > span { display: none !important; }
+#workoutExercisesList.reorder-mode > .card {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    animation: none;
+}
+#workoutExercisesList.reorder-mode .exercise-header { cursor: grab; }
+#workoutExercisesList.reorder-mode .exercise-header a { pointer-events: none; }
+#workoutExercisesList.reorder-mode .exercise-header h3 > img,
+#workoutExercisesList.reorder-mode .exercise-header h3 > div {
+    width: 36px !important;
+    height: 36px !important;
+}
+#workoutExercisesList.reorder-mode .drag-handle { color: var(--color-brand); }
+.sortable-ghost { opacity: 0.35; }
+.sortable-chosen { box-shadow: 0 12px 28px rgba(124, 77, 255, 0.28) !important; }
+
+/* ===== Filas de series: entrar / salir ===== */
+
+.set-table tr.set-row-removing {
+    opacity: 0;
+    transform: translateX(-14px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    pointer-events: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .set-table tr.set-row-entering { animation: row-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
+}
+@keyframes row-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* ===== Fluidez general ===== */
+
+/* Sin retardo de doble toque en móvil al pulsar controles. */
+button, a, select, input, label { touch-action: manipulation; }
+
+/* Respuesta al pulsar: todo lo tocable "se hunde" un poco. .btn ya tenía
+transición de transform; el resto la gana aquí. */
+.btn-outline, .btn-icon, .btn-nav, .effort-chip, .bottom-nav-item,
+.bottom-nav-profile-btn, .routine-block-default-btn {
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+                transform 0.1s ease, box-shadow 0.15s ease;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .btn:active, .btn-outline:active, .btn-icon:active, .btn-nav:active,
+    .effort-chip:active, .bottom-nav-item:active, .bottom-nav-profile-btn:active,
+    .routine-block-default-btn:active, .btn-google:active, .btn-finish:active {
+        transform: scale(0.95);
+    }
+
+    /* Las tarjetas entran con un leve deslizamiento escalonado al cargar.
+    fill-mode "backwards" (no "both") a propósito: al terminar no deja un
+    transform fijado que pise las animaciones inline de SortableJS. */
+    .card { animation: card-in 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+    .card:nth-child(2) { animation-delay: 0.03s; }
+    .card:nth-child(3) { animation-delay: 0.06s; }
+    .card:nth-child(4) { animation-delay: 0.09s; }
+    .card:nth-child(5) { animation-delay: 0.12s; }
+    .card:nth-child(n+6) { animation-delay: 0.15s; }
+
+    .routine-block-details[open] > .routine-section { animation: fade-down 0.22s ease-out; }
+}
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: none; }
+}
+@keyframes fade-down {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: none; }
+}

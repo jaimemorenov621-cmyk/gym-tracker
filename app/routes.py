@@ -401,6 +401,20 @@ def replace_workout_exercise(workout_id):
     ).all()
     for s in sets:
         s.exercise = new_name
+
+    # Si el usuario ya reordenó a mano, el orden guardado sigue apuntando al
+    # nombre viejo -- sin esto el reemplazo caía al final de la lista.
+    if workout.exercise_order:
+        try:
+            order = json.loads(workout.exercise_order)
+        except (ValueError, TypeError):
+            order = []
+        if old_name in order and new_name != old_name:
+            # Si el nuevo ya estaba en el entreno (fusión), ocupa el hueco del viejo.
+            order = [name for name in order if name != new_name]
+            order[order.index(old_name)] = new_name
+            workout.exercise_order = json.dumps(order)
+
     db.session.commit()
     return jsonify({"ok": True, "exercise": new_name})
 
@@ -602,6 +616,16 @@ def workout_detail(workout_id):
     empty_form = EmptyForm()
     new_exercise_form = NewExerciseForm()
     previous_sets_map = get_previous_sets_map(workout, exercise_order)
+    # Mismo valor que get_rest_seconds() -- se pasa al JS para arrancar el
+    # descanso en cuanto se pulsa el tick, sin esperar la respuesta del servidor.
+    rest_seconds_map = {
+        name: (
+            exercise_notes_map[name].default_rest_seconds
+            if name in exercise_notes_map and exercise_notes_map[name].default_rest_seconds
+            else 120
+        )
+        for name in exercise_order
+    }
     return render_template(
         "workout_detail.html",
         title=workout.note or "Entrenamiento",
@@ -617,6 +641,7 @@ def workout_detail(workout_id):
         ring_pct=ring_pct,
         new_exercise_form=new_exercise_form,
         previous_sets_map=previous_sets_map,
+        rest_seconds_map=rest_seconds_map,
     )
 
 
