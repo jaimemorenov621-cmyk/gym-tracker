@@ -4,6 +4,7 @@ from urllib.parse import urlsplit
 from collections import defaultdict
 import colorsys
 import json
+import math
 import re
 import unicodedata
 import sqlalchemy as sa
@@ -965,10 +966,21 @@ def ai_analysis():
     )
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     next_available = None
+    wait_label = None
+    cooldown_pct = 0
     if latest:
-        available_at = latest.created_at + timedelta(days=7)
+        cooldown = timedelta(days=7)
+        available_at = latest.created_at + cooldown
         if available_at > now:
             next_available = available_at
+            remaining = available_at - now
+            if remaining < timedelta(days=1):
+                hours = max(1, math.ceil(remaining.total_seconds() / 3600))
+                wait_label = f"en {hours} h"
+            else:
+                days = math.ceil(remaining.total_seconds() / 86400)
+                wait_label = "mañana" if days == 1 else f"en {days} días"
+            cooldown_pct = round(100 * (1 - remaining / cooldown))
 
     try:
         analysis = json.loads(latest.content) if latest else None
@@ -989,6 +1001,8 @@ def ai_analysis():
         latest=latest,
         analysis=analysis,
         next_available=next_available,
+        wait_label=wait_label,
+        cooldown_pct=cooldown_pct,
         total_workouts=total_workouts,
         min_workouts=MIN_WORKOUTS_FOR_AI_ANALYSIS,
         checkin_form=AiCheckinForm(),

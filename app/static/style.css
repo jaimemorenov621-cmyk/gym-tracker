@@ -2229,36 +2229,93 @@ por la otra. */
     .workout-actions-menu .menu-item-delete:hover { background: #ffe3e3; }
 }
 
-/* ===== "Zona de peligro" (rutina) =====
-"Eliminar rutina" va al final de la página, lejos de "Iniciar
-entrenamiento", con una frase que dice exactamente qué se borra. */
+/* ===== Botón del análisis de IA (ai_analysis.html) =====
+Antes era un .btn deshabilitado con "Disponible el dd/mm/aaaa" -- parecía
+roto. Ahora: tarjeta de estado con cuánto falta y barra de progreso
+cuando está bloqueado, y un botón grande tipo "Terminar entreno" cuando
+se puede pedir. */
 
-.danger-zone {
+.ai-cta {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 14px;
-    flex-wrap: wrap;
-    margin: 56px 0 24px;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 16px;
     padding: 14px 16px;
-    border: 1.5px dashed #f0b8b8;
     border-radius: var(--radius-card);
-    background: #fff8f8;
+    text-align: left;
+    font-family: inherit;
 }
-.danger-zone-text {
-    flex: 1 1 200px;
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+.ai-cta-icon {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
 }
-.danger-zone-text strong {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--color-danger);
-    font-size: 0.95rem;
+.ai-cta-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ai-cta-body strong { font-size: 1rem; line-height: 1.25; }
+.ai-cta-body small { font-size: 0.78rem; }
+
+.ai-cta-locked {
+    background: #fff;
+    border: 1px solid var(--color-border-soft);
+    box-shadow: var(--shadow-elevated);
 }
-.danger-zone-text small { color: var(--color-text-muted); font-size: 0.8rem; line-height: 1.35; }
-.danger-zone form { margin: 0; }
-.danger-zone .btn-danger-outline { margin: 0; white-space: nowrap; }
+.ai-cta-locked .ai-cta-icon { background: var(--color-surface-active); color: var(--color-brand); }
+.ai-cta-locked .ai-cta-body small {
+    color: var(--color-brand);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 0.7rem;
+}
+.ai-cta-locked .ai-cta-body strong { color: var(--color-text); }
+.ai-cta-detail { color: var(--color-text-muted); font-size: 0.8rem; line-height: 1.35; }
+.ai-cta-progress {
+    height: 6px;
+    margin-top: 8px;
+    border-radius: 999px;
+    background: var(--color-surface-active);
+    overflow: hidden;
+}
+.ai-cta-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #7c4dff, #536dfe);
+}
+
+.ai-request-form p { margin-top: 0; }
+.ai-request-form textarea {
+    margin-top: 6px;
+    padding: 10px 12px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    border: 1.5px solid var(--color-border-soft);
+    border-radius: 12px;
+    resize: vertical;
+}
+.ai-request-form textarea:focus { outline: none; border-color: var(--color-brand); }
+button.ai-cta-ready {
+    margin: 4px 0 0;
+    border: none;
+    color: #fff;
+    background: linear-gradient(135deg, #7c4dff, #536dfe);
+    box-shadow: 0 8px 22px rgba(124, 77, 255, 0.35);
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+.ai-cta-ready .ai-cta-icon { background: rgba(255, 255, 255, 0.2); color: #fff; }
+.ai-cta-ready .ai-cta-body small { color: rgba(255, 255, 255, 0.85); font-weight: 500; }
+.ai-cta-ready .ai-cta-arrow { flex-shrink: 0; display: flex; opacity: 0.85; }
+@media (hover: hover) {
+    button.ai-cta-ready:hover { box-shadow: 0 10px 26px rgba(124, 77, 255, 0.45); }
+}
+button.ai-cta-ready:active { transform: scale(0.97); }
+button.ai-cta-ready:disabled { opacity: 0.8; cursor: progress; }
+@media (prefers-reduced-motion: no-preference) {
+    button.ai-cta-ready:disabled .ai-cta-icon { animation: tile-pulse 0.8s ease-in-out infinite; }
+}
