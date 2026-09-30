@@ -2112,7 +2112,27 @@ vivo. .btn-finish se mantiene para el botón de la propia página de cierre. */
     display: flex;
     align-items: center;
     gap: 10px;
-    margin: 22px 0 8px;
+    margin: 0 0 8px;
+}
+/* Separa "Añadir ejercicio" (sigue el entreno) de "Terminar entreno" (lo
+cierra): línea con etiqueta centrada para que no se lean como un mismo bloque. */
+.workout-end-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 34px 0 18px;
+    color: var(--color-text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.workout-end-divider::before,
+.workout-end-divider::after {
+    content: "";
+    flex: 1;
+    height: 1.5px;
+    background: var(--color-border-soft);
 }
 .finish-workout-cta {
     flex: 1;

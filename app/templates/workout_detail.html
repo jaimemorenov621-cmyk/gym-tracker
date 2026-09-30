@@ -305,6 +305,8 @@
     </script>
     {% endif %}
 
+    <div class="workout-end-divider" role="separator"><span>Cuando acabes</span></div>
+
     <div class="finish-bar">
         <a class="finish-workout-cta" href="{{ url_for('finish_workout', workout_id=workout.id) }}">
             <span class="finish-cta-icon">{{ macros.icon('flag', 22) }}</span>
