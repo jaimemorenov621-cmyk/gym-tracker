@@ -1726,7 +1726,7 @@ def routine_detail(routine_id):
             )
             db.session.add(ex)
             db.session.commit()
-            flash("Ejercicio añadido a la rutina.")
+            return redirect(url_for("routine_detail", routine_id=routine.id, _anchor=f"rex-{ex.id}"))
         return redirect(url_for("routine_detail", routine_id=routine.id))
 
     exercises = db.session.scalars(
@@ -1785,10 +1785,86 @@ def delete_routine_exercise(routine_id, ex_id):
         flash("No tienes acceso a esta rutina.")
         return redirect(url_for("routines"))
     ex = db.get_or_404(RoutineExercise, ex_id)
+    # El ejercicio tiene que ser de ESTA rutina: comprobar solo la rutina
+    # dejaba borrar un ejercicio ajeno poniendo un ex_id de otra rutina.
+    if ex.routine_id != routine.id:
+        flash("No tienes acceso a esta rutina.")
+        return redirect(url_for("routines"))
     db.session.delete(ex)
     db.session.commit()
     flash("Ejercicio eliminado de la rutina.")
     return redirect(url_for("routine_detail", routine_id=routine.id))
+
+
+_EFFORT_RE = re.compile(r"\d{1,2}(-\d{1,2})?")
+
+
+def _own_routine_exercise(routine_id, ex_id):
+    """(rutina, ejercicio) si ambos existen, son del usuario y el ejercicio
+    pertenece a esa rutina; si no, None."""
+    routine = db.session.get(Routine, routine_id)
+    ex = db.session.get(RoutineExercise, ex_id)
+    if routine is None or ex is None or routine.author != current_user or ex.routine_id != routine.id:
+        return None
+    return routine, ex
+
+
+@app.route("/routines/<int:routine_id>/exercise/<int:ex_id>", methods=["POST"])
+@login_required
+def update_routine_exercise(routine_id, ex_id):
+    """Edición en la propia fila (series / reps / RIR-RPE), sin formulario
+    aparte. Mismas reglas que RoutineExerciseForm."""
+    found = _own_routine_exercise(routine_id, ex_id)
+    if found is None:
+        return jsonify({"ok": False}), 403
+    _, ex = found
+    data = request.get_json(silent=True) or {}
+
+    if "target_sets" in data:
+        try:
+            sets = int(data["target_sets"])
+        except (TypeError, ValueError):
+            sets = 0
+        if not 1 <= sets <= 15:
+            return jsonify({"ok": False, "error": "Las series van de 1 a 15."}), 400
+        ex.target_sets = sets
+    if "target_reps" in data:
+        reps = " ".join(str(data["target_reps"] or "").split())
+        if not reps or len(reps) > 16:
+            return jsonify({"ok": False, "error": "Escribe las reps (máx. 16 caracteres), p. ej. 8-10."}), 400
+        ex.target_reps = reps
+    if "effort" in data:
+        effort = str(data["effort"] or "").replace(" ", "")
+        if effort and not _EFFORT_RE.fullmatch(effort):
+            return jsonify({"ok": False, "error": "Usa un número (ej. 2) o un rango (ej. 2-3)."}), 400
+        scale = current_user.effort_scale
+        ex.rir = (effort or None) if scale == "rir" else None
+        ex.rpe = (effort or None) if scale == "rpe" else None
+
+    db.session.commit()
+    return jsonify({
+        "ok": True,
+        "target_sets": ex.target_sets,
+        "target_reps": ex.target_reps,
+        "effort": ex.rir if ex.rir is not None else (ex.rpe or ""),
+    })
+
+
+@app.route("/routines/<int:routine_id>/exercise/<int:ex_id>/replace", methods=["POST"])
+@login_required
+def replace_routine_exercise(routine_id, ex_id):
+    """Cambia el ejercicio de la fila conservando series/reps/esfuerzo (lo
+    usa el modo "reemplazar" del selector, igual que en el entreno)."""
+    found = _own_routine_exercise(routine_id, ex_id)
+    if found is None:
+        return jsonify({"ok": False}), 403
+    _, ex = found
+    name = str((request.get_json(silent=True) or {}).get("exercise", "")).strip()
+    if not name or len(name) > 64:
+        return jsonify({"ok": False, "error": "Elige un ejercicio."}), 400
+    ex.exercise = canonicalize_exercise_name(name)
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @app.route("/routines/<int:routine_id>/delete", methods=["POST"])

@@ -2,18 +2,22 @@
 {% import "_macros.html" as macros %}
 {% block content %}
     <p class="page-back"><a href="{{ url_for('progress') }}">← Progreso</a></p>
-    <h1 style="font-weight:800; letter-spacing:-0.02em;">⚖️ Peso corporal</h1>
+    <h1 class="page-title">Peso corporal</h1>
 
-    <div class="card card-elevated">
-        <form action="" method="post" style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
-            {{ form.hidden_tag() }}
-            <p style="margin:0;">
-                {{ form.weight.label }}<br>
-                {{ form.weight(inputmode="decimal", autocomplete="off", placeholder="Ej: 72,5") }}
-            </p>
-            {{ form.submit() }}
-        </form>
-    </div>
+    <form action="" method="post" class="form-ui card card-elevated weight-form">
+        {{ form.hidden_tag() }}
+        <div class="field">
+            <label class="field-label" for="{{ form.weight.id }}">Registrar peso de hoy</label>
+            <div class="weight-form-row">
+                <span class="input-suffix">
+                    {{ form.weight(inputmode="decimal", autocomplete="off", placeholder="72,5") }}
+                    <span>kg</span>
+                </span>
+                {{ form.submit(class="btn") }}
+            </div>
+            {% for e in form.weight.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+        </div>
+    </form>
 
     {% if chart_labels %}
         <div class="card card-elevated">

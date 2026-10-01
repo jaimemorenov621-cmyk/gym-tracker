@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1>Nueva rutina</h1>
-    <form action="" method="post">
+    <p class="page-back"><a href="{{ url_for('routines') }}">← Rutinas</a></p>
+    <h1 class="page-title">Nueva rutina</h1>
+    <form action="" method="post" class="form-ui card card-elevated">
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.name.label }}<br>
-            {{ form.name(size=32) }}<br>
-            {% for error in form.name.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
+        <div class="field">
+            <label class="field-label" for="{{ form.name.id }}">Nombre</label>
+            {{ form.name(placeholder="Ej: Push A, Pierna, Torso fuerza…", autofocus=true) }}
+            {% for error in form.name.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
+            <small class="field-help">Después añadirás los ejercicios con sus series y repeticiones.</small>
+        </div>
+        {{ form.submit(class="btn form-submit") }}
     </form>
 {% endblock %}

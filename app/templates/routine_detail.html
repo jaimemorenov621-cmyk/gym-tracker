@@ -1,12 +1,17 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1 style="font-weight:800; letter-spacing:-0.02em;">{{ routine.name }}</h1>
+    <p class="page-back"><a href="{{ url_for('routines') }}">← Rutinas</a></p>
+    <h1 class="page-title">{{ routine.name }}</h1>
+    <p class="routine-detail-meta">
+        {{ exercises|length }} ejercicio{{ '' if exercises|length == 1 else 's' }}
+        {% if routine.block %} · <i class="home-cta-dot" style="--dot: {{ routine.block.color }};"></i> {{ routine.block.name }}{% endif %}
+    </p>
 
     <div class="routine-actions-bar">
         <form action="{{ url_for('start_routine', routine_id=routine.id) }}" method="post">
             {{ empty_form.hidden_tag() }}
-            <button type="submit" class="btn">{{ macros.icon('play', 16) }} Iniciar entrenamiento</button>
+            <button type="submit" class="btn"{% if not exercises %} disabled title="Añade al menos un ejercicio"{% endif %}>{{ macros.icon('play', 16) }} Iniciar entrenamiento</button>
         </form>
         <form action="{{ url_for('delete_routine', routine_id=routine.id) }}" method="post"
             onsubmit="return confirmFormSubmit(this, '¿Eliminar esta rutina? Tus entrenamientos ya hechos no se borran.');">
@@ -18,96 +23,129 @@
         </form>
     </div>
 
-    <hr>
-    <h2>Ejercicios planificados</h2>
-    <p><small>Arrastra {{ macros.icon('grip', 14) }} para reordenar.</small></p>
-    <ul id="exerciseList" style="list-style:none; padding:0;">
+    <h2 class="section-title">Plan de ejercicios</h2>
+    {% if exercises %}
+        <p class="routine-detail-hint">Toca las cifras para cambiarlas; se guardan solas. Arrastra {{ macros.icon('grip', 14) }} para reordenar.</p>
+    {% endif %}
+    <ul id="exerciseList" class="routine-ex-list">
         {% for ex in exercises %}
-            <li class="exercise-row" data-id="{{ ex.id }}">
-                <span style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <span class="drag-handle">{{ macros.icon('grip', 20) }}</span>
+            {% set effort = ex.rir if ex.rir is not none else (ex.rpe if ex.rpe is not none else '') %}
+            <li class="card card-elevated routine-ex" id="rex-{{ ex.id }}" data-id="{{ ex.id }}"
+                data-url="{{ url_for('update_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}">
+                <div class="routine-ex-head">
+                    <span class="drag-handle" title="Mantén pulsado y arrastra para ordenar">{{ macros.icon('grip', 18) }}</span>
                     {% set img = get_exercise_image(ex.exercise) %}
                     {% if img %}
-                        <img src="{{ img }}" style="width:40px; height:40px; object-fit:cover; border-radius:8px; flex-shrink:0;">
+                        <img src="{{ img }}" alt="" class="routine-ex-img">
                     {% else %}
-                        {{ macros.exercise_icon_fallback(40, 8) }}
+                        {{ macros.exercise_icon_fallback(40, 10) }}
                     {% endif %}
-                    <strong>{{ ex.exercise|title }}</strong>
-                    <span class="pill">{{ ex.target_sets }}x{{ ex.target_reps }}{% if ex.rir is not none %} @RIR{{ ex.rir }}{% elif ex.rpe is not none %} @RPE{{ ex.rpe }}{% endif %}</span>
-                    {% set n = exercise_notes_map.get(ex.exercise) %}
-                    <a class="rest-badge" href="{{ url_for('exercise_notes', name=ex.exercise) }}">
-                        {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) if n and n.default_rest_seconds else '1min 30s' }}
-                    </a>
-                </span>
-                <span style="display:inline-flex; gap:4px;">
-                    <button type="button" class="btn-icon" title="Reemplazar ejercicio" aria-label="Reemplazar ejercicio"
-                        onclick="startReplaceExercise({{ ex.id }}, '{{ ex.exercise }}', {{ ex.target_sets }}, '{{ ex.target_reps }}', '{{ ex.rir if ex.rir is not none else (ex.rpe if ex.rpe is not none else '') }}')">{{ macros.icon('repeat') }}</button>
-                    <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" style="display:inline">
+                    <a class="routine-ex-name" href="{{ url_for('exercise_progress', name=ex.exercise) }}">{{ ex.exercise|title }}</a>
+                    <button type="button" class="btn-icon" title="Reemplazar ejercicio" aria-label="Reemplazar {{ ex.exercise|title }}"
+                        onclick="openExercisePicker('{{ url_for('replace_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}')">{{ macros.icon('repeat') }}</button>
+                    <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" class="routine-ex-delete">
                         {{ empty_form.hidden_tag() }}
-                        <button type="submit" class="btn-icon" title="Quitar ejercicio" aria-label="Quitar ejercicio">{{ macros.icon('trash') }}</button>
+                        <button type="submit" class="btn-icon" title="Quitar de la rutina" aria-label="Quitar {{ ex.exercise|title }} de la rutina">{{ macros.icon('trash') }}</button>
                     </form>
-                </span>
+                </div>
+                <div class="routine-ex-plan">
+                    <label class="plan-field">
+                        <input type="number" inputmode="numeric" min="1" max="15" value="{{ ex.target_sets }}" data-field="target_sets" aria-label="Series">
+                        <span>series</span>
+                    </label>
+                    <span class="plan-x" aria-hidden="true">×</span>
+                    <label class="plan-field plan-field-reps">
+                        <input type="text" maxlength="16" value="{{ ex.target_reps }}" data-field="target_reps" aria-label="Repeticiones">
+                        <span>reps</span>
+                    </label>
+                    {% if effort_scale != 'none' %}
+                        <label class="plan-field">
+                            <input type="text" inputmode="numeric" maxlength="5" value="{{ effort }}" placeholder="—" data-field="effort" aria-label="{{ effort_scale|upper }} objetivo">
+                            <span>{{ effort_scale|upper }}</span>
+                        </label>
+                    {% endif %}
+                    {% set n = exercise_notes_map.get(ex.exercise) %}
+                    <a class="rest-badge routine-ex-rest" href="{{ url_for('exercise_notes', name=ex.exercise) }}" title="Descanso">
+                        {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) if n and n.default_rest_seconds else '2min' }}
+                    </a>
+                </div>
             </li>
-        {% else %}
-            <p><em>Todavía no has añadido ejercicios.</em></p>
         {% endfor %}
     </ul>
+    {% if not exercises %}
+        <div class="card card-elevated routine-detail-empty">
+            <strong>Esta rutina aún no tiene ejercicios.</strong>
+            <span>Añade el primero: después podrás ajustar series, reps y {{ effort_scale|upper if effort_scale != 'none' else 'esfuerzo' }} en la propia fila.</span>
+        </div>
+    {% endif %}
 
-    <hr>
-    <h2 id="exerciseFormTitle">Añadir ejercicio</h2>
-    <form id="exerciseForm" action="" method="post" onsubmit="return validateExerciseChosen();">
+    {# Elegir en el buscador = añadir con 3 × 8-10 (luego se ajusta en la fila). #}
+    <form action="" method="post" class="add-exercise-form" data-autosubmit="1">
         {{ form.hidden_tag() }}
         {{ form.exercise(type="hidden") }}
-        {{ form.replace_ex_id() }}
-        <div class="exercise-picker-field">
-            <button type="button" class="btn-outline" onclick="openExercisePicker()">
-                {{ macros.icon('search', 16) }} Elegir ejercicio del catálogo
-            </button>
-            <span id="selectedExerciseChip" class="exercise-chip"></span>
-        </div>
-        <p>
-            {{ form.target_sets.label }}<br>
-            {{ form.target_sets() }}
-        </p>
-        <p>
-            {{ form.target_reps.label }}<br>
-            {{ form.target_reps() }}
-        </p>
-        {% if effort_scale != 'none' %}
-        <p>
-            <label for="{{ form.effort_value.id }}">{{ effort_scale|upper }} objetivo</label><br>
-            {{ form.effort_value() }}
-        </p>
-        {% endif %}
-        <p><input type="submit" id="exerciseFormSubmit" value="Añadir ejercicio" class="btn"></p>
+        {{ form.target_sets(type="hidden") }}
+        {{ form.target_reps(type="hidden") }}
+        {{ form.effort_value(type="hidden", value="") }}
+        <button type="button" class="add-exercise-tile" onclick="openExercisePicker()">
+            <span class="add-exercise-tile-icon">{{ macros.icon('plus', 24) }}</span>
+            <span class="add-exercise-tile-text">
+                <strong>Añadir ejercicio</strong>
+                <small>Busca o crea uno nuevo</small>
+            </span>
+            <span class="add-exercise-tile-search">{{ macros.icon('search', 20) }}</span>
+        </button>
+        <span id="selectedExerciseChip" class="exercise-chip"></span>
     </form>
-    <script>
-        function startReplaceExercise(exId, exercise, sets, reps, effort) {
-            document.getElementById('replace_ex_id').value = exId;
-            document.querySelector('[name="exercise"]').value = exercise;
-            document.getElementById('selectedExerciseChip').textContent = exercise;
-            document.getElementById('selectedExerciseChip').classList.add('visible');
-            document.getElementById('target_sets').value = sets;
-            document.getElementById('target_reps').value = reps;
-            const effortInput = document.getElementById('effort_value');
-            if (effortInput) effortInput.value = effort;
-            document.getElementById('exerciseFormTitle').textContent = 'Editar ' + exercise;
-            document.getElementById('exerciseFormSubmit').value = 'Guardar cambios';
-            document.getElementById('exerciseForm').scrollIntoView({ behavior: 'smooth' });
-        }
-    </script>
     {{ macros.exercise_picker_sheet() }}
     <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
+
+    <script>
+        // Edición en la fila: se guarda al cambiar; si el servidor lo rechaza
+        // se vuelve al valor anterior y se explica por qué.
+        document.querySelectorAll('.routine-ex').forEach(function (row) {
+            row.querySelectorAll('input[data-field]').forEach(function (input) {
+                input.dataset.saved = input.value;
+                input.addEventListener('focus', function () { input.select(); });
+                input.addEventListener('keydown', function (e) { if (e.key === 'Enter') input.blur(); });
+                input.addEventListener('change', function () {
+                    const value = input.value.trim();
+                    if (value === input.dataset.saved) return;
+                    const payload = {};
+                    payload[input.dataset.field] = value;
+                    fetch(row.dataset.url, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    }).then(r => r.json()).then(data => {
+                        if (!data.ok) throw new Error(data.error);
+                        const saved = String(data[input.dataset.field] ?? value);
+                        input.value = saved;
+                        input.dataset.saved = saved;
+                        const field = input.closest('.plan-field');
+                        field.classList.remove('saved');
+                        void field.offsetWidth;
+                        field.classList.add('saved');
+                        setTimeout(() => field.classList.remove('saved'), 1200);
+                    }).catch(err => {
+                        input.value = input.dataset.saved;
+                        showPickerErrorToast((err && err.message) || 'No se pudo guardar. Revisa la conexión.');
+                    });
+                });
+            });
+        });
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         const list = document.getElementById('exerciseList');
-        if (list) {
+        if (list && list.children.length) {
             new Sortable(list, {
                 handle: '.drag-handle',
                 animation: 150,
                 onEnd: function() {
-                    const order = Array.from(list.children).map(li => parseInt(li.dataset.id));
+                    const order = Array.from(list.children)
+                        .filter(li => li.dataset && li.dataset.id)
+                        .map(li => parseInt(li.dataset.id));
                     fetch("{{ url_for('reorder_routine', routine_id=routine.id) }}", {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},

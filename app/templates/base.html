@@ -22,7 +22,7 @@
     {% set routine_endpoints = ('routines', 'routine_detail', 'new_routine', 'new_workout', 'workout_detail') %}
     {% set progress_endpoints = ('progress', 'exercise_progress', 'exercise_notes', 'weight') %}
     {% block top_nav %}
-    <nav class="top-nav">
+    <nav class="top-nav{% if current_user.is_authenticated %} top-nav-app{% endif %}">
         <strong class="top-nav-brand">Gyre</strong>
         <a class="btn-nav{% if request.endpoint == 'index' %} active{% endif %}" href="{{ url_for('index') }}">{{ macros.icon('home', 18) }}<span>Inicio</span></a>
         {% if current_user.is_anonymous %}

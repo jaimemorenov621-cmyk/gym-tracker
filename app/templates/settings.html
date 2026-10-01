@@ -1,62 +1,69 @@
 {% extends "base.html" %}
 {% block content %}
-    <h1 style="font-weight:800; letter-spacing:-0.02em;">Configuración</h1>
-    <form action="" method="post">
+    <h1 class="page-title">Configuración</h1>
+    <form action="" method="post" class="form-ui">
         {{ form.hidden_tag() }}
 
         <div class="card card-elevated">
-            <h3 style="margin-top:0;">Preferencias de entrenamiento</h3>
-            <p>
-                {{ form.stagnation_threshold.label }}<br>
-                {{ form.stagnation_threshold() }}
-            </p>
-            <p>
-                {{ form.effort_scale.label }}<br>
-                <small>
-                    <strong>RIR</strong> (Repeticiones en Reserva): cuántas repeticiones más podrías haber hecho antes de fallar. 0 = al fallo, 3 = con bastante margen.<br>
-                    <strong>RPE</strong> (Percepción de Esfuerzo): escala inversa, de 0 a 10, donde 10 = esfuerzo máximo (equivale a RIR 0).
-                </small><br>
+            <h3 class="form-section-title">Entrenamiento</h3>
+
+            <div class="field">
+                <label class="field-label" for="{{ form.effort_scale.id }}">{{ form.effort_scale.label.text }}</label>
                 {{ form.effort_scale() }}
-            </p>
-            <p>
-                {{ form.rest_sound_enabled() }}
-                {{ form.rest_sound_enabled.label }}
-            </p>
-            <p>
-                {{ form.rest_vibration_enabled() }}
-                {{ form.rest_vibration_enabled.label }}
-            </p>
+                <small class="field-help">
+                    <strong>RIR</strong> (repeticiones en reserva): cuántas más podrías haber hecho. 0 = al fallo, 3 = con bastante margen.
+                    <strong>RPE</strong> (esfuerzo percibido): de 0 a 10, donde 10 = esfuerzo máximo (equivale a RIR 0).
+                </small>
+            </div>
+
+            <div class="field">
+                <label class="field-label" for="{{ form.stagnation_threshold.id }}">{{ form.stagnation_threshold.label.text }}</label>
+                {{ form.stagnation_threshold(inputmode="numeric", class="input-short") }}
+                {% for e in form.stagnation_threshold.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+            </div>
+
+            <label class="toggle-row">
+                <span>{{ form.rest_sound_enabled.label.text }}</span>
+                {{ form.rest_sound_enabled(class="toggle") }}
+            </label>
+            <label class="toggle-row">
+                <span>{{ form.rest_vibration_enabled.label.text }}</span>
+                {{ form.rest_vibration_enabled(class="toggle") }}
+            </label>
         </div>
 
         <div class="card card-elevated">
-            <h3 style="margin-top:0;">Perfil</h3>
-            <p>
-                {{ form.sex.label }}<br>
+            <h3 class="form-section-title">Perfil</h3>
+            <p class="field-help">Ayuda a que el mapa muscular y el análisis de IA se ajusten a ti.</p>
+            <div class="field">
+                <label class="field-label" for="{{ form.sex.id }}">{{ form.sex.label.text }}</label>
                 {{ form.sex() }}
-            </p>
-            <p>
-                {{ form.height_cm.label }}<br>
-                {{ form.height_cm() }}
-            </p>
-            <p>
-                {{ form.training_goal.label }}<br>
+            </div>
+            <div class="field">
+                <label class="field-label" for="{{ form.height_cm.id }}">{{ form.height_cm.label.text }}</label>
+                {{ form.height_cm(inputmode="numeric", class="input-short") }}
+                {% for e in form.height_cm.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+            </div>
+            <div class="field">
+                <label class="field-label" for="{{ form.training_goal.id }}">{{ form.training_goal.label.text }}</label>
                 {{ form.training_goal() }}
-            </p>
+            </div>
         </div>
 
         <div class="card card-elevated">
-            <h3 style="margin-top:0;">Racha</h3>
-            <p>
-                {{ form.weekly_workout_goal.label }}<br>
-                <small>Si lo rellenas, la racha del panel pasa a contar semanas consecutivas cumpliendo este objetivo en vez de días consecutivos entrenando.</small><br>
-                {{ form.weekly_workout_goal() }}
-            </p>
-            <p>
-                {{ form.disable_weekly_goal() }}
-                {{ form.disable_weekly_goal.label }}
-            </p>
+            <h3 class="form-section-title">Racha</h3>
+            <div class="field">
+                <label class="field-label" for="{{ form.weekly_workout_goal.id }}">{{ form.weekly_workout_goal.label.text }}</label>
+                {{ form.weekly_workout_goal(inputmode="numeric", class="input-short") }}
+                <small class="field-help">Si lo rellenas, la racha cuenta semanas seguidas cumpliendo este objetivo en vez de días seguidos entrenando.</small>
+                {% for e in form.weekly_workout_goal.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
+            </div>
+            <label class="toggle-row">
+                <span>{{ form.disable_weekly_goal.label.text }}</span>
+                {{ form.disable_weekly_goal(class="toggle") }}
+            </label>
         </div>
 
-        <p>{{ form.submit() }}</p>
+        {{ form.submit(class="btn form-submit") }}
     </form>
 {% endblock %}
