@@ -4,13 +4,10 @@ Uso (desde la raíz del repo):
     python -m unittest discover -s tests -t .
     python -m unittest tests.test_landing_share
 """
-import os
 import unittest
 from datetime import datetime, timezone
 
-# Igual que tests/test_progress.py: la base en memoria tiene que fijarse
-# ANTES de la primera importación de `app`.
-os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+from tests.dbcase import DbTestCase  # antes que `app`: fija la BD en memoria
 
 import sqlalchemy as sa
 
@@ -45,52 +42,7 @@ class CleanRefTests(unittest.TestCase):
         self.assertIsNone(_clean_ref("   "))
 
 
-class _DbTestCase(unittest.TestCase):
-    """Base en memoria. OJO: no se deja un app context abierto entre
-    peticiones -- Flask-Login cachea el usuario en `g` (vive en el app
-    context), y un contexto compartido haría que el usuario de una petición
-    se colara en la siguiente (falsos "sin sesión -> 200"). Cada operación de
-    BD del test abre su propio contexto con `with app.app_context()`."""
-
-    @classmethod
-    def setUpClass(cls):
-        # Misma salvaguarda que test_progress: nunca tocar una base real.
-        uri = app.config["SQLALCHEMY_DATABASE_URI"]
-        assert ":memory:" in uri, f"Test DB no aislada, abortando: {uri!r}"
-        cls._csrf = app.config.get("WTF_CSRF_ENABLED", True)
-        app.config["WTF_CSRF_ENABLED"] = False
-        with app.app_context():
-            db.create_all()
-
-    @classmethod
-    def tearDownClass(cls):
-        with app.app_context():
-            db.drop_all()
-        app.config["WTF_CSRF_ENABLED"] = cls._csrf
-
-    def setUp(self):
-        self.client = app.test_client()
-
-    def tearDown(self):
-        with app.app_context():
-            db.drop_all()
-            db.create_all()
-
-    def _make_user(self, username):
-        with app.app_context():
-            user = User(username=username, email=f"{username}@example.com")
-            user.set_password("testpass")
-            db.session.add(user)
-            db.session.commit()
-            return user.id
-
-    def _login(self, client, user_id):
-        with client.session_transaction() as sess:
-            sess["_user_id"] = str(user_id)
-            sess["_fresh"] = True
-
-
-class RefTrackingTests(_DbTestCase):
+class RefTrackingTests(DbTestCase):
     def _register(self, username="nuevo"):
         return self.client.post(
             "/register",
@@ -160,11 +112,11 @@ class RefTrackingTests(_DbTestCase):
         self.assertEqual(self._sources("visit"), [])
 
 
-class ShareSetTests(_DbTestCase):
+class ShareSetTests(DbTestCase):
     def setUp(self):
         super().setUp()
-        self.owner_id = self._make_user("owner")
-        self.other_id = self._make_user("other")
+        self.owner_id = self.make_user("owner")
+        self.other_id = self.make_user("other")
 
     def _add_set(self, day, weight, reps, rir=None, completed=True, exercise="sentadilla"):
         """Devuelve (id de la serie, 1RM estimado con la fórmula de la app)."""
@@ -185,23 +137,23 @@ class ShareSetTests(_DbTestCase):
 
     def test_other_user_forbidden(self):
         set_id, _ = self._add_set(1, 100, 5)
-        self._login(self.client, self.other_id)
+        self.login(self.other_id)
         resp = self.client.get(f"/set/{set_id}/share")
         self.assertEqual(resp.status_code, 403)
         self.assertFalse(resp.get_json()["ok"])
 
     def test_missing_set_404(self):
-        self._login(self.client, self.owner_id)
+        self.login(self.owner_id)
         self.assertEqual(self.client.get("/set/99999/share").status_code, 404)
 
     def test_incomplete_set_rejected(self):
         set_id, _ = self._add_set(1, 100, 5, completed=False)
-        self._login(self.client, self.owner_id)
+        self.login(self.owner_id)
         self.assertEqual(self.client.get(f"/set/{set_id}/share").status_code, 400)
 
     def test_first_session_has_no_improvement(self):
         set_id, e1rm = self._add_set(1, 100, 5, rir=2)
-        self._login(self.client, self.owner_id)
+        self.login(self.owner_id)
         data = self.client.get(f"/set/{set_id}/share").get_json()
         self.assertTrue(data["ok"])
         self.assertIsNone(data["improvement"])
@@ -213,7 +165,7 @@ class ShareSetTests(_DbTestCase):
     def test_improvement_against_previous_best(self):
         _, first_e1rm = self._add_set(1, 100, 5, rir=2)
         second_id, second_e1rm = self._add_set(8, 110, 5, rir=2)
-        self._login(self.client, self.owner_id)
+        self.login(self.owner_id)
         data = self.client.get(f"/set/{second_id}/share").get_json()
         self.assertEqual(data["improvement"], round(second_e1rm - first_e1rm, 1))
         self.assertGreater(data["improvement"], 0)
@@ -221,7 +173,7 @@ class ShareSetTests(_DbTestCase):
     def test_later_sessions_do_not_count_as_previous(self):
         first_id, _ = self._add_set(1, 100, 5, rir=2)
         self._add_set(8, 120, 5, rir=2)  # posterior y mejor: no es "anterior"
-        self._login(self.client, self.owner_id)
+        self.login(self.owner_id)
         data = self.client.get(f"/set/{first_id}/share").get_json()
         self.assertIsNone(data["improvement"])
 

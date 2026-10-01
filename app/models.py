@@ -109,6 +109,9 @@ class SetEntry(db.Model):
     set_type: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
     completed: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
     is_pr: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
+    # Cuándo se marcó como hecha (UTC naive). Sirve para estimar la duración
+    # real de un entreno que se quedó abierto. NULL en series antiguas.
+    completed_at: so.Mapped[Optional[datetime]] = so.mapped_column()
 
     def __repr__(self):
         return f"<SetEntry {self.exercise} {self.weight}x{self.reps}>"

@@ -1,7 +1,54 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1 style="font-weight:800; letter-spacing:-0.02em;">{{ workout.note or "Entrenamiento" }}</h1>
+    <div class="workout-title">
+        <h1 id="workoutTitle">{{ workout.note or "Entrenamiento" }}</h1>
+        <button type="button" class="workout-rename-btn" onclick="startRenameWorkout()" title="Cambiar nombre" aria-label="Cambiar nombre del entreno">{{ macros.icon('note', 18) }}</button>
+    </div>
+    <script>
+        // Renombrar en el sitio: el entreno libre empieza como "Entreno del
+        // martes" y aquí se cambia sin pasar por ningún formulario.
+        function startRenameWorkout() {
+            const h1 = document.getElementById('workoutTitle');
+            if (!h1 || h1.dataset.editing) return;
+            h1.dataset.editing = '1';
+            const original = h1.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.maxLength = 64;
+            input.value = original;
+            input.className = 'workout-title-input';
+            input.setAttribute('aria-label', 'Nombre del entreno');
+            h1.replaceChildren(input);
+            input.focus();
+            input.select();
+            let done = false;
+            function finish(save) {
+                if (done) return;
+                done = true;
+                const name = input.value.trim().replace(/ +/g, ' ');
+                delete h1.dataset.editing;
+                if (!save || !name || name === original) { h1.textContent = original; return; }
+                h1.textContent = name;
+                fetch("{{ url_for('rename_workout', workout_id=workout.id) }}", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: name})
+                }).then(r => r.json()).then(data => {
+                    if (!data.ok) throw new Error(data.error);
+                    h1.textContent = data.name;
+                }).catch(err => {
+                    h1.textContent = original;
+                    showPickerErrorToast((err && err.message) || 'No se pudo cambiar el nombre.');
+                });
+            }
+            input.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+                if (e.key === 'Escape') finish(false);
+            });
+            input.addEventListener('blur', function () { finish(true); });
+        }
+    </script>
     <div class="card card-elevated workout-meta">
         <div class="workout-meta-tags">
             <span class="set-tag">{{ macros.icon('calendar', 17) }} {{ to_local(workout.timestamp).strftime('%d/%m/%Y') }}</span>

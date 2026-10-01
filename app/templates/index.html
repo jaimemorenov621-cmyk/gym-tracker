@@ -6,6 +6,80 @@
         "Lo que no se mide, no se puede mejorar."
     </p>
 
+    {# Acción principal: continuar / la rutina que toca / entreno libre. #}
+    <div class="home-cta">
+        {% if home_cta.kind == 'continue' %}
+            {% set w = home_cta.workout %}
+            <a class="home-cta-main home-cta-continue" href="{{ url_for('workout_detail', workout_id=w.id) }}">
+                <span class="home-cta-icon">{{ macros.icon('play', 22) }}</span>
+                <span class="home-cta-text">
+                    <small>Entreno en curso</small>
+                    <strong>Continuar {{ w.note or 'entreno' }}</strong>
+                    <span>{% if home_cta.total %}{{ home_cta.done }} de {{ home_cta.total }} series hechas{% else %}Aún sin series{% endif %}</span>
+                </span>
+                <span class="home-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
+            </a>
+        {% elif home_cta.kind == 'routine' %}
+            {% set r = home_cta.routine %}
+            <form action="{{ url_for('start_routine', routine_id=r.id) }}" method="post">
+                {{ empty_form.hidden_tag() }}
+                <button type="submit" class="home-cta-main">
+                    <span class="home-cta-icon">{{ macros.icon('play', 22) }}</span>
+                    <span class="home-cta-text">
+                        <small>{% if r.block %}<i class="home-cta-dot" style="--dot: {{ r.block.color }};"></i>{{ r.block.name }} · {% endif %}Hoy toca</small>
+                        <strong>Empezar {{ r.name }}</strong>
+                        <span>{{ home_cta.exercise_count }} ejercicio{{ '' if home_cta.exercise_count == 1 else 's' }}</span>
+                    </span>
+                    <span class="home-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
+                </button>
+            </form>
+            <div class="home-cta-secondary">
+                <a href="{{ url_for('routines') }}">Otra rutina</a>
+                <form action="{{ url_for('new_workout') }}" method="post">
+                    {{ empty_form.hidden_tag() }}
+                    <button type="submit">Entreno libre</button>
+                </form>
+            </div>
+        {% else %}
+            <form action="{{ url_for('new_workout') }}" method="post">
+                {{ empty_form.hidden_tag() }}
+                <button type="submit" class="home-cta-main">
+                    <span class="home-cta-icon">{{ macros.icon('play', 22) }}</span>
+                    <span class="home-cta-text">
+                        <small>Sin preparar nada</small>
+                        <strong>Empezar entreno libre</strong>
+                        <span>Añade los ejercicios sobre la marcha</span>
+                    </span>
+                    <span class="home-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
+                </button>
+            </form>
+            <div class="home-cta-secondary">
+                <a href="{{ url_for('new_routine') }}">{{ macros.icon('plus', 15) }} Crear una rutina</a>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if onboarding %}
+        <div class="card card-elevated onboarding">
+            <div class="onboarding-head">
+                <strong>Primeros pasos</strong>
+                <span>{{ onboarding.done }} de {{ onboarding.steps|length }}</span>
+            </div>
+            <div class="onboarding-bar" aria-hidden="true"><span style="width: {{ (100 * onboarding.done / onboarding.steps|length)|round|int }}%"></span></div>
+            <ol class="onboarding-steps">
+                {% for step in onboarding.steps %}
+                    <li class="{{ 'done' if step.done else ('current' if loop.index0 == onboarding.current else '') }}">
+                        <span class="onboarding-check">{% if step.done %}{{ macros.icon('check', 14) }}{% else %}{{ loop.index }}{% endif %}</span>
+                        <span>
+                            <strong>{{ step.title }}</strong>
+                            {% if loop.index0 == onboarding.current %}<small>{{ step.hint }}</small>{% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ol>
+        </div>
+    {% endif %}
+
     <div class="dashboard-panel">
         <span class="dash-eyebrow">Resumen de entrenamiento</span>
         <div class="dash-metrics">

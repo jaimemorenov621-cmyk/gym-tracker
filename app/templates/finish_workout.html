@@ -1,29 +1,138 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block content %}
-    <h1>Finalizar: {{ workout.note or "Entrenamiento" }}</h1>
-    <form action="" method="post" onsubmit="return confirmLongDuration(this);">
+    {% set editing = workout.performance_rating is not none %}
+
+    <div class="finish-hero">
+        <span class="finish-hero-icon">{{ macros.icon('flag', 26) }}</span>
+        <h1>{{ 'Editar valoración' if editing else '¡Buen entreno!' }}</h1>
+        <p>{{ workout.note or "Entrenamiento" }} · {{ to_local(workout.timestamp).strftime('%d/%m/%Y') }}</p>
+        <div class="finish-stats">
+            <div><strong id="summaryDuration">{{ form.duration_hours.data or 0 }}h {{ '%02d' % (form.duration_minutes.data or 0) }}m</strong><span>Duración</span></div>
+            <div><strong>{{ '{:,}'.format(summary.volume).replace(',', '.') }}<small> kg</small></strong><span>Volumen</span></div>
+            <div><strong>{{ summary.sets_done }}</strong><span>Series</span></div>
+            <div><strong>{{ summary.exercise_count }}</strong><span>Ejercicios</span></div>
+        </div>
+        {% if summary.volume_change_pct is not none %}
+            <p class="finish-compare {{ 'up' if summary.volume_change_pct > 0 else ('down' if summary.volume_change_pct < 0 else '') }}">
+                {% if summary.volume_change_pct > 0 %}▲ {{ summary.volume_change_pct }}% más volumen que la última vez
+                {% elif summary.volume_change_pct < 0 %}▼ {{ -summary.volume_change_pct }}% menos volumen que la última vez
+                {% else %}Mismo volumen que la última vez{% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    {% if summary.sets_done == 0 %}
+        <div class="finish-warning">
+            Aún no has marcado ninguna serie como hecha. Vuelve al entreno y pulsa ✓ en las que hayas completado.
+            <a href="{{ url_for('workout_detail', workout_id=workout.id) }}">Volver al entreno</a>
+        </div>
+    {% endif %}
+
+    {% if summary.prs %}
+        <div class="card card-elevated finish-prs">
+            <h3>🏅 {{ 'Récord' if summary.prs|length == 1 else summary.prs|length ~ ' récords' }} en esta sesión</h3>
+            {% for s in summary.prs %}
+                <div class="finish-pr-row">
+                    <div>
+                        <strong>{{ s.exercise|title }}</strong>
+                        <small>{{ ('%g' % s.weight).replace('.', ',') }} kg × {{ s.reps }}</small>
+                    </div>
+                    <button type="button" class="btn-outline finish-pr-share" onclick="openShareCard({{ s.id }})">Compartir</button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form action="" method="post" class="card card-elevated finish-form" onsubmit="return validateFinish(this);">
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.performance_rating.label }}<br>
-            {{ form.performance_rating() }}
-        </p>
-        <p>
-            {{ form.performance_comment.label }}<br>
-            {{ form.performance_comment(cols=50, rows=3) }}
-        </p>
-        <p>
-            <label>Duración de la sesión</label><br>
-            {{ form.duration_hours(style="width:4em;") }} h
-            {{ form.duration_minutes(style="width:4em;") }} min
-        </p>
-        <p>{{ form.submit(class="btn-finish") }}</p>
+
+        <div class="finish-field">
+            <span class="finish-label">¿Cómo te ha ido hoy?</span>
+            <div class="rating-scale" role="radiogroup" aria-label="Valoración del 1 al 10">
+                {% for value, short, desc in rating_choices %}
+                    <button type="button" class="rating-chip rating-{{ value }}{% if form.performance_rating.data == value %} selected{% endif %}"
+                            role="radio" aria-checked="{{ 'true' if form.performance_rating.data == value else 'false' }}"
+                            data-value="{{ value }}" data-short="{{ short }}" data-desc="{{ desc }}"
+                            onclick="pickRating(this)">{{ value }}</button>
+                {% endfor %}
+            </div>
+            <div class="rating-scale-ends"><span>Pésimo</span><span>Excelente</span></div>
+            <p class="rating-desc" id="ratingDesc">
+                {% if form.performance_rating.data %}
+                    {% for value, short, desc in rating_choices if value == form.performance_rating.data %}<strong>{{ short }}</strong> · {{ desc }}{% endfor %}
+                {% else %}Toca un número para valorar la sesión.{% endif %}
+            </p>
+            <div style="display:none;">{{ form.performance_rating() }}</div>
+            {% if form.performance_rating.errors %}<p class="finish-error">Elige cómo te ha ido antes de guardar.</p>{% endif %}
+        </div>
+
+        <label class="finish-field">
+            <span class="finish-label">Comentario <small>(opcional)</small></span>
+            {{ form.performance_comment(rows=3, placeholder="Ej: buena sensación en sentadilla, me costó el press") }}
+        </label>
+
+        <div class="finish-field">
+            <span class="finish-label">Duración</span>
+            <div class="duration-inputs">
+                <label>{{ form.duration_hours(inputmode="numeric", oninput="syncDuration()") }} <span>h</span></label>
+                <label>{{ form.duration_minutes(inputmode="numeric", oninput="syncDuration()") }} <span>min</span></label>
+            </div>
+            {% if duration_estimated_from %}
+                <p class="finish-hint">
+                    Parece que el entreno se quedó abierto: calculada hasta tu última serie
+                    ({{ duration_estimated_from.strftime('%H:%M') }}). Ajústala si no es correcta.
+                </p>
+            {% elif duration_suspicious %}
+                <p class="finish-hint">Este entreno lleva abierto muchas horas: revisa la duración antes de guardar.</p>
+            {% endif %}
+            {% if form.duration_hours.errors or form.duration_minutes.errors %}<p class="finish-error">Revisa la duración (horas de 0 a 23, minutos de 0 a 59).</p>{% endif %}
+        </div>
+
+        <button type="submit" class="finish-workout-cta finish-submit">
+            <span class="finish-cta-icon">{{ macros.icon('check', 22) }}</span>
+            <span class="finish-cta-text"><strong>{{ 'Guardar cambios' if editing else 'Guardar entreno' }}</strong></span>
+        </button>
     </form>
+
+    <p class="finish-back"><a href="{{ url_for('workout_detail', workout_id=workout.id) }}">← Volver al entreno</a></p>
+
+    <script src="{{ url_for('static', filename='share_card.js') }}"></script>
     <script>
-        function confirmLongDuration(form) {
+        function pickRating(chip) {
+            document.querySelectorAll('.rating-chip').forEach(function (c) {
+                c.classList.toggle('selected', c === chip);
+                c.setAttribute('aria-checked', c === chip ? 'true' : 'false');
+            });
+            document.getElementById('{{ form.performance_rating.id }}').value = chip.dataset.value;
+            const desc = document.getElementById('ratingDesc');
+            desc.innerHTML = '';
+            const strong = document.createElement('strong');
+            strong.textContent = chip.dataset.short;
+            desc.appendChild(strong);
+            desc.appendChild(document.createTextNode(' · ' + chip.dataset.desc));
+            desc.classList.remove('rating-desc-missing');
+            if (navigator.vibrate) navigator.vibrate(8);
+        }
+
+        function syncDuration() {
+            const h = parseInt(document.getElementById('{{ form.duration_hours.id }}').value) || 0;
+            const m = parseInt(document.getElementById('{{ form.duration_minutes.id }}').value) || 0;
+            document.getElementById('summaryDuration').textContent = h + 'h ' + String(m).padStart(2, '0') + 'm';
+        }
+
+        function validateFinish(form) {
+            if (!document.querySelector('.rating-chip.selected')) {
+                const desc = document.getElementById('ratingDesc');
+                desc.textContent = 'Elige cómo te ha ido antes de guardar.';
+                desc.classList.add('rating-desc-missing');
+                desc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
             const hours = parseInt(form.duration_hours.value) || 0;
             const minutes = parseInt(form.duration_minutes.value) || 0;
             if (hours * 60 + minutes < 180) return true;
-            confirmFormSubmit(form, '¿Estás seguro de que esta fue la duración del entrenamiento? Llevas marcadas ' + hours + 'h ' + minutes + 'min.', 'Sí, guardar');
+            confirmFormSubmit(form, '¿Seguro que el entreno duró ' + hours + 'h ' + minutes + 'min?', 'Sí, guardar');
             return false;
         }
     </script>

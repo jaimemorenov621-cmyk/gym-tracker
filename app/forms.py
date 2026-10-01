@@ -69,11 +69,6 @@ class RegistrationForm(FlaskForm):
             raise ValidationError("Ya hay una cuenta con ese email. ¿Quieres iniciar sesión?")
 
 
-class WorkoutForm(FlaskForm):
-    note = StringField("Nombre de la sesión (ej: Pecho y tríceps)")
-    submit = SubmitField("Empezar entrenamiento")
-
-
 class SetEntryForm(FlaskForm):
     exercise = StringField("Ejercicio", validators=[DataRequired()])
     weight = FloatField(

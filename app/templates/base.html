@@ -93,7 +93,7 @@
         </script>
     {% endif %}
 
-    {% if active_workout and request.endpoint not in ("new_workout", "workout_detail") %}
+    {% if active_workout and request.endpoint not in ("new_workout", "workout_detail", "index") %}
     <a href="{{ url_for('workout_detail', workout_id=active_workout.id) }}" class="active-toast">
         {{ active_workout.note or "Entrenamiento" }} en curso
     </a>

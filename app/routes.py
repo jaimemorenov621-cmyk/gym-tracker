@@ -13,7 +13,6 @@ from app import app, db, oauth
 from app.forms import (
     LoginForm,
     RegistrationForm,
-    WorkoutForm,
     SetEntryForm,
     EmptyForm,
     SettingsForm,
@@ -273,6 +272,102 @@ def landing_stats():
     )
 
 
+def suggest_next_routine(user_id):
+    """Rutina que toca hoy: dentro del bloque predeterminado (o de todas, si
+    no hay bloque predeterminado o está vacío), la siguiente a la última que
+    hiciste, en el orden de "Mis rutinas" y volviendo a empezar al final.
+    None si el usuario no tiene rutinas con ejercicios."""
+    default_block_id = db.session.scalar(
+        sa.select(RoutineBlock.id).where(
+            RoutineBlock.user_id == user_id, RoutineBlock.is_default.is_(True)
+        )
+    )
+    # Solo rutinas con algún ejercicio: sugerir una vacía no sirve para entrenar.
+    ordered = (
+        sa.select(Routine)
+        .where(
+            Routine.user_id == user_id,
+            Routine.id.in_(sa.select(RoutineExercise.routine_id)),
+        )
+        .order_by(Routine.order_index, Routine.id)
+    )
+    candidates = []
+    if default_block_id is not None:
+        candidates = db.session.scalars(ordered.where(Routine.block_id == default_block_id)).all()
+    if not candidates:
+        candidates = db.session.scalars(ordered).all()
+    if not candidates:
+        return None
+
+    ids = [r.id for r in candidates]
+    last_id = db.session.scalar(
+        sa.select(Workout.routine_id)
+        .where(Workout.user_id == user_id, Workout.routine_id.in_(ids))
+        .order_by(Workout.timestamp.desc())
+        .limit(1)
+    )
+    if last_id in ids:
+        return candidates[(ids.index(last_id) + 1) % len(candidates)]
+    return candidates[0]
+
+
+def home_cta(user_id):
+    """Acción principal de Inicio: continuar el entreno en curso, empezar la
+    rutina que toca, o (sin rutinas) empezar un entreno libre."""
+    active = get_active_workout(user_id)
+    if active is not None:
+        sets = db.session.scalars(active.sets.select()).all()
+        return {
+            "kind": "continue",
+            "workout": active,
+            "done": sum(1 for s in sets if s.completed),
+            "total": len(sets),
+        }
+    routine = suggest_next_routine(user_id)
+    if routine is not None:
+        exercise_count = db.session.scalar(
+            sa.select(sa.func.count())
+            .select_from(RoutineExercise)
+            .where(RoutineExercise.routine_id == routine.id)
+        )
+        return {"kind": "routine", "routine": routine, "exercise_count": exercise_count}
+    return {"kind": "empty"}
+
+
+def onboarding_status(user_id):
+    """Primeros pasos de un usuario nuevo. None en cuanto los 3 están hechos
+    (la tarjeta desaparece sola, no hay que "cerrarla")."""
+    def any_row(query):
+        return db.session.scalar(query.limit(1)) is not None
+
+    has_plan = any_row(sa.select(Routine.id).where(Routine.user_id == user_id)) or any_row(
+        sa.select(Workout.id).where(Workout.user_id == user_id)
+    )
+    has_set = any_row(
+        sa.select(SetEntry.id)
+        .join(Workout, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == user_id, SetEntry.completed.is_(True))
+    )
+    has_finished = any_row(
+        sa.select(Workout.id).where(
+            Workout.user_id == user_id, Workout.performance_rating.is_not(None)
+        )
+    )
+    steps = [
+        {"title": "Crea una rutina o empieza un entreno libre",
+         "hint": "Con una rutina, cada entreno viene con tus ejercicios ya puestos.", "done": has_plan},
+        {"title": "Marca tu primera serie",
+         "hint": "Apunta peso y repeticiones y pulsa ✓: el descanso arranca solo.", "done": has_set},
+        {"title": "Termina tu primer entreno",
+         "hint": "Verás el resumen de la sesión y empezará tu historial de progreso.", "done": has_finished},
+    ]
+    done = sum(1 for s in steps if s["done"])
+    if done == len(steps):
+        return None
+    current = next(i for i, s in enumerate(steps) if not s["done"])
+    return {"steps": steps, "done": done, "current": current}
+
+
 @app.route("/index")
 @login_required
 def index():
@@ -389,6 +484,9 @@ def index():
         muscle_colors=compute_muscle_intensity(),
         muscle_svg=build_muscle_svg_parts(current_user.sex),
         notes_form=notes_form,
+        home_cta=home_cta(current_user.id),
+        onboarding=onboarding_status(current_user.id),
+        empty_form=EmptyForm(),
     )
 
 
@@ -507,33 +605,72 @@ def register():
     return render_template("register.html", title="Crear cuenta", form=form)
 
 
-@app.route("/workout/new", methods=["GET", "POST"])
-@login_required
-def new_workout():
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=6)
-    existing = db.session.scalar(
+ACTIVE_WORKOUT_WINDOW = timedelta(hours=6)
+
+
+def get_active_workout(user_id):
+    """Entreno sin terminar (sin valoración) empezado en las últimas 6 h.
+    Única definición de "entreno en curso": la usan el aviso global, Inicio
+    y los guardas que impiden empezar dos a la vez."""
+    cutoff = datetime.now(timezone.utc) - ACTIVE_WORKOUT_WINDOW
+    return db.session.scalar(
         sa.select(Workout)
         .where(
-            Workout.user_id == current_user.id,
+            Workout.user_id == user_id,
             Workout.performance_rating.is_(None),
             Workout.timestamp >= cutoff,
         )
         .order_by(Workout.timestamp.desc())
     )
+
+
+_WEEKDAYS_ES = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+
+
+def default_workout_name(now_utc=None):
+    """"Entreno del martes" en hora de Madrid -- nombre automático del
+    entreno libre (se puede cambiar luego desde el propio entreno)."""
+    local = to_local(now_utc or datetime.now(timezone.utc))
+    return f"Entreno del {_WEEKDAYS_ES[local.weekday()]}"
+
+
+@app.route("/workout/new", methods=["GET", "POST"])
+@login_required
+def new_workout():
+    # Empieza al instante: antes pedía un nombre en un formulario aparte,
+    # un paso más justo antes de entrenar. GET (enlaces antiguos) no crea
+    # nada -- crear algo con GET lo dispararía cualquier precarga de enlaces.
+    if request.method == "GET":
+        return redirect(url_for("index"))
+    form = EmptyForm()
+    if not form.validate_on_submit():
+        flash("No se pudo empezar el entreno. Inténtalo de nuevo.")
+        return redirect(url_for("index"))
+
+    existing = get_active_workout(current_user.id)
     if existing:
-        flash(
-            "⚠️ YA TIENES UN ENTRENAMIENTO EN CURSO — termínalo antes de empezar otro."
-        )
+        flash("Ya tienes un entreno en curso — termínalo antes de empezar otro.")
         return redirect(url_for("workout_detail", workout_id=existing.id))
 
-    form = WorkoutForm()
-    if form.validate_on_submit():
-        workout = Workout(note=form.note.data, author=current_user)
-        db.session.add(workout)
-        db.session.commit()
-        flash("¡Entrenamiento creado! Añade tus series.")
-        return redirect(url_for("workout_detail", workout_id=workout.id))
-    return render_template("new_workout.html", title="Nuevo entrenamiento", form=form)
+    workout = Workout(note=default_workout_name(), author=current_user)
+    db.session.add(workout)
+    db.session.commit()
+    return redirect(url_for("workout_detail", workout_id=workout.id))
+
+
+@app.route("/workout/<int:workout_id>/rename", methods=["POST"])
+@login_required
+def rename_workout(workout_id):
+    workout = db.get_or_404(Workout, workout_id)
+    if workout.author != current_user:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    name = " ".join(str(data.get("name", "")).split())[:64]
+    if not name:
+        return jsonify({"ok": False, "error": "El nombre no puede estar vacío."}), 400
+    workout.note = name
+    db.session.commit()
+    return jsonify({"ok": True, "name": name})
 
 
 @app.route("/workout/<int:workout_id>/add_exercise", methods=["POST"])
@@ -697,6 +834,10 @@ def api_update_set(set_id):
         was_completed = entry.completed
         entry.completed = bool(data["completed"])
         just_completed = entry.completed and not was_completed
+        if just_completed:
+            entry.completed_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        elif not entry.completed:
+            entry.completed_at = None
         if not entry.completed and entry.is_pr:
             entry.is_pr = False
 
@@ -862,6 +1003,61 @@ def workout_detail(workout_id):
     )
 
 
+FORGOTTEN_GAP = timedelta(minutes=30)  # sin marcar nada en 30 min = se olvidó abierto
+LAST_SET_TAIL = timedelta(minutes=5)   # la última serie no es el último minuto
+
+
+def estimate_workout_end(workout, now=None):
+    """(fin estimado, ¿estimado desde la última serie?). Si desde la última
+    serie marcada han pasado más de 30 min, el entreno se quedó abierto: el
+    fin es esa serie + 5 min, no "ahora" (antes salían duraciones de 31 h).
+    Series antiguas sin completed_at -> se usa "ahora", como antes."""
+    now = now or datetime.now(timezone.utc).replace(tzinfo=None)
+    last_done = db.session.scalar(
+        sa.select(sa.func.max(SetEntry.completed_at)).where(SetEntry.workout_id == workout.id)
+    )
+    if last_done is not None and now - last_done > FORGOTTEN_GAP:
+        return max(last_done + LAST_SET_TAIL, workout.timestamp), True
+    return max(now, workout.timestamp), False
+
+
+def _real_sets_volume(workout):
+    sets = [s for s in db.session.scalars(workout.sets.select().order_by(SetEntry.id)) if is_real_set(s)]
+    return sets, sum(s.weight * s.reps for s in sets)
+
+
+def workout_summary(workout):
+    """Cifras del resumen de fin de entreno: series hechas de verdad
+    (is_real_set), volumen, ejercicios, récords de esta sesión y cambio de
+    volumen frente a la última vez que hiciste la misma rutina."""
+    done, volume = _real_sets_volume(workout)
+    volume_change_pct = None
+    if workout.routine_id is not None:
+        previous = db.session.scalar(
+            sa.select(Workout)
+            .where(
+                Workout.user_id == workout.user_id,
+                Workout.routine_id == workout.routine_id,
+                Workout.id != workout.id,
+                Workout.timestamp < workout.timestamp,
+                Workout.performance_rating.is_not(None),
+            )
+            .order_by(Workout.timestamp.desc())
+            .limit(1)
+        )
+        if previous is not None:
+            _, prev_volume = _real_sets_volume(previous)
+            if prev_volume > 0:
+                volume_change_pct = round(100 * (volume - prev_volume) / prev_volume)
+    return {
+        "sets_done": len(done),
+        "volume": round(volume),
+        "exercise_count": len({s.exercise for s in done}),
+        "prs": [s for s in done if s.is_pr],
+        "volume_change_pct": volume_change_pct,
+    }
+
+
 @app.route("/workout/<int:workout_id>/finish", methods=["GET", "POST"])
 @login_required
 def finish_workout(workout_id):
@@ -908,23 +1104,45 @@ def finish_workout(workout_id):
         else:
             flash("Entrenamiento guardado.")
         return redirect(url_for("index", celebrate=1))
-    elif request.method == "GET":
+    duration_estimated_from = None
+    duration_suspicious = False
+    if request.method == "GET":
         if workout.performance_rating is not None:
             form.performance_rating.data = workout.performance_rating
             form.performance_comment.data = workout.performance_comment
+        else:
+            # Sin valoración previa no se preselecciona ninguna (antes salía
+            # "1 - Pésimo" por defecto y se guardaba sin querer).
+            form.performance_rating.data = None
         # workout.timestamp llega naive (mismo patrón que el resto del
         # código -- ver comentario en WeeklyGoalHistory.effective_from), así
         # que se compara contra "ahora" también naive.
-        elapsed_end = workout.ended_at or datetime.now(timezone.utc).replace(tzinfo=None)
+        if workout.ended_at is not None:
+            elapsed_end = workout.ended_at
+        else:
+            elapsed_end, estimated = estimate_workout_end(workout)
+            if estimated:
+                duration_estimated_from = to_local(elapsed_end - LAST_SET_TAIL)
+            else:
+                # Series antiguas sin hora: no hay con qué estimar, pero
+                # al menos se avisa en vez de proponer 20+ h en silencio.
+                duration_suspicious = elapsed_end - workout.timestamp > timedelta(hours=4)
         elapsed = max(elapsed_end - workout.timestamp, timedelta(0))
         total_minutes = int(elapsed.total_seconds() // 60)
-        form.duration_hours.data, form.duration_minutes.data = divmod(total_minutes, 60)
+        form.duration_hours.data, form.duration_minutes.data = divmod(min(total_minutes, 23 * 60 + 59), 60)
 
     return render_template(
         "finish_workout.html",
-        title="Finalizar entrenamiento",
+        title="Terminar entreno",
         form=form,
         workout=workout,
+        summary=workout_summary(workout),
+        duration_estimated_from=duration_estimated_from,
+        duration_suspicious=duration_suspicious,
+        rating_choices=[
+            (value, label.split(" - ", 1)[1].split(":")[0], label.split(": ", 1)[1])
+            for value, label in form.performance_rating.choices
+        ],
     )
 
 
@@ -1594,20 +1812,9 @@ def start_routine(routine_id):
         flash("No tienes acceso a esta rutina.")
         return redirect(url_for("routines"))
 
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=6)
-    existing = db.session.scalar(
-        sa.select(Workout)
-        .where(
-            Workout.user_id == current_user.id,
-            Workout.performance_rating.is_(None),
-            Workout.timestamp >= cutoff,
-        )
-        .order_by(Workout.timestamp.desc())
-    )
+    existing = get_active_workout(current_user.id)
     if existing:
-        flash(
-            "⚠️ YA TIENES UN ENTRENAMIENTO EN CURSO — termínalo antes de iniciar otro."
-        )
+        flash("Ya tienes un entreno en curso — termínalo antes de empezar otro.")
         return redirect(url_for("workout_detail", workout_id=existing.id))
 
     workout = Workout(note=routine.name, routine_id=routine.id, author=current_user)
@@ -1718,17 +1925,7 @@ def reorder_routines():
 @app.context_processor
 def inject_active_workout():
     if current_user.is_authenticated:
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=6)
-        active = db.session.scalar(
-            sa.select(Workout)
-            .where(
-                Workout.user_id == current_user.id,
-                Workout.performance_rating.is_(None),
-                Workout.timestamp >= cutoff,
-            )
-            .order_by(Workout.timestamp.desc())
-        )
-        return {"active_workout": active}
+        return {"active_workout": get_active_workout(current_user.id)}
     return {"active_workout": None}
 
 
