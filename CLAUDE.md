@@ -19,7 +19,11 @@ flask db downgrade                 # revert last migration
 python import_exercises.py         # populate the Exercise catalog from an external JSON dataset (one-off/reseed)
 ```
 
-There is no test suite and no lint/format config in this repo.
+```
+python -m unittest discover -s tests -t .   # run all tests (in-memory SQLite)
+```
+
+Run discovery from `tests/` (`-s tests`), not the repo root: root-level discovery imports the `app` package before the tests can point `DATABASE_URL` at in-memory SQLite, so the DB tests abort via their safety assert instead of touching `app.db`. There is no lint/format config in this repo.
 
 ## Architecture
 

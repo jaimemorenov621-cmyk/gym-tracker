@@ -36,6 +36,8 @@ class User(UserMixin, db.Model):
         default=lambda: datetime.now(timezone.utc), index=True
     )
     signup_method: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10))  # "password" | "google"
+    # Canal de la última landing visitada con ?ref= (cookie gyre_ref), p.ej. "mediavida".
+    signup_source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(40))  # _clean_ref limita a 20
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -286,6 +288,9 @@ class LandingEvent(db.Model):
     # NULL = evento anterior a esta columna (sin clasificar); "" = la
     # petición no mandó User-Agent (se trata como robot).
     user_agent: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
+    # Canal etiquetado con ?ref= en el enlace (o, en clics, el de la cookie
+    # de esa visita). NULL = enlace sin etiquetar.
+    source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(40), index=True)
 
     def __repr__(self):
         return f"<LandingEvent {self.event_type} {self.timestamp}>"

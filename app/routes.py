@@ -85,7 +85,32 @@ def _is_bot_user_agent(user_agent):
     return user_agent == "" or bool(_BOT_UA_RE.search(user_agent))
 
 
-def _log_landing_event(event_type):
+REF_COOKIE = "gyre_ref"
+
+
+_REF_RE = re.compile(r"[a-z0-9_-]{1,20}")
+
+
+def _clean_ref(value):
+    """Etiqueta de canal de ?ref= (p.ej. "mediavida", "tiktok"). Se acepta
+    tal cual (en minúsculas) solo si es [a-z0-9_-] de 1 a 20 caracteres; si
+    no, se rechaza entera (None) en vez de "arreglarla" quitando caracteres.
+    Regex y no lista blanca: así un canal nuevo no exige desplegar."""
+    if not value:
+        return None
+    value = value.strip().lower()
+    return value if _REF_RE.fullmatch(value) else None
+
+
+def _current_ref():
+    """Canal de esta petición: el ?ref= del enlace o, si no, el que dejó la
+    visita anterior en la cookie (para atribuir clics y registros).
+    Atribución "último enlace etiquetado": landing() sobrescribe la cookie
+    con cada ?ref= válido nuevo; una visita sin ?ref= no la toca."""
+    return _clean_ref(request.args.get("ref")) or _clean_ref(request.cookies.get(REF_COOKIE))
+
+
+def _log_landing_event(event_type, source=None):
     if request.cookies.get("no_contar") == "1" or request.args.get("no_contar") == "1":
         return
     db.session.add(
@@ -93,6 +118,7 @@ def _log_landing_event(event_type):
             event_type=event_type,
             referrer=(request.referrer[:255] if request.referrer else None),
             user_agent=(request.headers.get("User-Agent") or "")[:255],
+            source=source,
         )
     )
     db.session.commit()
@@ -102,16 +128,21 @@ def _log_landing_event(event_type):
 def landing():
     if current_user.is_authenticated:
         return redirect(url_for("index"))
-    _log_landing_event("visit")
+    # La visita solo se etiqueta con el ?ref= de SU enlace: una visita sin
+    # etiqueta es "sin etiqueta" aunque la cookie recuerde un canal anterior.
+    ref = _clean_ref(request.args.get("ref"))
+    _log_landing_event("visit", source=ref)
     resp = make_response(render_template("landing.html"))
     if request.args.get("no_contar") == "1":
         resp.set_cookie("no_contar", "1", max_age=60 * 60 * 24 * 365 * 5)
+    if ref:
+        resp.set_cookie(REF_COOKIE, ref, max_age=60 * 60 * 24 * 30, samesite="Lax", httponly=True)
     return resp
 
 
 @app.route("/landing/cta")
 def landing_cta():
-    _log_landing_event("cta_click")
+    _log_landing_event("cta_click", source=_current_ref())
     return redirect(url_for("register"))
 
 
@@ -119,7 +150,7 @@ def landing_cta():
 def landing_google():
     # "Continuar con Google" desde la landing también es crear cuenta: se
     # cuenta aparte del botón de registro normal y luego sigue al OAuth.
-    _log_landing_event("google_click")
+    _log_landing_event("google_click", source=_current_ref())
     return redirect(url_for("login_google"))
 
 
@@ -158,9 +189,15 @@ def landing_stats():
     period_key, period_label, start = _landing_stats_period()
 
     events_q = sa.select(
-        LandingEvent.event_type, LandingEvent.timestamp, LandingEvent.referrer, LandingEvent.user_agent
+        LandingEvent.event_type,
+        LandingEvent.timestamp,
+        LandingEvent.referrer,
+        LandingEvent.user_agent,
+        LandingEvent.source,
     )
-    users_q = sa.select(User.created_at, User.signup_method).where(User.created_at.is_not(None))
+    users_q = sa.select(User.created_at, User.signup_method, User.signup_source).where(
+        User.created_at.is_not(None)
+    )
     if start is not None:
         events_q = events_q.where(LandingEvent.timestamp >= start)
         users_q = users_q.where(User.created_at >= start)
@@ -169,8 +206,9 @@ def landing_stats():
     cta_clicks = google_clicks = 0
     referrer_counts = defaultdict(int)
     daily = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
+    by_source = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
 
-    for event_type, ts, referrer, user_agent in db.session.execute(events_q):
+    for event_type, ts, referrer, user_agent, source in db.session.execute(events_q):
         if _is_bot_user_agent(user_agent):
             if event_type == "visit":
                 visits_bot += 1
@@ -182,6 +220,7 @@ def landing_stats():
             else:
                 visits_human += 1
             daily[day]["visits"] += 1
+            by_source[source]["visits"] += 1
             key = (urlsplit(referrer).netloc if referrer else None) or "Directo / sin referrer"
             referrer_counts[key] += 1
         elif event_type in ("cta_click", "google_click"):
@@ -190,14 +229,16 @@ def landing_stats():
             else:
                 google_clicks += 1
             daily[day]["clicks"] += 1
+            by_source[source]["clicks"] += 1
 
     signups_password = signups_google = 0
-    for created_at, method in db.session.execute(users_q):
+    for created_at, method, signup_source in db.session.execute(users_q):
         if method == "google":
             signups_google += 1
         else:
             signups_password += 1
         daily[to_local(created_at).date()]["signups"] += 1
+        by_source[signup_source]["signups"] += 1
 
     visits = visits_human + visits_legacy
     clicks = cta_clicks + google_clicks
@@ -224,6 +265,11 @@ def landing_stats():
         total_users=total_users,
         referrer_counts=dict(sorted(referrer_counts.items(), key=lambda kv: -kv[1])),
         daily=sorted(daily.items(), reverse=True)[:60],
+        # Canales etiquetados primero (por cuentas, luego visitas); "sin etiqueta" al final.
+        by_source=sorted(
+            by_source.items(),
+            key=lambda kv: (kv[0] is None, -kv[1]["signups"], -kv[1]["visits"]),
+        ),
     )
 
 
@@ -426,6 +472,7 @@ def login_google_callback():
                 email=email,
                 google_sub=google_sub,
                 signup_method="google",
+                signup_source=_current_ref(),
             )
             db.session.add(user)
         db.session.commit()
@@ -443,7 +490,12 @@ def register():
         return redirect(url_for("index"))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data, signup_method="password")
+        user = User(
+            username=form.username.data,
+            email=form.email.data,
+            signup_method="password",
+            signup_source=_current_ref(),
+        )
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
@@ -659,6 +711,42 @@ def api_update_set(set_id):
     if just_completed:
         response["rest_seconds"] = get_rest_seconds(entry.exercise)
     return jsonify(response)
+
+
+@app.route("/set/<int:set_id>/share")
+@login_required
+def api_share_set(set_id):
+    """Datos para la tarjeta "Nuevo récord" que se dibuja en el navegador
+    (app/static/share_card.js). Mismo 1RM y mismo criterio de PR que el
+    resto de la app (get_exercise_sessions), no un cálculo aparte."""
+    entry = db.get_or_404(SetEntry, set_id)
+    if entry.workout.author != current_user:
+        return jsonify({"ok": False}), 403
+    if not is_real_set(entry):
+        return jsonify({"ok": False, "error": "Marca la serie como hecha para compartirla."}), 400
+
+    session_list, _, _ = get_exercise_sessions(entry.exercise)
+    previous_best = None
+    for s in session_list:
+        if s["sets"][0].workout_id == entry.workout_id:
+            break
+        if s["best_set"] is not None:
+            previous_best = max(previous_best or 0, s["best_1rm"])
+
+    e1rm = estimated_1rm(entry)
+    return jsonify(
+        {
+            "ok": True,
+            "exercise": entry.exercise.title(),
+            "weight": f"{entry.weight:g}",
+            "reps": entry.reps,
+            "e1rm": round(e1rm),
+            "improvement": round(e1rm - previous_best, 1) if previous_best else None,
+            "is_pr": bool(entry.is_pr),
+            "date": to_local(entry.workout.timestamp).strftime("%d/%m/%Y"),
+            "share_url": url_for("landing", ref="compartir", _external=True),
+        }
+    )
 
 
 @app.route("/set/<int:set_id>/delete", methods=["POST"])

@@ -45,6 +45,31 @@
     </p>
 
     <div class="card card-elevated">
+        <h3 style="margin-top:0;">Por canal</h3>
+        {% if by_source %}
+            <table class="stats-daily">
+                <thead><tr><th>Canal</th><th>Visitas</th><th>Clics</th><th>Cuentas</th></tr></thead>
+                <tbody>
+                    {% for source, d in by_source %}
+                        <tr>
+                            <td>{% if source %}<strong>{{ source }}</strong>{% else %}<span class="stats-muted">sin etiqueta</span>{% endif %}</td>
+                            <td>{{ d.visits }}</td>
+                            <td>{{ d.clicks }}</td>
+                            <td>{% if d.signups %}<strong>{{ d.signups }}</strong>{% else %}0{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p><em>Sin datos en este periodo.</em></p>
+        {% endif %}
+        <p class="stats-footnote" style="margin-bottom:0;">
+            Etiqueta cada enlace que compartas con <code>?ref=</code>, por ejemplo
+            <code>{{ request.url_root }}?ref=mediavida</code>. Las tarjetas de récord compartidas llevan <code>?ref=compartir</code>.
+        </p>
+    </div>
+
+    <div class="card card-elevated" style="margin-top:16px;">
         <h3 style="margin-top:0;">Día a día</h3>
         {% if daily %}
             <table class="stats-daily">

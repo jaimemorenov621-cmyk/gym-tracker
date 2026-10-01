@@ -122,7 +122,7 @@
                     {% set untouched = (not s.completed and s.weight == 0 and s.reps == 0) %}
                     {% set ghost = untouched and p %}
                     <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}"{% if s.completed %} class="set-row-done"{% endif %}>
-                        <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" title="Récord personal" aria-label="Récord personal">🏅</span>{% endif %}</td>
+                        <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" role="button" tabindex="0" title="Récord personal · toca para compartir" aria-label="Récord personal, compartir">🏅</span>{% endif %}</td>
                         <td class="set-previous">{{ p.label if p else "—" }}</td>
                         <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" value="{{ '' if ghost else ('%g' % s.weight) }}"{% if ghost %} placeholder="{{ '%g' % p.weight }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
                         <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
@@ -219,6 +219,7 @@
     </form>
     {{ macros.exercise_picker_sheet() }}
     <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
+    <script src="{{ url_for('static', filename='share_card.js') }}"></script>
 
     {% if effort_scale != 'none' %}
     <div class="sheet-backdrop" id="effortPickerBackdrop" onclick="closeEffortPicker()"></div>
@@ -395,8 +396,10 @@
                 if (!numCell.querySelector('.pr-badge')) {
                     const badge = document.createElement('span');
                     badge.className = 'pr-badge';
-                    badge.title = 'Récord personal';
-                    badge.setAttribute('aria-label', 'Récord personal');
+                    badge.title = 'Récord personal · toca para compartir';
+                    badge.setAttribute('role', 'button');
+                    badge.setAttribute('tabindex', '0');
+                    badge.setAttribute('aria-label', 'Récord personal, compartir');
                     badge.textContent = '🏅';
                     numCell.appendChild(badge);
                 }
@@ -624,6 +627,9 @@
                 syncPrBadge(row, data.is_pr);
                 if (willComplete && data.is_pr) {
                     celebrate(70);
+                    if (window.showPrShareToast) {
+                        showPrShareToast(id, exercise.replace(/\b\w/g, c => c.toUpperCase()));
+                    }
                 }
             })
             .catch(() => {
