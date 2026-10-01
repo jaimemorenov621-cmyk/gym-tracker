@@ -1,15 +1,68 @@
 {% extends "base.html" %}
 {% block content %}
     <h1 style="font-weight:800; letter-spacing:-0.02em;">Estadísticas de la landing</h1>
-    <div class="card card-elevated landing-stats-card">
-        <div class="landing-stat">
-            <span class="landing-stat-value">{{ visits }}</span>
-            <span class="landing-stat-label">Visitas</span>
+
+    <div class="stats-period">
+        {% for key, label in [('nueva', 'Landing nueva'), ('7d', '7 días'), ('30d', '30 días'), ('todo', 'Todo')] %}
+            <a href="{{ url_for('landing_stats', periodo=key) }}" class="stats-period-chip{% if period_key == key %} active{% endif %}">{{ label }}</a>
+        {% endfor %}
+        <form method="get" class="stats-period-date">
+            <label for="desde">Desde</label>
+            <input type="date" id="desde" name="desde" value="{{ desde }}" onchange="this.form.submit()">
+        </form>
+    </div>
+    <p class="stats-period-label">{{ period_label }}</p>
+
+    <div class="stats-funnel">
+        <div class="card card-elevated stats-tile">
+            <span class="stats-tile-value">{{ visits }}</span>
+            <span class="stats-tile-label">Visitas de personas</span>
+            <span class="stats-tile-sub">
+                {% if visits_bot %}{{ visits_bot }} de robots descartadas{% endif %}
+                {% if visits_legacy %}{% if visits_bot %} · {% endif %}{{ visits_legacy }} antiguas sin filtrar{% endif %}
+            </span>
         </div>
-        <div class="landing-stat">
-            <span class="landing-stat-value">{{ clicks }}</span>
-            <span class="landing-stat-label">Clics en "Crear cuenta gratis"</span>
+        <div class="card card-elevated stats-tile">
+            <span class="stats-tile-value">{{ clicks }}</span>
+            <span class="stats-tile-label">Clics para crear cuenta</span>
+            <span class="stats-tile-sub">
+                {{ cta_clicks }} "Crear cuenta gratis" · {{ google_clicks }} Google
+                {% if click_rate is not none %}<br><strong>{{ '%.1f' % click_rate }}%</strong> de las visitas{% endif %}
+            </span>
         </div>
+        <div class="card card-elevated stats-tile stats-tile-goal">
+            <span class="stats-tile-value">{{ signups }}</span>
+            <span class="stats-tile-label">Cuentas creadas</span>
+            <span class="stats-tile-sub">
+                {{ signups_password }} con usuario · {{ signups_google }} con Google
+                {% if signup_rate is not none %}<br><strong>{{ '%.1f' % signup_rate }}%</strong> de las visitas{% endif %}
+            </span>
+        </div>
+    </div>
+    <p class="stats-footnote">
+        Usuarios en total: {{ total_users }}. Las cuentas creadas solo se cuentan desde el 01/10/2026 (antes no se guardaba la fecha),
+        y los robots solo se filtran desde ese mismo día.
+    </p>
+
+    <div class="card card-elevated">
+        <h3 style="margin-top:0;">Día a día</h3>
+        {% if daily %}
+            <table class="stats-daily">
+                <thead><tr><th>Día</th><th>Visitas</th><th>Clics</th><th>Cuentas</th></tr></thead>
+                <tbody>
+                    {% for day, d in daily %}
+                        <tr>
+                            <td>{{ day.strftime('%d/%m') }}</td>
+                            <td>{{ d.visits }}</td>
+                            <td>{{ d.clicks }}</td>
+                            <td>{% if d.signups %}<strong>{{ d.signups }}</strong>{% else %}0{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p><em>Sin datos en este periodo.</em></p>
+        {% endif %}
     </div>
 
     <div class="card card-elevated" style="margin-top:16px;">

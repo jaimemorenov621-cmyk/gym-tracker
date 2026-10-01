@@ -57,14 +57,52 @@ def privacy():
     return render_template("privacy.html", title="Política de privacidad")
 
 
+@app.route("/healthz")
+def healthz():
+    # Para el ping externo (UptimeRobot / cron-job.org) que evita que Render
+    # duerma la app. No toca la base de datos a propósito: así Neon sí puede
+    # suspenderse (su plan gratis tiene horas de cómputo limitadas) y el ping
+    # tampoco cuenta como visita en las estadísticas de la landing.
+    return "ok", 200, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"}
+
+
+# Robots que descargan la página sin ser una persona: vistas previas de
+# enlaces (Reddit, WhatsApp, Discord...), buscadores, monitores de uptime y
+# clientes HTTP de scripts.
+_BOT_UA_RE = re.compile(
+    r"bot|crawl|spider|slurp|preview|facebookexternalhit|embedly|whatsapp|telegram|"
+    r"discord|slack|skype|vkshare|pinterest|headless|lighthouse|pagespeed|uptime|"
+    r"monitor|pingdom|statuscake|curl|wget|python|httpx|aiohttp|go-http|okhttp|java/|"
+    r"axios|node-fetch|libwww|scrapy|feedfetcher|validator|render",
+    re.IGNORECASE,
+)
+
+
+def _is_bot_user_agent(user_agent):
+    """None = evento antiguo, sin clasificar (no se considera robot)."""
+    if user_agent is None:
+        return False
+    return user_agent == "" or bool(_BOT_UA_RE.search(user_agent))
+
+
+def _log_landing_event(event_type):
+    if request.cookies.get("no_contar") == "1" or request.args.get("no_contar") == "1":
+        return
+    db.session.add(
+        LandingEvent(
+            event_type=event_type,
+            referrer=(request.referrer[:255] if request.referrer else None),
+            user_agent=(request.headers.get("User-Agent") or "")[:255],
+        )
+    )
+    db.session.commit()
+
+
 @app.route("/")
 def landing():
     if current_user.is_authenticated:
         return redirect(url_for("index"))
-    no_contar = request.cookies.get("no_contar") == "1" or request.args.get("no_contar") == "1"
-    if not no_contar:
-        db.session.add(LandingEvent(event_type="visit", referrer=(request.referrer[:255] if request.referrer else None)))
-        db.session.commit()
+    _log_landing_event("visit")
     resp = make_response(render_template("landing.html"))
     if request.args.get("no_contar") == "1":
         resp.set_cookie("no_contar", "1", max_age=60 * 60 * 24 * 365 * 5)
@@ -73,10 +111,41 @@ def landing():
 
 @app.route("/landing/cta")
 def landing_cta():
-    if request.cookies.get("no_contar") != "1":
-        db.session.add(LandingEvent(event_type="cta_click", referrer=(request.referrer[:255] if request.referrer else None)))
-        db.session.commit()
+    _log_landing_event("cta_click")
     return redirect(url_for("register"))
+
+
+@app.route("/landing/google")
+def landing_google():
+    # "Continuar con Google" desde la landing también es crear cuenta: se
+    # cuenta aparte del botón de registro normal y luego sigue al OAuth.
+    _log_landing_event("google_click")
+    return redirect(url_for("login_google"))
+
+
+# Despliegue de la landing nueva (commit 06aa0d5, 30/09/2026 12:07 hora local).
+NEW_LANDING_SINCE = datetime(2026, 9, 30, 10, 10)  # UTC, naive como el resto
+
+
+def _landing_stats_period():
+    """Devuelve (clave, etiqueta, desde_utc_naive | None) según ?periodo= / ?desde=."""
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    desde = request.args.get("desde", "").strip()
+    if desde:
+        try:
+            local_start = datetime.strptime(desde, "%Y-%m-%d").replace(tzinfo=LOCAL_TZ)
+            start = local_start.astimezone(timezone.utc).replace(tzinfo=None)
+            return "desde", f"Desde el {local_start.strftime('%d/%m/%Y')}", start
+        except ValueError:
+            flash("Fecha no válida; se muestra desde la landing nueva.")
+    periodo = request.args.get("periodo", "nueva")
+    if periodo == "7d":
+        return periodo, "Últimos 7 días", now - timedelta(days=7)
+    if periodo == "30d":
+        return periodo, "Últimos 30 días", now - timedelta(days=30)
+    if periodo == "todo":
+        return periodo, "Desde el principio", None
+    return "nueva", "Desde la landing nueva (30/09)", NEW_LANDING_SINCE
 
 
 @app.route("/landing/stats")
@@ -85,27 +154,76 @@ def landing_stats():
     if current_user.username != "Jaime_309":
         flash("No tienes acceso a esta página.")
         return redirect(url_for("index"))
-    visits = db.session.scalar(
-        sa.select(sa.func.count())
-        .select_from(LandingEvent)
-        .where(LandingEvent.event_type == "visit")
+
+    period_key, period_label, start = _landing_stats_period()
+
+    events_q = sa.select(
+        LandingEvent.event_type, LandingEvent.timestamp, LandingEvent.referrer, LandingEvent.user_agent
     )
-    clicks = db.session.scalar(
-        sa.select(sa.func.count())
-        .select_from(LandingEvent)
-        .where(LandingEvent.event_type == "cta_click")
-    )
-    referrers = db.session.scalars(
-        sa.select(LandingEvent.referrer).where(LandingEvent.event_type == "visit")
-    ).all()
-    referrer_counts = {}
-    for r in referrers:
-        key = urlsplit(r).netloc if r else None
-        key = key or "Directo / sin referrer"
-        referrer_counts[key] = referrer_counts.get(key, 0) + 1
-    referrer_counts = dict(sorted(referrer_counts.items(), key=lambda kv: -kv[1]))
+    users_q = sa.select(User.created_at, User.signup_method).where(User.created_at.is_not(None))
+    if start is not None:
+        events_q = events_q.where(LandingEvent.timestamp >= start)
+        users_q = users_q.where(User.created_at >= start)
+
+    visits_human = visits_bot = visits_legacy = 0
+    cta_clicks = google_clicks = 0
+    referrer_counts = defaultdict(int)
+    daily = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
+
+    for event_type, ts, referrer, user_agent in db.session.execute(events_q):
+        if _is_bot_user_agent(user_agent):
+            if event_type == "visit":
+                visits_bot += 1
+            continue
+        day = to_local(ts).date()
+        if event_type == "visit":
+            if user_agent is None:
+                visits_legacy += 1
+            else:
+                visits_human += 1
+            daily[day]["visits"] += 1
+            key = (urlsplit(referrer).netloc if referrer else None) or "Directo / sin referrer"
+            referrer_counts[key] += 1
+        elif event_type in ("cta_click", "google_click"):
+            if event_type == "cta_click":
+                cta_clicks += 1
+            else:
+                google_clicks += 1
+            daily[day]["clicks"] += 1
+
+    signups_password = signups_google = 0
+    for created_at, method in db.session.execute(users_q):
+        if method == "google":
+            signups_google += 1
+        else:
+            signups_password += 1
+        daily[to_local(created_at).date()]["signups"] += 1
+
+    visits = visits_human + visits_legacy
+    clicks = cta_clicks + google_clicks
+    signups = signups_password + signups_google
+    total_users = db.session.scalar(sa.select(sa.func.count()).select_from(User))
+
     return render_template(
-        "landing_stats.html", visits=visits, clicks=clicks, referrer_counts=referrer_counts
+        "landing_stats.html",
+        title="Estadísticas de la landing",
+        period_key=period_key,
+        period_label=period_label,
+        desde=request.args.get("desde", ""),
+        visits=visits,
+        visits_bot=visits_bot,
+        visits_legacy=visits_legacy,
+        clicks=clicks,
+        cta_clicks=cta_clicks,
+        google_clicks=google_clicks,
+        click_rate=(100 * clicks / visits) if visits else None,
+        signups=signups,
+        signups_password=signups_password,
+        signups_google=signups_google,
+        signup_rate=(100 * signups / visits) if visits else None,
+        total_users=total_users,
+        referrer_counts=dict(sorted(referrer_counts.items(), key=lambda kv: -kv[1])),
+        daily=sorted(daily.items(), reverse=True)[:60],
     )
 
 
@@ -307,6 +425,7 @@ def login_google_callback():
                 username=_unique_username_from_email(email),
                 email=email,
                 google_sub=google_sub,
+                signup_method="google",
             )
             db.session.add(user)
         db.session.commit()
@@ -324,7 +443,7 @@ def register():
         return redirect(url_for("index"))
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
+        user = User(username=form.username.data, email=form.email.data, signup_method="password")
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()

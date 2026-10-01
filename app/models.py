@@ -30,6 +30,12 @@ class User(UserMixin, db.Model):
     notes: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
     rest_sound_enabled: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
     rest_vibration_enabled: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    # Para las estadísticas de la landing. Las cuentas anteriores a estas
+    # columnas se quedan en NULL ("sin fecha"), no se inventa un valor.
+    created_at: so.Mapped[Optional[datetime]] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc), index=True
+    )
+    signup_method: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10))  # "password" | "google"
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -272,11 +278,14 @@ class ExerciseFavorite(db.Model):
 
 class LandingEvent(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    event_type: so.Mapped[str] = so.mapped_column(sa.String(20), index=True)  # "visit" | "cta_click"
+    event_type: so.Mapped[str] = so.mapped_column(sa.String(20), index=True)  # "visit" | "cta_click" | "google_click"
     timestamp: so.Mapped[datetime] = so.mapped_column(
         default=lambda: datetime.now(timezone.utc), index=True
     )
     referrer: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
+    # NULL = evento anterior a esta columna (sin clasificar); "" = la
+    # petición no mandó User-Agent (se trata como robot).
+    user_agent: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
 
     def __repr__(self):
         return f"<LandingEvent {self.event_type} {self.timestamp}>"

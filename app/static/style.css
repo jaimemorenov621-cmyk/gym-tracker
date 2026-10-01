@@ -2167,20 +2167,39 @@ body.landing-page {
     .lp-footer-inner { justify-content: center; text-align: center; }
 }
 
-.landing-stats-card {
-    display: flex;
-    gap: 32px;
-    flex-wrap: wrap;
-}
-.landing-stat { display: flex; flex-direction: column; }
-.landing-stat-value {
-    font-size: 2.2rem;
-    font-weight: 800;
+/* ===== Estadísticas de la landing (landing_stats.html) ===== */
+.stats-period { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.stats-period-chip {
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-border-soft);
+    background: #fff;
     color: var(--color-brand-dark);
-}
-.landing-stat-label {
-    color: var(--color-text-muted);
     font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+.stats-period-chip.active { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
+.stats-period-date { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 0.85rem; color: var(--color-text-muted); }
+.stats-period-date input { padding: 5px 8px; border: 1.5px solid var(--color-border-soft); border-radius: 10px; font-family: inherit; }
+.stats-period-label { margin: 10px 0 14px; color: var(--color-text-muted); font-size: 0.85rem; }
+.stats-funnel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stats-funnel .card { margin: 0; }
+.stats-tile { display: flex; flex-direction: column; gap: 2px; }
+.stats-tile-value { font-size: 2.1rem; font-weight: 800; color: var(--color-brand-dark); line-height: 1.1; }
+.stats-tile-label { font-weight: 700; font-size: 0.9rem; }
+.stats-tile-sub { color: var(--color-text-muted); font-size: 0.78rem; line-height: 1.45; margin-top: 4px; }
+.stats-tile-sub strong { color: var(--color-text); }
+.stats-tile-goal { background: rgba(34, 201, 140, 0.07); border-color: var(--color-success); }
+.stats-tile-goal .stats-tile-value { color: var(--color-success-dark); }
+.stats-footnote { margin: 10px 2px 16px; color: var(--color-text-muted); font-size: 0.78rem; line-height: 1.45; }
+.stats-daily { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.stats-daily th { text-align: right; color: var(--color-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 4px; }
+.stats-daily td { text-align: right; padding: 7px 4px; border-top: 1px solid #f0edfa; }
+.stats-daily th:first-child, .stats-daily td:first-child { text-align: left; }
+.stats-daily td strong { color: var(--color-success-dark); }
+@media (max-width: 600px) {
+    .stats-funnel { grid-template-columns: 1fr; }
 }
 
 
