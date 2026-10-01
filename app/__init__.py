@@ -22,8 +22,10 @@ oauth.register(
 )
 
 from app import routes, models
-from app.routes import format_rest, get_exercise_image, to_local
+from app.routes import format_rest, get_exercise_image, to_local, fmt_num, relative_day
 
 app.jinja_env.globals["format_rest"] = format_rest
 app.jinja_env.globals["get_exercise_image"] = get_exercise_image
 app.jinja_env.globals["to_local"] = to_local
+app.jinja_env.filters["num"] = fmt_num
+app.jinja_env.filters["relative_day"] = relative_day

@@ -107,7 +107,7 @@
             {% endif %}
             {% if latest_weight %}
                 <div class="dash-metric">
-                    <span class="dash-metric-value">{{ latest_weight.weight|round(1) }}kg</span>
+                    <span class="dash-metric-value">{{ latest_weight.weight|num }} kg</span>
                     <span class="dash-metric-label">Peso</span>
                 </div>
             {% else %}
@@ -219,7 +219,7 @@
                     </div>
                 {% endif %}
                 <div class="wc-meta">
-                    {% if item.duration %}{{ macros.icon('stopwatch', 14) }} {{ item.duration }} · {% endif %}🏋️ {{ item.volume }}kg volumen
+                    {% if item.duration %}{{ macros.icon('stopwatch', 14) }} {{ item.duration }} · {% endif %}🏋️ {{ item.volume|num(0) }} kg volumen
                 </div>
             </a>
         {% endfor %}

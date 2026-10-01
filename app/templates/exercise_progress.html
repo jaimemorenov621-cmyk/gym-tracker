@@ -1,15 +1,46 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1 style="display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:-0.02em;">
+    <p class="page-back"><a href="{{ url_for('progress') }}">← Progreso</a></p>
+    <h1 class="exercise-title">
         {% set img = get_exercise_image(exercise) %}
         {% if img %}
-            <img src="{{ img }}" style="width:64px; height:64px; object-fit:cover; border-radius:10px;">
+            <img src="{{ img }}" alt="">
         {% else %}
             {{ macros.exercise_icon_fallback(64, 10) }}
         {% endif %}
         {{ exercise|title }}
     </h1>
+
+    {% if stats %}
+        <div class="exercise-stats">
+            <div>
+                <strong>{{ stats.last_1rm|num(0) }}<small> kg</small></strong>
+                <span>1RM actual</span>
+            </div>
+            <div>
+                <strong>{{ stats.best_1rm|num(0) }}<small> kg</small></strong>
+                <span>Mejor 1RM</span>
+            </div>
+            <div>
+                {% if stats.trend_pct is not none %}
+                    <strong class="{{ 'up' if stats.trend_pct > 0 else ('down' if stats.trend_pct < 0 else '') }}">
+                        {% if stats.trend_pct > 0 %}▲{% elif stats.trend_pct < 0 %}▼{% endif %}{{ stats.trend_pct|abs }}%
+                    </strong>
+                {% else %}
+                    <strong>—</strong>
+                {% endif %}
+                <span>Tendencia 60 d</span>
+            </div>
+            <div>
+                <strong>{{ stats.sessions }}</strong>
+                <span>Sesiones</span>
+            </div>
+        </div>
+        <p class="exercise-stats-foot">
+            Último entreno {{ stats.last_trained|relative_day }}{% if stats.last_pr and stats.sessions > 1 %} · último récord {{ stats.last_pr|relative_day }}{% endif %}
+        </p>
+    {% endif %}
 
     {% if stagnation %}
         <div class="card card-elevated" style="border-left:4px solid #c62828;">
@@ -49,40 +80,78 @@
         </a>
     </div>
 
+    {% if chart_values|length == 1 %}
+    <p class="progress-footnote">Con una sesión más verás aquí la gráfica de tu 1RM.</p>
+    {% elif chart_values %}
     <div class="card card-elevated">
-        <canvas id="progressChart" class="progress-chart" width="600" height="280"></canvas>
+        <div class="chart-head">
+            <h3>1RM estimado</h3>
+            <span class="chart-legend">
+                <span><i style="background:#17a973"></i>Récord</span>
+                <span><i style="background:#5a4fcf"></i>Sesión</span>
+                {% if stagnation %}<span><i style="background:#c62828"></i>Sin récord</span>{% endif %}
+            </span>
+        </div>
+        <div class="chart-box"><canvas id="progressChart"></canvas></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const ctx = document.getElementById('progressChart');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: {{ chart_labels|tojson }},
-                datasets: [{
-                    label: '1RM estimado (kg)',
-                    data: {{ chart_values|tojson }},
-                    borderColor: '#7c4dff',
-                    pointBackgroundColor: {{ chart_colors|tojson }},
-                    pointRadius: 7,
-                    tension: 0.25
-                }]
-            }
-        });
+        (function () {
+            const values = {{ chart_values|tojson }};
+            const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 1 });
+            new Chart(document.getElementById('progressChart'), {
+                type: 'line',
+                data: {
+                    labels: {{ chart_labels|tojson }},
+                    datasets: [{
+                        data: values,
+                        borderColor: '#7c4dff',
+                        borderWidth: 3,
+                        backgroundColor: 'rgba(124, 77, 255, 0.10)',
+                        fill: true,
+                        pointBackgroundColor: {{ chart_colors|tojson }},
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: c => '1RM ' + fmt(c.parsed.y) + ' kg' } }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#999', maxRotation: 0, autoSkipPadding: 12 } },
+                        y: { grid: { color: '#f0edfa' }, ticks: { color: '#999', callback: v => fmt(v) },
+                             suggestedMin: Math.min(...values) * 0.95, suggestedMax: Math.max(...values) * 1.03 }
+                    }
+                }
+            });
+        })();
     </script>
+    {% endif %}
 
-    <hr>
+    <h2 class="section-title">Historial</h2>
     {% for s in sessions %}
-        <div class="card card-elevated">
-            <h3 style="margin-top:0;">{{ to_local(s.timestamp).strftime('%d/%m/%Y %H:%M') }} {% if s.is_pr %}<span style="color:#ffb300;">🏆</span>{% endif %}</h3>
-            {% for e in s.sets if e.completed and e.weight > 0 and e.reps > 0 %}
-                <div class="set-row">
-                    <span class="set-weight">{{ e.weight }}kg</span>
-                    <span>x {{ e.reps }} reps</span>
-                    {% if e.rir is not none %}<span class="pill">RIR {{ e.rir }}</span>{% elif e.rpe is not none %}<span class="pill">RPE {{ e.rpe }}</span>{% endif %}
-                </div>
-            {% endfor %}
-            <span class="pill">1RM: {{ s.best_1rm|round(1) }}kg</span>
+        <div class="card card-elevated session-card{% if s.is_pr %} session-card-pr{% endif %}">
+            <div class="session-card-head">
+                <strong>{{ to_local(s.timestamp).strftime('%d/%m/%Y') }}</strong>
+                <span>{{ to_local(s.timestamp).strftime('%H:%M') }}</span>
+                {% if s.is_pr %}<span class="session-pr-badge">🏅 Récord</span>{% endif %}
+                <span class="session-1rm">1RM {{ s.best_1rm|num }} kg</span>
+            </div>
+            <div class="session-sets">
+                {% for e in s.sets if e.completed and e.weight > 0 and e.reps > 0 %}
+                    <span class="session-set{% if e.id == s.best_set.id %} best{% endif %}">
+                        {{ e.weight|num(2) }} kg × {{ e.reps }}{% if e.rir is not none %} <small>RIR {{ e.rir }}</small>{% elif e.rpe is not none %} <small>RPE {{ e.rpe }}</small>{% endif %}
+                    </span>
+                {% endfor %}
+            </div>
         </div>
+    {% else %}
+        <p class="progress-footnote">Todavía no hay sesiones con series marcadas como hechas.</p>
     {% endfor %}
 {% endblock %}

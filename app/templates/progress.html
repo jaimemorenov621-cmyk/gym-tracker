@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <h1 class="page-title">Progreso</h1>
+
+    <a class="card card-elevated progress-weight" href="{{ url_for('weight') }}">
+        <span class="progress-weight-icon">{{ macros.icon('scale', 22) }}</span>
+        <span class="progress-weight-text">
+            <small>Peso corporal</small>
+            {% if latest_weight %}
+                <strong>{{ latest_weight.weight|num }} kg</strong>
+                <span>Último registro: {{ latest_weight.timestamp|relative_day }}</span>
+            {% else %}
+                <strong>Sin registrar</strong>
+                <span>Apunta tu peso para ver su evolución</span>
+            {% endif %}
+        </span>
+        {{ macros.icon('chevron-right', 20) }}
+    </a>
+
+    {% if items %}
+        <div class="progress-toolbar">
+            <h2>Tus ejercicios <span>{{ items|length }}</span></h2>
+            <input type="search" class="progress-search" placeholder="Buscar ejercicio…" aria-label="Buscar ejercicio"
+                   oninput="filterProgress(this.value)">
+        </div>
+        <ul class="progress-list" id="progressList">
+            {% for it in items %}
+                <li data-name="{{ it.exercise }}">
+                    <a href="{{ url_for('exercise_progress', name=it.exercise) }}" class="progress-row">
+                        {% set img = get_exercise_image(it.exercise) %}
+                        {% if img %}
+                            <img src="{{ img }}" alt="" class="progress-thumb" loading="lazy">
+                        {% else %}
+                            {{ macros.exercise_icon_fallback(44, 10) }}
+                        {% endif %}
+                        <span class="progress-main">
+                            <strong>{{ it.exercise|title }}</strong>
+                            <small>
+                                {{ it.last_trained|relative_day|capitalize }}
+                                {% if it.last_pr and it.sessions > 1 %} · 🏅 récord {{ it.last_pr|relative_day }}{% endif %}
+                            </small>
+                        </span>
+                        <span class="progress-figures">
+                            <strong>{{ it.last_1rm|num(0) }} kg</strong>
+                            {% if it.stagnation %}
+                                <span class="trend trend-stuck" title="Sin récord en las últimas {{ threshold }} sesiones">Estancado</span>
+                            {% elif it.trend_pct is not none %}
+                                <span class="trend {{ 'trend-up' if it.trend_pct > 0 else ('trend-down' if it.trend_pct < 0 else '') }}">
+                                    {% if it.trend_pct > 0 %}▲ {{ it.trend_pct }}%{% elif it.trend_pct < 0 %}▼ {{ -it.trend_pct }}%{% else %}= 0%{% endif %}
+                                </span>
+                            {% else %}
+                                <span class="trend">{{ it.sessions }} sesión{{ '' if it.sessions == 1 else 'es' }}</span>
+                            {% endif %}
+                        </span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+        <p class="progress-empty-search" id="progressNoResults" hidden>Ningún ejercicio coincide.</p>
+        <p class="progress-footnote">1RM estimado de tu última sesión. La tendencia compara con hace hasta 60 días.</p>
+        <script>
+            function filterProgress(q) {
+                const needle = q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+                let shown = 0;
+                document.querySelectorAll('#progressList li').forEach(function (li) {
+                    const name = li.dataset.name.normalize('NFD').replace(/[̀-ͯ]/g, '');
+                    const match = !needle || name.includes(needle);
+                    li.hidden = !match;
+                    if (match) shown++;
+                });
+                document.getElementById('progressNoResults').hidden = shown > 0;
+            }
+        </script>
+    {% else %}
+        <div class="card card-elevated progress-empty">
+            {{ macros.exercise_icon_fallback(48, 10) }}
+            <p><strong>Aún no hay progreso que mostrar.</strong></p>
+            <p>Marca series como hechas en un entreno y aquí verás cada ejercicio con su 1RM, su tendencia y tus récords.</p>
+            <a class="btn" href="{{ url_for('index') }}">Ir a entrenar</a>
+        </div>
+    {% endif %}
+{% endblock %}

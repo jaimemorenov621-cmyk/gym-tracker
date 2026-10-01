@@ -1608,29 +1608,6 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     gap: 8px;
 }
 
-.routine-exercise-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
-}
-.routine-exercise-tags-empty {
-    color: var(--color-text-muted);
-    font-size: 0.9rem;
-}
-
-.routine-card-last {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 10px;
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-}
-.routine-card-last .icon {
-    color: #b7b2c9;
-}
-
 .routine-empty-state {
     display: flex;
     flex-direction: column;
@@ -1663,22 +1640,6 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     .routine-pin-btn:hover { background: var(--color-surface-hover); }
 }
 
-.routine-block-row {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-.routine-block-label {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.78rem;
-    font-weight: 700;
-    color: var(--color-text-muted);
-    flex-shrink: 0;
-}
 .routine-block-select,
 .routine-block-input {
     flex: 1;
@@ -2967,3 +2928,147 @@ button.finish-submit { width: 100%; margin: 4px 0 0; border: none; font-family: 
     .finish-stats strong { font-size: 1rem; }
     button.rating-chip { height: 38px; font-size: 0.85rem; border-radius: 8px; }
 }
+
+/* ===== Fase 2: Progreso, página de ejercicio y tarjetas de rutina ===== */
+.page-title { font-weight: 800; letter-spacing: -0.02em; }
+.page-back { margin: 4px 0 -6px; }
+.page-back a { color: var(--color-text-muted); text-decoration: none; font-weight: 600; font-size: 0.88rem; }
+@media (hover: hover) { .page-back a:hover { color: var(--color-brand); } }
+.section-title { margin: 24px 0 10px; font-size: 1.1rem; font-weight: 800; }
+
+/* Progreso (progress.html) */
+a.progress-weight { display: flex; align-items: center; gap: 14px; color: inherit; text-decoration: none; }
+.progress-weight-icon { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 14px; background: var(--color-surface-active); color: var(--color-brand); flex-shrink: 0; }
+.progress-weight-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.progress-weight-text small { color: var(--color-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+.progress-weight-text strong { font-size: 1.2rem; }
+.progress-weight-text span { color: var(--color-text-muted); font-size: 0.8rem; }
+a.progress-weight > .icon { color: var(--color-text-muted); }
+.progress-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 22px 0 10px; }
+.progress-toolbar h2 { margin: 0; font-size: 1.15rem; font-weight: 800; }
+.progress-toolbar h2 span { color: var(--color-text-muted); font-weight: 600; font-size: 0.9rem; margin-left: 4px; }
+.progress-search {
+    flex: 1 1 180px;
+    max-width: 280px;
+    padding: 9px 12px;
+    font-family: inherit;
+    font-size: 16px;
+    border: 1.5px solid var(--color-border-soft);
+    border-radius: 12px;
+    background: #fff;
+}
+.progress-search:focus { outline: none; border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.15); }
+.progress-list { list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid var(--color-border-soft); border-radius: var(--radius-card); box-shadow: var(--shadow-elevated); overflow: hidden; }
+.progress-list li + li { border-top: 1px solid #f0edfa; }
+a.progress-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; color: inherit; text-decoration: none; }
+@media (hover: hover) { a.progress-row:hover { background: var(--color-surface-hover); } }
+a.progress-row:active { background: var(--color-surface-active); }
+.progress-thumb { width: 44px; height: 44px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+.progress-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.progress-main strong { font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.progress-main small { color: var(--color-text-muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.progress-figures { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
+.progress-figures strong { font-size: 1rem; font-weight: 800; color: var(--color-brand-dark); }
+.trend { font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted); padding: 2px 7px; border-radius: 999px; background: #f4f3f8; }
+.trend-up { color: #13a06b; background: #e3f9ef; }
+.trend-down { color: #c62828; background: #fdecec; }
+.trend-stuck { color: #9a6700; background: #fff4d6; }
+.progress-footnote { color: var(--color-text-muted); font-size: 0.78rem; margin: 10px 2px 24px; }
+.progress-empty-search { color: var(--color-text-muted); text-align: center; margin: 16px 0; }
+.progress-empty { text-align: center; }
+.progress-empty p { color: var(--color-text-muted); margin: 6px 0; }
+.progress-empty p strong { color: var(--color-text); }
+.progress-empty .btn { margin-top: 10px; }
+
+/* Página de ejercicio (exercise_progress.html) */
+.exercise-title { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: -0.02em; }
+.exercise-title img { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
+.exercise-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.exercise-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 12px 4px; text-align: center; background: #fff; border: 1px solid var(--color-border-soft); border-radius: 14px; }
+.exercise-stats strong { font-size: 1.2rem; font-weight: 800; color: var(--color-brand-dark); white-space: nowrap; }
+.exercise-stats strong small { font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted); }
+.exercise-stats strong.up { color: #13a06b; }
+.exercise-stats strong.down { color: #c62828; }
+.exercise-stats span { font-size: 0.7rem; color: var(--color-text-muted); }
+.exercise-stats-foot { margin: 8px 2px 16px; color: var(--color-text-muted); font-size: 0.82rem; }
+.chart-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.chart-head h3 { margin: 0; font-size: 1rem; }
+.chart-legend { display: flex; gap: 12px; color: var(--color-text-muted); font-size: 0.75rem; }
+.chart-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.chart-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.chart-box { position: relative; height: 230px; }
+.session-card { padding-top: 14px; padding-bottom: 14px; }
+.session-card-pr { border-color: rgba(34, 201, 140, 0.45); }
+.session-card-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.session-card-head > span { color: var(--color-text-muted); font-size: 0.82rem; }
+.session-pr-badge { color: #13a06b !important; font-weight: 700; }
+.session-1rm { margin-left: auto; font-weight: 700; color: var(--color-brand-dark) !important; }
+.session-sets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.session-set { padding: 5px 10px; border-radius: 10px; background: #f6f5fb; font-size: 0.85rem; font-weight: 600; }
+.session-set small { color: var(--color-text-muted); font-weight: 500; }
+.session-set.best { background: var(--color-surface-active); color: var(--color-brand-dark); }
+@media (max-width: 340px) {
+    .exercise-stats { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Tarjeta de rutina compacta (routines.html) */
+.routine-card.routine-card-compact { padding: 12px 12px 12px 6px; }
+.routine-card-row { display: flex; align-items: center; gap: 8px; }
+.routine-card-compact .drag-handle { flex-shrink: 0; width: 28px; height: 40px; display: grid; place-items: center; }
+a.routine-card-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; color: inherit; text-decoration: none; }
+a.routine-card-main strong { font-size: 1.02rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+a.routine-card-main small { color: var(--color-text-muted); font-size: 0.8rem; }
+@media (hover: hover) { a.routine-card-main:hover strong { color: var(--color-brand); } }
+.routine-card-compact .routine-pin-btn { margin: 0; flex-shrink: 0; }
+.routine-start-form { margin: 0; flex-shrink: 0; }
+button.routine-start-btn {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: 0;
+    padding: 0;
+    border-radius: 14px;
+    box-shadow: 0 6px 14px rgba(124, 77, 255, 0.3);
+}
+button.routine-start-btn:disabled { opacity: 0.35; box-shadow: none; cursor: not-allowed; }
+.routine-card-sub { display: flex; align-items: center; gap: 10px; margin: 8px 0 0 34px; }
+.routine-card-exercises { flex: 1; min-width: 0; color: var(--color-text-muted); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.routine-card-exercises a { color: var(--color-brand); font-weight: 600; text-decoration: none; }
+.routine-block-chip {
+    position: relative;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 50%;
+    padding: 4px 8px 4px 9px;
+    border-radius: 999px;
+    border: 1.5px solid var(--color-border-soft);
+    background: #fff;
+    color: var(--color-text);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+.routine-block-chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--chip-color, #c9c3e6); flex-shrink: 0; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15); }
+.routine-block-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.routine-block-chip.none { color: var(--color-text-muted); border-style: dashed; }
+.routine-block-chip .icon { flex-shrink: 0; color: var(--color-text-muted); }
+/* El <select> real cubre la etiqueta entera, invisible: un toque abre el
+selector nativo del sistema, igual que antes. */
+.routine-block-chip select.routine-block-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    max-width: none;
+    opacity: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    cursor: pointer;
+    font-size: 16px;
+}
+.routine-card-sub .routine-block-input { flex: 0 1 50%; min-width: 0; }

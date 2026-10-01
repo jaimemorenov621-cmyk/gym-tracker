@@ -1177,7 +1177,7 @@ def exercise_progress(name):
         else set()
     )
 
-    chart_labels = [to_local(s["timestamp"]).strftime("%d/%m %H:%M") for s in display_sessions]
+    chart_labels = [to_local(s["timestamp"]).strftime("%d/%m") for s in display_sessions]
     chart_values = [round(s["best_1rm"], 1) for s in display_sessions]
     chart_colors = []
     for s in display_sessions:
@@ -1186,7 +1186,7 @@ def exercise_progress(name):
         elif id(s) in lastN_ids and stagnation:
             chart_colors.append("#c62828")
         else:
-            chart_colors.append("#1565c0")
+            chart_colors.append("#5a4fcf")  # = --color-brand-dark, igual que la leyenda
 
     note = db.session.scalar(
         sa.select(ExerciseNote).where(
@@ -1210,9 +1210,30 @@ def exercise_progress(name):
         chart_labels=chart_labels,
         chart_values=chart_values,
         chart_colors=chart_colors,
+        stats=exercise_stats(session_list, threshold),
         exercise_note=note,
         catalog_exercise=catalog_exercise,
         translation_form=translation_form,
+    )
+
+
+@app.route("/progress")
+@login_required
+def progress():
+    """Todos tus ejercicios con 1RM, tendencia y último récord -- antes la
+    página de cada ejercicio solo se alcanzaba desde dentro de un entreno."""
+    latest_weight = db.session.scalar(
+        sa.select(BodyWeightEntry)
+        .where(BodyWeightEntry.user_id == current_user.id)
+        .order_by(BodyWeightEntry.timestamp.desc())
+        .limit(1)
+    )
+    return render_template(
+        "progress.html",
+        title="Progreso",
+        items=progress_overview(current_user.id, current_user.stagnation_threshold),
+        threshold=current_user.stagnation_threshold,
+        latest_weight=latest_weight,
     )
 
 
@@ -1507,6 +1528,7 @@ def routines():
             {
                 "routine": r,
                 "exercise_names": [e.exercise.title() for e in exercises],
+                "last_trained": last_workout.timestamp if last_workout else None,
                 "last_day": last_day,
                 "last_date": (
                     to_local(last_workout.timestamp).strftime("%d/%m/%Y")
@@ -2270,30 +2292,17 @@ def get_previous_sets_map(workout, exercise_names):
                     "reps": entry.reps,
                     "effort": effort_value,
                     "effort_scale": entry_scale,
-                    "label": f"{entry.weight:g}kg×{entry.reps}",
+                    "label": f"{fmt_num(entry.weight, 2)}kg×{entry.reps}",
                 }
             )
     return result
 
 
-def get_exercise_sessions(name, user_id=None):
-    """Sesiones históricas de `name`, con 1RM estimado, PRs y estancamiento.
-    Por defecto usa current_user; acepta user_id explícito para poder
-    llamarse fuera de un request autenticado (backfill)."""
-    if user_id is None:
-        user_id = current_user.id
-        threshold = current_user.stagnation_threshold
-    else:
-        threshold = db.session.get(User, user_id).stagnation_threshold
-
-    query = (
-        sa.select(Workout, SetEntry)
-        .join(SetEntry, SetEntry.workout_id == Workout.id)
-        .where(Workout.user_id == user_id, SetEntry.exercise == name)
-        .order_by(Workout.timestamp.asc())
-    )
-    rows = db.session.execute(query).all()
-
+def sessions_from_rows(rows):
+    """[(Workout, SetEntry)] de UN ejercicio -> sesiones en orden cronológico
+    con best_set / best_1rm / is_pr. Separado de la consulta para que la
+    pantalla de Progreso (todos los ejercicios en una sola consulta) use
+    exactamente el mismo criterio de 1RM y récord que el resto de la app."""
     sessions = {}
     for workout, entry in rows:
         sessions.setdefault(workout.id, {"timestamp": workout.timestamp, "sets": []})
@@ -2313,14 +2322,86 @@ def get_exercise_sessions(name, user_id=None):
             s["best_set"] = None
             s["best_1rm"] = 0
             s["is_pr"] = False
+    return session_list
 
+
+def stagnation_flags(session_list, threshold):
+    """(estancado, mejora) sobre las últimas `threshold` sesiones que cuentan."""
     qualifying = qualifying_sessions(session_list)
-    stagnation = False
-    improvement = False
-    if len(qualifying) >= threshold:
-        lastN = qualifying[-threshold:]
-        stagnation = not any(s["is_pr"] for s in lastN)
-        improvement = lastN[-1]["is_pr"]
+    if len(qualifying) < threshold:
+        return False, False
+    lastN = qualifying[-threshold:]
+    return not any(s["is_pr"] for s in lastN), lastN[-1]["is_pr"]
+
+
+TREND_WINDOW = timedelta(days=60)
+
+
+def exercise_stats(session_list, threshold):
+    """Cifras de cabecera de un ejercicio (Progreso y página del ejercicio).
+    None si no hay ninguna sesión que cuente. trend_pct: cambio del 1RM
+    entre la primera y la última sesión de los últimos 60 días (mín. 2)."""
+    qualifying = qualifying_sessions(session_list)
+    if not qualifying:
+        return None
+    last = qualifying[-1]
+    window = [s for s in qualifying if s["timestamp"] >= last["timestamp"] - TREND_WINDOW]
+    trend_pct = None
+    if len(window) >= 2 and window[0]["best_1rm"] > 0:
+        trend_pct = round(100 * (last["best_1rm"] - window[0]["best_1rm"]) / window[0]["best_1rm"])
+    last_pr = next((s for s in reversed(qualifying) if s["is_pr"]), None)
+    stagnation, _ = stagnation_flags(session_list, threshold)
+    return {
+        "last_1rm": last["best_1rm"],
+        "best_1rm": max(s["best_1rm"] for s in qualifying),
+        "last_trained": last["timestamp"],
+        "last_pr": last_pr["timestamp"] if last_pr else None,
+        "sessions": len(qualifying),
+        "trend_pct": trend_pct,
+        "stagnation": stagnation,
+    }
+
+
+def progress_overview(user_id, threshold):
+    """Todos los ejercicios del usuario con sus cifras, en UNA consulta (no
+    una por ejercicio). Ordenados por el último entrenado primero."""
+    rows = db.session.execute(
+        sa.select(Workout, SetEntry)
+        .join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == user_id)
+        .order_by(Workout.timestamp.asc())
+    ).all()
+    by_exercise = defaultdict(list)
+    for workout, entry in rows:
+        by_exercise[entry.exercise].append((workout, entry))
+
+    items = []
+    for exercise, ex_rows in by_exercise.items():
+        stats = exercise_stats(sessions_from_rows(ex_rows), threshold)
+        if stats is not None:
+            items.append({"exercise": exercise, **stats})
+    items.sort(key=lambda i: i["last_trained"], reverse=True)
+    return items
+
+
+def get_exercise_sessions(name, user_id=None):
+    """Sesiones históricas de `name`, con 1RM estimado, PRs y estancamiento.
+    Por defecto usa current_user; acepta user_id explícito para poder
+    llamarse fuera de un request autenticado (backfill)."""
+    if user_id is None:
+        user_id = current_user.id
+        threshold = current_user.stagnation_threshold
+    else:
+        threshold = db.session.get(User, user_id).stagnation_threshold
+
+    query = (
+        sa.select(Workout, SetEntry)
+        .join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == user_id, SetEntry.exercise == name)
+        .order_by(Workout.timestamp.asc())
+    )
+    session_list = sessions_from_rows(db.session.execute(query).all())
+    stagnation, improvement = stagnation_flags(session_list, threshold)
 
     return session_list, stagnation, improvement
 
@@ -2706,6 +2787,42 @@ def to_local(dt):
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=timezone.utc)
     return dt.astimezone(LOCAL_TZ)
+
+
+def fmt_num(value, decimals=1):
+    """Número en formato español para mostrar: coma decimal, punto de miles
+    y sin ceros sobrantes (82.5 -> "82,5", 100.0 -> "100", 1200 -> "1.200").
+    Filtro Jinja `num`. Solo para texto: los <input> siguen usando punto."""
+    if value is None:
+        return "—"
+    v = round(float(value), decimals)
+    sign = "-" if v < 0 else ""
+    v = abs(v)
+    whole = int(v)
+    text = f"{whole:,}".replace(",", ".")
+    if decimals:
+        frac = f"{v - whole:.{decimals}f}"[2:].rstrip("0")
+        if frac:
+            text += "," + frac
+    return sign + text
+
+
+def relative_day(dt):
+    """"hoy" / "ayer" / "hace 3 días" / "hace 2 semanas" / "12/08" (hora de
+    Madrid). Filtro Jinja `relative_day`."""
+    if dt is None:
+        return "—"
+    local = to_local(dt).date()
+    days = (to_local(datetime.now(timezone.utc)).date() - local).days
+    if days <= 0:
+        return "hoy"
+    if days == 1:
+        return "ayer"
+    if days < 14:
+        return f"hace {days} días"
+    if days < 60:
+        return f"hace {days // 7} semanas"
+    return local.strftime("%d/%m/%Y")
 
 
 def format_rest(seconds):
