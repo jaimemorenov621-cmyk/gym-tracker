@@ -3,6 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        // Tema antes de pintar (sin destello claro en modo oscuro). Preferencia
+        // por dispositivo en localStorage: "auto" (sigue al sistema), "light"
+        // o "dark"; se cambia en Configuración. Una página puede fijarlo con
+        // el bloque theme_lock (la landing es siempre clara).
+        (function () {
+            var lock = "{% block theme_lock %}{% endblock %}";
+            var pref = "auto";
+            try { pref = localStorage.getItem("gyre-theme") || "auto"; } catch (e) {}
+            var mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+            function apply() {
+                var dark = lock ? lock === "dark" : (pref === "dark" || (pref === "auto" && mq && mq.matches));
+                document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.setAttribute("content", dark ? "#0f0d1a" : "#7c4dff");
+            }
+            window.setGyreTheme = function (value) {
+                pref = value;
+                try { localStorage.setItem("gyre-theme", value); } catch (e) {}
+                apply();
+            };
+            window.getGyreTheme = function () { return pref; };
+            // Chart.js no lee CSS: antes de crear un gráfico se le pasan los
+            // colores de texto y cuadrícula del tema actual.
+            window.applyChartTheme = function () {
+                if (!window.Chart) return;
+                var cs = getComputedStyle(document.documentElement);
+                Chart.defaults.color = cs.getPropertyValue("--color-text-muted").trim();
+                Chart.defaults.borderColor = cs.getPropertyValue("--border-subtle").trim();
+            };
+            apply();
+            if (mq && mq.addEventListener) mq.addEventListener("change", function () { if (pref === "auto") apply(); });
+            // Respaldo por si el sistema no avisa del cambio: se recalcula al
+            // volver a la app (p. ej. el móvil pasó a modo oscuro al anochecer).
+            document.addEventListener("visibilitychange", function () { if (!document.hidden) apply(); });
+            document.addEventListener("DOMContentLoaded", apply);
+        })();
+    </script>
     {% if title %}
         <title>{{ title }} - Gyre</title>
     {% else %}

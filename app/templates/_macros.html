@@ -1,5 +1,5 @@
 {% macro exercise_icon_fallback(size=56, radius=8) %}
-<div style="width:{{ size }}px; height:{{ size }}px; border-radius:{{ radius }}px; background:#ececf7; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+<div style="width:{{ size }}px; height:{{ size }}px; border-radius:{{ radius }}px; background:var(--icon-tile, #ececf7); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
     <img src="{{ url_for('static', filename='icons/logo-mark.png') }}" alt="" style="max-width:{{ (size * 0.6) | round | int }}px; max-height:{{ (size * 0.6) | round | int }}px; object-fit:contain;">
 </div>
 {% endmacro %}

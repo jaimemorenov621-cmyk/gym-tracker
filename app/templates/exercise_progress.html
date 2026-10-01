@@ -99,6 +99,7 @@
         (function () {
             const values = {{ chart_values|tojson }};
             const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 1 });
+            applyChartTheme();
             new Chart(document.getElementById('progressChart'), {
                 type: 'line',
                 data: {
@@ -124,8 +125,8 @@
                         tooltip: { callbacks: { label: c => '1RM ' + fmt(c.parsed.y) + ' kg' } }
                     },
                     scales: {
-                        x: { grid: { display: false }, ticks: { color: '#999', maxRotation: 0, autoSkipPadding: 12 } },
-                        y: { grid: { color: '#f0edfa' }, ticks: { color: '#999', callback: v => fmt(v) },
+                        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 12 } },
+                        y: { ticks: { callback: v => fmt(v) },
                              suggestedMin: Math.min(...values) * 0.95, suggestedMax: Math.max(...values) * 1.03 }
                     }
                 }

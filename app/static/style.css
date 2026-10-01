@@ -1,20 +1,56 @@
 :root {
-    /* Tokens usados por las reglas nuevas de esta hoja (rediseño piloto de
-    workout_detail.html) -- las reglas ya existentes se dejan con su hex tal
-    cual, no se migran de golpe. Ver plan de rediseño para el porqué. */
+    /* Tokens de color. Las superficies, textos y bordes neutros de toda la
+    hoja (salvo la landing, que es siempre clara) leen de aquí, para que el
+    modo oscuro sea un único bloque de valores (ver :root[data-theme="dark"]
+    más abajo). El tema lo fija el script del <head> de base.html. */
+    color-scheme: light;
     --color-brand: #7c4dff;
     --color-brand-dark: #5a4fcf;
+    --color-brand-deep: #3d2b8a;
+    --color-brand-soft: #6f62c4;
     --color-success: #22c98c;
     --color-success-dark: #17a973;
     --color-danger: #c62828;
     --color-neutral-bg: #f8f8fc;
     --color-text: #222;
-    --color-text-muted: #888;
+    --color-text-soft: #555;
+    /* #888 daba 3,5:1 sobre blanco (por debajo del 4,5:1 de WCAG AA para
+    texto pequeño); #6b6780 da 5,3:1. */
+    --color-text-muted: #6b6780;
     --color-border-soft: #e0d9ff;
     --color-surface-hover: #f5f3ff;
     --color-surface-active: #ece7ff;
+    --bg: #fff;
+    --surface: #fff;
+    --surface-2: #fcfbff;
+    --surface-3: #f8f7fd;
+    --border-subtle: #f0edfa;
+    --border-strong: #d9d2ff;
     --radius-card: 18px;
     --shadow-elevated: 0 8px 28px rgba(124, 77, 255, 0.18);
+}
+
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --color-brand: #9b7bff;
+    --color-brand-dark: #b9a8ff;
+    --color-brand-deep: #d6ccff;
+    --color-brand-soft: #a99de0;
+    --color-danger: #ff6b6b;
+    --color-neutral-bg: #1d1a2c;
+    --color-text: #ece9f7;
+    --color-text-soft: #c9c4dd;
+    --color-text-muted: #a49fbd;
+    --color-border-soft: #3a3260;
+    --color-surface-hover: #262141;
+    --color-surface-active: #2f2852;
+    --bg: #0f0d1a;
+    --surface: #1a1729;
+    --surface-2: #211d34;
+    --surface-3: #1f1b31;
+    --border-subtle: #2a2542;
+    --border-strong: #463c78;
+    --shadow-elevated: 0 8px 28px rgba(0, 0, 0, 0.45);
 }
 
 html {
@@ -37,7 +73,16 @@ body {
     max-width: 700px;
     margin: 0 auto;
     padding: 16px;
-    color: #222;
+    color: var(--color-text);
+    background: var(--bg);
+}
+html { background: var(--bg); }
+
+/* Foco visible al navegar con teclado (no aparece al tocar con el dedo). */
+a:focus-visible, button:focus-visible, select:focus-visible, summary:focus-visible,
+[role="button"]:focus-visible, input[type="checkbox"]:focus-visible {
+    outline: 3px solid rgba(124, 77, 255, 0.55);
+    outline-offset: 2px;
 }
 
 /* font-size 16px evita el zoom automático de iOS al enfocar el campo; width
@@ -54,7 +99,7 @@ textarea {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--color-border-soft);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-elevated);
@@ -93,7 +138,7 @@ textarea {
 
 .btn:disabled, button:disabled, input[type="submit"]:disabled {
     background: #ccc;
-    color: #888;
+    color: var(--color-text-muted);
     cursor: not-allowed;
     box-shadow: none;
 }
@@ -112,7 +157,7 @@ textarea {
     align-items: center;
     gap: 6px;
     background: transparent;
-    color: #555;
+    color: var(--color-text-soft);
     text-decoration: none;
     border-radius: 8px;
     padding: 8px 12px;
@@ -126,13 +171,13 @@ textarea {
 .btn-nav.btn-nav-danger { color: var(--color-danger); }
 .btn-nav.btn-nav-danger .icon { color: var(--color-danger); }
 @media (hover: hover) {
-    .btn-nav:hover { background: var(--color-surface-hover); color: #222; }
+    .btn-nav:hover { background: var(--color-surface-hover); color: var(--color-text); }
     .btn-nav.btn-nav-danger:hover { background: #fdecea; color: var(--color-danger); }
 }
 
 .card {
-    background: white;
-    border: 1px solid #ece7ff;
+    background: var(--surface);
+    border: 1px solid var(--color-surface-active);
     border-radius: 14px;
     padding: 16px 18px;
     margin-bottom: 14px;
@@ -176,13 +221,13 @@ textarea {
     border-left: 4px solid #7c4dff;
     background: #f2eefd;
 }
-.analysis-proximos-pasos h3 { color: #5a4fcf; }
+.analysis-proximos-pasos h3 { color: var(--color-brand-dark); }
 .analysis-proximos-pasos .analysis-placeholder { color: #6b5fa8; }
 
 .workout-card {
     display: block;
     background: var(--color-neutral-bg);
-    border: 1px solid #e0d9ff;
+    border: 1px solid var(--color-border-soft);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-elevated);
     padding: 14px 18px;
@@ -200,11 +245,11 @@ textarea {
 .workout-card .wc-title {
     font-weight: 700;
     font-size: 1.05rem;
-    color: #3d2b8a;
+    color: var(--color-brand-deep);
 }
 .workout-card .wc-date {
     font-size: 0.85rem;
-    color: #4a4a5a;
+    color: var(--color-text-soft);
     font-weight: 600;
     background: #ececf7;
     padding: 3px 10px;
@@ -215,8 +260,8 @@ textarea {
 .btn-outline {
     display: inline-block;
     padding: 5px 12px;
-    background: white;
-    color: #536dfe;
+    background: var(--surface);
+    color: #3d50d6;
     border: 1.5px solid #536dfe;
     border-radius: 8px;
     text-decoration: none;
@@ -233,8 +278,8 @@ textarea {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    background: white;
-    color: #3d2b8a;
+    background: var(--surface);
+    color: var(--color-brand-deep);
     border: 1.5px solid #7c4dff;
     padding: 10px 16px;
     border-radius: 10px;
@@ -256,7 +301,7 @@ textarea {
     display: inline-block;
 }
 @media (hover: hover) {
-    .active-toast:hover { background: #f5f3ff; color: #3d2b8a; }
+    .active-toast:hover { background: var(--color-surface-hover); color: var(--color-brand-deep); }
 }
 
 
@@ -264,8 +309,8 @@ textarea {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: white;
-    border: 1px solid #e0d9ff;
+    background: var(--surface);
+    border: 1px solid var(--color-border-soft);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-elevated);
     padding: 14px 18px;
@@ -273,7 +318,7 @@ textarea {
 }
 .drag-handle {
     cursor: grab;
-    color: #999;
+    color: var(--color-text-muted);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -283,8 +328,8 @@ textarea {
 }
 .pill {
     display: inline-block;
-    background: #f5f3ff;
-    color: #5a4fcf;
+    background: var(--color-surface-hover);
+    color: var(--color-brand-dark);
     padding: 4px 12px;
     border-radius: 999px;
     font-size: 0.85rem;
@@ -337,9 +382,9 @@ textarea {
     position: fixed;
     bottom: 90px;
     right: 20px;
-    background: white;
+    background: var(--surface);
     border: 1.5px solid #7c4dff;
-    color: #3d2b8a;
+    color: var(--color-brand-deep);
     padding: 8px 12px;
     border-radius: 16px;
     box-shadow: 0 6px 18px rgba(124,77,255,0.25);
@@ -406,9 +451,9 @@ textarea {
 }
 .rest-badge {
     display: inline-block;
-    background: #f5f3ff;
-    color: #5a4fcf;
-    border: 1px solid #d9d2ff;
+    background: var(--color-surface-hover);
+    color: var(--color-brand-dark);
+    border: 1px solid var(--border-strong);
     padding: 3px 10px;
     border-radius: 999px;
     font-size: 0.8rem;
@@ -417,7 +462,7 @@ textarea {
     white-space: nowrap;
 }
 @media (hover: hover) {
-    .rest-badge:hover { background: #ece7ff; }
+    .rest-badge:hover { background: var(--color-surface-active); }
 }
 
 
@@ -425,20 +470,20 @@ textarea {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: #f8f8fc;
+    background: var(--surface-3);
     border-radius: 8px;
     padding: 8px 12px;
     margin-bottom: 6px;
     font-size: 0.95rem;
 }
-.set-row .set-weight { font-weight: 700; color: #3d2b8a; min-width: 70px; }
+.set-row .set-weight { font-weight: 700; color: var(--color-brand-deep); min-width: 70px; }
 
 .form-table {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
     gap: 10px;
     align-items: end;
-    background: #f8f8fc;
+    background: var(--surface-3);
     padding: 14px;
     border-radius: 10px;
 }
@@ -454,13 +499,13 @@ textarea {
 }
 .set-table th {
     font-size: 0.75rem;
-    color: #999;
+    color: var(--color-text-muted);
     text-transform: uppercase;
     text-align: center;
     padding: 4px;
 }
 .set-table td { text-align: center; padding: 4px; }
-.set-table tr:nth-child(even) { background: #f8f8fc; }
+.set-table tr:nth-child(even) { background: var(--surface-3); }
 .cell-input {
     width: 55px;
     text-align: center;
@@ -481,8 +526,8 @@ select.cell-input {
     -webkit-appearance: menulist;
     appearance: menulist;
 }
-.cell-input:focus { background: #ece7ff; outline: none; }
-.set-num { font-weight: 700; color: #3d2b8a; position: relative; }
+.cell-input:focus { background: var(--color-surface-active); outline: none; }
+.set-num { font-weight: 700; color: var(--color-brand-deep); position: relative; }
 .pr-badge {
     display: flex;
     align-items: center;
@@ -496,7 +541,7 @@ select.cell-input {
     line-height: 1;
     box-shadow: 0 1px 3px rgba(255, 179, 0, 0.5);
 }
-.set-previous { font-size: 0.8rem; color: #999; white-space: nowrap; }
+.set-previous { font-size: 0.8rem; color: var(--color-text-muted); white-space: nowrap; }
 .delete-set-btn { background: none; border: none; color: #c62828; cursor: pointer; font-size: 0.9rem; }
 /* Tick de serie: antes era un círculo blanco vacío sin pista de qué hacía.
 Ahora muestra siempre el check (tenue sin marcar, blanco sobre degradado
@@ -511,7 +556,7 @@ al marcar) -- se entiende a la primera como "pulsa para completar". */
     padding: 0;
     border-radius: 10px;
     border: 2px solid #ddd7f3;
-    background: #fff;
+    background: var(--surface);
     color: #cfc8e8;
     cursor: pointer;
     box-shadow: none;
@@ -584,10 +629,10 @@ para que al tocar se abra el selector del sistema con los nombres enteros. */
     cursor: pointer;
     font-size: 16px;
 }
-.set-type-normal        { background: #f0eef7; color: #6b6780; }
-.set-type-calentamiento { background: #fff1db; color: #c26a00; }
+.set-type-normal        { background: #f0eef7; color: var(--color-text-muted); }
+.set-type-calentamiento { background: #fff1db; color: #9a5200; }
 .set-type-fallo         { background: #fde4e4; color: #c62828; }
-.set-type-dropset       { background: #dff3fb; color: #0277a0; }
+.set-type-dropset       { background: #dff3fb; color: #01628a; }
 .set-type-bump { transform: scale(1.15); }
 
 /* En móvil, la tabla de series no debe necesitar scroll horizontal -- se
@@ -664,20 +709,20 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 .action-menu-btn {
     background: none;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-subtle);
     border-radius: 8px;
     padding: 8px 14px;
     font-size: 1.1rem;
     cursor: pointer;
-    color: #555;
+    color: var(--color-text-soft);
 }
 .action-menu-content {
     display: none;
     position: absolute;
     bottom: 110%;
     right: 0;
-    background: white;
-    border: 1px solid #e0e0e0;
+    background: var(--surface);
+    border: 1px solid var(--border-subtle);
     border-radius: 10px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.15);
     min-width: 200px;
@@ -696,7 +741,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     padding: 12px 16px;
     font-size: 0.9rem;
     cursor: pointer;
-    color: #333;
+    color: var(--color-text);
     font-family: inherit;
 }
 @media (hover: hover) {
@@ -762,7 +807,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 
 .btn-danger-outline {
     display: inline-block;
-    background: white;
+    background: var(--surface);
     border: 1.5px solid #c62828;
     color: #c62828;
     font-size: 0.9rem;
@@ -780,8 +825,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 
 .dashboard-panel {
-    background: #fbfaff;
-    border: 1px solid #e0d9ff;
+    background: var(--surface-3);
+    border: 1px solid var(--color-border-soft);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-elevated);
     padding: 22px 24px;
@@ -793,7 +838,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #9a8fd6;
+    color: var(--color-brand-soft);
     margin-bottom: 14px;
 }
 .dash-metrics {
@@ -807,13 +852,13 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .dash-metric-value {
     font-size: 1.4rem;
     font-weight: 800;
-    color: #5a4fcf;
+    color: var(--color-brand-dark);
 }
 .dash-metric-primary .dash-metric-value { font-size: 2rem; }
-.dash-metric-soon .dash-metric-value { color: #b7b2c9; }
+.dash-metric-soon .dash-metric-value { color: var(--color-text-muted); }
 .dash-metric-label {
     font-size: 0.75rem;
-    color: #888;
+    color: var(--color-text-muted);
     margin-top: 2px;
 }
 @media (max-width: 600px) {
@@ -833,8 +878,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 .dash-muscle-map {
     flex: 0 0 50%;
-    background: white;
-    border: 1px solid #ece7ff;
+    background: var(--surface);
+    border: 1px solid var(--color-surface-active);
     border-radius: 14px;
     display: flex;
     flex-direction: column;
@@ -846,14 +891,14 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .mm-figure { width: 135px; height: auto; }
 .dash-muscle-caption {
     font-size: 0.68rem;
-    color: #aaa;
+    color: var(--color-text-muted);
     margin-top: 8px;
     text-align: center;
 }
 .dash-calendar {
     flex: 1;
-    background: white;
-    border: 1px solid #ece7ff;
+    background: var(--surface);
+    border: 1px solid var(--color-surface-active);
     border-radius: 14px;
     padding: 14px;
     overflow-x: auto;
@@ -865,11 +910,11 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     align-items: center;
     gap: 6px;
     background: none;
-    border: 1px dashed #d9d2ff;
+    border: 1px dashed var(--border-strong);
     border-radius: 10px;
     padding: 8px;
     margin-top: 14px;
-    color: #7c4dff;
+    color: var(--color-brand);
     font-size: 0.8rem;
     font-weight: 600;
 }
@@ -887,30 +932,30 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 .dash-weight {
     margin-top: 14px;
-    background: white;
-    border: 1px solid #ece7ff;
+    background: var(--surface);
+    border: 1px solid var(--color-surface-active);
     border-radius: 14px;
     padding: 10px 14px;
 }
 .dash-weight-empty {
     margin: 4px 0;
     font-size: 0.85rem;
-    color: #888;
+    color: var(--color-text-muted);
     text-align: center;
 }
-.dash-weight-empty a { color: #7c4dff; font-weight: 600; }
+.dash-weight-empty a { color: var(--color-brand); font-weight: 600; }
 
 .dash-notes {
     margin-top: 14px;
-    background: white;
-    border: 1px solid #ece7ff;
+    background: var(--surface);
+    border: 1px solid var(--color-surface-active);
     border-radius: 14px;
     padding: 10px 14px;
 }
 .dash-notes textarea {
     width: 100%;
     box-sizing: border-box;
-    border: 1px solid #ece7ff;
+    border: 1px solid var(--color-surface-active);
     border-radius: 8px;
     padding: 8px 10px;
     font-family: inherit;
@@ -918,17 +963,17 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     margin-bottom: 8px;
 }
 
-.calendar-grid { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 6px; }
+.calendar-grid { display: flex; gap: 3px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
 .calendar-col { display: flex; flex-direction: column; gap: 3px; }
 .calendar-col.new-month { margin-left: 8px; }
 .calendar-day {
     width: 22px; height: 22px; border-radius: 5px;
-    background: #ececf7;
+    background: var(--icon-tile, #ececf7);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.65rem;
-    color: #999;
+    color: var(--color-text-muted);
 }
 .calendar-day.trained { background: #22c98c; color: white; font-weight: 700; }
 .calendar-day.empty { background: transparent; }
@@ -945,7 +990,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     align-items: center;
     justify-content: center;
     gap: 10px;
-    background: white;
+    background: var(--surface);
     color: #3c4043;
     border: 1.5px solid #dadce0;
     border-radius: 8px;
@@ -972,7 +1017,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 
 .workout-meta {
-    background: #f5f3ff;
+    background: var(--color-surface-hover);
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
@@ -981,7 +1026,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     padding: 12px 16px;
 }
 .workout-meta .icon {
-    color: #726c8a; /* gris con un toque de morado, no un gris neutro puro -- contraste ~4.1:1 sobre el chip, verificado */
+    color: var(--color-text-muted); /* gris con un toque de morado, no un gris neutro puro -- contraste ~4.1:1 sobre el chip, verificado */
     background: rgba(124, 77, 255, 0.12);
     border-radius: 50%;
     padding: 4px;
@@ -1100,8 +1145,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
         left: 0;
         right: 0;
         bottom: 0;
-        background: white;
-        border-top: 1px solid #ece7ff;
+        background: var(--surface);
+        border-top: 1px solid var(--color-surface-active);
         box-shadow: 0 -2px 12px rgba(124, 77, 255, 0.08);
         padding: 6px 4px;
         padding-bottom: calc(6px + env(safe-area-inset-bottom));
@@ -1129,7 +1174,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     align-items: center;
     gap: 2px;
     padding: 6px 2px;
-    color: #888;
+    color: var(--color-text-muted);
     text-decoration: none;
     font-size: 0.68rem;
     background: none;
@@ -1162,7 +1207,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     align-items: center;
     gap: 2px;
     padding: 6px 2px;
-    color: #888;
+    color: var(--color-text-muted);
     background: none;
     border: none;
     cursor: pointer;
@@ -1176,7 +1221,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     bottom: 100%;
     right: 4px;
     margin-bottom: 8px;
-    background: white;
+    background: var(--surface);
     border: 1px solid var(--color-border-soft);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-elevated);
@@ -1250,7 +1295,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     right: 0;
     bottom: 0;
     z-index: 1001;
-    background: white;
+    background: var(--surface);
     border-radius: var(--radius-card) var(--radius-card) 0 0;
     box-shadow: var(--shadow-elevated);
     max-height: 85vh;
@@ -1290,14 +1335,14 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .sheet-close-btn {
     background: none;
     border: none;
-    color: #726c8a;
+    color: var(--color-text-muted);
     padding: 6px;
     border-radius: 50%;
     cursor: pointer;
     display: flex;
 }
 @media (hover: hover) {
-    .sheet-close-btn:hover { background: #f5f3ff; }
+    .sheet-close-btn:hover { background: var(--color-surface-hover); }
 }
 
 .bottom-sheet-search-wrap {
@@ -1310,14 +1355,14 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     left: 28px;
     top: 50%;
     transform: translateY(-50%);
-    color: #999;
+    color: var(--color-text-muted);
     pointer-events: none;
 }
 .bottom-sheet-search-input {
     width: 100%;
     box-sizing: border-box;
     padding: 10px 12px 10px 38px;
-    border: 1.5px solid #e0d9ff;
+    border: 1.5px solid var(--color-border-soft);
     border-radius: 10px;
     font-size: 1rem;
 }
@@ -1344,8 +1389,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 
 .effort-chip {
     display: inline-block;
-    background: #f5f3ff;
-    color: #5a4fcf;
+    background: var(--color-surface-hover);
+    color: var(--color-brand-dark);
     border: none;
     border-radius: 999px;
     padding: 4px 10px;
@@ -1366,7 +1411,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     background: transparent;
     color: var(--color-text-muted);
     opacity: 0.5;
-    border: 1.5px dashed #d9d2ff;
+    border: 1.5px dashed var(--border-strong);
 }
 @media (max-width: 600px) {
     .effort-chip { padding: 3px 6px; font-size: 0.7rem; min-width: 24px; }
@@ -1406,8 +1451,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    border: 1.5px solid #ece7ff;
-    background: white;
+    border: 1.5px solid var(--color-surface-active);
+    background: var(--surface);
     font-size: 1rem;
     font-weight: 700;
     font-family: inherit;
@@ -1434,9 +1479,9 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     padding: 10px 16px;
     cursor: pointer;
 }
-.exercise-result-row:focus-visible { background: #f5f3ff; }
+.exercise-result-row:focus-visible { background: var(--color-surface-hover); }
 @media (hover: hover) {
-    .exercise-result-row:hover { background: #f5f3ff; }
+    .exercise-result-row:hover { background: var(--color-surface-hover); }
 }
 .exercise-result-thumb {
     width: 44px;
@@ -1476,7 +1521,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .exercise-favorite-star.is-favorite .icon { fill: #ffb300; }
 
 .exercise-picker-footer {
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border-subtle);
     padding: 10px 16px;
 }
 
@@ -1493,7 +1538,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     margin-bottom: 10px;
     max-height: 140px;
     overflow-y: auto;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-subtle);
     border-radius: 6px;
     padding: 6px;
 }
@@ -1522,8 +1567,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     display: none;
     align-items: center;
     gap: 6px;
-    background: #f5f3ff;
-    color: #5a4fcf;
+    background: var(--color-surface-hover);
+    color: var(--color-brand-dark);
     padding: 4px 12px;
     border-radius: 999px;
     font-size: 0.85rem;
@@ -1547,7 +1592,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 .debug-error-banner button {
     margin-top: 8px;
-    background: white;
+    background: var(--surface);
     color: #a11f1f;
     border: none;
     border-radius: 8px;
@@ -1560,8 +1605,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: white;
-    color: #3d2b8a;
+    background: var(--surface);
+    color: var(--color-brand-deep);
     border: 1.5px solid #7c4dff;
     padding: 10px 18px;
     border-radius: 10px;
@@ -1581,7 +1626,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: white;
+    background: var(--surface);
     color: #a11f1f;
     border: 1.5px solid var(--color-danger);
     padding: 10px 18px;
@@ -1673,7 +1718,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .routine-block-details > summary::-webkit-details-marker { display: none; }
 /* Bloque blanco = "sin color": la mezcla con blanco daría un borde invisible. */
 .routine-block-details.block-neutral > summary {
-    background: #fff;
+    background: var(--surface);
     border-color: var(--color-border-soft);
 }
 .routine-block-details > summary .icon {
@@ -1700,7 +1745,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 .routine-block-color-input::-webkit-color-swatch { border: none; border-radius: 50%; }
 .routine-block-default-btn {
     background: none;
-    border: 1.5px solid #e0d9ff;
+    border: 1.5px solid var(--color-border-soft);
     border-radius: 999px;
     padding: 4px 10px;
     font-size: 0.72rem;
@@ -1774,7 +1819,7 @@ que falle o vaya lento, coste cero. */
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #9a8fd6;
+    color: var(--color-brand-soft);
     margin: 24px 0 10px;
 }
 
@@ -2134,7 +2179,7 @@ body.landing-page {
     padding: 7px 13px;
     border-radius: 999px;
     border: 1.5px solid var(--color-border-soft);
-    background: #fff;
+    background: var(--surface);
     color: var(--color-brand-dark);
     font-size: 0.85rem;
     font-weight: 600;
@@ -2156,7 +2201,7 @@ body.landing-page {
 .stats-footnote { margin: 10px 2px 16px; color: var(--color-text-muted); font-size: 0.78rem; line-height: 1.45; }
 .stats-daily { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .stats-daily th { text-align: right; color: var(--color-text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 6px 4px; }
-.stats-daily td { text-align: right; padding: 7px 4px; border-top: 1px solid #f0edfa; }
+.stats-daily td { text-align: right; padding: 7px 4px; border-top: 1px solid var(--border-subtle); }
 .stats-daily th:first-child, .stats-daily td:first-child { text-align: left; }
 .stats-daily td strong { color: var(--color-success-dark); }
 .stats-daily td:first-child strong { color: var(--color-brand-dark); }
@@ -2275,7 +2320,7 @@ sobrescribe explícitamente todo lo que pone la regla global de button. */
     width: 100%;
     margin: 0;
     padding: 16px 18px;
-    background: #faf9ff;
+    background: var(--surface-3);
     color: var(--color-brand-dark);
     border: 2px dashed #cbbfff;
     border-radius: var(--radius-card);
@@ -2530,7 +2575,7 @@ se puede pedir. */
 .ai-cta-body small { font-size: 0.78rem; }
 
 .ai-cta-locked {
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--color-border-soft);
     box-shadow: var(--shadow-elevated);
 }
@@ -2598,7 +2643,7 @@ Tarjeta centrada a juego con la landing: es el siguiente paso tras
     max-width: 400px;
     margin: 20px auto 40px;
     padding: 28px 22px 24px;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--color-border-soft);
     border-radius: 22px;
     box-shadow: var(--shadow-elevated);
@@ -2621,10 +2666,10 @@ Tarjeta centrada a juego con la landing: es el siguiente paso tras
     font-family: inherit;
     border: 1.5px solid var(--color-border-soft);
     border-radius: 12px;
-    background: #fcfbff;
+    background: var(--surface-2);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.auth-form input:focus { outline: none; border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.15); background: #fff; }
+.auth-form input:focus { outline: none; border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.15); background: var(--surface); }
 .auth-form input.auth-input-error { border-color: var(--color-danger); }
 .auth-error { color: var(--color-danger); font-size: 0.8rem; font-weight: 500; }
 .auth-form label.auth-check { flex-direction: row; align-items: center; gap: 8px; font-weight: 500; }
@@ -2770,7 +2815,7 @@ Continuar el entreno en curso / empezar la rutina que toca / entreno libre. */
     padding: 10px 12px;
     border: 1.5px solid var(--color-border-soft);
     border-radius: 12px;
-    background: #fff;
+    background: var(--surface);
     color: var(--color-brand-dark);
     font-family: inherit;
     font-size: 0.88rem;
@@ -2807,7 +2852,7 @@ Continuar el entreno en curso / empezar la rutina que toca / entreno libre. */
 }
 .onboarding-steps li.current { color: var(--color-text); }
 .onboarding-steps li.current strong { font-weight: 700; }
-.onboarding-steps li.current .onboarding-check { border-color: var(--color-brand); color: var(--color-brand); background: var(--color-surface-hover); }
+.onboarding-steps li.current .onboarding-check { border-color: var(--color-brand); color: var(--color-brand-dark); background: var(--color-surface-hover); }
 .onboarding-steps li.done strong { text-decoration: line-through; }
 .onboarding-steps li.done .onboarding-check { border: none; color: #fff; background: linear-gradient(135deg, #22c98c, #17a973); }
 
@@ -2865,7 +2910,7 @@ p.finish-compare.down { color: #ffb4b4; }
 .finish-warning { margin: 0 0 16px; padding: 12px 14px; border-radius: 14px; background: #fff8e1; border: 1px solid #ffe08a; color: #6b5200; font-size: 0.88rem; line-height: 1.45; }
 .finish-warning a { display: inline-block; margin-top: 6px; font-weight: 700; color: #6b5200; }
 .finish-prs h3 { margin: 0 0 10px; font-size: 1rem; }
-.finish-pr-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid #f0edfa; }
+.finish-pr-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border-subtle); }
 .finish-pr-row div { display: flex; flex-direction: column; min-width: 0; }
 .finish-pr-row small { color: var(--color-text-muted); }
 .finish-pr-row .finish-pr-share { margin: 0; flex-shrink: 0; }
@@ -2889,19 +2934,19 @@ button.rating-chip {
     height: 42px;
     border-radius: 10px;
     border: 1.5px solid var(--chip);
-    background: #fff;
-    color: var(--chip);
+    background: var(--surface);
+    color: var(--chip-text, var(--chip));
     font-family: inherit;
     font-size: 0.95rem;
     font-weight: 800;
     transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 }
-button.rating-chip.selected { background: var(--chip); color: #fff; transform: scale(1.06); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15); }
-.rating-1, .rating-2 { --chip: #e5484d; }
-.rating-3, .rating-4 { --chip: #f08c2e; }
-.rating-5, .rating-6 { --chip: #c9a400; }
-.rating-7, .rating-8 { --chip: #4cb35a; }
-.rating-9, .rating-10 { --chip: #17a973; }
+button.rating-chip.selected { background: var(--chip-text, var(--chip)); border-color: var(--chip-text, var(--chip)); color: #fff; transform: scale(1.06); box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15); }
+.rating-1, .rating-2 { --chip: #e5484d; --chip-text: #b8282d; }
+.rating-3, .rating-4 { --chip: #f08c2e; --chip-text: #9a5200; }
+.rating-5, .rating-6 { --chip: #c9a400; --chip-text: #7a6300; }
+.rating-7, .rating-8 { --chip: #4cb35a; --chip-text: #2a7a35; }
+.rating-9, .rating-10 { --chip: #17a973; --chip-text: #0f7d54; }
 .rating-scale-ends { display: flex; justify-content: space-between; color: var(--color-text-muted); font-size: 0.72rem; }
 .rating-desc { margin: 0; min-height: 2.6em; color: var(--color-text-muted); font-size: 0.86rem; line-height: 1.4; }
 .rating-desc strong { color: var(--color-text); }
@@ -2955,11 +3000,11 @@ a.progress-weight > .icon { color: var(--color-text-muted); }
     font-size: 16px;
     border: 1.5px solid var(--color-border-soft);
     border-radius: 12px;
-    background: #fff;
+    background: var(--surface);
 }
 .progress-search:focus { outline: none; border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.15); }
-.progress-list { list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid var(--color-border-soft); border-radius: var(--radius-card); box-shadow: var(--shadow-elevated); overflow: hidden; }
-.progress-list li + li { border-top: 1px solid #f0edfa; }
+.progress-list { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--color-border-soft); border-radius: var(--radius-card); box-shadow: var(--shadow-elevated); overflow: hidden; }
+.progress-list li + li { border-top: 1px solid var(--border-subtle); }
 a.progress-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; color: inherit; text-decoration: none; }
 @media (hover: hover) { a.progress-row:hover { background: var(--color-surface-hover); } }
 a.progress-row:active { background: var(--color-surface-active); }
@@ -2969,7 +3014,7 @@ a.progress-row:active { background: var(--color-surface-active); }
 .progress-main small { color: var(--color-text-muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .progress-figures { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; flex-shrink: 0; }
 .progress-figures strong { font-size: 1rem; font-weight: 800; color: var(--color-brand-dark); }
-.trend { font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted); padding: 2px 7px; border-radius: 999px; background: #f4f3f8; }
+.trend { font-size: 0.72rem; font-weight: 700; color: var(--color-text-muted); padding: 2px 7px; border-radius: 999px; background: var(--surface-3); }
 .trend-up { color: #13a06b; background: #e3f9ef; }
 .trend-down { color: #c62828; background: #fdecec; }
 .trend-stuck { color: #9a6700; background: #fff4d6; }
@@ -2984,7 +3029,7 @@ a.progress-row:active { background: var(--color-surface-active); }
 .exercise-title { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: -0.02em; }
 .exercise-title img { width: 64px; height: 64px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
 .exercise-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-.exercise-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 12px 4px; text-align: center; background: #fff; border: 1px solid var(--color-border-soft); border-radius: 14px; }
+.exercise-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 12px 4px; text-align: center; background: var(--surface); border: 1px solid var(--color-border-soft); border-radius: 14px; }
 .exercise-stats strong { font-size: 1.2rem; font-weight: 800; color: var(--color-brand-dark); white-space: nowrap; }
 .exercise-stats strong small { font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted); }
 .exercise-stats strong.up { color: #13a06b; }
@@ -3001,10 +3046,10 @@ a.progress-row:active { background: var(--color-surface-active); }
 .session-card-pr { border-color: rgba(34, 201, 140, 0.45); }
 .session-card-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .session-card-head > span { color: var(--color-text-muted); font-size: 0.82rem; }
-.session-pr-badge { color: #13a06b !important; font-weight: 700; }
+.session-pr-badge { color: #0f7d54 !important; font-weight: 700; }
 .session-1rm { margin-left: auto; font-weight: 700; color: var(--color-brand-dark) !important; }
 .session-sets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-.session-set { padding: 5px 10px; border-radius: 10px; background: #f6f5fb; font-size: 0.85rem; font-weight: 600; }
+.session-set { padding: 5px 10px; border-radius: 10px; background: var(--surface-3); font-size: 0.85rem; font-weight: 600; }
 .session-set small { color: var(--color-text-muted); font-weight: 500; }
 .session-set.best { background: var(--color-surface-active); color: var(--color-brand-dark); }
 @media (max-width: 340px) {
@@ -3045,7 +3090,7 @@ button.routine-start-btn:disabled { opacity: 0.35; box-shadow: none; cursor: not
     padding: 4px 8px 4px 9px;
     border-radius: 999px;
     border: 1.5px solid var(--color-border-soft);
-    background: #fff;
+    background: var(--surface);
     color: var(--color-text);
     font-size: 0.75rem;
     font-weight: 700;
@@ -3107,7 +3152,7 @@ de series ni el buscador de ejercicios, que tienen su propio estilo). */
     color: var(--color-text);
     border: 1.5px solid var(--color-border-soft);
     border-radius: 12px;
-    background-color: #fcfbff;
+    background-color: var(--surface-2);
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .form-ui textarea { resize: vertical; line-height: 1.45; }
@@ -3123,7 +3168,7 @@ de series ni el buscador de ejercicios, que tienen su propio estilo). */
     outline: none;
     border-color: var(--color-brand);
     box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.15);
-    background-color: #fff;
+    background-color: var(--surface);
 }
 .form-ui .input-short { max-width: 110px; }
 .form-ui .inline-inputs { display: flex; gap: 12px; }
@@ -3138,7 +3183,7 @@ de series ni el buscador de ejercicios, que tienen su propio estilo). */
     justify-content: space-between;
     gap: 14px;
     padding: 12px 0;
-    border-top: 1px solid #f0edfa;
+    border-top: 1px solid var(--border-subtle);
     font-size: 0.92rem;
     font-weight: 600;
     cursor: pointer;
@@ -3205,14 +3250,14 @@ a.routine-ex-name { flex: 1; min-width: 0; font-weight: 800; font-size: 1rem; co
     color: var(--color-brand-dark);
     border: 1.5px solid var(--color-border-soft);
     border-radius: 10px;
-    background: #fcfbff;
+    background: var(--surface-2);
     -moz-appearance: textfield;
     transition: border-color 0.2s ease, background 0.2s ease;
 }
 .plan-field input::-webkit-outer-spin-button,
 .plan-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .plan-field-reps input { width: 76px; }
-.plan-field input:focus { outline: none; border-color: var(--color-brand); background: #fff; box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.15); }
+.plan-field input:focus { outline: none; border-color: var(--color-brand); background: var(--surface); box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.15); }
 .plan-field span { font-size: 0.68rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
 .plan-x { align-self: center; margin-bottom: 18px; color: var(--color-text-muted); font-weight: 700; }
 .plan-field.saved input { border-color: var(--color-success); background: rgba(34, 201, 140, 0.08); }
@@ -3226,4 +3271,79 @@ a.routine-ex-rest { align-self: center; margin: 0 0 18px auto; }
     .routine-ex-plan { margin-left: 6px; gap: 6px; }
     .plan-field input { width: 48px; }
     .plan-field-reps input { width: 66px; }
+}
+
+/* ===== Fase 4: modo oscuro y accesibilidad ===== */
+.home-quote { color: var(--color-brand-dark); font-style: italic; font-weight: 600; margin: 4px 0 20px; }
+
+/* Ajustes de modo oscuro para los fondos de color "pastel" que en claro
+son tintes suaves y en oscuro serían manchas brillantes: en oscuro pasan a
+ser el mismo tono translúcido sobre la superficie, con el texto aclarado. */
+:root { --icon-tile: #ececf7; }
+:root[data-theme="dark"] { --icon-tile: #2a2545; }
+:root[data-theme="dark"] .btn-outline { color: #aab6ff; border-color: #5560d6; }
+:root[data-theme="dark"] .analysis-summary,
+:root[data-theme="dark"] .analysis-proximos-pasos { background: #241f3f; }
+:root[data-theme="dark"] .analysis-fortalezas { background: rgba(34, 201, 140, 0.12); }
+:root[data-theme="dark"] .analysis-areas-mejora { background: rgba(255, 107, 107, 0.12); }
+:root[data-theme="dark"] .workout-card .wc-date,
+:root[data-theme="dark"] .calendar-day:not(.trained):not(.empty),
+:root[data-theme="dark"] .exercise-result-thumb-fallback { background: var(--surface-3); }
+:root[data-theme="dark"] .pill-success { background: rgba(34, 201, 140, 0.15); }
+:root[data-theme="dark"] .flash { background: #2d2710; border-color: #6b5714; color: #f5d77a; }
+:root[data-theme="dark"] .bottom-nav-profile-btn.active .nav-icon-wrap,
+:root[data-theme="dark"] .bottom-nav-profile-btn.touch-pressed .nav-icon-wrap { background: var(--color-surface-active); }
+:root[data-theme="dark"] .bottom-sheet-grabber { background: var(--border-strong); }
+:root[data-theme="dark"] .effort-chip-empty { background: rgba(255, 107, 107, 0.12); color: #ff8a8a; }
+:root[data-theme="dark"] .set-type-normal { background: #2a2545; color: var(--color-text-muted); }
+:root[data-theme="dark"] .set-type-calentamiento { background: rgba(240, 140, 46, 0.18); color: #ffb066; }
+:root[data-theme="dark"] .set-type-fallo { background: rgba(255, 107, 107, 0.16); color: #ff8a8a; }
+:root[data-theme="dark"] .set-type-dropset { background: rgba(77, 184, 230, 0.16); color: #7fd3f5; }
+:root[data-theme="dark"] .workout-actions-menu .menu-item-delete,
+:root[data-theme="dark"] button.delete-tile { background: rgba(255, 107, 107, 0.12); }
+:root[data-theme="dark"] .finish-warning,
+:root[data-theme="dark"] .finish-hint { background: #2d2710; border-color: #5c4a12; color: #f2d27a; }
+:root[data-theme="dark"] .finish-warning a { color: #f2d27a; }
+:root[data-theme="dark"] .trend-up { background: rgba(34, 201, 140, 0.15); color: #5cf0b4; }
+:root[data-theme="dark"] .trend-down { background: rgba(255, 107, 107, 0.15); color: #ff8a8a; }
+:root[data-theme="dark"] .trend-stuck { background: rgba(240, 180, 0, 0.15); color: #f2c94c; }
+:root[data-theme="dark"] .trend { background: var(--surface-3); }
+:root[data-theme="dark"] .exercise-stats strong.up,
+:root[data-theme="dark"] .onboarding-steps li.done strong { color: #5cf0b4; }
+:root[data-theme="dark"] .exercise-stats strong.down { color: #ff8a8a; }
+@media (hover: hover) {
+    :root[data-theme="dark"] .btn-outline:hover,
+    :root[data-theme="dark"] .add-exercise-tile:hover,
+    :root[data-theme="dark"] .btn-google:hover { background: var(--color-surface-hover); }
+    :root[data-theme="dark"] .btn-icon:hover,
+    :root[data-theme="dark"] .btn-danger-outline:hover,
+    :root[data-theme="dark"] .btn-nav.btn-nav-danger:hover,
+    :root[data-theme="dark"] .workout-actions-menu .menu-item-delete:hover,
+    :root[data-theme="dark"] button.delete-tile:hover { background: rgba(255, 107, 107, 0.2); }
+    :root[data-theme="dark"] .set-check-btn:hover { background: rgba(34, 201, 140, 0.12); }
+}
+
+/* Zonas táctiles: iconos pequeños con un área de toque invisible de al
+menos ~44 px, sin cambiar su tamaño ni la maquetación de la tabla. */
+.btn-icon, .delete-set-btn, .drag-handle, .routine-pin-btn, .workout-rename-btn,
+.sheet-close-btn, .pr-badge[role="button"] { position: relative; }
+.btn-icon::after, .delete-set-btn::after, .drag-handle::after, .routine-pin-btn::after,
+.sheet-close-btn::after, .pr-badge[role="button"]::after {
+    content: "";
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+}
+:root[data-theme="dark"] button.rating-chip { --chip-text: var(--chip); }
+:root[data-theme="dark"] button.rating-chip.selected { background: var(--chip); border-color: var(--chip); color: #12101f; }
+:root[data-theme="dark"] .session-pr-badge { color: #5cf0b4 !important; }
+:root[data-theme="dark"] .workout-card .wc-date { background: var(--surface-3); color: var(--color-text-soft); }
+:root[data-theme="dark"] .rating-1, :root[data-theme="dark"] .rating-2 { --chip: #ff6b70; }
+/* Campos sueltos fuera de .form-ui: mismo fondo y texto que el resto en ambos temas. */
+.finish-form textarea, .duration-inputs input, .progress-search, .ai-request-form textarea,
+.auth-form input[type="text"], .auth-form input[type="email"], .auth-form input[type="password"] {
+    background-color: var(--surface-2);
+    color: var(--color-text);
 }

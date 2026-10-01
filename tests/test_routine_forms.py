@@ -146,5 +146,16 @@ class FormPagesRenderTests(DbTestCase):
         self.assertIn('class="toggle"', self.client.get("/settings").get_data(as_text=True))
 
 
+class ThemeTests(DbTestCase):
+    def test_app_pages_follow_preference_and_landing_is_locked_light(self):
+        uid = self.make_user("atleta")
+        landing = self.client.get("/?no_contar=1").get_data(as_text=True)
+        self.assertIn('var lock = "light";', landing)
+        self.login(uid)
+        page = self.client.get("/settings").get_data(as_text=True)
+        self.assertIn('var lock = "";', page)
+        self.assertIn('id="themeSelect"', page)
+
+
 if __name__ == "__main__":
     unittest.main()

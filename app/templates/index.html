@@ -2,7 +2,7 @@
 {% import "_macros.html" as macros %}
 {% block content %}
     <h1 style="font-weight:800; letter-spacing:-0.02em;">Mis entrenamientos</h1>
-    <p style="color:#5a4fcf; font-style:italic; font-weight:600; margin:4px 0 20px;">
+    <p class="home-quote">
         "Lo que no se mide, no se puede mejorar."
     </p>
 
@@ -247,6 +247,7 @@
         let weightMiniChart = null;
         function createWeightChart() {
             if (weightMiniChart || typeof weightChartData === 'undefined') return;
+            applyChartTheme();
             weightMiniChart = new Chart(document.getElementById('weightMiniChart'), {
                 type: 'line',
                 data: {
@@ -279,8 +280,17 @@
                 } else {
                     createWeightChart();
                 }
+                scrollCalendarToToday();
             }
         }
+
+        // El calendario es más ancho que su hueco: sin esto se abría por la
+        // izquierda (hace 3 meses) y la semana actual quedaba oculta.
+        function scrollCalendarToToday() {
+            const grid = document.querySelector('.calendar-grid');
+            if (grid) grid.scrollLeft = grid.scrollWidth;
+        }
+        scrollCalendarToToday();
 
         document.addEventListener('DOMContentLoaded', function () {
             const dashWeight = document.getElementById('dashWeight');

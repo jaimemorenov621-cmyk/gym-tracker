@@ -1,6 +1,22 @@
 {% extends "base.html" %}
 {% block content %}
     <h1 class="page-title">Configuración</h1>
+
+    {# Apariencia: preferencia de este dispositivo (localStorage), no de la cuenta. #}
+    <div class="form-ui card card-elevated">
+        <h3 class="form-section-title">Apariencia</h3>
+        <div class="field">
+            <label class="field-label" for="themeSelect">Tema</label>
+            <select id="themeSelect" onchange="setGyreTheme(this.value)">
+                <option value="auto">Automático (como el móvil)</option>
+                <option value="light">Claro</option>
+                <option value="dark">Oscuro</option>
+            </select>
+            <small class="field-help">Se guarda en este dispositivo y se aplica al momento.</small>
+        </div>
+    </div>
+    <script>document.getElementById('themeSelect').value = getGyreTheme();</script>
+
     <form action="" method="post" class="form-ui">
         {{ form.hidden_tag() }}
 
