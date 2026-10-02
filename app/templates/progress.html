@@ -18,6 +18,92 @@
         {{ macros.icon('chevron-right', 20) }}
     </a>
 
+    <div class="card card-elevated strength-card" id="fuerza">
+        <div class="strength-head">
+            <div>
+                <h2>Fuerza</h2>
+                <p>Índice de todos tus ejercicios · 100 = tu primera semana</p>
+            </div>
+            {% if strength %}
+                <div class="strength-pct {{ 'up' if strength.pct >= 0.5 else ('down' if strength.pct <= -0.5 else '') }}">
+                    <strong>{{ '+' if strength.pct >= 0.5 }}{{ strength.pct|num }} %</strong>
+                    <span>{{ 'en 4 semanas' if strength.weeks == 4 else ('en 1 semana' if strength.weeks == 1 else 'en ' ~ strength.weeks ~ ' semanas') }}</span>
+                </div>
+            {% endif %}
+        </div>
+        {% if strength %}
+            <div class="chart-box strength-chart"><canvas id="strengthChart"></canvas></div>
+            {% set ups = strength.movers|selectattr('pct', 'ge', 0.5)|list %}
+            {% set downs = strength.movers|selectattr('pct', 'le', -0.5)|list|reverse|list %}
+            {% if ups or downs %}
+                <div class="strength-movers">
+                    {% if ups %}
+                        <div>
+                            <h3>Más suben</h3>
+                            {% for m in ups[:3] %}
+                                <a href="{{ url_for('exercise_progress', name=m.exercise) }}"><span>{{ m.exercise|title }}</span><b class="up">+{{ m.pct|num }} %</b></a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    {% if downs %}
+                        <div>
+                            <h3>Bajan</h3>
+                            {% for m in downs[:3] %}
+                                <a href="{{ url_for('exercise_progress', name=m.exercise) }}"><span>{{ m.exercise|title }}</span><b class="down">{{ m.pct|num }} %</b></a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+            <details class="strength-how">
+                <summary>¿Cómo se calcula?</summary>
+                <p>
+                    Cada semana comparamos el 1RM estimado de cada ejercicio que hiciste con la vez anterior que lo
+                    hiciste, y hacemos la media de esos cambios. Así un ejercicio nuevo no hunde ni infla el índice,
+                    y una sesión floja seguida de una normal se compensa. Los cambios de más de un 20-25 % de una
+                    vez se recortan, por si hay algún peso mal apuntado.
+                </p>
+            </details>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                (function () {
+                    const values = {{ strength_values|tojson }};
+                    const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 1 });
+                    applyChartTheme();
+                    new Chart(document.getElementById('strengthChart'), {
+                        type: 'line',
+                        data: {
+                            labels: {{ strength_labels|tojson }},
+                            datasets: [{
+                                data: values,
+                                borderColor: '#7c4dff',
+                                borderWidth: 3,
+                                backgroundColor: 'rgba(124, 77, 255, 0.10)',
+                                fill: true,
+                                pointRadius: 0,
+                                pointHitRadius: 12,
+                                tension: 0.3
+                            }]
+                        },
+                        options: {
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { callbacks: { title: c => 'Semana del ' + c[0].label, label: c => 'Índice ' + fmt(c.parsed.y) } }
+                            },
+                            scales: {
+                                x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 14 } },
+                                y: { ticks: { callback: v => fmt(v) } }
+                            }
+                        }
+                    });
+                })();
+            </script>
+        {% else %}
+            <p class="progress-footnote" style="margin:8px 0 0;">Con al menos 2 semanas de entrenos verás aquí cómo evoluciona tu fuerza.</p>
+        {% endif %}
+    </div>
+
     {% if items %}
         <div class="progress-toolbar">
             <h2>Tus ejercicios <span>{{ items|length }}</span></h2>

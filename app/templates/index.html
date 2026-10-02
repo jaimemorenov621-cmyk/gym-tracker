@@ -19,6 +19,30 @@
                 </span>
                 <span class="home-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
             </a>
+        {% elif home_cta.kind in ('done', 'rest') %}
+            {% set r = home_cta.routine %}
+            <div class="home-cta-calm {{ 'is-done' if home_cta.kind == 'done' else 'is-rest' }}">
+                <span class="home-cta-icon">{% if home_cta.kind == 'done' %}{{ macros.icon('check', 22) }}{% else %}<span aria-hidden="true">🌙</span>{% endif %}</span>
+                <span class="home-cta-text">
+                    <strong>{{ 'Entreno de hoy hecho' if home_cta.kind == 'done' else 'Hoy toca descanso' }}</strong>
+                    <span>
+                        {% if r %}Próximo: {{ r.name }}{% if home_cta.kind == 'rest' and home_cta.next_day %}, {{ home_cta.next_day }}{% endif %}
+                        {% elif home_cta.kind == 'done' %}Buen trabajo. A recuperar.{% else %}Recupera para el próximo entreno.{% endif %}
+                    </span>
+                </span>
+            </div>
+            <div class="home-cta-secondary">
+                {% if r %}
+                    <form action="{{ url_for('start_routine', routine_id=r.id) }}" method="post">
+                        {{ empty_form.hidden_tag() }}
+                        <button type="submit">{{ 'Entrenar igualmente' if home_cta.kind == 'rest' else 'Empezar ' ~ r.name }}</button>
+                    </form>
+                {% endif %}
+                <form action="{{ url_for('new_workout') }}" method="post">
+                    {{ empty_form.hidden_tag() }}
+                    <button type="submit">Entreno libre</button>
+                </form>
+            </div>
         {% elif home_cta.kind == 'routine' %}
             {% set r = home_cta.routine %}
             <form action="{{ url_for('start_routine', routine_id=r.id) }}" method="post">
@@ -26,7 +50,7 @@
                 <button type="submit" class="home-cta-main">
                     <span class="home-cta-icon">{{ macros.icon('play', 22) }}</span>
                     <span class="home-cta-text">
-                        <small>{% if r.block %}<i class="home-cta-dot" style="--dot: {{ r.block.color }};"></i>{{ r.block.name }} · {% endif %}Hoy toca</small>
+                        <small>{% if r.block %}<i class="home-cta-dot" style="--dot: {{ r.block.color }};"></i>{{ r.block.name }} · {% endif %}{{ 'Hoy toca' if home_cta.is_training_day else 'Siguiente entreno' }}</small>
                         <strong>Empezar {{ r.name }}</strong>
                         <span>{{ home_cta.exercise_count }} ejercicio{{ '' if home_cta.exercise_count == 1 else 's' }}</span>
                     </span>
@@ -40,6 +64,9 @@
                     <button type="submit">Entreno libre</button>
                 </form>
             </div>
+            {% if not home_cta.is_training_day %}
+                <p class="home-cta-hint"><a href="{{ url_for('settings') }}">Marca qué días entrenas</a> y te diré cuándo toca descanso.</p>
+            {% endif %}
         {% else %}
             <form action="{{ url_for('new_workout') }}" method="post">
                 {{ empty_form.hidden_tag() }}
@@ -82,44 +109,57 @@
 
     <div class="dashboard-panel">
         <span class="dash-eyebrow">Resumen de entrenamiento</span>
-        <div class="dash-metrics">
-            <div class="dash-metric dash-metric-primary">
-                <span class="dash-metric-value">{{ total_workouts }}</span>
-                <span class="dash-metric-label">Entrenamientos</span>
-            </div>
-            <div class="dash-metric">
-                <span class="dash-metric-value">🔥 {{ streak.days }}</span>
-                <span class="dash-metric-label">Racha (días)</span>
-                <span class="dash-metric-sub{% if streak.this_week >= streak.minimum %} ok{% endif %}"
-                      title="Días entrenados esta semana / mínimo para mantener la racha">
-                    {{ streak.this_week }}/{{ streak.minimum }} esta semana
+        <div class="dash-tiles">
+            <div class="dash-tile dash-tile-streak">
+                <span class="dash-tile-head"><span class="dash-tile-icon" aria-hidden="true">🔥</span>Racha</span>
+                <strong class="dash-tile-value">{{ streak.days }}<small> día{{ '' if streak.days == 1 else 's' }}</small></strong>
+                <span class="week-dots" aria-label="Días entrenados esta semana">
+                    {% for d in streak.week %}
+                        <span class="week-dot{% if d.trained %} on{% endif %}{% if d.today %} today{% endif %}{% if d.planned %} planned{% endif %}"
+                              title="{{ d.letter }}{% if d.trained %} · entrenado{% elif d.planned %} · día de entreno{% endif %}">{{ d.letter }}</span>
+                    {% endfor %}
+                </span>
+                <span class="dash-tile-sub{% if streak.this_week >= streak.minimum %} ok{% endif %}">
+                    {% if streak.this_week >= streak.minimum %}✓ Mínimo semanal cumplido{% else %}{{ streak.this_week }} de {{ streak.minimum }} días mínimos esta semana{% endif %}
                 </span>
             </div>
-            {% if strength_change is not none %}
-                <div class="dash-metric">
-                    <span class="dash-metric-value">
-                        {% if strength_change > 0.5 %}↗{% elif strength_change < -0.5 %}↘{% else %}→{% endif %}
-                        {{ "%+.0f"|format(strength_change) }}%
+
+            <a class="dash-tile" href="{{ url_for('progress') }}#fuerza">
+                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('trending-up', 15) }}</span>Fuerza</span>
+                {% if strength %}
+                    <strong class="dash-tile-value {{ 'up' if strength.pct >= 0.5 else ('down' if strength.pct <= -0.5 else '') }}">
+                        {{ '+' if strength.pct >= 0.5 }}{{ strength.pct|num }}<small> %</small>
+                    </strong>
+                    {% if strength_spark %}
+                        <svg class="dash-spark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true">
+                            <polyline points="{{ strength_spark }}" fill="none" vector-effect="non-scaling-stroke"/>
+                        </svg>
+                    {% endif %}
+                    <span class="dash-tile-sub">{{ 'últimas 4 semanas' if strength.weeks == 4 else ('última semana' if strength.weeks == 1 else 'últimas ' ~ strength.weeks ~ ' semanas') }}</span>
+                {% else %}
+                    <strong class="dash-tile-value is-empty">—</strong>
+                    <span class="dash-tile-sub">Con 2 semanas de entrenos verás tu evolución</span>
+                {% endif %}
+            </a>
+
+            <div class="dash-tile">
+                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('calendar', 15) }}</span>Entrenos</span>
+                <strong class="dash-tile-value">{{ total_workouts }}</strong>
+                <span class="dash-tile-sub">{{ workouts_this_month }} este mes</span>
+            </div>
+
+            <a class="dash-tile" href="{{ url_for('weight') }}">
+                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('scale', 15) }}</span>Peso</span>
+                {% if latest_weight %}
+                    <strong class="dash-tile-value">{{ latest_weight.weight|num }}<small> kg</small></strong>
+                    <span class="dash-tile-sub">
+                        {% if weight_change is not none %}{{ '▲ +' if weight_change > 0 else ('▼ ' if weight_change < 0 else '= ') }}{{ weight_change|num }} kg en 30 días{% else %}{{ latest_weight.timestamp|relative_day|capitalize }}{% endif %}
                     </span>
-                    <span class="dash-metric-label">Fuerza ({{ strength_window_days }} días)</span>
-                </div>
-            {% else %}
-                <div class="dash-metric dash-metric-soon">
-                    <span class="dash-metric-value">—</span>
-                    <span class="dash-metric-label">Fuerza</span>
-                </div>
-            {% endif %}
-            {% if latest_weight %}
-                <div class="dash-metric">
-                    <span class="dash-metric-value">{{ latest_weight.weight|num }} kg</span>
-                    <span class="dash-metric-label">Peso</span>
-                </div>
-            {% else %}
-                <div class="dash-metric dash-metric-soon">
-                    <span class="dash-metric-value">—</span>
-                    <span class="dash-metric-label">Peso sin registrar</span>
-                </div>
-            {% endif %}
+                {% else %}
+                    <strong class="dash-tile-value is-empty">—</strong>
+                    <span class="dash-tile-sub">Registrar peso →</span>
+                {% endif %}
+            </a>
         </div>
         <div class="dash-body">
             <div class="dash-muscle-map">
@@ -142,20 +182,8 @@
                     .mm-pantorrillas { fill: {{ muscle_colors.pantorrillas }}; }
                 </style>
                 <div class="mm-row">
-                    <svg viewBox="0 0 724 1448" aria-hidden="true" class="mm-figure">
-                        {% for part in muscle_svg.front %}
-                            {% for d in part.paths %}
-                                <path class="{{ 'mm-' + part.group if part.group else 'mm-neutral' }}" d="{{ d }}"/>
-                            {% endfor %}
-                        {% endfor %}
-                    </svg>
-                    <svg viewBox="724 0 724 1448" aria-hidden="true" class="mm-figure">
-                        {% for part in muscle_svg.back %}
-                            {% for d in part.paths %}
-                                <path class="{{ 'mm-' + part.group if part.group else 'mm-neutral' }}" d="{{ d }}"/>
-                            {% endfor %}
-                        {% endfor %}
-                    </svg>
+                    <svg viewBox="0 0 724 1448" aria-hidden="true" class="mm-figure">{{ muscle_svg.front }}</svg>
+                    <svg viewBox="724 0 724 1448" aria-hidden="true" class="mm-figure">{{ muscle_svg.back }}</svg>
                 </div>
                 <span class="dash-muscle-caption">Frente · Espalda — últimos 14 días</span>
             </div>

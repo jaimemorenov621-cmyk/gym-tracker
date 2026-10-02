@@ -11,7 +11,7 @@ from tests.dbcase import DbTestCase  # antes que `app`: fija la BD en memoria
 
 from app import app, db
 from app.models import SetEntry, Workout
-from app.routes import estimated_1rm, fmt_num, progress_overview, relative_day
+from app.routes import estimated_1rm, fmt_num, progress_overview, relative_day, strength_progress
 
 
 class FmtNumTests(unittest.TestCase):
@@ -101,6 +101,50 @@ class ProgressOverviewTests(DbTestCase):
         self.assertIn("exercise-stats", html)
         self.assertIn("102,5 kg", html)
         self.assertNotIn("102.5kg", html)
+
+
+class StrengthIndexTests(ProgressOverviewTests):
+    def test_single_exercise_index_equals_ratio(self):
+        self.add(35, "sentadilla", 100, 5)
+        self.add(1, "sentadilla", 110, 5)
+        with app.app_context():
+            st = strength_progress(self.uid)
+        self.assertAlmostEqual(st["series"][-1][1], 110.0, places=3)
+
+    def test_new_exercise_does_not_move_index(self):
+        self.add(21, "sentadilla", 100, 5)
+        self.add(14, "sentadilla", 100, 5)
+        self.add(7, "curl", 20, 10)        # entra nuevo: no compara con nada
+        with app.app_context():
+            st = strength_progress(self.uid)
+        self.assertAlmostEqual(st["series"][-1][1], 100.0, places=3)
+
+    def test_bad_then_normal_session_cancels_out(self):
+        self.add(21, "sentadilla", 100, 5)
+        self.add(14, "sentadilla", 90, 5)
+        self.add(7, "sentadilla", 100, 5)
+        with app.app_context():
+            st = strength_progress(self.uid)
+        self.assertAlmostEqual(st["series"][-1][1], 100.0, places=3)
+
+    def test_outlier_is_capped(self):
+        self.add(14, "sentadilla", 100, 5)
+        self.add(7, "sentadilla", 300, 5)   # peso mal apuntado
+        with app.app_context():
+            st = strength_progress(self.uid)
+        self.assertAlmostEqual(st["series"][-1][1], 125.0, places=3)
+
+    def test_needs_two_weeks_and_reports_movers(self):
+        self.add(1, "sentadilla", 100, 5)
+        with app.app_context():
+            self.assertIsNone(strength_progress(self.uid))
+        self.add(35, "press", 60, 5)
+        self.add(2, "press", 66, 5)
+        with app.app_context():
+            st = strength_progress(self.uid)
+        self.assertEqual(st["weeks"], 4)
+        self.assertEqual(st["movers"][0]["exercise"], "press")
+        self.assertAlmostEqual(st["movers"][0]["pct"], 10.0, places=3)
 
 
 if __name__ == "__main__":

@@ -116,7 +116,7 @@ class StreakSettingsTests(DbTestCase):
             row = db.session.scalar(sa.select(WeeklyGoalHistory).where(WeeklyGoalHistory.user_id == uid))
             self.assertEqual(row.goal, 2)
         html = self.client.get("/index").get_data(as_text=True)
-        self.assertIn("0/2 esta semana", html)
+        self.assertIn("0 de 2 días mínimos esta semana", html)
         self.assertEqual(self.client.post("/settings", data={**data, "weekly_workout_goal": 9}).status_code, 200)
 
 

@@ -178,5 +178,15 @@ class ShareSetTests(DbTestCase):
         self.assertIsNone(data["improvement"])
 
 
+class LanguageTests(DbTestCase):
+    def test_browser_language_saved(self):
+        self.client.get("/", headers={"Accept-Language": "en-US,en;q=0.9,es;q=0.8"})
+        self.client.get("/", headers={"Accept-Language": "es-ES"})
+        self.client.get("/", headers={"Accept-Language": "*"})
+        with app.app_context():
+            langs = db.session.scalars(sa.select(LandingEvent.language).order_by(LandingEvent.id)).all()
+        self.assertEqual(langs, ["en", "es", None])
+
+
 if __name__ == "__main__":
     unittest.main()

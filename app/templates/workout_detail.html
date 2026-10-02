@@ -171,7 +171,7 @@
                     <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}"{% if s.completed %} class="set-row-done"{% endif %}>
                         <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" role="button" tabindex="0" title="Récord personal · toca para compartir" aria-label="Récord personal, compartir">🏅</span>{% endif %}</td>
                         <td class="set-previous">{{ p.label if p else "—" }}</td>
-                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="Peso en kg, serie {{ loop.index }}" value="{{ '' if ghost else ('%g' % s.weight) }}"{% if ghost %} placeholder="{{ '%g' % p.weight }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
+                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="Peso en kg, serie {{ loop.index }}" value="{{ '' if ghost else ('%g' % s.weight).replace('.', ',') }}"{% if ghost %} placeholder="{{ ('%g' % p.weight).replace('.', ',') }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
                         <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="Repeticiones, serie {{ loop.index }}" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
                         {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
@@ -572,9 +572,9 @@
                 const previousLabel = (prevEntry && prevEntry.label) || '—';
                 const untouched = !lastRowDone && lastWeight === '' && lastReps === '';
                 const ghost = untouched && !!prevEntry;
-                const weightValue = ghost ? '' : (lastWeight === '' ? '0' : lastWeight);
+                const weightValue = ghost ? '' : (lastWeight === '' ? '0' : String(lastWeight).replace('.', ','));
                 const repsValue = ghost ? '' : (lastReps === '' ? '0' : lastReps);
-                const weightPlaceholder = ghost ? prevEntry.weight : '';
+                const weightPlaceholder = ghost ? String(prevEntry.weight).replace('.', ',') : '';
                 const repsPlaceholder = ghost ? prevEntry.reps : '';
                 {% if effort_scale != 'none' %}
                 const effortGhost = lastEffort === '' && prevEntry && prevEntry.effort != null && prevEntry.effort_scale === '{{ effort_scale }}';

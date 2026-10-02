@@ -47,7 +47,16 @@
         <title>Gyre</title>
     {% endif %}
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="manifest" href="/static/manifest.json">
+    {# Cambio de pestaña más rápido: Chrome empieza a cargar la pestaña en
+    cuanto el dedo toca el enlace ("conservative" = al pulsar, no antes, para
+    no mostrar datos viejos). Nunca /logout: precargarlo cerraría la sesión. #}
+    <script type="speculationrules">
+    {"prerender": [{"where": {"and": [
+        {"selector_matches": ".bottom-nav a, .top-nav-app a.btn-nav"},
+        {"not": {"href_matches": "/logout"}}
+    ]}, "eagerness": "conservative"}]}
+    </script>
     <link rel="icon" href="{{ url_for('static', filename='icons/favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
     <meta name="theme-color" content="#7c4dff">
@@ -221,6 +230,9 @@
         });
         window.addEventListener('unhandledrejection', function (e) {
             const reason = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+            // La transición entre páginas (@view-transition) rechaza su promesa
+            // interna si se navega antes de que termine: es normal, no un fallo.
+            if (e.reason && (e.reason.name === 'AbortError' || /transition/i.test(reason))) return;
             showDebugError('Promesa sin capturar: ' + reason);
         });
 

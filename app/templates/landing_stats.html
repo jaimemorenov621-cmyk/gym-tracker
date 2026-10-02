@@ -70,6 +70,31 @@
     </div>
 
     <div class="card card-elevated" style="margin-top:16px;">
+        <h3 style="margin-top:0;">Idioma del navegador</h3>
+        {% if by_language %}
+            <table class="stats-daily">
+                <thead><tr><th>Idioma</th><th>Visitas</th><th>% visitas</th><th>Clics</th></tr></thead>
+                <tbody>
+                    {% for name, d in by_language %}
+                        <tr>
+                            <td>{% if name %}<strong>{{ name }}</strong>{% else %}<span class="stats-muted">desconocido</span>{% endif %}</td>
+                            <td>{{ d.visits }}</td>
+                            <td>{% if name and known_language_visits %}{{ (100 * d.visits / known_language_visits)|round|int }}%{% else %}—{% endif %}</td>
+                            <td>{{ d.clicks }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="stats-footnote" style="margin-bottom:0;">
+                El % se calcula sobre las visitas con idioma conocido (se guarda desde el 02/10/2026).
+                Si los idiomas distintos del español pasan del 25-30 %, merece la pena traducir la app.
+            </p>
+        {% else %}
+            <p><em>Sin datos en este periodo.</em></p>
+        {% endif %}
+    </div>
+
+    <div class="card card-elevated" style="margin-top:16px;">
         <h3 style="margin-top:0;">Día a día</h3>
         {% if daily %}
             <table class="stats-daily">

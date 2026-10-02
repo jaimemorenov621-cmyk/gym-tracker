@@ -67,7 +67,20 @@
         </div>
 
         <div class="card card-elevated">
-            <h3 class="form-section-title">Racha</h3>
+            <h3 class="form-section-title">Semana de entreno</h3>
+            <div class="field">
+                <span class="field-label">{{ form.training_days.label.text }}</span>
+                <div class="day-chips">
+                    {% for day in form.training_days %}
+                        <label class="day-chip">{{ day() }}<span>{{ day.label.text }}</span></label>
+                    {% endfor %}
+                </div>
+                <small class="field-help">
+                    Opcional. Inicio te dirá si hoy toca entrenar o descansar. No afecta a la racha:
+                    si cambias un día por otro, no pasa nada.
+                </small>
+            </div>
+
             <div class="field">
                 <label class="field-label" for="{{ form.weekly_workout_goal.id }}">{{ form.weekly_workout_goal.label.text }}</label>
                 {{ form.weekly_workout_goal(inputmode="numeric", class="input-short", placeholder="1", min=1, max=7) }}

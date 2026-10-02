@@ -9,7 +9,9 @@ from wtforms import (
     SelectField,
     TextAreaField,
     HiddenField,
+    SelectMultipleField,
 )
+from wtforms.widgets import CheckboxInput, ListWidget
 
 
 class CommaFloatField(FloatField):
@@ -147,6 +149,14 @@ class SettingsForm(FlaskForm):
             ("perdida_grasa", "Pérdida de grasa"),
         ],
         validators=[Optional()],
+    )
+    training_days = SelectMultipleField(
+        "Días que sueles entrenar",
+        choices=[(0, "L"), (1, "M"), (2, "X"), (3, "J"), (4, "V"), (5, "S"), (6, "D")],
+        coerce=int,
+        validators=[Optional()],
+        widget=ListWidget(prefix_label=False),
+        option_widget=CheckboxInput(),
     )
     weekly_workout_goal = IntegerField(
         "Mínimo de días por semana para no perder la racha",

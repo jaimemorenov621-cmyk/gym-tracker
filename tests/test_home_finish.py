@@ -12,7 +12,7 @@ from tests.dbcase import DbTestCase  # antes que `app`: fija la BD en memoria
 import sqlalchemy as sa
 
 from app import app, db
-from app.models import Routine, RoutineBlock, RoutineExercise, SetEntry, Workout
+from app.models import Routine, RoutineBlock, RoutineExercise, SetEntry, User, Workout
 from app.routes import (
     default_workout_name,
     estimate_workout_end,
@@ -77,7 +77,7 @@ class SuggestNextRoutineTests(_Fixtures):
     def test_none_without_routines(self):
         with app.app_context():
             self.assertIsNone(suggest_next_routine(self.uid))
-            self.assertEqual(home_cta(self.uid)["kind"], "empty")
+            self.assertEqual(home_cta(db.session.get(User, self.uid))["kind"], "empty")
 
     def test_first_routine_when_none_done(self):
         a = self.add_routine("A", 0)
@@ -100,7 +100,7 @@ class SuggestNextRoutineTests(_Fixtures):
         fuerza = self.add_block("Fuerza", default=True)
         f1 = self.add_routine("F1", 0, block_id=fuerza, exercises=4)
         with app.app_context():
-            cta = home_cta(self.uid)
+            cta = home_cta(db.session.get(User, self.uid))
         self.assertEqual(cta["kind"], "routine")
         self.assertEqual(cta["routine"].id, f1)
         self.assertEqual(cta["exercise_count"], 4)
@@ -120,13 +120,13 @@ class SuggestNextRoutineTests(_Fixtures):
     def test_only_empty_routines_offers_free_workout(self):
         self.add_routine("Vacía", 0, exercises=0)
         with app.app_context():
-            self.assertEqual(home_cta(self.uid)["kind"], "empty")
+            self.assertEqual(home_cta(db.session.get(User, self.uid))["kind"], "empty")
 
     def test_active_workout_takes_priority(self):
         self.add_routine("A", 0)
         wid = self.add_workout(1, sets=[(100, 5, True, False, 10), (0, 0, False, False, None)])
         with app.app_context():
-            cta = home_cta(self.uid)
+            cta = home_cta(db.session.get(User, self.uid))
         self.assertEqual((cta["kind"], cta["workout"].id, cta["done"], cta["total"]), ("continue", wid, 1, 2))
 
 
@@ -271,6 +271,54 @@ class FinishTests(_Fixtures):
             w = db.session.get(Workout, wid)
             self.assertEqual(w.performance_rating, 8)
             self.assertEqual(w.ended_at - w.timestamp, timedelta(hours=1, minutes=5))
+
+
+class RestDayTests(_Fixtures):
+    """Hoy toca / descanso / hecho según los días marcados y lo entrenado hoy."""
+
+    def set_days(self, days):
+        with app.app_context():
+            db.session.get(User, self.uid).training_days = days
+            db.session.commit()
+
+    def cta(self):
+        with app.app_context():
+            return home_cta(db.session.get(User, self.uid))
+
+    def test_without_days_it_is_next_workout_not_today(self):
+        self.add_routine("A", 0)
+        cta = self.cta()
+        self.assertEqual((cta["kind"], cta["is_training_day"]), ("routine", False))
+
+    def test_rest_day_when_today_not_in_plan(self):
+        from app.routes import to_local
+        from datetime import datetime, timezone
+        today = to_local(datetime.now(timezone.utc)).weekday()
+        self.add_routine("A", 0)
+        self.set_days("".join(str(d) for d in range(7) if d != today))
+        cta = self.cta()
+        self.assertEqual(cta["kind"], "rest")
+        self.assertEqual(cta["next_day"], "mañana")
+
+    def test_training_day(self):
+        self.add_routine("A", 0)
+        self.set_days("0123456")
+        cta = self.cta()
+        self.assertEqual((cta["kind"], cta["is_training_day"]), ("routine", True))
+
+    def test_done_when_trained_today(self):
+        self.add_routine("A", 0)
+        self.set_days("0123456")
+        self.add_workout(0.2, rating=7, sets=[(100, 5, True, False, 5)])
+        self.assertEqual(self.cta()["kind"], "done")
+
+    def test_settings_save_training_days(self):
+        self.login(self.uid)
+        data = {"stagnation_threshold": 3, "effort_scale": "rir", "sex": "", "training_goal": "",
+                "training_days": ["0", "1", "3", "4"]}
+        self.assertEqual(self.client.post("/settings", data=data).status_code, 302)
+        with app.app_context():
+            self.assertEqual(db.session.get(User, self.uid).training_days, "0134")
 
 
 if __name__ == "__main__":

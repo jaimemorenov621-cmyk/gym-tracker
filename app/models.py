@@ -37,7 +37,11 @@ class User(UserMixin, db.Model):
     )
     signup_method: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10))  # "password" | "google"
     # Canal de la última landing visitada con ?ref= (cookie gyre_ref), p.ej. "mediavida".
-    signup_source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(40))  # _clean_ref limita a 20
+    signup_source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(40))
+    # Días de la semana en que suele entrenar, como dígitos 0=lunes..6=domingo
+    # (p. ej. "0134"). Solo para el "hoy toca / hoy descanso" de Inicio; la
+    # racha NO depende de qué días se entrene. NULL = sin configurar.
+    training_days: so.Mapped[Optional[str]] = so.mapped_column(sa.String(7))  # _clean_ref limita a 20
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -294,6 +298,8 @@ class LandingEvent(db.Model):
     # Canal etiquetado con ?ref= en el enlace (o, en clics, el de la cookie
     # de esa visita). NULL = enlace sin etiquetar.
     source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(40), index=True)
+    # Idioma principal del navegador (Accept-Language), p. ej. "es", "en".
+    language: so.Mapped[Optional[str]] = so.mapped_column(sa.String(8))
 
     def __repr__(self):
         return f"<LandingEvent {self.event_type} {self.timestamp}>"

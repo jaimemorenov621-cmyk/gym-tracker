@@ -1,9 +1,12 @@
-from flask import render_template, flash, redirect, url_for, request, jsonify, make_response
+from flask import render_template, flash, redirect, url_for, request, jsonify, make_response, g
 from flask_login import current_user, login_user, logout_user, login_required
+from markupsafe import Markup, escape
 from urllib.parse import urlsplit
 from collections import defaultdict
 import colorsys
+import functools
 import json
+import os
 import math
 import re
 import unicodedata
@@ -49,6 +52,34 @@ from zoneinfo import ZoneInfo
 @app.route("/sw.js")
 def service_worker():
     return app.send_static_file("sw.js")
+
+
+# Estáticos versionados: url_for('static', ...) añade ?v=<fecha del archivo>
+# y esas URLs se cachean un año. Antes el navegador revalidaba style.css en
+# CADA cambio de pestaña antes de pintar (un viaje de ida y vuelta a Oregón).
+# Al desplegar cambia la fecha -> URL nueva -> se descarga una vez. Las rutas
+# /static/... escritas a mano (sin ?v=) siguen sin caché larga.
+_static_versions = {}
+
+
+@app.url_defaults
+def _version_static_urls(endpoint, values):
+    if endpoint == "static" and "filename" in values and "v" not in values:
+        filename = values["filename"]
+        if app.debug or filename not in _static_versions:  # en local, cada cambio de CSS cuenta
+            try:
+                _static_versions[filename] = int(os.stat(os.path.join(app.static_folder, filename)).st_mtime)
+            except OSError:
+                _static_versions[filename] = None
+        if _static_versions[filename]:
+            values["v"] = _static_versions[filename]
+
+
+@app.after_request
+def _cache_versioned_static(response):
+    if request.path.startswith("/static/") and request.args.get("v") and response.status_code in (200, 304):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return response
 
 
 @app.route("/privacy")
@@ -109,6 +140,21 @@ def _current_ref():
     return _clean_ref(request.args.get("ref")) or _clean_ref(request.cookies.get(REF_COOKIE))
 
 
+_LANG_RE = re.compile(r"[a-z]{2,3}")
+LANGUAGE_NAMES = {
+    "es": "Español", "en": "Inglés", "pt": "Portugués", "fr": "Francés", "de": "Alemán",
+    "it": "Italiano", "ca": "Catalán", "gl": "Gallego", "eu": "Euskera", "nl": "Neerlandés",
+}
+
+
+def _browser_language():
+    """Idioma principal del navegador según Accept-Language ("es-ES,es;q=0.9,en"
+    -> "es"). None si no viene o no tiene forma de código de idioma."""
+    first = (request.headers.get("Accept-Language") or "").split(",")[0].split(";")[0]
+    code = first.strip().lower().split("-")[0]
+    return code if _LANG_RE.fullmatch(code) else None
+
+
 def _log_landing_event(event_type, source=None):
     if request.cookies.get("no_contar") == "1" or request.args.get("no_contar") == "1":
         return
@@ -118,6 +164,7 @@ def _log_landing_event(event_type, source=None):
             referrer=(request.referrer[:255] if request.referrer else None),
             user_agent=(request.headers.get("User-Agent") or "")[:255],
             source=source,
+            language=_browser_language(),
         )
     )
     db.session.commit()
@@ -193,6 +240,7 @@ def landing_stats():
         LandingEvent.referrer,
         LandingEvent.user_agent,
         LandingEvent.source,
+        LandingEvent.language,
     )
     users_q = sa.select(User.created_at, User.signup_method, User.signup_source).where(
         User.created_at.is_not(None)
@@ -206,8 +254,9 @@ def landing_stats():
     referrer_counts = defaultdict(int)
     daily = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
     by_source = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
+    by_language = defaultdict(lambda: {"visits": 0, "clicks": 0})
 
-    for event_type, ts, referrer, user_agent, source in db.session.execute(events_q):
+    for event_type, ts, referrer, user_agent, source, language in db.session.execute(events_q):
         if _is_bot_user_agent(user_agent):
             if event_type == "visit":
                 visits_bot += 1
@@ -220,6 +269,7 @@ def landing_stats():
                 visits_human += 1
             daily[day]["visits"] += 1
             by_source[source]["visits"] += 1
+            by_language[language]["visits"] += 1
             key = (urlsplit(referrer).netloc if referrer else None) or "Directo / sin referrer"
             referrer_counts[key] += 1
         elif event_type in ("cta_click", "google_click"):
@@ -229,6 +279,7 @@ def landing_stats():
                 google_clicks += 1
             daily[day]["clicks"] += 1
             by_source[source]["clicks"] += 1
+            by_language[language]["clicks"] += 1
 
     signups_password = signups_google = 0
     for created_at, method, signup_source in db.session.execute(users_q):
@@ -264,6 +315,13 @@ def landing_stats():
         total_users=total_users,
         referrer_counts=dict(sorted(referrer_counts.items(), key=lambda kv: -kv[1])),
         daily=sorted(daily.items(), reverse=True)[:60],
+        # Idiomas conocidos por nº de visitas; "desconocido" (eventos anteriores
+        # a guardar el idioma) al final.
+        by_language=sorted(
+            ((LANGUAGE_NAMES.get(code, code) if code else None, d) for code, d in by_language.items()),
+            key=lambda kv: (kv[0] is None, -kv[1]["visits"]),
+        ),
+        known_language_visits=sum(d["visits"] for code, d in by_language.items() if code),
         # Canales etiquetados primero (por cuentas, luego visitas); "sin etiqueta" al final.
         by_source=sorted(
             by_source.items(),
@@ -311,10 +369,34 @@ def suggest_next_routine(user_id):
     return candidates[0]
 
 
-def home_cta(user_id):
-    """Acción principal de Inicio: continuar el entreno en curso, empezar la
-    rutina que toca, o (sin rutinas) empezar un entreno libre."""
-    active = get_active_workout(user_id)
+_WEEKDAY_SHORT = ["L", "M", "X", "J", "V", "S", "D"]
+
+
+def planned_weekdays(user):
+    """Días (0=lunes..6=domingo) que el usuario marcó como de entreno; vacío si no configuró."""
+    return {int(c) for c in (user.training_days or "") if c.isdigit()}
+
+
+def _next_training_day_label(plan, today_wd):
+    """"mañana" / "el jueves" para el siguiente día marcado después de hoy."""
+    for offset in range(1, 8):
+        wd = (today_wd + offset) % 7
+        if wd in plan:
+            return "mañana" if offset == 1 else f"el {_WEEKDAYS_ES[wd]}"
+    return None
+
+
+def home_cta(user):
+    """Acción principal de Inicio:
+    - continue: hay un entreno en curso.
+    - done: hoy ya entrenaste (con alguna serie hecha); se muestra el siguiente.
+    - rest: el usuario marcó sus días de entreno y hoy no es uno; se ofrece
+      el siguiente para "entrenar igualmente".
+    - routine: la rutina que toca ("Hoy toca" si hoy es día de entreno
+      marcado; "Siguiente entreno" si no hay días marcados, porque entonces
+      la app no sabe si hoy toca).
+    - empty: sin rutinas con ejercicios -> entreno libre."""
+    active = get_active_workout(user.id)
     if active is not None:
         sets = db.session.scalars(active.sets.select()).all()
         return {
@@ -323,14 +405,36 @@ def home_cta(user_id):
             "done": sum(1 for s in sets if s.completed),
             "total": len(sets),
         }
-    routine = suggest_next_routine(user_id)
+
+    routine = suggest_next_routine(user.id)
+    exercise_count = 0
     if routine is not None:
         exercise_count = db.session.scalar(
             sa.select(sa.func.count())
             .select_from(RoutineExercise)
             .where(RoutineExercise.routine_id == routine.id)
         )
-        return {"kind": "routine", "routine": routine, "exercise_count": exercise_count}
+    base = {"routine": routine, "exercise_count": exercise_count}
+
+    now_local = to_local(datetime.now(timezone.utc))
+    today_start_utc = (
+        datetime.combine(now_local.date(), datetime.min.time(), tzinfo=LOCAL_TZ)
+        .astimezone(timezone.utc).replace(tzinfo=None)
+    )
+    trained_today = db.session.scalar(
+        sa.select(Workout.id)
+        .join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == user.id, Workout.timestamp >= today_start_utc, SetEntry.completed.is_(True))
+        .limit(1)
+    ) is not None
+    if trained_today:
+        return {"kind": "done", **base}
+
+    plan = planned_weekdays(user)
+    if plan and now_local.weekday() not in plan:
+        return {"kind": "rest", "next_day": _next_training_day_label(plan, now_local.weekday()), **base}
+    if routine is not None:
+        return {"kind": "routine", "is_training_day": bool(plan), **base}
     return {"kind": "empty"}
 
 
@@ -375,6 +479,17 @@ def index():
         current_user.workouts.select().order_by(Workout.timestamp.desc())
     ).all()
 
+    # Todas las series de todos los entrenos en UNA consulta (antes era una
+    # por entreno: con 22 entrenos, 22 viajes a la base de datos).
+    sets_by_workout = defaultdict(list)
+    if workouts:
+        for s in db.session.scalars(
+            sa.select(SetEntry)
+            .where(SetEntry.workout_id.in_([w.id for w in workouts]))
+            .order_by(SetEntry.id)
+        ):
+            sets_by_workout[s.workout_id].append(s)
+
     grouped = []
     current_week_key = None
     current_group = None
@@ -391,7 +506,7 @@ def index():
             grouped.append(current_group)
             current_week_key = week_key
 
-        sets = db.session.scalars(w.sets.select().order_by(SetEntry.id)).all()
+        sets = sets_by_workout.get(w.id, [])
         names = []
         for s in sets:
             if s.exercise.title() not in names:
@@ -461,9 +576,18 @@ def index():
         .order_by(BodyWeightEntry.timestamp.asc())
     ).all()
     latest_weight = weight_entries[-1] if weight_entries else None
+    # Cambio de peso frente al registro más reciente de hace >= 30 días.
+    weight_change = None
+    if latest_weight:
+        cutoff = latest_weight.timestamp - timedelta(days=30)
+        older = [e for e in weight_entries if e.timestamp <= cutoff]
+        if older:
+            weight_change = round(latest_weight.weight - older[-1].weight, 1)
 
-    strength_result = compute_strength_change()
-    strength_change, strength_window_days = strength_result if strength_result else (None, None)
+    month_start = to_local(datetime.now(timezone.utc)).date().replace(day=1)
+    workouts_this_month = sum(1 for w in workouts if to_local(w.timestamp).date() >= month_start)
+
+    strength = strength_progress(current_user.id)
 
     notes_form = NotesForm()
     notes_form.notes.data = current_user.notes or ""
@@ -475,15 +599,17 @@ def index():
         total_workouts=total_workouts,
         streak=streak,
         calendar_weeks=calendar_weeks,
-        strength_change=strength_change,
-        strength_window_days=strength_window_days,
+        weight_change=weight_change,
+        workouts_this_month=workouts_this_month,
+        strength=strength,
+        strength_spark=sparkline_points([v for _, v in strength["series"][-12:]]) if strength else "",
         latest_weight=latest_weight,
         weight_chart_labels=[to_local(e.timestamp).strftime("%d/%m") for e in weight_entries],
         weight_chart_values=[e.weight for e in weight_entries],
         muscle_colors=compute_muscle_intensity(),
-        muscle_svg=build_muscle_svg_parts(current_user.sex),
+        muscle_svg=muscle_svg_markup(current_user.sex),
         notes_form=notes_form,
-        home_cta=home_cta(current_user.id),
+        home_cta=home_cta(current_user),
         onboarding=onboarding_status(current_user.id),
         empty_form=EmptyForm(),
     )
@@ -983,6 +1109,7 @@ def workout_detail(workout_id):
         )
         for name in exercise_order
     }
+    prefetch_catalog_exercises(exercise_order)
     return render_template(
         "workout_detail.html",
         title=workout.note or "Entrenamiento",
@@ -1227,10 +1354,16 @@ def progress():
         .order_by(BodyWeightEntry.timestamp.desc())
         .limit(1)
     )
+    strength = strength_progress(current_user.id)
+    items = progress_overview(current_user.id, current_user.stagnation_threshold)
+    prefetch_catalog_exercises(i["exercise"] for i in items)
     return render_template(
         "progress.html",
         title="Progreso",
-        items=progress_overview(current_user.id, current_user.stagnation_threshold),
+        strength=strength,
+        strength_labels=[wk.strftime("%d/%m") for wk, _ in strength["series"][-26:]] if strength else [],
+        strength_values=[round(v, 1) for _, v in strength["series"][-26:]] if strength else [],
+        items=items,
         threshold=current_user.stagnation_threshold,
         latest_weight=latest_weight,
     )
@@ -1248,6 +1381,7 @@ def update_exercise_translation(name):
     if form.validate_on_submit():
         catalog_exercise.name_es = form.name_es.data.strip() or None
         db.session.commit()
+        _clear_catalog_cache()
         flash("Nombre en español guardado.")
     return redirect(url_for("exercise_progress", name=name))
 
@@ -1320,6 +1454,8 @@ def settings():
         current_user.sex = form.sex.data or None
         current_user.height_cm = form.height_cm.data
         current_user.training_goal = form.training_goal.data or None
+        days = sorted({d for d in (form.training_days.data or []) if 0 <= d <= 6})
+        current_user.training_days = "".join(str(d) for d in days) or None
 
         # Mínimo semanal de la racha: se guarda como fila nueva (historial
         # append-only) solo si cambia; vacío = el mínimo por defecto (1).
@@ -1346,6 +1482,7 @@ def settings():
         form.sex.data = current_user.sex or ""
         form.height_cm.data = current_user.height_cm
         form.training_goal.data = current_user.training_goal or ""
+        form.training_days.data = [int(c) for c in (current_user.training_days or "")]
         latest = _latest_weekly_goal_row(current_user.id)
         form.weekly_workout_goal.data = latest.goal if latest else None
     return render_template("settings.html", title="Configuración", form=form)
@@ -1741,6 +1878,7 @@ def routine_detail(routine_id):
         exercise_notes_map = {n.exercise: n for n in notes_rows}
 
     empty_form = EmptyForm()
+    prefetch_catalog_exercises(e.exercise for e in exercises)
     return render_template(
         "routine_detail.html",
         title=routine.name,
@@ -2129,6 +2267,7 @@ def api_create_exercise():
     )
     db.session.add(exercise)
     db.session.commit()
+    _clear_catalog_cache()
     return jsonify({"ok": True, "name": name})
 
 
@@ -2291,7 +2430,17 @@ def compute_smart_streak(user_id, workouts):
         streak += days_by_week[week]
         week -= timedelta(days=7)
 
-    return {"days": streak, "this_week": this_week, "minimum": minimum_for(current_week)}
+    plan = planned_weekdays(db.session.get(User, user_id))
+    week = [
+        {
+            "letter": _WEEKDAY_SHORT[i],
+            "trained": (current_week + timedelta(days=i)) in trained_days,
+            "today": i == today.weekday(),
+            "planned": i in plan,
+        }
+        for i in range(7)
+    ]
+    return {"days": streak, "this_week": this_week, "minimum": minimum_for(current_week), "week": week}
 
 
 def get_previous_sets_map(workout, exercise_names):
@@ -2494,68 +2643,108 @@ def recompute_pr_badges(entry):
         apply_pr_flags_for_session(current)
 
 
-def compute_strength_change():
-    """% de cambio de fuerza entre el periodo actual y el anterior, ponderado por
-    nº de sesiones recientes de cada ejercicio. Devuelve (pct, window_days) o None
-    si no hay datos suficientes en ningún ejercicio.
+STRENGTH_STEP_CAP = (0.8, 1.25)  # un cambio sesión a sesión fuera de ±20-25% se recorta (dato mal apuntado)
+STRENGTH_WINDOW_WEEKS = 4
 
-    La ventana es adaptativa (hasta 90 días) en vez de fija: con una cuenta nueva,
-    exigir siempre 90+91 días de historial deja el dato en "—" durante meses sin
-    remedio posible, por mucho que se entrene. En su lugar se parte el historial
-    real del usuario por la mitad (mínimo 7 días de ventana), y ese reparto crece
-    hasta el estándar de 90 días según se acumula historial.
 
-    Basta con 1 sesión cualificada en cada mitad (no 2+): con una ventana corta
-    (cuenta reciente) y un ejercicio entrenado ~1 vez por semana -- lo normal en
-    la mayoría de rutinas --, exigir 2+ repeticiones del mismo ejercicio dentro
-    de una sola mitad nunca se cumple, y el dato se queda en "—" indefinidamente
-    aunque se entrene con total regularidad. El `weight = len(current_sessions)`
-    de abajo ya descuenta proporcionalmente a los ejercicios con poco dato frente
-    a los que tienen más, así que no hace falta además vetarlos por completo."""
-    now = datetime.now(timezone.utc).replace(tzinfo=None)
+def _week_start_local(dt):
+    d = to_local(dt).date()
+    return d - timedelta(days=d.weekday())
 
-    oldest = db.session.scalar(
-        sa.select(sa.func.min(Workout.timestamp)).where(Workout.user_id == current_user.id)
-    )
-    if oldest is None:
-        return None
-    window_days = min(90, max(7, (now - oldest).days // 2))
 
-    current_start = now - timedelta(days=window_days)
-    previous_start = now - timedelta(days=window_days * 2)
+def strength_progress(user_id):
+    """Índice de fuerza semanal encadenado + resumen de las últimas 4 semanas.
 
-    exercises = db.session.scalars(
-        sa.select(SetEntry.exercise)
-        .join(Workout, Workout.id == SetEntry.workout_id)
-        .where(Workout.user_id == current_user.id)
-        .distinct()
+    Cada semana, cada ejercicio entrenado se compara con su valor anterior
+    (mejor 1RM estimado de la última semana en que se hizo) y la media
+    geométrica de esos cambios mueve el índice (100 = tu primera semana).
+    Encadenar así hace que ejercicios nuevos no hundan ni inflen el índice
+    (entran sin comparar), y una sesión floja seguida de una normal se
+    compensa sola (para un único ejercicio, índice = 1RM actual / 1RM inicial).
+    Mismo 1RM y criterio de serie válida que el resto (sessions_from_rows).
+    Una sola consulta.
+
+    Devuelve None sin al menos 2 semanas con datos, o:
+      pct: cambio del índice en las últimas 4 semanas (o desde el inicio si
+           hay menos historial), weeks: semanas que abarca ese cambio,
+      series: [(lunes, índice)] de todas las semanas,
+      movers: [{exercise, pct}] ejercicios con dato antes y dentro de la
+              ventana, de más subida a más bajada."""
+    rows = db.session.execute(
+        sa.select(Workout, SetEntry)
+        .join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == user_id)
+        .order_by(Workout.timestamp.asc())
     ).all()
+    by_exercise = defaultdict(list)
+    for workout, entry in rows:
+        by_exercise[entry.exercise].append((workout, entry))
 
-    weighted_sum = 0.0
-    total_weight = 0
-    for name in exercises:
-        session_list, _, _ = get_exercise_sessions(name)
-        qualifying = qualifying_sessions(session_list)
-        current_sessions = [s for s in qualifying if s["timestamp"] >= current_start]
-        previous_sessions = [
-            s for s in qualifying if previous_start <= s["timestamp"] < current_start
-        ]
-        if not current_sessions or not previous_sessions:
-            continue
-        best_current = max(s["best_1rm"] for s in current_sessions)
-        best_previous = max(s["best_1rm"] for s in previous_sessions)
-        if best_previous <= 0:
-            continue
-        pct_change = (best_current - best_previous) / best_previous * 100
-        weight = len(current_sessions)
-        weighted_sum += pct_change * weight
-        total_weight += weight
-
-    if total_weight == 0:
+    weekly = {}  # ejercicio -> {lunes: mejor 1RM de esa semana}
+    for exercise, ex_rows in by_exercise.items():
+        per_week = {}
+        for s in qualifying_sessions(sessions_from_rows(ex_rows)):
+            wk = _week_start_local(s["timestamp"])
+            per_week[wk] = max(per_week.get(wk, 0), s["best_1rm"])
+        if per_week:
+            weekly[exercise] = per_week
+    if not weekly:
         return None
 
-    pct = max(-50, min(100, weighted_sum / total_weight))
-    return pct, window_days
+    first_week = min(min(w) for w in weekly.values())
+    current_week = _week_start_local(datetime.now(timezone.utc))
+    weeks = []
+    wk = first_week
+    while wk <= current_week:
+        weeks.append(wk)
+        wk += timedelta(days=7)
+    if len(weeks) < 2:
+        return None
+
+    lo, hi = STRENGTH_STEP_CAP
+    last_known = {}
+    index = 100.0
+    series = []
+    for wk in weeks:
+        ratios = []
+        for exercise, per_week in weekly.items():
+            if wk in per_week:
+                value = per_week[wk]
+                if exercise in last_known and last_known[exercise] > 0:
+                    ratios.append(min(hi, max(lo, value / last_known[exercise])))
+                last_known[exercise] = value
+        if ratios:
+            index *= math.exp(sum(math.log(r) for r in ratios) / len(ratios))
+        series.append((wk, index))
+
+    span = min(STRENGTH_WINDOW_WEEKS, len(series) - 1)
+    ref_week, ref_index = series[-1 - span]
+    pct = 100 * (series[-1][1] / ref_index - 1)
+
+    movers = []
+    for exercise, per_week in weekly.items():
+        before = [v for w, v in per_week.items() if w <= ref_week]
+        after = [(w, v) for w, v in per_week.items() if w > ref_week]
+        if before and after:
+            ref_value = per_week[max(w for w in per_week if w <= ref_week)]
+            latest = max(after)[1]
+            if ref_value > 0:
+                movers.append({"exercise": exercise, "pct": 100 * (latest / ref_value - 1)})
+    movers.sort(key=lambda m: m["pct"], reverse=True)
+    return {"pct": pct, "weeks": span, "series": series, "movers": movers}
+
+
+def sparkline_points(values, width=100, height=28, pad=2):
+    """Puntos "x,y" de un <polyline> SVG para una mini gráfica."""
+    if len(values) < 2:
+        return ""
+    lo, hi = min(values), max(values)
+    rng = (hi - lo) or 1
+    step = (width - 2 * pad) / (len(values) - 1)
+    return " ".join(
+        f"{pad + i * step:.1f},{height - pad - (v - lo) / rng * (height - 2 * pad):.1f}"
+        for i, v in enumerate(values)
+    )
 
 
 def build_progress_summary():
@@ -2881,27 +3070,50 @@ def _strip_accents(s):
 
 
 def find_catalog_exercise(name):
+    """Ejercicio del catálogo cuyo nombre (inglés o español) coincide con
+    `name` ignorando mayúsculas y acentos. Una sola consulta indexada sobre
+    name_normalized/name_es_normalized (antes eran dos: un ILIKE exacto que
+    esta ya cubre). Memorizada por petición en flask.g: una misma página
+    preguntaba por el mismo ejercicio hasta 24 veces (imagen, mapa
+    muscular...), y cada consulta es un viaje a Neon en producción.
+    Cuidado: quien modifique el catálogo debe llamar a
+    _clear_catalog_cache() (ver api_create_exercise y la traducción)."""
     if not name:
         return None
-    match = db.session.scalar(
-        sa.select(Exercise).where(
-            sa.or_(Exercise.name.ilike(name), Exercise.name_es.ilike(name))
+    target = _strip_accents(name.strip())
+    cache = g.setdefault("_catalog_cache", {})
+    if target not in cache:
+        cache[target] = db.session.scalar(
+            sa.select(Exercise)
+            .where(sa.or_(Exercise.name_normalized == target, Exercise.name_es_normalized == target))
+            .limit(1)
         )
-    )
-    if match:
-        return match
+    return cache[target]
 
-    # Antes recorría las 800+ filas del catálogo en Python comparando cadena
-    # a cadena en cada llamada sin caché -- se nota cuando build_progress_summary()
-    # lo llama hasta 20 veces por petición. name_normalized/name_es_normalized
-    # (app/models.py) se mantienen en sincronía solas, así que esto es una
-    # consulta indexada normal.
-    target = _strip_accents(name)
-    return db.session.scalar(
+
+def _clear_catalog_cache():
+    g.pop("_catalog_cache", None)
+
+
+def prefetch_catalog_exercises(names):
+    """Rellena de golpe la caché de find_catalog_exercise() para varios
+    nombres: UNA consulta en vez de una por ejercicio (la mayoría de los
+    ejercicios propios no están en el catálogo y cada "no está" también
+    costaba una consulta)."""
+    cache = g.setdefault("_catalog_cache", {})
+    targets = {_strip_accents(n.strip()) for n in names if n} - set(cache)
+    if not targets:
+        return
+    for ex in db.session.scalars(
         sa.select(Exercise).where(
-            sa.or_(Exercise.name_normalized == target, Exercise.name_es_normalized == target)
+            sa.or_(Exercise.name_normalized.in_(targets), Exercise.name_es_normalized.in_(targets))
         )
-    )
+    ):
+        for key in (ex.name_normalized, ex.name_es_normalized):
+            if key in targets and key not in cache:
+                cache[key] = ex
+    for t in targets:
+        cache.setdefault(t, None)
 
 
 def canonicalize_exercise_name(name):
@@ -3022,6 +3234,23 @@ def _interpolate_muscle_color(group, t):
     return f"#{r:02x}{g:02x}{b:02x}"
 
 
+@functools.lru_cache(maxsize=4)
+def muscle_svg_markup(sex):
+    """Interior de los dos <svg> del mapa muscular (frente, espalda), ya
+    escapado y memorizado: los ~160 trazos (~40 KB) nunca cambian -- los
+    colores van aparte en el <style> de la plantilla por clase mm-<grupo>.
+    Antes se regeneraban y escapaban en cada visita a Inicio."""
+    parts = build_muscle_svg_parts(sex)
+    out = {}
+    for side in ("front", "back"):
+        out[side] = Markup("".join(
+            f'<path class="mm-{part["group"] or "neutral"}" d="{escape(d)}"/>'
+            for part in parts[side]
+            for d in part["paths"]
+        ))
+    return out
+
+
 def build_muscle_svg_parts(sex):
     """Devuelve {"front": [...], "back": [...]} listos para iterar en la plantilla:
     cada elemento es {"group": <grupo español o None>, "paths": [d, d, ...]}.
@@ -3070,6 +3299,7 @@ def compute_muscle_volumes(days=14):
     ).all()
 
     volumes = {group: 0.0 for group in MUSCLE_GROUPS}
+    prefetch_catalog_exercises({e.exercise for e in entries})
     catalog_cache = {}
     for entry in entries:
         if entry.exercise not in catalog_cache:
