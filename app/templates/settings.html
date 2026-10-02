@@ -70,14 +70,15 @@
             <h3 class="form-section-title">Racha</h3>
             <div class="field">
                 <label class="field-label" for="{{ form.weekly_workout_goal.id }}">{{ form.weekly_workout_goal.label.text }}</label>
-                {{ form.weekly_workout_goal(inputmode="numeric", class="input-short") }}
-                <small class="field-help">Si lo rellenas, la racha cuenta semanas seguidas cumpliendo este objetivo en vez de días seguidos entrenando.</small>
+                {{ form.weekly_workout_goal(inputmode="numeric", class="input-short", placeholder="1", min=1, max=7) }}
+                <small class="field-help">
+                    La racha cuenta los días que entrenas. Cada semana que llegas a este mínimo, sus días se suman;
+                    si una semana no llegas, la racha vuelve a empezar. Ponlo por debajo de lo que sueles entrenar
+                    (por ejemplo 2 si vas 4 días) para que una descarga o una semana complicada no la corte.
+                    Vacío = 1 día.
+                </small>
                 {% for e in form.weekly_workout_goal.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
             </div>
-            <label class="toggle-row">
-                <span>{{ form.disable_weekly_goal.label.text }}</span>
-                {{ form.disable_weekly_goal(class="toggle") }}
-            </label>
         </div>
 
         {{ form.submit(class="btn form-submit") }}

@@ -413,7 +413,7 @@ def index():
         .where(Workout.user_id == current_user.id)
     )
 
-    streak, streak_unit = compute_smart_streak(current_user.id, workouts)
+    streak = compute_smart_streak(current_user.id, workouts)
 
     # Calendario de los últimos 3 meses
     today = datetime.now(timezone.utc).date()
@@ -474,7 +474,6 @@ def index():
         grouped=grouped,
         total_workouts=total_workouts,
         streak=streak,
-        streak_unit=streak_unit,
         calendar_weeks=calendar_weeks,
         strength_change=strength_change,
         strength_window_days=strength_window_days,
@@ -1305,7 +1304,7 @@ def _current_week_start_naive():
     activa o se cambia el objetivo nunca tiene un objetivo "vigente" según
     goal_for_week() y compute_smart_streak() devuelve 0 de inmediato, sin
     mirar siquiera semanas anteriores ya cumplidas."""
-    today = datetime.now(timezone.utc).date()
+    today = to_local(datetime.now(timezone.utc)).date()
     return datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
 
 
@@ -1322,20 +1321,16 @@ def settings():
         current_user.height_cm = form.height_cm.data
         current_user.training_goal = form.training_goal.data or None
 
+        # Mínimo semanal de la racha: se guarda como fila nueva (historial
+        # append-only) solo si cambia; vacío = el mínimo por defecto (1).
         latest = _latest_weekly_goal_row(current_user.id)
-        current_goal = latest.goal if latest else None
-        if form.disable_weekly_goal.data:
-            if current_goal is not None:
-                db.session.add(
-                    WeeklyGoalHistory(
-                        user_id=current_user.id, goal=None, effective_from=_current_week_start_naive()
-                    )
-                )
-        elif form.weekly_workout_goal.data and form.weekly_workout_goal.data != current_goal:
+        current_minimum = latest.goal if latest else None
+        new_minimum = form.weekly_workout_goal.data or None
+        if new_minimum != current_minimum:
             db.session.add(
                 WeeklyGoalHistory(
                     user_id=current_user.id,
-                    goal=form.weekly_workout_goal.data,
+                    goal=new_minimum,
                     effective_from=_current_week_start_naive(),
                 )
             )
@@ -1353,7 +1348,6 @@ def settings():
         form.training_goal.data = current_user.training_goal or ""
         latest = _latest_weekly_goal_row(current_user.id)
         form.weekly_workout_goal.data = latest.goal if latest else None
-        form.disable_weekly_goal.data = bool(latest and latest.goal is None)
     return render_template("settings.html", title="Configuración", form=form)
 
 
@@ -2243,92 +2237,61 @@ def estimated_1rm(entry):
     return entry.weight * (1 + effective_reps(entry) / 30)
 
 
-def compute_streak(workouts):
-    """Días consecutivos entrenando, contando hacia atrás desde hoy o ayer."""
-    trained_dates = sorted({w.timestamp.date() for w in workouts}, reverse=True)
-    streak = 0
-    if trained_dates:
-        today = datetime.now(timezone.utc).date()
-        expected = (
-            today
-            if trained_dates[0] == today
-            else (
-                today - timedelta(days=1)
-                if trained_dates[0] == today - timedelta(days=1)
-                else None
-            )
-        )
-        if expected:
-            for d in trained_dates:
-                if d == expected:
-                    streak += 1
-                    expected -= timedelta(days=1)
-                else:
-                    break
-    return streak
+DEFAULT_WEEKLY_MINIMUM = 1  # sin mínimo configurado: basta con entrenar 1 día a la semana
 
 
 def compute_smart_streak(user_id, workouts):
-    """(valor, unidad). Sin objetivo semanal nunca configurado, o desactivado
-    explícitamente (última fila de WeeklyGoalHistory con goal=None) ->
-    fallback a compute_streak() (días). Con objetivo activo -> semanas
-    consecutivas cumpliendo el objetivo que estaba VIGENTE en cada semana
-    (no el objetivo actual) -- ver WeeklyGoalHistory en app/models.py."""
+    """Racha en DÍAS entrenados, mantenida semana a semana.
+
+    Cada semana (lunes-domingo, hora de Madrid) en la que entrenas al menos
+    tu mínimo semanal suma TODOS los días que entrenaste esa semana; una
+    semana por debajo del mínimo corta la racha. La semana en curso nunca
+    la corta (aún puede cumplirse) y sus días ya cuentan. Así una semana de
+    descarga o con menos días que de costumbre no rompe la racha mientras
+    llegue al mínimo, y no importa QUÉ días de la semana entrenes.
+
+    Un día cuenta si ese día hay algún entreno con al menos una serie
+    marcada como hecha (un entreno empezado por error no suma).
+    El mínimo vigente de cada semana sale de WeeklyGoalHistory (append-only:
+    cambiarlo no reevalúa semanas pasadas con el criterio nuevo).
+
+    Devuelve {"days", "this_week", "minimum"}."""
+    workout_ids = [w.id for w in workouts]
+    done_ids = set()
+    if workout_ids:
+        done_ids = set(db.session.scalars(
+            sa.select(SetEntry.workout_id)
+            .where(SetEntry.workout_id.in_(workout_ids), SetEntry.completed.is_(True))
+            .distinct()
+        ))
+    trained_days = {to_local(w.timestamp).date() for w in workouts if w.id in done_ids}
+    days_by_week = defaultdict(int)
+    for d in trained_days:
+        days_by_week[d - timedelta(days=d.weekday())] += 1
+
     history = db.session.scalars(
         sa.select(WeeklyGoalHistory)
         .where(WeeklyGoalHistory.user_id == user_id)
         .order_by(WeeklyGoalHistory.effective_from.desc(), WeeklyGoalHistory.id.desc())
     ).all()
-    if not history or history[0].goal is None:
-        return compute_streak(workouts), "días"
 
-    week_counts = defaultdict(int)
-    for w in workouts:
-        week_start = w.timestamp.date() - timedelta(days=w.timestamp.weekday())
-        week_counts[week_start] += 1
+    def minimum_for(week_start):
+        for h in history:  # desc por effective_from: el primero vigente gana
+            if h.effective_from.date() <= week_start:
+                return h.goal or DEFAULT_WEEKLY_MINIMUM
+        return DEFAULT_WEEKLY_MINIMUM
 
-    def goal_for_week(week_start):
-        # naive, igual que WeeklyGoalHistory.effective_from -- ver comentario
-        # en el modelo sobre por qué Workout.timestamp vuelve naive de SQLite.
-        week_start_dt = datetime.combine(week_start, datetime.min.time())
-        for h in history:  # ya ordenado desc por effective_from
-            if h.effective_from <= week_start_dt:
-                return h.goal
-        return None  # anterior a que existiera cualquier objetivo, o antes
-        # de una fila con goal=None (desactivado)
+    today = to_local(datetime.now(timezone.utc)).date()
+    current_week = today - timedelta(days=today.weekday())
+    this_week = days_by_week.get(current_week, 0)
 
-    today = datetime.now(timezone.utc).date()
-    current_week_start = today - timedelta(days=today.weekday())
-    week = current_week_start
-    streak = 0
+    streak = this_week
+    week = current_week - timedelta(days=7)
+    while days_by_week.get(week, 0) >= minimum_for(week):
+        streak += days_by_week[week]
+        week -= timedelta(days=7)
 
-    current_goal = goal_for_week(week)
-    if current_goal is not None:
-        if week_counts.get(week, 0) >= current_goal:
-            streak += 1
-            week -= timedelta(days=7)
-        elif today.weekday() == 6:
-            # semana en curso YA terminó (es domingo) y no llegó al objetivo
-            return 0, "semanas"
-        else:
-            # semana en curso todavía sin terminar y sin cumplir aún -- no
-            # rompe la racha, simplemente no cuenta todavía; se sigue
-            # evaluando desde la semana anterior, ya cerrada
-            week -= timedelta(days=7)
-    else:
-        return 0, "semanas"
-
-    while True:
-        goal = goal_for_week(week)
-        if goal is None:
-            break
-        if week_counts.get(week, 0) >= goal:
-            streak += 1
-            week -= timedelta(days=7)
-        else:
-            break
-
-    return streak, "semanas"
+    return {"days": streak, "this_week": this_week, "minimum": minimum_for(current_week)}
 
 
 def get_previous_sets_map(workout, exercise_names):
@@ -2657,11 +2620,10 @@ def build_progress_summary():
             }
         )
 
-    streak, streak_unit = compute_smart_streak(current_user.id, workouts)
+    streak = compute_smart_streak(current_user.id, workouts)
     return {
         "total_workouts": len(workouts),
         "streak": streak,
-        "streak_unit": streak_unit,
         "exercises": exercises,
         "recent_workouts": recent_workouts,
     }
@@ -2708,9 +2670,9 @@ def generate_ai_analysis(how_you_feel=None):
 
     lines = [
         f"Entrenamientos totales: {summary['total_workouts']}",
-        f"Racha actual: {summary['streak']} {summary['streak_unit']} consecutivos entrenando"
-        if summary["streak_unit"] == "días"
-        else f"Racha actual: {summary['streak']} semanas consecutivas cumpliendo el objetivo semanal",
+        f"Racha actual: {summary['streak']['days']} días entrenados en semanas seguidas cumpliendo "
+        f"su mínimo de {summary['streak']['minimum']} días/semana "
+        f"(esta semana lleva {summary['streak']['this_week']})",
     ]
 
     goal_labels = {

@@ -3354,3 +3354,8 @@ menos ~44 px, sin cambiar su tamaño ni la maquetación de la tabla. */
 :root[data-theme="dark"] .analysis-areas-mejora h3 { color: #ff8a8a; }
 :root[data-theme="dark"] .analysis-areas-mejora .analysis-placeholder { color: #f0b0b0; }
 :root[data-theme="dark"] .analysis-proximos-pasos .analysis-placeholder { color: #b9aef0; }
+/* Racha (index.html): días de esta semana frente al mínimo que la mantiene. */
+.dash-metric-sub { display: block; margin-top: 2px; font-size: 0.72rem; font-weight: 700; color: #9a5200; }
+.dash-metric-sub.ok { color: var(--color-success-dark); }
+:root[data-theme="dark"] .dash-metric-sub { color: #f2c94c; }
+:root[data-theme="dark"] .dash-metric-sub.ok { color: #5cf0b4; }
