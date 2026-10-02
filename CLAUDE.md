@@ -37,6 +37,9 @@ Classic single-package Flask app, not an application factory — `app` and `db` 
 - `migrations/` — Flask-Migrate/Alembic migrations. Always add one when `app/models.py` changes.
 - `import_exercises.py` — standalone script (run outside the request lifecycle via `app.app_context()`) that seeds the `Exercise` catalog from the `yuhonas/free-exercise-db` GitHub dataset; used for exercise autocomplete/search and images.
 - `config.py` — `SECRET_KEY` and `SQLALCHEMY_DATABASE_URI` from env vars, falling back to a local SQLite `app.db`.
+- `app/achievements.py` — achievements catalog (in code; `code` values are stored per user in `UserAchievement` and must never change), `compute_stats(user)` (one query over the whole history) and `evaluate(user)`.
+- `app/strength_standards.py` — Lon Kilgore's strength standards (ExRx, kept in pounds as published, converted to kg in code), strict barbell-lift detection (`lift_of`), DOTS, and `strength_profile(user)` (per-lift "reached" level using the body weight logged at each session). Shown in `/progress` and used by the "Estándares de fuerza" achievements.
+- `app/usage.py` — privacy-respecting usage counter (`DailyActivity`: one row per user/day, 120-day retention) and the rest-day usage report in `/landing/stats`.
 
 ### Domain model
 

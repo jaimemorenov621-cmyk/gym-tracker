@@ -47,6 +47,7 @@ from app.models import (
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from app import achievements, usage
+from app import strength_standards as standards
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
@@ -1488,6 +1489,8 @@ def progress():
         items=items,
         threshold=current_user.stagnation_threshold,
         latest_weight=latest_weight,
+        profile=standards.strength_profile(current_user),
+        standards=standards,
     )
 
 

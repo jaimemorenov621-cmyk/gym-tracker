@@ -3,21 +3,6 @@
 {% block content %}
     <h1 class="page-title">Progreso</h1>
 
-    <a class="card card-elevated progress-weight" href="{{ url_for('weight') }}">
-        <span class="progress-weight-icon">{{ macros.icon('scale', 22) }}</span>
-        <span class="progress-weight-text">
-            <small>Peso corporal</small>
-            {% if latest_weight %}
-                <strong>{{ latest_weight.weight|num }} kg</strong>
-                <span>Último registro: {{ latest_weight.timestamp|relative_day }}</span>
-            {% else %}
-                <strong>Sin registrar</strong>
-                <span>Apunta tu peso para ver su evolución</span>
-            {% endif %}
-        </span>
-        {{ macros.icon('chevron-right', 20) }}
-    </a>
-
     <div class="card card-elevated strength-card" id="fuerza">
         <div class="strength-head">
             <div>
@@ -103,6 +88,119 @@
             <p class="progress-footnote" style="margin:8px 0 0;">Con al menos 2 semanas de entrenos verás aquí cómo evoluciona tu fuerza.</p>
         {% endif %}
     </div>
+
+    <div class="card card-elevated std-card" id="estandares">
+        <div class="strength-head">
+            <div>
+                <h2>Estándares de fuerza</h2>
+                <p>Tu 1RM estimado frente a los estándares de Lon Kilgore</p>
+            </div>
+            {% if profile.global is not none %}
+                <div class="std-global">
+                    <span>Nivel global</span>
+                    <strong class="std-level lvl-{{ profile.global }}">{{ profile.global_label }}</strong>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if profile.missing %}
+            <p class="std-missing">
+                Para darte un nivel falta:
+                {% for m in profile.missing %}{% if m == 'sexo' %}<a href="{{ url_for('settings') }}">tu sexo</a>{% else %}<a href="{{ url_for('weight') }}">tu peso corporal</a>{% endif %}{{ ' y ' if not loop.last }}{% endfor %}.
+                Las tablas son distintas para hombres y mujeres y dependen del peso.
+            </p>
+        {% elif profile.global is none and profile.missing_lifts %}
+            <p class="std-missing">
+                Nivel global (el menor de banca, sentadilla y peso muerto): falta un 1RM válido de
+                {{ profile.missing_lifts|join(', ')|lower }} (con barra, series de hasta 10 repeticiones).
+            </p>
+        {% endif %}
+
+        <div class="std-list">
+            {% for lift in standards.LIFTS %}
+                {% set l = profile.lifts[lift] %}
+                <div class="std-row">
+                    <div class="std-row-head">
+                        <strong>{{ l.label }}</strong>
+                        {% if l.reached is not none %}
+                            <span class="std-level lvl-{{ l.reached }}">{{ l.reached_label }}</span>
+                        {% endif %}
+                    </div>
+                    {% if not l.has_data %}
+                        <p class="std-sub">Sin series válidas todavía.</p>
+                    {% else %}
+                        <p class="std-sub">
+                            {% if l.best_e1rm %}1RM estimado {{ l.best_e1rm|num }} kg{% if l.ratio %} · {{ l.ratio|num }}× tu peso{% endif %}{% else %}Sin series válidas en los últimos 12 meses{% endif %}
+                            {% if l.reached_at %} · nivel alcanzado {{ l.reached_at|relative_day }}{% endif %}
+                        </p>
+                        {% if l.bar_pct is not none %}
+                            <div class="std-bar"><span style="width: {{ l.bar_pct }}%"></span></div>
+                            <p class="std-next">
+                                {% if l.meets_next_now %}
+                                    Con tu peso actual ya llegas a {{ l.next_label }}: contará en tu próxima sesión registrada.
+                                {% else %}
+                                    {{ l.next_label }}: {{ l.next_kg|num }} kg con tu peso actual · te faltan {{ l.missing_kg|num }} kg
+                                {% endif %}
+                            </p>
+                        {% elif l.reached == 4 %}
+                            <p class="std-next">Nivel máximo de la tabla.</p>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+
+        {% if profile.dots %}
+            <p class="std-dots"><strong>DOTS estimado: {{ profile.dots|round|int }}</strong> · suma de tus 1RM estimados de banca, sentadilla y peso muerto, corregida por tu peso corporal.</p>
+        {% endif %}
+
+        <details class="strength-how">
+            <summary>¿De dónde salen estos niveles?</summary>
+            <p>
+                De los estándares de rendimiento de <a href="{{ standards.SOURCE_URL }}" target="_blank" rel="noopener">Lon Kilgore (ExRx.net)</a>
+                para adultos de 18 a 39 años: 1RM sin equipo de ayuda (cinturón sí), basados en unos 70 años de
+                clasificaciones de halterofilia y powerlifting. No son una norma de la población general.
+            </p>
+            <ul class="std-defs">
+                {% for lvl in standards.LEVELS %}
+                    <li><b>{{ standards.LEVEL_LABELS[lvl] }}</b>: {{ standards.LEVEL_DESCRIPTIONS[lvl] }}</li>
+                {% endfor %}
+            </ul>
+            <p>
+                <b>Cómo lo aplicamos.</b> Usamos tu 1RM estimado con series de hasta 10 repeticiones efectivas
+                (más allá la estimación es poco fiable), solo del levantamiento con barra: las variantes
+                (inclinado, mancuernas, Smith, búlgara, frontal, rumano...) no cuentan porque tienen otras cargas.
+                Las tablas van por categorías de peso corporal y entre dos categorías interpolamos.
+                El <b>nivel alcanzado</b> es el mejor de todas tus sesiones, cada una con el peso que tenías entonces,
+                así que pesarte hoy no te quita un nivel. El <b>nivel global</b> es el menor de banca, sentadilla
+                y peso muerto. Los estándares suponen la técnica de la fuente:
+            </p>
+            <ul class="std-defs">
+                {% for lift in standards.LIFTS %}
+                    <li><b>{{ standards.LIFT_LABELS[lift] }}</b>: {{ standards.LIFT_RULES[lift] }}</li>
+                {% endfor %}
+            </ul>
+            <p>
+                <b>DOTS</b> (Konertz, 2019) es la puntuación que usan muchas federaciones de powerlifting para comparar
+                totales de personas de distinto peso; aquí se calcula con tus 1RM estimados, no con un total de competición.
+            </p>
+        </details>
+    </div>
+
+    <a class="card card-elevated progress-weight" href="{{ url_for('weight') }}">
+        <span class="progress-weight-icon">{{ macros.icon('scale', 22) }}</span>
+        <span class="progress-weight-text">
+            <small>Peso corporal</small>
+            {% if latest_weight %}
+                <strong>{{ latest_weight.weight|num }} kg</strong>
+                <span>Último registro: {{ latest_weight.timestamp|relative_day }}</span>
+            {% else %}
+                <strong>Sin registrar</strong>
+                <span>Apunta tu peso para ver su evolución</span>
+            {% endif %}
+        </span>
+        {{ macros.icon('chevron-right', 20) }}
+    </a>
 
     {% if items %}
         <div class="progress-toolbar">

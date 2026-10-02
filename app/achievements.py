@@ -17,6 +17,7 @@ from typing import Callable, Optional
 import sqlalchemy as sa
 
 from app import db
+from app import strength_standards as standards
 from app.models import (
     AiAnalysis,
     BodyWeightEntry,
@@ -31,6 +32,7 @@ from app.models import (
 CATEGORIES = [
     ("constancia", "Constancia", "🔥"),
     ("fuerza", "Fuerza", "🏋️"),
+    ("estandares", "Estándares de fuerza", "🎖️"),
     ("volumen", "Volumen", "📦"),
     ("records", "Récords", "🏅"),
     ("habitos", "Horarios y hábitos", "⏰"),
@@ -64,6 +66,7 @@ def _tiers(prefix, category, metric, unit, rows):
 
 
 A = Achievement
+_LEVEL_EMOJI = {"principiante": "🌱", "novato": "🥉", "intermedio": "🥈", "avanzado": "🥇", "elite": "👑"}
 ACHIEVEMENTS = [
     # ---------------------------------------------------------------- Constancia
     *_tiers("workouts", "constancia", "workouts", "entrenos", [
@@ -112,7 +115,7 @@ ACHIEVEMENTS = [
     A("bench_bw", "fuerza", "🛋️", "Tu propio peso en banca",
       "Llega a un 1RM estimado en press de banca igual a tu peso corporal.",
       metric="bench_bw", target=1.0, unit="× tu peso"),
-    A("bench_15bw", "fuerza", "🚀", "Banca de élite",
+    A("bench_15bw", "fuerza", "🚀", "Banca avanzada",
       "Llega a un 1RM estimado en press de banca de 1,5 veces tu peso corporal.",
       metric="bench_bw", target=1.5, unit="× tu peso"),
     A("squat_15bw", "fuerza", "🦵", "Piernas de acero",
@@ -130,6 +133,51 @@ ACHIEVEMENTS = [
     *_tiers("e1rm", "fuerza", "best_e1rm", "kg", [
         (100, "📈", "1RM de tres cifras", "Llega a un 1RM estimado de 100 kg en cualquier ejercicio."),
         (150, "📊", "1RM de 150", "Llega a un 1RM estimado de 150 kg en cualquier ejercicio."),
+    ]),
+
+    # ---------------------------------------------------------------- Estándares
+    # Niveles de Kilgore (ExRx), ver app/strength_standards.py. Nivel
+    # "alcanzado": cada sesión con el peso corporal de ese momento.
+    *[
+        A(f"std_{lift}_{level}", "estandares", _LEVEL_EMOJI[level],
+          f"{standards.LIFT_LABELS[lift]}: {standards.LEVEL_LABELS[level]}",
+          f"Alcanza el nivel {standards.LEVEL_LABELS[level]} en {standards.LIFT_LABELS[lift].lower()} "
+          f"según los estándares de Lon Kilgore (1RM estimado con series de hasta 10 reps, "
+          f"según tu sexo y tu peso corporal).",
+          check=(lambda s, lift=lift, i=i: s[f"std_{lift}"] is not None and s[f"std_{lift}"] >= i))
+        for lift in standards.LIFTS
+        for i, level in enumerate(standards.LEVELS)
+    ],
+    A("std_big3_intermedio", "estandares", "🥈", "Intermedio en los tres grandes",
+      "Nivel Intermedio o más en press de banca, sentadilla y peso muerto a la vez.",
+      check=lambda s: s["std_big3"] is not None and s["std_big3"] >= 2),
+    A("std_big3_avanzado", "estandares", "🥇", "Avanzado en los tres grandes",
+      "Nivel Avanzado o más en press de banca, sentadilla y peso muerto a la vez.",
+      check=lambda s: s["std_big3"] is not None and s["std_big3"] >= 3),
+    A("std_big3_elite", "estandares", "👑", "Élite en los tres grandes",
+      "Nivel Élite en press de banca, sentadilla y peso muerto: nivel de competición.",
+      check=lambda s: s["std_big3"] is not None and s["std_big3"] >= 4),
+    # Hitos de discos: barra de 20 kg + discos de 20 kg por lado.
+    *_tiers("plates_bench", "estandares", "max_bench_kg", "kg", [
+        (60, "🔵", "Banca: un disco por lado", "Haz press de banca con 60 kg (barra + un disco de 20 por lado)."),
+        (100, "🔵", "Banca: dos discos", "Haz press de banca con 100 kg (dos discos de 20 por lado)."),
+        (140, "🔵", "Banca: tres discos", "Haz press de banca con 140 kg (tres discos de 20 por lado)."),
+    ]),
+    *_tiers("plates_squat", "estandares", "max_squat_kg", "kg", [
+        (100, "🟣", "Sentadilla: dos discos", "Haz sentadilla con 100 kg (dos discos de 20 por lado)."),
+        (140, "🟣", "Sentadilla: tres discos", "Haz sentadilla con 140 kg (tres discos de 20 por lado)."),
+        (180, "🟣", "Sentadilla: cuatro discos", "Haz sentadilla con 180 kg (cuatro discos de 20 por lado)."),
+    ]),
+    *_tiers("plates_deadlift", "estandares", "max_deadlift_kg", "kg", [
+        (140, "🟠", "Peso muerto: tres discos", "Haz peso muerto con 140 kg (tres discos de 20 por lado)."),
+        (180, "🟠", "Peso muerto: cuatro discos", "Haz peso muerto con 180 kg (cuatro discos de 20 por lado)."),
+        (220, "🟠", "Peso muerto: cinco discos", "Haz peso muerto con 220 kg (cinco discos de 20 por lado)."),
+    ]),
+    *_tiers("dots", "estandares", "dots", "puntos", [
+        (200, "📐", "DOTS 200", "Llega a 200 puntos DOTS con tus 1RM estimados de banca, sentadilla y peso muerto."),
+        (300, "📐", "DOTS 300", "Llega a 300 puntos DOTS: un total sólido para tu peso."),
+        (400, "📐", "DOTS 400", "Llega a 400 puntos DOTS: nivel de powerlifter competitivo."),
+        (500, "📐", "DOTS 500", "Llega a 500 puntos DOTS: nivel de competición nacional o más."),
     ]),
 
     # ---------------------------------------------------------------- Volumen
@@ -302,10 +350,7 @@ ACHIEVEMENTS = [
 BY_CODE = {a.code: a for a in ACHIEVEMENTS}
 assert len(BY_CODE) == len(ACHIEVEMENTS), "códigos de logro repetidos"
 
-_BENCH = ("banca", "bench")
-_SQUAT = ("sentadilla", "squat")
-_DEADLIFT = ("peso muerto", "deadlift")
-_NOT_DEADLIFT = ("rumano", "romanian", "piernas rigidas", "stiff")
+_BENCH = ("banca", "bench")  # solo para "Lunes internacional de pecho" (laxo a propósito)
 _LEGS = ("sentadilla", "squat", "prensa", "leg press", "zancada", "lunge", "hack", "bulgara", "búlgara",
          "femoral", "cuadriceps", "cuádriceps", "extension de pierna", "extensión de pierna", "hip thrust")
 
@@ -337,7 +382,7 @@ def compute_stats(user):
         "midnight", "leap_day", "anniversary", "palindrome_session", "exact_100x10")})
     exercises, pr_exercises, set_types = set(), set(), set()
     exercise_sessions = defaultdict(int)
-    best_e1rm = {"bench": 0.0, "squat": 0.0, "deadlift": 0.0, "any": 0.0}
+    best_e1rm = {"any": 0.0}
     days, months, week_days = set(), set(), defaultdict(set)
     counted = []
 
@@ -407,14 +452,7 @@ def compute_stats(user):
                 st["true_single"] = True
             if s.weight == 100 and s.reps == 10:
                 st["exact_100x10"] = True
-            e1rm = estimated_1rm(s)
-            best_e1rm["any"] = max(best_e1rm["any"], e1rm)
-            if _has(s.exercise, _BENCH):
-                best_e1rm["bench"] = max(best_e1rm["bench"], e1rm)
-            elif _has(s.exercise, _SQUAT):
-                best_e1rm["squat"] = max(best_e1rm["squat"], e1rm)
-            elif _has(s.exercise, _DEADLIFT) and not _has(s.exercise, _NOT_DEADLIFT):
-                best_e1rm["deadlift"] = max(best_e1rm["deadlift"], e1rm)
+            best_e1rm["any"] = max(best_e1rm["any"], estimated_1rm(s))
 
     sorted_days = sorted(days)
     for a, b in zip(sorted_days, sorted_days[1:]):
@@ -436,14 +474,19 @@ def compute_stats(user):
     st["best_e1rm"] = best_e1rm["any"]
     st["streak_days"] = compute_smart_streak(user.id, list(workouts.values()))["days"]
 
-    body_weight = db.session.scalar(
-        sa.select(BodyWeightEntry.weight)
-        .where(BodyWeightEntry.user_id == user.id)
-        .order_by(BodyWeightEntry.timestamp.desc())
-        .limit(1)
-    )
+    # Fuerza relativa y estándares: mismo criterio estricto que /progress
+    # (solo el levantamiento con barra, sin variantes; 1RM estimado con series
+    # de hasta 10 repeticiones efectivas). Ver app/strength_standards.py.
+    profile = standards.strength_profile(user, rows=rows)
+    latest_bw = profile["latest_bw"]
     for lift in ("bench", "squat", "deadlift"):
-        st[f"{lift}_bw"] = (best_e1rm[lift] / body_weight) if body_weight else 0.0
+        best = profile["lifts"][lift]["best_e1rm_all"]
+        st[f"{lift}_bw"] = (best / latest_bw) if (best and latest_bw) else 0.0
+    for lift in standards.LIFTS:
+        st[f"std_{lift}"] = profile["lifts"][lift]["reached"]
+        st[f"max_{lift}_kg"] = profile["lifts"][lift]["max_weight"] or 0.0
+    st["std_big3"] = profile["global"]
+    st["dots"] = profile["dots"] or 0.0
 
     def count(model, *where):
         return db.session.scalar(sa.select(sa.func.count()).select_from(model).where(*where)) or 0

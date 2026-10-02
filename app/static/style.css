@@ -3526,6 +3526,38 @@ a.dash-tile:active { transform: scale(0.98); }
     .strength-movers { grid-template-columns: 1fr; }
 }
 
+/* ===== Estándares de fuerza (progress.html) ===== */
+.std-card { margin-top: 16px; scroll-margin-top: 16px; }
+.std-global { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.std-global > span { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
+.std-missing { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: var(--color-surface-active); font-size: 0.85rem; line-height: 1.45; }
+.std-missing a { font-weight: 700; }
+.std-list { display: flex; flex-direction: column; }
+.std-row { padding: 12px 0; border-top: 1px solid var(--border-subtle); }
+.std-row:first-child { border-top: 0; padding-top: 4px; }
+.std-row-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.std-row-head strong { font-size: 0.95rem; }
+.std-sub { margin: 3px 0 0; font-size: 0.8rem; color: var(--color-text-muted); }
+.std-next { margin: 4px 0 0; font-size: 0.78rem; color: var(--color-text-soft); }
+.std-bar { height: 8px; margin-top: 8px; border-radius: 999px; background: var(--color-surface-active); overflow: hidden; }
+.std-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--color-brand-soft), var(--color-brand)); }
+.std-dots { margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--border-subtle); font-size: 0.82rem; color: var(--color-text-muted); }
+.std-dots strong { color: var(--color-text); }
+.std-defs { margin: 8px 0 0; padding-left: 18px; line-height: 1.5; }
+/* Insignia de nivel: colores sólidos con texto legible (AA) en claro y oscuro. */
+.std-level { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
+.std-level.lvl--1 { background: var(--color-surface-active); color: var(--color-text-muted); }
+.std-level.lvl-0 { background: #dff5e9; color: #0f6b47; }
+.std-level.lvl-1 { background: #f6e3d3; color: #7a3f12; }
+.std-level.lvl-2 { background: #e3e8f2; color: #34415a; }
+.std-level.lvl-3 { background: #fbecc0; color: #6b4e00; }
+.std-level.lvl-4 { background: #3d2b8a; color: #fff; }
+:root[data-theme="dark"] .std-level.lvl-0 { background: #12382a; color: #8ff0c4; }
+:root[data-theme="dark"] .std-level.lvl-1 { background: #3d2516; color: #f4c49c; }
+:root[data-theme="dark"] .std-level.lvl-2 { background: #263043; color: #c9d4ea; }
+:root[data-theme="dark"] .std-level.lvl-3 { background: #3d3110; color: #ffdd7a; }
+:root[data-theme="dark"] .std-level.lvl-4 { background: #b9a6ff; color: #1b1238; }
+
 /* Transición suave entre páginas (Chrome 126+; el resto simplemente cambia de página). */
 @media (prefers-reduced-motion: no-preference) {
     @view-transition { navigation: auto; }
