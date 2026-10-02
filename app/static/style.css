@@ -207,7 +207,7 @@ textarea {
     border-left: 4px solid #22c98c;
     background: #e7faf1;
 }
-.analysis-fortalezas h3 { color: #128a5e; }
+.analysis-fortalezas h3 { color: #0e7550; }
 .analysis-fortalezas .analysis-placeholder { color: #3d8a6b; }
 
 .analysis-areas-mejora {
@@ -1645,8 +1645,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 /* ===== Piloto de rediseño: routines.html ===== */
 
 .routine-card {
-    border-color: color-mix(in srgb, var(--block-color, #ece7ff) 45%, white);
-    background: color-mix(in srgb, var(--block-color, #ece7ff) 8%, white);
+    border-color: color-mix(in srgb, var(--block-color, #ece7ff) 45%, var(--surface));
+    background: color-mix(in srgb, var(--block-color, #ece7ff) 8%, var(--surface));
 }
 .routine-card .exercise-header {
     flex-wrap: wrap;
@@ -1711,8 +1711,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     color: var(--color-text);
     padding: 10px 14px;
     border-radius: var(--radius-card);
-    background: color-mix(in srgb, var(--block-color) 16%, white);
-    border: 1.5px solid color-mix(in srgb, var(--block-color) 45%, white);
+    background: color-mix(in srgb, var(--block-color) 16%, var(--surface));
+    border: 1.5px solid color-mix(in srgb, var(--block-color) 45%, var(--surface));
     margin-bottom: 14px;
 }
 .routine-block-details > summary::-webkit-details-marker { display: none; }
@@ -1722,7 +1722,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     border-color: var(--color-border-soft);
 }
 .routine-block-details > summary .icon {
-    color: color-mix(in srgb, var(--block-color) 70%, black);
+    color: color-mix(in srgb, var(--block-color) 70%, var(--color-text));
     transition: transform 0.2s ease;
     flex-shrink: 0;
 }
@@ -3079,7 +3079,7 @@ button.routine-start-btn {
 button.routine-start-btn:disabled { opacity: 0.35; box-shadow: none; cursor: not-allowed; }
 .routine-card-sub { display: flex; align-items: center; gap: 10px; margin: 8px 0 0 34px; }
 .routine-card-exercises { flex: 1; min-width: 0; color: var(--color-text-muted); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.routine-card-exercises a { color: var(--color-brand); font-weight: 600; text-decoration: none; }
+.routine-card-exercises a { color: var(--color-brand-dark); font-weight: 600; text-decoration: none; }
 .routine-block-chip {
     position: relative;
     flex-shrink: 0;
@@ -3209,7 +3209,7 @@ input[type="checkbox"].toggle::after {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    background: #fff;
+    background: #fff;  /* siempre blanca, también en oscuro */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     transition: transform 0.2s ease;
 }
@@ -3347,3 +3347,10 @@ menos ~44 px, sin cambiar su tamaño ni la maquetación de la tabla. */
     background-color: var(--surface-2);
     color: var(--color-text);
 }
+/* Análisis de IA en oscuro: los textos de cada tarjeta eran tonos oscuros pensados para fondo claro. */
+:root[data-theme="dark"] .analysis-summary { color: var(--color-text); }
+:root[data-theme="dark"] .analysis-fortalezas h3 { color: #5cf0b4; }
+:root[data-theme="dark"] .analysis-fortalezas .analysis-placeholder { color: #9fe3c6; }
+:root[data-theme="dark"] .analysis-areas-mejora h3 { color: #ff8a8a; }
+:root[data-theme="dark"] .analysis-areas-mejora .analysis-placeholder { color: #f0b0b0; }
+:root[data-theme="dark"] .analysis-proximos-pasos .analysis-placeholder { color: #b9aef0; }
