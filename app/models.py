@@ -42,6 +42,19 @@ class User(UserMixin, db.Model):
     # (p. ej. "0134"). Solo para el "hoy toca / hoy descanso" de Inicio; la
     # racha NO depende de qué días se entrene. NULL = sin configurar.
     training_days: so.Mapped[Optional[str]] = so.mapped_column(sa.String(7))  # _clean_ref limita a 20
+    # XP y nivel (app/progression.py). xp_total es una caché de
+    # compute_xp(): vale si xp_cached_seq == xp_seq, xp_rules es la versión
+    # de reglas vigente y xp_cached_at tiene menos de 24 h. xp_seq sube (con
+    # un UPDATE atómico, nunca leer-modificar-escribir) en la misma
+    # transacción que cualquier cambio de entrenos, series, check-ins o
+    # mínimo semanal. xp_level_seen = último nivel ya anunciado (NULL = aún
+    # no se ha calculado nunca: el primer cálculo no avisa).
+    xp_seq: so.Mapped[int] = so.mapped_column(default=0, server_default="0")
+    xp_total: so.Mapped[int] = so.mapped_column(default=0, server_default="0")
+    xp_cached_seq: so.Mapped[Optional[int]] = so.mapped_column()
+    xp_rules: so.Mapped[Optional[int]] = so.mapped_column()
+    xp_cached_at: so.Mapped[Optional[datetime]] = so.mapped_column()
+    xp_level_seen: so.Mapped[Optional[int]] = so.mapped_column()
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -348,3 +361,26 @@ class DailyActivity(db.Model):
 
     def __repr__(self):
         return f"<DailyActivity user={self.user_id} {self.day}>"
+
+
+class DailyCheckin(db.Model):
+    """Check-in de recuperación del día (hora de Madrid): sueño y energía de
+    1 a 5, agujetas de 0 (nada) a 3 (fuertes). Es una valoración
+    AUTODECLARADA: nunca bloquea nada y se presenta siempre como tal."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    day: so.Mapped[date] = so.mapped_column(sa.Date, index=True)
+    sleep: so.Mapped[int] = so.mapped_column()
+    energy: so.Mapped[int] = so.mapped_column()
+    soreness: so.Mapped[int] = so.mapped_column()
+    created_at: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint("user_id", "day", name="uq_daily_checkin_user_day"),
+    )
+
+    def __repr__(self):
+        return f"<DailyCheckin user={self.user_id} {self.day}>"

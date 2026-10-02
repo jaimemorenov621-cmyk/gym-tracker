@@ -27,6 +27,9 @@ class DbTestCase(unittest.TestCase):
         assert ":memory:" in uri, f"Test DB no aislada, abortando: {uri!r}"
         cls._csrf = app.config.get("WTF_CSRF_ENABLED", True)
         app.config["WTF_CSRF_ENABLED"] = False
+        # Toda escritura masiva en tablas del XP sin revisar rompe el test
+        # (ver app/progression.py).
+        app.config["XP_STRICT_BULK_DML"] = True
         with app.app_context():
             db.create_all()
 

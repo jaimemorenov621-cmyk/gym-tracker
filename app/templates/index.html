@@ -93,6 +93,69 @@
         {% endif %}
     </div>
 
+    {# Hoy: datos de descanso (solo hechos, nunca "recuperado") y check-in. #}
+    {% set soreness_names = ['nada', 'leves', 'moderadas', 'fuertes'] %}
+    <section class="today-panel{% if home_cta.kind == 'rest' %} is-rest{% endif %}" id="hoy">
+        {% if rest_facts %}
+            <div class="today-facts">
+                <p class="today-week">
+                    <b>{{ streak.this_week }}</b> día{{ '' if streak.this_week == 1 else 's' }} entrenado{{ '' if streak.this_week == 1 else 's' }} esta semana
+                    · mínimo {{ streak.minimum }}{% if streak.this_week >= streak.minimum %} <span class="ok">✓ cumplido</span>{% endif %}
+                </p>
+                {% if rest_facts['items'] %}
+                    <p class="today-facts-title">
+                        {% if rest_facts.for_routine %}Último entreno de lo que trabaja {{ home_cta.routine.name }}{% else %}Último entreno por grupo muscular{% endif %}
+                    </p>
+                    <ul class="today-groups">
+                        {% for it in rest_facts['items'] %}
+                            <li><span>{{ it.label }}</span><b>{% if it.days is none %}hace más de 60 d{% elif it.days == 0 %}hoy{% elif it.days == 1 %}ayer{% else %}hace {{ it.days }} d{% endif %}</b></li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+                {% if rest_facts.unmapped %}
+                    <p class="today-note">{{ rest_facts.unmapped }} ejercicio{{ '' if rest_facts.unmapped == 1 else 's' }} sin músculo en el catálogo no cuenta{{ '' if rest_facts.unmapped == 1 else 'n' }} aquí.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if checkin %}
+            <div class="checkin-done">
+                <span class="checkin-done-icon" aria-hidden="true">✓</span>
+                <span class="checkin-done-text">
+                    <small>Check-in de hoy</small>
+                    <span>Sueño {{ checkin.sleep }}/5 · Energía {{ checkin.energy }}/5 · Agujetas {{ soreness_names[checkin.soreness] }}</span>
+                </span>
+            </div>
+            {% if checkin.sleep <= 2 and checkin.energy <= 2 %}
+                <p class="checkin-low">Has indicado que dormiste poco y tienes poca energía: si entrenas, puedes valorar RIR +1 o una serie menos. Es solo una sugerencia.</p>
+            {% endif %}
+        {% endif %}
+        <details class="checkin"{% if not checkin and home_cta.kind == 'rest' %} open{% endif %}>
+            <summary>
+                {% if checkin %}Cambiar el check-in{% else %}¿Cómo llegas hoy?{% endif %}
+                {% if not checkin %}<small>3 toques · +10 XP</small>{% endif %}
+            </summary>
+            <form action="{{ url_for('recovery_checkin') }}" method="post" class="checkin-form">
+                {{ checkin_form.hidden_tag() }}
+                {% for field in [checkin_form.sleep, checkin_form.energy, checkin_form.soreness] %}
+                    <fieldset class="checkin-row">
+                        <legend>{{ field.label.text }}</legend>
+                        <div class="checkin-chips">
+                            {% for value, label in field.choices %}
+                                <label class="checkin-chip">
+                                    <input type="radio" name="{{ field.name }}" value="{{ value }}" required{% if checkin and checkin[field.name] == value %} checked{% endif %}>
+                                    <span>{{ label }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+                {% endfor %}
+                <button type="submit" class="btn form-submit checkin-submit">Guardar check-in</button>
+                <p class="checkin-help">Es tu valoración: no se mide nada y no bloquea nada.</p>
+            </form>
+        </details>
+    </section>
+
     {% if onboarding %}
         <div class="card card-elevated onboarding">
             <div class="onboarding-head">
@@ -127,6 +190,14 @@
                 {% endif %}
             </span>
             <span class="achv-toast-cta">Ver</span>
+        </a>
+    {% endif %}
+
+    {% if level_up %}
+        <a class="level-toast" href="{{ url_for('level_page') }}">
+            <span class="level-toast-badge">{{ level_up }}</span>
+            <span class="level-toast-text"><small>Has subido de nivel</small><strong>Nivel {{ level_up }}</strong></span>
+            {{ macros.icon('chevron-right', 18) }}
         </a>
     {% endif %}
 
@@ -187,6 +258,14 @@
         <a class="dash-achv-link" href="{{ url_for('achievements_page') }}">
             <span>{{ macros.icon('trophy', 16) }} Logros</span>
             <span><b>{{ achievements_unlocked }}</b> de {{ achievements_total }} {{ macros.icon('chevron-right', 16) }}</span>
+        </a>
+        {# Nivel: después de lo profesional (mosaicas), nunca en su lugar. #}
+        <a class="dash-level-link" href="{{ url_for('level_page') }}">
+            <span class="dash-level-top">
+                <span><b>Nivel {{ xp.level }}</b> · Fuerza: {{ profile.global_label or 'completa tu perfil' }}</span>
+                <span class="dash-level-next">faltan {{ xp.to_next|num }} XP {{ macros.icon('chevron-right', 16) }}</span>
+            </span>
+            <span class="dash-level-bar" aria-hidden="true"><i style="width: {{ xp.pct }}%"></i></span>
         </a>
         <div class="dash-body">
             <div class="dash-muscle-map">

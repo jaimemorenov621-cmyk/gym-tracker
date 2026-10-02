@@ -19,7 +19,7 @@ from datetime import datetime, timedelta, timezone
 import sqlalchemy as sa
 
 from app import db
-from app.models import DailyActivity, SetEntry, Workout
+from app.models import DailyActivity, DailyCheckin, SetEntry, Workout
 
 RETENTION_DAYS = 120
 
@@ -75,9 +75,10 @@ def record_css_retry(user):
 
 
 def _checkin_days(start):
-    """{(user_id, día)} con check-in desde `start`. Vacío (y `None` como
-    señal de "aún no existe") hasta que haya check-in en la app."""
-    return None
+    """{(user_id, día)} con check-in desde `start`."""
+    return set(db.session.execute(
+        sa.select(DailyCheckin.user_id, DailyCheckin.day).where(DailyCheckin.day >= start)
+    ).tuples())
 
 
 def _pct(part, whole):

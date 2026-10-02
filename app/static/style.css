@@ -3684,3 +3684,79 @@ a.dash-achv-link span { display: inline-flex; align-items: center; gap: 6px; }
 a.dash-achv-link span:first-child .icon { color: #e08a00; }
 a.dash-achv-link span:last-child { color: var(--color-text-muted); font-weight: 600; }
 a.dash-achv-link b { color: var(--color-text); }
+
+/* ===== Hoy: datos de descanso y check-in (index.html) ===== */
+.today-panel { margin: 12px 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.today-facts { padding: 12px 14px; border-radius: var(--radius-card); background: var(--surface); border: 1px solid var(--border-subtle); }
+.today-week { margin: 0; font-size: 0.9rem; }
+.today-week b { font-size: 1.05rem; }
+.today-week .ok { color: var(--color-success-text); font-weight: 700; }
+.today-facts-title { margin: 10px 0 4px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
+.today-groups { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; column-gap: 14px; }
+.today-groups li { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-top: 1px solid var(--border-subtle); font-size: 0.85rem; }
+.today-groups b { font-weight: 700; color: var(--color-text-soft); white-space: nowrap; }
+.today-note { margin: 8px 0 0; font-size: 0.75rem; color: var(--color-text-muted); }
+details.checkin { border-radius: var(--radius-card); background: var(--surface); border: 1px solid var(--border-subtle); }
+details.checkin > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; cursor: pointer; font-weight: 800; list-style: none; }
+details.checkin > summary::-webkit-details-marker { display: none; }
+details.checkin > summary small { color: var(--color-text-muted); font-weight: 600; font-size: 0.78rem; }
+.checkin-form { padding: 0 14px 14px; }
+.checkin-row { border: 0; margin: 0 0 10px; padding: 0; min-width: 0; }
+.checkin-row legend { padding: 0; margin-bottom: 6px; font-size: 0.8rem; font-weight: 700; color: var(--color-text-soft); }
+.checkin-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 5px; }
+.checkin-chip { position: relative; display: flex; }
+.checkin-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.checkin-chip span { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 1.15; min-height: 44px; padding: 4px 4px; border-radius: 12px; border: 1px solid var(--border-subtle); background: var(--color-neutral-bg); font-size: 0.82rem; font-weight: 600; cursor: pointer; }
+.checkin-chip input:checked + span { background: var(--color-brand); border-color: var(--color-brand); color: #fff; }
+.checkin-chip input:focus-visible + span { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+.checkin-submit { width: 100%; margin-top: 4px; }
+.checkin-help { margin: 8px 0 0; font-size: 0.75rem; color: var(--color-text-muted); text-align: center; }
+.checkin-done { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-radius: var(--radius-card); background: var(--surface); border: 1px solid var(--border-subtle); }
+.checkin-done-icon { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--color-success-dark); color: #fff; font-weight: 800; flex-shrink: 0; }
+.checkin-done-text { display: flex; flex-direction: column; font-size: 0.85rem; }
+.checkin-done-text small { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
+.checkin-low { margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--color-surface-active); font-size: 0.82rem; line-height: 1.45; }
+:root[data-theme="dark"] .checkin-chip span { background: var(--color-surface-active); }
+:root[data-theme="dark"] .checkin-chip input:checked + span { background: #5a3fd8; border-color: #b9a6ff; color: #fff; }
+
+/* ===== Nivel (index.html, level.html, finish_workout.html) ===== */
+a.dash-level-link { display: block; margin: -6px 0 16px; padding: 10px 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-subtle); color: var(--color-text); text-decoration: none; font-size: 0.88rem; }
+.dash-level-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.dash-level-next { display: inline-flex; align-items: center; gap: 4px; color: var(--color-text-muted); font-weight: 600; white-space: nowrap; font-size: 0.8rem; }
+.dash-level-bar { display: block; height: 6px; margin-top: 8px; border-radius: 999px; background: var(--color-surface-active); overflow: hidden; }
+.dash-level-bar i { display: block; height: 100%; border-radius: inherit; background: var(--color-brand); }
+a.level-toast { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 10px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--color-brand-soft); color: var(--color-text); text-decoration: none; }
+.level-toast-badge { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: var(--color-brand); color: #fff; font-weight: 800; flex-shrink: 0; }
+.level-toast-text { flex: 1; display: flex; flex-direction: column; }
+.level-toast-text small { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
+a.finish-xp { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin: 0 0 16px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--border-subtle); background: var(--surface); color: var(--color-text); text-decoration: none; font-size: 0.85rem; }
+.finish-xp-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0; }
+.finish-xp-main b { color: var(--color-brand-dark); }
+.finish-xp-main span, .finish-xp-week { color: var(--color-text-muted); }
+.finish-xp-week { font-weight: 700; white-space: nowrap; }
+.finish-xp-note { flex-basis: 100%; color: var(--color-text-muted); font-size: 0.75rem; }
+:root[data-theme="dark"] .finish-xp-main b { color: #b9a6ff; }
+.level-hero-top { display: flex; align-items: center; gap: 14px; }
+.level-hero-top strong { display: block; font-size: 1.3rem; }
+.level-hero-top div > span { color: var(--color-text-muted); font-size: 0.85rem; }
+.level-badge { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 18px; background: var(--color-brand); color: #fff; font-size: 1.4rem; font-weight: 800; flex-shrink: 0; }
+a.level-strength { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border-subtle); color: var(--color-text); text-decoration: none; font-size: 0.88rem; font-weight: 600; }
+.level-note { margin: 10px 0 0; font-size: 0.8rem; color: var(--color-text-muted); line-height: 1.45; }
+.level-note a { color: var(--color-brand-dark); font-weight: 700; }
+:root[data-theme="dark"] .level-note a { color: #b9a6ff; }
+.level-section { margin-top: 16px; }
+.level-section h2 { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 10px; font-size: 1.1rem; font-weight: 800; }
+.level-version { font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--color-surface-active); color: var(--color-text-soft); }
+.level-rules { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.level-rules th, .level-rules td { padding: 8px 6px; border-top: 1px solid var(--border-subtle); text-align: left; vertical-align: top; }
+.level-rules th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); border-top: 0; }
+.level-rules td:nth-child(2) { font-weight: 800; white-space: nowrap; }
+.level-rules tr.is-current td { background: var(--color-surface-active); font-weight: 700; }
+.level-notes { margin: 12px 0 0; padding-left: 18px; font-size: 0.8rem; color: var(--color-text-soft); line-height: 1.5; }
+.level-weeks { list-style: none; margin: 0; padding: 0; }
+.level-weeks li { padding: 9px 0; border-top: 1px solid var(--border-subtle); }
+.level-weeks li:first-child { border-top: 0; padding-top: 0; }
+.level-week-top { display: flex; justify-content: space-between; gap: 10px; font-size: 0.85rem; }
+.level-week-top b { white-space: nowrap; }
+.level-week-parts { margin-top: 2px; font-size: 0.75rem; color: var(--color-text-muted); }
+.level-capped { color: var(--color-brand-dark); font-weight: 800; margin-left: 2px; }

@@ -94,6 +94,11 @@ def run_migrations_online():
     connectable = get_engine()
 
     with connectable.connect() as connection:
+        # Las migraciones no invalidan la caché de XP (app/progression.py):
+        # antes de existir user.xp_seq el aumento fallaría. Una migración que
+        # cambie datos de entrenos/series/check-ins lleva el comentario
+        # "# xp: requiere flask recompute-xp" (lo exige un test).
+        connection.info["xp_tracking_disabled"] = True
         context.configure(
             connection=connection, target_metadata=get_metadata(), **conf_args
         )

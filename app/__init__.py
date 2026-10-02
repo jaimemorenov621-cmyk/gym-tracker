@@ -21,7 +21,7 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
-from app import routes, models
+from app import routes, models, progression  # progression: listeners de la caché de XP
 from app.routes import format_rest, get_exercise_image, to_local, fmt_num, relative_day
 
 app.jinja_env.globals["format_rest"] = format_rest
