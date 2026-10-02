@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <h1 class="page-title">Logros</h1>
+
+    <div class="achv-summary">
+        <div class="achv-summary-ring" style="--p: {{ (100 * unlocked_count / total)|round|int }};">
+            <span>{{ (100 * unlocked_count / total)|round|int }}%</span>
+        </div>
+        <div>
+            <strong>{{ unlocked_count }} de {{ total }}</strong>
+            <span>logros desbloqueados</span>
+        </div>
+    </div>
+
+    {% if closest %}
+        <h2 class="section-title">Te falta poco</h2>
+        <div class="achv-closest">
+            {% for it in closest %}
+                <div class="achv-mini">
+                    <span class="achv-emoji is-locked">{{ it.a.emoji }}</span>
+                    <div>
+                        <strong>{{ it.a.title }}</strong>
+                        <div class="achv-bar"><span style="width: {{ it.pct }}%"></span></div>
+                        <small>{{ it.value|num }} / {{ it.target|num }} {{ it.a.unit }}</small>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <nav class="achv-tabs" aria-label="Categorías">
+        <button type="button" class="achv-tab active" data-cat="all">Todos</button>
+        {% for key, name, emoji, items in categories %}
+            <button type="button" class="achv-tab" data-cat="{{ key }}">{{ emoji }} {{ name }}
+                <small>{{ items|selectattr('unlocked')|list|length }}/{{ items|length }}</small></button>
+        {% endfor %}
+    </nav>
+
+    {% for key, name, emoji, items in categories %}
+        <section class="achv-section" data-cat="{{ key }}">
+            <h2 class="section-title">{{ emoji }} {{ name }} <span class="achv-count">{{ items|selectattr('unlocked')|list|length }}/{{ items|length }}</span></h2>
+            <div class="achv-grid">
+                {% for it in items %}
+                    {% set hidden = it.a.secret and not it.unlocked %}
+                    <div class="achv-card{% if it.unlocked %} is-unlocked{% endif %}{% if hidden %} is-secret{% endif %}">
+                        <span class="achv-emoji{% if not it.unlocked %} is-locked{% endif %}">{{ '❔' if hidden else it.a.emoji }}</span>
+                        <strong>{{ '???' if hidden else it.a.title }}</strong>
+                        <p>{{ 'Logro secreto. Sigue entrenando…' if hidden else it.a.desc }}</p>
+                        {% if it.unlocked %}
+                            <small class="achv-date">✓ {{ it.unlocked_at|relative_day|capitalize }}</small>
+                        {% elif it.target and not hidden %}
+                            <div class="achv-bar"><span style="width: {{ it.pct }}%"></span></div>
+                            <small>{{ it.value|num }} / {{ it.target|num }} {{ it.a.unit }}</small>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endfor %}
+
+    <script>
+        // Filtro por categoría (todo se pinta en el servidor; esto solo oculta).
+        document.querySelectorAll('.achv-tab').forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                const cat = tab.dataset.cat;
+                document.querySelectorAll('.achv-tab').forEach(t => t.classList.toggle('active', t === tab));
+                document.querySelectorAll('.achv-section').forEach(function (sec) {
+                    sec.hidden = cat !== 'all' && sec.dataset.cat !== cat;
+                });
+            });
+        });
+    </script>
+{% endblock %}

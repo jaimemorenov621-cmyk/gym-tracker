@@ -107,6 +107,22 @@
         </div>
     {% endif %}
 
+    {% if new_achievements %}
+        <a class="achv-toast" href="{{ url_for('achievements_page') }}">
+            <span class="achv-toast-emoji">{{ new_achievements[0].emoji }}</span>
+            <span class="achv-toast-text">
+                {% if new_achievements|length == 1 %}
+                    <small>¡Logro desbloqueado!</small>
+                    <strong>{{ new_achievements[0].title }}</strong>
+                {% else %}
+                    <small>¡Logros desbloqueados!</small>
+                    <strong>{{ new_achievements|length }} logros nuevos</strong>
+                {% endif %}
+            </span>
+            <span class="achv-toast-cta">Ver</span>
+        </a>
+    {% endif %}
+
     <div class="dashboard-panel">
         <span class="dash-eyebrow">Resumen de entrenamiento</span>
         <div class="dash-tiles">
@@ -161,6 +177,10 @@
                 {% endif %}
             </a>
         </div>
+        <a class="dash-achv-link" href="{{ url_for('achievements_page') }}">
+            <span>{{ macros.icon('trophy', 16) }} Logros</span>
+            <span><b>{{ achievements_unlocked }}</b> de {{ achievements_total }} {{ macros.icon('chevron-right', 16) }}</span>
+        </a>
         <div class="dash-body">
             <div class="dash-muscle-map">
                 <style>

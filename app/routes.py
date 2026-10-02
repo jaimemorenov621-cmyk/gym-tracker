@@ -43,8 +43,10 @@ from app.models import (
     AiAnalysis,
     BodyWeightEntry,
     WeeklyGoalHistory,
+    UserAchievement,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
+from app import achievements
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
@@ -80,6 +82,43 @@ def _cache_versioned_static(response):
     if request.path.startswith("/static/") and request.args.get("v") and response.status_code in (200, 304):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return response
+
+
+def check_achievements():
+    """Evalúa los logros tras una acción que puede desbloquear alguno. Nunca
+    rompe la acción principal: si algo falla, se registra y se sigue."""
+    try:
+        achievements.evaluate(current_user)
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error evaluando logros")
+
+
+@app.route("/logros")
+@login_required
+def achievements_page():
+    items, _ = achievements.evaluate(current_user)
+    achievements.unseen(current_user.id)  # ya los está viendo aquí
+    by_category = defaultdict(list)
+    for it in items:
+        by_category[it["a"].category].append(it)
+    for cat_items in by_category.values():
+        # Conseguidos primero (más recientes arriba), luego por cercanía.
+        cat_items.sort(key=lambda it: (not it["unlocked"], -(it["unlocked_at"].timestamp() if it["unlocked_at"] else 0), -it["pct"]))
+    recent = sorted((it for it in items if it["unlocked"]), key=lambda it: it["unlocked_at"], reverse=True)[:4]
+    closest = sorted(
+        (it for it in items if not it["unlocked"] and not it["a"].secret and it["target"]),
+        key=lambda it: -it["pct"],
+    )[:3]
+    return render_template(
+        "achievements.html",
+        title="Logros",
+        categories=[(key, name, emoji, by_category.get(key, [])) for key, name, emoji in achievements.CATEGORIES],
+        unlocked_count=sum(1 for it in items if it["unlocked"]),
+        total=len(items),
+        recent=recent,
+        closest=closest,
+    )
 
 
 @app.route("/privacy")
@@ -592,6 +631,13 @@ def index():
     notes_form = NotesForm()
     notes_form.notes.data = current_user.notes or ""
 
+    # Primera vez con logros: se calculan sobre todo el historial para que
+    # quien ya entrenaba se encuentre con los que ya se había ganado.
+    if db.session.scalar(
+        sa.select(UserAchievement.id).where(UserAchievement.user_id == current_user.id).limit(1)
+    ) is None and workouts:
+        check_achievements()
+
     return render_template(
         "index.html",
         title="Inicio",
@@ -610,6 +656,11 @@ def index():
         muscle_svg=muscle_svg_markup(current_user.sex),
         notes_form=notes_form,
         home_cta=home_cta(current_user),
+        new_achievements=achievements.unseen(current_user.id),
+        achievements_unlocked=db.session.scalar(
+            sa.select(sa.func.count()).select_from(UserAchievement).where(UserAchievement.user_id == current_user.id)
+        ),
+        achievements_total=len(achievements.ACHIEVEMENTS),
         onboarding=onboarding_status(current_user.id),
         empty_form=EmptyForm(),
     )
@@ -1229,6 +1280,7 @@ def finish_workout(workout_id):
                 flash(f"Entrenamiento guardado. Se eliminaron {n} series vacías sin rellenar.")
         else:
             flash("Entrenamiento guardado.")
+        check_achievements()
         return redirect(url_for("index", celebrate=1))
     duration_estimated_from = None
     duration_suspicious = False
@@ -1496,6 +1548,7 @@ def weight():
         db.session.add(BodyWeightEntry(weight=form.weight.data, user_id=current_user.id))
         db.session.commit()
         flash("Peso registrado.")
+        check_achievements()
         return redirect(url_for("weight"))
 
     entries = db.session.scalars(
@@ -1629,6 +1682,7 @@ def request_ai_analysis():
 
     db.session.add(AiAnalysis(content=content, user_id=current_user.id))
     db.session.commit()
+    check_achievements()
     flash("¡Análisis generado!")
     return redirect(url_for("ai_analysis"))
 
@@ -1904,6 +1958,7 @@ def new_routine():
         routine = Routine(name=form.name.data, order_index=count, author=current_user)
         db.session.add(routine)
         db.session.commit()
+        check_achievements()
         flash("Rutina creada. Añade ejercicios.")
         return redirect(url_for("routine_detail", routine_id=routine.id))
     return render_template("new_routine.html", title="Nueva rutina", form=form)

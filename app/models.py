@@ -303,3 +303,24 @@ class LandingEvent(db.Model):
 
     def __repr__(self):
         return f"<LandingEvent {self.event_type} {self.timestamp}>"
+
+
+class UserAchievement(db.Model):
+    """Logro desbloqueado por un usuario (el catálogo de logros vive en
+    app/achievements.py, en código). seen=False hasta que se le ha
+    mostrado el aviso de "logro desbloqueado"."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    code: so.Mapped[str] = so.mapped_column(sa.String(40))
+    unlocked_at: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
+    seen: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
+
+    __table_args__ = (
+        sa.UniqueConstraint("user_id", "code", name="uq_user_achievement"),
+    )
+
+    def __repr__(self):
+        return f"<UserAchievement user={self.user_id} {self.code}>"
