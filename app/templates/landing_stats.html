@@ -95,6 +95,58 @@
     </div>
 
     <div class="card card-elevated" style="margin-top:16px;">
+        <h3 style="margin-top:0;">Uso en días sin entreno</h3>
+        {% if usage_report.weeks %}
+            <table class="stats-daily">
+                <thead><tr>
+                    <th>Semana</th><th>Activos</th><th>Días sin entreno</th>
+                    <th title="Días sin entreno con la app abierta">A</th>
+                    <th title="Abierta y sin check-in">A'</th>
+                    <th title="Días sin entreno con check-in">B</th>
+                    <th title="Veces que una página se pintó sin CSS y se volvió a pedir">CSS</th>
+                </tr></thead>
+                <tbody>
+                    {% for w in usage_report.weeks %}
+                        <tr>
+                            <td>{{ w.start.strftime('%d/%m') }}{% if w.current %} <span class="stats-muted">(en curso)</span>{% endif %}</td>
+                            <td>{{ w.active_users }}</td>
+                            <td>{{ w.rest }}</td>
+                            <td>{% if w.a is not none %}{{ w.a }}% <span class="stats-muted">({{ w.opened }})</span>{% else %}—{% endif %}</td>
+                            <td>{% if w.a2 is not none %}{{ w.a2 }}% <span class="stats-muted">({{ w.opened_no_checkin }})</span>{% else %}—{% endif %}</td>
+                            <td>{% if w.b is not none %}{{ w.b }}% <span class="stats-muted">({{ w.checkin }})</span>{% else %}—{% endif %}</td>
+                            <td>{{ w.css_retries }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% set latest = usage_report.weeks[0] %}
+            {% if latest.per_user %}
+                <details style="margin-top:10px;">
+                    <summary>Por usuario (semana del {{ latest.start.strftime('%d/%m') }}, anónimo)</summary>
+                    <table class="stats-daily" style="margin-top:8px;">
+                        <thead><tr><th>Usuario</th><th>Días sin entreno</th><th>Abrió</th><th>Abrió sin check-in</th><th>Check-in</th></tr></thead>
+                        <tbody>
+                            {% for u in latest.per_user %}
+                                <tr><td>{{ u.label }}</td><td>{{ u.rest }}</td><td>{{ u.opened }}</td><td>{{ u.opened_no_checkin }}</td><td>{% if usage_report.has_checkin %}{{ u.checkin }}{% else %}—{% endif %}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </details>
+            {% endif %}
+            <p class="stats-footnote" style="margin-bottom:0;">
+                Desde el {{ usage_report.since.strftime('%d/%m/%Y') }}. Solo usuarios que entrenaron esa semana.
+                A = días sin entreno con la app abierta · A' = abierta y sin check-in · B = con check-in
+                ({% if usage_report.has_checkin %}activo{% else %}aún no existe{% endif %}).
+                Criterio fijado antes de lanzar el check-in (semanas 3-4 frente a esta línea base):
+                B ≥ 50 % y A +10 puntos → adelantar el mapa de recuperación; B &lt; 15 % o A sin cambio (±5) → el check-in no funciona.
+                Con pocos usuarios, orientativo.
+            </p>
+        {% else %}
+            <p><em>Todavía no hay datos: se empezó a medir con este despliegue.</em></p>
+        {% endif %}
+    </div>
+
+    <div class="card card-elevated" style="margin-top:16px;">
         <h3 style="margin-top:0;">Día a día</h3>
         {% if daily %}
             <table class="stats-daily">

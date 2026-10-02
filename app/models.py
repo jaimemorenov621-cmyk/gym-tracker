@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Optional
 import unicodedata
 import sqlalchemy as sa
@@ -324,3 +324,27 @@ class UserAchievement(db.Model):
 
     def __repr__(self):
         return f"<UserAchievement user={self.user_id} {self.code}>"
+
+
+class DailyActivity(db.Model):
+    """Contador de uso, una fila por usuario y día (hora de Madrid). Solo
+    guarda lo que no se puede sacar de otras tablas: si abrió la app ese día,
+    si era un día de descanso según su plan y cuántas veces hubo que
+    reintentar cargar el CSS. Sin IP, sin navegador, sin horas. Si entrenó o
+    hizo el check-in se calcula al hacer el informe (app/usage.py) desde
+    Workout y el check-in, así no hay nada que mantener sincronizado.
+    Se purga a los 120 días."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    day: so.Mapped[date] = so.mapped_column(sa.Date, index=True)
+    opened: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
+    planned_rest: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
+    css_retries: so.Mapped[int] = so.mapped_column(default=0, server_default="0")
+
+    __table_args__ = (
+        sa.UniqueConstraint("user_id", "day", name="uq_daily_activity_user_day"),
+    )
+
+    def __repr__(self):
+        return f"<DailyActivity user={self.user_id} {self.day}>"

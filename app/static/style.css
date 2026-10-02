@@ -4,6 +4,8 @@
     modo oscuro sea un único bloque de valores (ver :root[data-theme="dark"]
     más abajo). El tema lo fija el script del <head> de base.html. */
     color-scheme: light;
+    /* Testigo de que la hoja cargó: si falta, base.html la vuelve a pedir. */
+    --gyre-css: 1;
     --color-brand: #7c4dff;
     --color-brand-dark: #5a4fcf;
     --color-brand-deep: #3d2b8a;

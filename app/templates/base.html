@@ -46,7 +46,23 @@
     {% else %}
         <title>Gyre</title>
     {% endif %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" id="gyre-css" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        // Red de seguridad para "la página sale sin estilos": este script se
+        // ejecuta cuando la hoja de arriba ya cargó... o falló (p. ej. sin
+        // cobertura justo tras un deploy). Si la variable testigo no está, la
+        // hoja no se aplicó: se pide otra vez y se avisa al servidor para
+        // saber si sigue pasando.
+        (function () {
+            if (getComputedStyle(document.documentElement).getPropertyValue("--gyre-css").trim()) return;
+            var old = document.getElementById("gyre-css");
+            var link = document.createElement("link");
+            link.rel = "stylesheet";
+            link.href = old.href + (old.href.indexOf("?") >= 0 ? "&" : "?") + "r=" + Date.now();
+            document.head.appendChild(link);
+            try { if (navigator.sendBeacon) navigator.sendBeacon("/usage/css-retry"); } catch (e) {}
+        })();
+    </script>
     <link rel="manifest" href="/static/manifest.json">
     {# Cambio de pestaña más rápido: Chrome empieza a cargar la pestaña en
     cuanto el dedo toca el enlace ("conservative" = al pulsar, no antes, para

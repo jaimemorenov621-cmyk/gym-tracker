@@ -1,4 +1,4 @@
-from flask import render_template, flash, redirect, url_for, request, jsonify, make_response, g
+from flask import render_template, flash, redirect, url_for, request, jsonify, make_response, g, session
 from flask_login import current_user, login_user, logout_user, login_required
 from markupsafe import Markup, escape
 from urllib.parse import urlsplit
@@ -46,7 +46,7 @@ from app.models import (
     UserAchievement,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
-from app import achievements
+from app import achievements, usage
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
@@ -133,6 +133,48 @@ def healthz():
     # suspenderse (su plan gratis tiene horas de cómputo limitadas) y el ping
     # tampoco cuenta como visita en las estadísticas de la landing.
     return "ok", 200, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"}
+
+
+# Peticiones que no son "abrir la app": estáticos, el service worker, el ping
+# de UptimeRobot y el aviso de reintento de CSS (que ya cuenta por su lado).
+_NOT_AN_OPEN = {None, "static", "service_worker", "healthz", "css_retry"}
+
+
+@app.before_request
+def _track_daily_open():
+    """Contador de uso (app/usage.py): marca una vez al día que el usuario
+    abrió la app. Las precargas de Chrome (speculation rules) no cuentan:
+    las pide el navegador, no la persona. Nunca rompe la petición."""
+    if request.method != "GET" or request.endpoint in _NOT_AN_OPEN:
+        return
+    purpose = (request.headers.get("Sec-Purpose", "") + request.headers.get("Purpose", "")).lower()
+    if "prefetch" in purpose or "prerender" in purpose:
+        return
+    if not current_user.is_authenticated:
+        return
+    today = usage.local_today().isoformat()
+    if session.get("opened_day") == today:
+        return
+    try:
+        usage.record_open(current_user)
+        session["opened_day"] = today
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error registrando la apertura diaria")
+
+
+@app.route("/usage/css-retry", methods=["POST"])
+def css_retry():
+    """La página se pintó sin style.css y lo volvió a pedir (ver base.html).
+    Sirve para saber si el fallo de "página sin estilos" sigue pasando."""
+    app.logger.warning("Página sin CSS: reintento de carga (%s)", request.headers.get("Referer", "-"))
+    if current_user.is_authenticated:
+        try:
+            usage.record_css_retry(current_user)
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Error registrando el reintento de CSS")
+    return "", 204
 
 
 # Robots que descargan la página sin ser una persona: vistas previas de
@@ -366,6 +408,8 @@ def landing_stats():
             by_source.items(),
             key=lambda kv: (kv[0] is None, -kv[1]["signups"], -kv[1]["visits"]),
         ),
+        # Uso de la app en días sin entreno (no depende del periodo elegido).
+        usage_report=usage.rest_day_report(weeks=6),
     )
 
 
