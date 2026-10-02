@@ -425,6 +425,27 @@ def _next_training_day_label(plan, today_wd):
     return None
 
 
+REST_TIPS = [
+    "El músculo crece mientras descansas.",
+    "Recuperar también es entrenar.",
+    "Duerme bien: mañana se nota.",
+    "Hoy toca cargar pilas, no barras.",
+    "Un buen descanso vale un récord.",
+    "Estira, camina, bebe agua. Mañana, a por ello.",
+]
+DONE_TIPS = [
+    "Buen trabajo. Ahora, a recuperar.",
+    "Un día más que suma.",
+    "Hecho. Come bien y descansa.",
+    "Constancia > intensidad. Hoy has cumplido.",
+]
+
+
+def _daily_pick(options, now_local):
+    """La misma frase durante todo el día, distinta de un día a otro."""
+    return options[now_local.date().toordinal() % len(options)]
+
+
 def home_cta(user):
     """Acción principal de Inicio:
     - continue: hay un entreno en curso.
@@ -467,11 +488,16 @@ def home_cta(user):
         .limit(1)
     ) is not None
     if trained_today:
-        return {"kind": "done", **base}
+        return {"kind": "done", "tip": _daily_pick(DONE_TIPS, now_local), **base}
 
     plan = planned_weekdays(user)
     if plan and now_local.weekday() not in plan:
-        return {"kind": "rest", "next_day": _next_training_day_label(plan, now_local.weekday()), **base}
+        return {
+            "kind": "rest",
+            "next_day": _next_training_day_label(plan, now_local.weekday()),
+            "tip": _daily_pick(REST_TIPS, now_local),
+            **base,
+        }
     if routine is not None:
         return {"kind": "routine", "is_training_day": bool(plan), **base}
     return {"kind": "empty"}

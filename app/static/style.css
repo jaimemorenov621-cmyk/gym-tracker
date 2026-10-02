@@ -3410,19 +3410,71 @@ a.dash-tile:active { transform: scale(0.98); }
 
 /* Inicio: día de descanso / entreno de hoy hecho (index.html). */
 .home-cta-calm {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     gap: 14px;
-    padding: 16px 16px 16px 14px;
+    padding: 18px 16px 18px 14px;
     border-radius: var(--radius-card);
-    border: 1px solid var(--color-border-soft);
-    background: var(--surface);
-    box-shadow: var(--shadow-elevated);
+    color: #fff;
 }
-.home-cta-calm .home-cta-icon { background: var(--color-surface-active); color: var(--color-brand); font-size: 1.3rem; }
-.home-cta-calm.is-done .home-cta-icon { background: linear-gradient(135deg, #22c98c, #17a973); color: #fff; }
-.home-cta-calm .home-cta-text strong { color: var(--color-text); }
-.home-cta-calm .home-cta-text > span { color: var(--color-text-muted); opacity: 1; }
+/* Descanso: cielo nocturno (azul marino, estrellas y luna con brillo). */
+.home-cta-calm.is-rest {
+    background: radial-gradient(260px 160px at 12% 0%, rgba(124, 140, 255, 0.45), transparent 70%),
+                linear-gradient(150deg, #1d2b64 0%, #121a45 55%, #0b1030 100%);
+    box-shadow: 0 10px 26px rgba(18, 26, 69, 0.35);
+}
+.calm-sky {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    /* Estrellas solo en la franja derecha, lejos del texto y de la pastilla. */
+    background-image:
+        radial-gradient(1.5px 1.5px at 84% 18%, #fff 50%, transparent 51%),
+        radial-gradient(1px 1px at 93% 34%, rgba(255, 255, 255, 0.8) 50%, transparent 51%),
+        radial-gradient(2px 2px at 88% 62%, rgba(255, 255, 255, 0.9) 50%, transparent 51%),
+        radial-gradient(1px 1px at 96% 80%, rgba(255, 255, 255, 0.6) 50%, transparent 51%),
+        radial-gradient(1px 1px at 80% 84%, rgba(255, 255, 255, 0.5) 50%, transparent 51%),
+        radial-gradient(1.5px 1.5px at 97% 12%, rgba(255, 255, 255, 0.7) 50%, transparent 51%);
+}
+
+.home-cta-calm.is-rest .calm-icon {
+    position: relative;
+    background: radial-gradient(circle at 50% 45%, rgba(255, 214, 102, 0.35), rgba(255, 255, 255, 0.08) 70%);
+    box-shadow: 0 0 22px rgba(255, 214, 102, 0.35);
+    font-size: 1.5rem;
+}
+/* Hecho: verde, a juego con "Terminar entreno". */
+.home-cta-calm.is-done {
+    background: linear-gradient(135deg, #22c98c, #129a69);
+    box-shadow: 0 10px 26px rgba(34, 201, 140, 0.35);
+}
+.home-cta-calm.is-done .calm-icon { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.home-cta-calm .home-cta-text { position: relative; gap: 2px; }
+.home-cta-calm .home-cta-text small { opacity: 0.8; }
+.home-cta-calm .home-cta-text strong { color: #fff; font-size: 1.2rem; }
+.home-cta-calm .home-cta-text > span { color: rgba(255, 255, 255, 0.82); opacity: 1; font-size: 0.85rem; }
+.home-cta-calm .home-cta-text > span.calm-next {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    margin-top: 8px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .home-cta-calm.is-rest .calm-icon { animation: moon-glow 4s ease-in-out infinite; }
+    @keyframes moon-glow {
+        50% { box-shadow: 0 0 30px rgba(255, 214, 102, 0.55); }
+    }
+}
 .home-cta-hint { margin: 8px 2px 0; font-size: 0.8rem; color: var(--color-text-muted); }
 .home-cta-hint a { color: var(--color-brand-dark); font-weight: 700; }
 

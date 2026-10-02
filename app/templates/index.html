@@ -21,14 +21,21 @@
             </a>
         {% elif home_cta.kind in ('done', 'rest') %}
             {% set r = home_cta.routine %}
+            {# Descanso = cielo nocturno; hecho = verde. Igual de vistosos que el
+            botón morado de entrenar, pero distintos a primera vista. #}
             <div class="home-cta-calm {{ 'is-done' if home_cta.kind == 'done' else 'is-rest' }}">
-                <span class="home-cta-icon">{% if home_cta.kind == 'done' %}{{ macros.icon('check', 22) }}{% else %}<span aria-hidden="true">🌙</span>{% endif %}</span>
+                {% if home_cta.kind == 'rest' %}<span class="calm-sky" aria-hidden="true"></span>{% endif %}
+                <span class="home-cta-icon calm-icon">{% if home_cta.kind == 'done' %}{{ macros.icon('check', 24) }}{% else %}<span aria-hidden="true">🌙</span>{% endif %}</span>
                 <span class="home-cta-text">
+                    <small>{{ 'Objetivo de hoy cumplido' if home_cta.kind == 'done' else 'Día de recuperación' }}</small>
                     <strong>{{ 'Entreno de hoy hecho' if home_cta.kind == 'done' else 'Hoy toca descanso' }}</strong>
-                    <span>
-                        {% if r %}Próximo: {{ r.name }}{% if home_cta.kind == 'rest' and home_cta.next_day %}, {{ home_cta.next_day }}{% endif %}
-                        {% elif home_cta.kind == 'done' %}Buen trabajo. A recuperar.{% else %}Recupera para el próximo entreno.{% endif %}
-                    </span>
+                    <span>{{ home_cta.tip }}</span>
+                    {% if r %}
+                        <span class="calm-next">
+                            {{ macros.icon('calendar', 13) }}
+                            {% if home_cta.kind == 'rest' and home_cta.next_day %}{{ home_cta.next_day|capitalize }}{% else %}Próximo{% endif %} · {{ r.name }}
+                        </span>
+                    {% endif %}
                 </span>
             </div>
             <div class="home-cta-secondary">
