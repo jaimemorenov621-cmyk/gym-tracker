@@ -9,6 +9,7 @@ UserAchievement CUÁNDO se desbloqueó cada uno.
 Añadir un logro = añadir una línea a ACHIEVEMENTS. El código (`code`) no se
 puede cambiar una vez publicado: es lo que se guarda por usuario.
 """
+import math
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -508,6 +509,20 @@ def _status(a, stats):
     return value >= a.target, value, a.target
 
 
+def progress_text(a, value, unlocked):
+    """"1,47 / 1,5 × tu peso". Mientras no esté conseguido, el valor se
+    redondea HACIA ABAJO: si no, 1,47 salía como "1,5 / 1,5" sin estar
+    desbloqueado. Los cocientes de peso llevan 2 decimales."""
+    from app.routes import fmt_num
+
+    decimals = 2 if "peso" in a.unit else 1
+    shown = value or 0
+    if not unlocked:
+        factor = 10 ** decimals
+        shown = math.floor(shown * factor) / factor
+    return f"{fmt_num(shown, decimals)} / {fmt_num(a.target, decimals)} {a.unit}".strip()
+
+
 def evaluate(user):
     """Calcula todos los logros, guarda los recién conseguidos y devuelve
     (lista de dicts para mostrar, lista de logros nuevos en esta llamada)."""
@@ -532,7 +547,9 @@ def evaluate(user):
             "unlocked_at": ua.unlocked_at if ua is not None else None,
             "value": value,
             "target": target,
-            "pct": 100 if ua is not None else (min(100, round(100 * value / target)) if target else 0),
+            # Sin conseguir, la barra nunca llega al 100 % (99,6 % no es 100 %).
+            "pct": 100 if ua is not None else (min(99, math.floor(100 * value / target)) if target else 0),
+            "progress": progress_text(a, value, ua is not None) if target else None,
         })
     if newly:
         db.session.commit()

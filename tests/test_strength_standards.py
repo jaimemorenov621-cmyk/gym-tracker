@@ -266,6 +266,16 @@ class StandardsAchievementTests(_LifterCase):
         self.assertIn("std_bench_intermedio", self.unlocked())
 
 
+class ProgressTextTests(unittest.TestCase):
+    def test_unearned_progress_never_looks_complete(self):
+        a = achievements.BY_CODE["bench_15bw"]
+        with app.app_context():
+            self.assertEqual(achievements.progress_text(a, 1.497, False), "1,49 / 1,5 × tu peso")
+            self.assertEqual(achievements.progress_text(a, 1.5, True), "1,5 / 1,5 × tu peso")
+            hours = achievements.BY_CODE["hours_50"]
+            self.assertEqual(achievements.progress_text(hours, 49.96, False), "49,9 / 50 h")
+
+
 class ProgressPageTests(DbTestCase):
     def test_card_shows_what_is_missing(self):
         uid = self.make_user("atleta")

@@ -22,7 +22,7 @@
                     <div>
                         <strong>{{ it.a.title }}</strong>
                         <div class="achv-bar"><span style="width: {{ it.pct }}%"></span></div>
-                        <small>{{ it.value|num }} / {{ it.target|num }} {{ it.a.unit }}</small>
+                        <small>{{ it.progress }}</small>
                     </div>
                 </div>
             {% endfor %}
@@ -51,7 +51,7 @@
                             <small class="achv-date">✓ {{ it.unlocked_at|relative_day|capitalize }}</small>
                         {% elif it.target and not hidden %}
                             <div class="achv-bar"><span style="width: {{ it.pct }}%"></span></div>
-                            <small>{{ it.value|num }} / {{ it.target|num }} {{ it.a.unit }}</small>
+                            <small>{{ it.progress }}</small>
                         {% endif %}
                     </div>
                 {% endfor %}
