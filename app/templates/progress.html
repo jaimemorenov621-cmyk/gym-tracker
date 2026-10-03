@@ -272,7 +272,7 @@
             </ul>
             {% if volume.unmapped or volume.no_effort %}
                 <p class="progress-footnote">
-                    {% if volume.unmapped %}{{ volume.unmapped }} serie{{ '' if volume.unmapped == 1 else 's' }} de ejercicios sin músculo en el catálogo no cuenta{{ '' if volume.unmapped == 1 else 'n' }}.{% endif %}
+                    {% if volume.unmapped %}{{ volume.unmapped }} serie{{ '' if volume.unmapped == 1 else 's' }} de ejercicios sin músculo en el catálogo no cuenta{{ '' if volume.unmapped == 1 else 'n' }}: <a href="{{ url_for('exercise_muscles') }}">asígnales músculos</a>.{% endif %}
                     {% if volume.no_effort %}{{ volume.no_effort }} serie{{ '' if volume.no_effort == 1 else 's' }} sin RIR/RPE anotado cuenta{{ '' if volume.no_effort == 1 else 'n' }} como dura.{% endif %}
                 </p>
             {% endif %}

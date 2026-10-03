@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <p class="page-back"><a href="{{ url_for('progress') }}#volumen">← Progreso</a></p>
+    <h1 class="page-title">Músculos de tus ejercicios</h1>
+    <p class="alias-intro">
+        Estos nombres los escribiste a mano y no coinciden con el catálogo, así que la app no sabe qué
+        músculos trabajan: no cuentan en el mapa muscular, el volumen semanal ni el análisis de IA.
+        Asígnale a cada uno el ejercicio del catálogo que más se parezca. <b>Tu nombre y tu historial no
+        cambian</b>: solo se toman de ahí los músculos y la imagen.
+    </p>
+
+    <div class="card card-elevated alias-card">
+        <h2>Sin músculos <span>{{ missing|length }}</span></h2>
+        {% if missing %}
+            <ul class="alias-list">
+                {% for m in missing %}
+                    <li>
+                        <span class="alias-name">
+                            <strong>{{ m.name|title }}</strong>
+                            <small>{% if m.sets %}{{ m.sets }} serie{{ '' if m.sets == 1 else 's' }}{% else %}solo en rutinas{% endif %}</small>
+                        </span>
+                        <button type="button" class="btn-outline alias-assign"
+                                onclick='openExercisePicker("{{ url_for('api_set_exercise_alias') }}", {alias: {{ m.name|tojson }}})'>Asignar</button>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="alias-empty">Todos tus ejercicios tienen músculos asignados. 👌</p>
+        {% endif %}
+    </div>
+
+    {% if aliases %}
+        <div class="card card-elevated alias-card">
+            <h2>Ya asignados <span>{{ aliases|length }}</span></h2>
+            <ul class="alias-list">
+                {% for alias, ex in aliases %}
+                    <li>
+                        <span class="alias-name">
+                            <strong>{{ alias.name|title }}</strong>
+                            <small>→ {{ (ex.name_es or ex.name)|title }}</small>
+                        </span>
+                        <button type="button" class="btn-outline alias-remove" onclick="removeAlias({{ alias.id }}, this)">Quitar</button>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {{ macros.exercise_picker_sheet() }}
+    <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
+    <script>
+        function removeAlias(id, btn) {
+            btn.disabled = true;
+            fetch('/api/exercise-alias/' + id + '/delete', { method: 'POST' })
+                .then(function (r) { return r.json(); })
+                .then(function (d) { if (d.ok) location.reload(); else btn.disabled = false; })
+                .catch(function () { btn.disabled = false; });
+        }
+    </script>
+{% endblock %}

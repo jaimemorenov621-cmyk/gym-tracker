@@ -3878,3 +3878,17 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .rank-chip { display: inline-flex; align-items: center; gap: 4px; }
 .std-global { gap: 2px; }
 .std-defs li.rank-def { display: flex; align-items: center; gap: 6px; list-style: none; margin-left: -18px; }
+
+/* ===== Músculos de tus ejercicios (exercise_muscles.html) ===== */
+.alias-intro { margin: 0 0 14px; font-size: 0.88rem; line-height: 1.5; color: var(--color-text-soft); }
+.alias-card { margin-bottom: 14px; }
+.alias-card h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 1.05rem; font-weight: 800; }
+.alias-card h2 span { font-size: 0.8rem; padding: 2px 8px; border-radius: 999px; background: var(--color-surface-active); color: var(--color-text-soft); }
+.alias-list { list-style: none; margin: 0; padding: 0; }
+.alias-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border-subtle); }
+.alias-list li:first-child { border-top: 0; }
+.alias-name { display: flex; flex-direction: column; min-width: 0; }
+.alias-name strong { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; }
+.alias-name small { font-size: 0.75rem; color: var(--color-text-muted); }
+.alias-list button { min-height: 40px; flex-shrink: 0; }
+.alias-empty { margin: 0; color: var(--color-text-muted); }

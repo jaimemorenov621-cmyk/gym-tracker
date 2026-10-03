@@ -384,3 +384,26 @@ class DailyCheckin(db.Model):
 
     def __repr__(self):
         return f"<DailyCheckin user={self.user_id} {self.day}>"
+
+
+class ExerciseAlias(db.Model):
+    """"Mi ejercicio X es el Y del catálogo", por usuario. Para nombres
+    escritos a mano que no coinciden con el catálogo: así cuentan para el
+    mapa muscular, el volumen semanal y las imágenes SIN renombrar el
+    historial (p. ej. "press de banca ligero técnico" sigue siendo su propio
+    ejercicio, con su propia curva de 1RM). `name` va normalizado como
+    Exercise.name_normalized (minúsculas, sin acentos)."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    name: so.Mapped[str] = so.mapped_column(sa.String(120))
+    exercise_id: so.Mapped[str] = so.mapped_column(sa.ForeignKey(Exercise.id, ondelete="CASCADE"), index=True)
+    created_at: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
+
+    exercise: so.Mapped[Exercise] = so.relationship()
+
+    __table_args__ = (
+        sa.UniqueConstraint("user_id", "name", name="uq_exercise_alias_user_name"),
+    )

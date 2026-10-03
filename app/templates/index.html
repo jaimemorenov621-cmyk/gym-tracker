@@ -113,7 +113,7 @@
                     </ul>
                 {% endif %}
                 {% if rest_facts.unmapped %}
-                    <p class="today-note">{{ rest_facts.unmapped }} ejercicio{{ '' if rest_facts.unmapped == 1 else 's' }} sin músculo en el catálogo no cuenta{{ '' if rest_facts.unmapped == 1 else 'n' }} aquí.</p>
+                    <p class="today-note">{{ rest_facts.unmapped }} ejercicio{{ '' if rest_facts.unmapped == 1 else 's' }} sin músculo en el catálogo no cuenta{{ '' if rest_facts.unmapped == 1 else 'n' }} aquí: <a href="{{ url_for('exercise_muscles') }}">asígnales músculos</a>.</p>
                 {% endif %}
             </div>
         {% endif %}

@@ -46,6 +46,7 @@ from app.models import (
     WeeklyGoalHistory,
     UserAchievement,
     DailyCheckin,
+    ExerciseAlias,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from app import achievements, usage
@@ -177,6 +178,83 @@ def level_page():
         curve=[(lvl, progression.xp_to_reach(lvl), progression.xp_to_reach(lvl + 1) - progression.xp_to_reach(lvl))
                for lvl in range(1, 31)],
     )
+
+
+def exercises_without_muscles(user_id):
+    """Nombres de ejercicio del usuario (entrenos y rutinas) que no aportan
+    músculos: ni están en el catálogo ni los ha asignado. Más usados primero."""
+    names = {}
+    for name, n in db.session.execute(
+        sa.select(SetEntry.exercise, sa.func.count())
+        .join(Workout, Workout.id == SetEntry.workout_id)
+        .where(Workout.user_id == user_id)
+        .group_by(SetEntry.exercise)
+    ):
+        names[name] = n
+    for (name,) in db.session.execute(
+        sa.select(RoutineExercise.exercise).join(Routine, Routine.id == RoutineExercise.routine_id)
+        .where(Routine.user_id == user_id)
+    ):
+        names.setdefault(name, 0)
+    prefetch_catalog_exercises(names)
+    missing = [
+        {"name": name, "sets": n}
+        for name, n in names.items()
+        if not (ex := find_catalog_exercise(name)) or not ex.primary_muscles
+    ]
+    missing.sort(key=lambda m: (-m["sets"], m["name"]))
+    return missing
+
+
+@app.route("/ejercicios/musculos")
+@login_required
+def exercise_muscles():
+    """Asignar a un ejercicio del catálogo los nombres escritos a mano, para
+    que cuenten en el mapa muscular, el volumen semanal y la IA."""
+    aliases = db.session.execute(
+        sa.select(ExerciseAlias, Exercise)
+        .join(Exercise, Exercise.id == ExerciseAlias.exercise_id)
+        .where(ExerciseAlias.user_id == current_user.id)
+        .order_by(ExerciseAlias.name)
+    ).all()
+    return render_template(
+        "exercise_muscles.html",
+        title="Músculos de tus ejercicios",
+        missing=exercises_without_muscles(current_user.id),
+        aliases=aliases,
+    )
+
+
+@app.route("/api/exercise-alias", methods=["POST"])
+@login_required
+def api_set_exercise_alias():
+    data = request.get_json(silent=True) or {}
+    alias = (data.get("alias") or "").strip().lower()
+    target = find_catalog_exercise((data.get("exercise") or "").strip(), use_alias=False)
+    if not alias or target is None:
+        return jsonify({"ok": False, "error": "Elige un ejercicio del catálogo."}), 400
+    key = _strip_accents(alias)[:120]
+    row = db.session.scalar(
+        sa.select(ExerciseAlias).where(ExerciseAlias.user_id == current_user.id, ExerciseAlias.name == key)
+    )
+    if row is None:
+        db.session.add(ExerciseAlias(user_id=current_user.id, name=key, exercise_id=target.id))
+    else:
+        row.exercise_id = target.id
+    db.session.commit()
+    _clear_catalog_cache()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/exercise-alias/<int:alias_id>/delete", methods=["POST"])
+@login_required
+def api_delete_exercise_alias(alias_id):
+    row = db.session.get(ExerciseAlias, alias_id)
+    if row is None or row.user_id != current_user.id:
+        return jsonify({"ok": False}), 403
+    db.session.delete(row)
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @app.route("/healthz")
@@ -1526,7 +1604,7 @@ def exercise_progress(name):
         )
     )
 
-    catalog_exercise = find_catalog_exercise(name)
+    catalog_exercise = find_catalog_exercise(name, use_alias=False)  # la traducción edita el catálogo global
     translation_form = ExerciseTranslationForm(
         name_es=catalog_exercise.name_es if catalog_exercise else None
     )
@@ -1584,7 +1662,7 @@ def progress():
 @login_required
 def update_exercise_translation(name):
     name = name.strip().lower()
-    catalog_exercise = find_catalog_exercise(name)
+    catalog_exercise = find_catalog_exercise(name, use_alias=False)
     if not catalog_exercise:
         flash("No se encontró este ejercicio en el catálogo.")
         return redirect(url_for("exercise_progress", name=name))
@@ -3347,7 +3425,17 @@ def _strip_accents(s):
     ).lower()
 
 
-def find_catalog_exercise(name):
+def _alias_user_id():
+    """Usuario cuyos alias aplican en esta petición (None fuera de una
+    petición autenticada: scripts, comandos)."""
+    from flask import has_request_context
+
+    if has_request_context() and current_user.is_authenticated:
+        return current_user.id
+    return None
+
+
+def find_catalog_exercise(name, use_alias=True):
     """Ejercicio del catálogo cuyo nombre (inglés o español) coincide con
     `name` ignorando mayúsculas y acentos. Una sola consulta indexada sobre
     name_normalized/name_es_normalized (antes eran dos: un ILIKE exacto que
@@ -3366,11 +3454,27 @@ def find_catalog_exercise(name):
             .where(sa.or_(Exercise.name_normalized == target, Exercise.name_es_normalized == target))
             .limit(1)
         )
-    return cache[target]
+    if cache[target] is not None or not use_alias:
+        return cache[target]
+    # Sin coincidencia exacta: ¿lo asignó el usuario a un ejercicio del
+    # catálogo? (ExerciseAlias). Nunca para renombrar, solo para saber
+    # músculos, imagen, etc.
+    uid = _alias_user_id()
+    if uid is None:
+        return None
+    aliases = g.setdefault("_alias_cache", {})
+    if target not in aliases:
+        aliases[target] = db.session.scalar(
+            sa.select(Exercise)
+            .join(ExerciseAlias, ExerciseAlias.exercise_id == Exercise.id)
+            .where(ExerciseAlias.user_id == uid, ExerciseAlias.name == target)
+        )
+    return aliases[target]
 
 
 def _clear_catalog_cache():
     g.pop("_catalog_cache", None)
+    g.pop("_alias_cache", None)
 
 
 def prefetch_catalog_exercises(names):
@@ -3392,13 +3496,26 @@ def prefetch_catalog_exercises(names):
                 cache[key] = ex
     for t in targets:
         cache.setdefault(t, None)
+    # Y los alias del usuario para lo que no está en el catálogo (otra consulta).
+    uid = _alias_user_id()
+    missing = {t for t in targets if cache[t] is None}
+    if uid is not None and missing:
+        aliases = g.setdefault("_alias_cache", {})
+        for alias, ex in db.session.execute(
+            sa.select(ExerciseAlias.name, Exercise)
+            .join(Exercise, Exercise.id == ExerciseAlias.exercise_id)
+            .where(ExerciseAlias.user_id == uid, ExerciseAlias.name.in_(missing))
+        ):
+            aliases[alias] = ex
+        for t in missing:
+            aliases.setdefault(t, None)
 
 
 def canonicalize_exercise_name(name):
     """Si `name` coincide (ignorando acentos/mayúsculas) con el catálogo, devuelve la
     forma canónica del catálogo en vez del texto tal cual lo escribió el usuario."""
     name = name.strip().lower()
-    match = find_catalog_exercise(name)
+    match = find_catalog_exercise(name, use_alias=False)
     if match:
         return (match.name_es or match.name).strip().lower()
     return name
