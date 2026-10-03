@@ -121,6 +121,18 @@ class AchievementTests(DbTestCase):
         self.assertTrue(first)
         self.assertEqual(second, [])
 
+    def test_first_logros_visit_that_unlocks_something_does_not_crash(self):
+        # Ya tenía un logro (así Inicio no calcula) y entrena algo que desbloquea
+        # más: la primera visita a /logros los crea y antes daba 500.
+        with app.app_context():
+            db.session.add(UserAchievement(user_id=self.uid, code="workouts_1"))
+            db.session.commit()
+        self.workout(datetime(2026, 9, 1, 6, 0), [("press banca", 60, 8, "normal", False)] * 3)
+        self.login(self.uid)
+        resp = self.client.get("/logros")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("Madrugador", resp.get_data(as_text=True))
+
     def test_page_and_home_toast(self):
         self.workout(datetime(2026, 9, 1, 18, 0), [("press banca", 60, 8, "normal", False)])
         self.login(self.uid)

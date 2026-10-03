@@ -524,10 +524,13 @@ def progress_text(a, value, unlocked):
     return f"{fmt_num(shown, decimals)} / {fmt_num(a.target, decimals)} {a.unit}".strip()
 
 
-def evaluate(user):
+def evaluate(user, _retry=True):
     """Calcula todos los logros, guarda los recién conseguidos y devuelve
     (lista de dicts para mostrar, lista de logros nuevos en esta llamada)."""
+    from sqlalchemy.exc import IntegrityError
+
     stats = compute_stats(user)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     unlocked = {
         ua.code: ua
         for ua in db.session.scalars(sa.select(UserAchievement).where(UserAchievement.user_id == user.id))
@@ -538,7 +541,10 @@ def evaluate(user):
         done, value, target = _status(a, stats)
         ua = unlocked.get(a.code)
         if done and ua is None:
-            ua = UserAchievement(user_id=user.id, code=a.code)
+            # Fecha explícita: sin ella el logro recién creado no la tiene hasta
+            # guardarse, y ordenar "Recientes" por fecha rompía /logros (500
+            # justo la primera visita en que se desbloqueaba algo).
+            ua = UserAchievement(user_id=user.id, code=a.code, unlocked_at=now)
             db.session.add(ua)
             unlocked[a.code] = ua
             newly.append(a)
@@ -553,7 +559,15 @@ def evaluate(user):
             "progress": progress_text(a, value, ua is not None) if target else None,
         })
     if newly:
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            # Otra petición (p. ej. la precarga del navegador) acaba de guardar
+            # los mismos logros: se recalcula una vez con lo que ya hay.
+            db.session.rollback()
+            if _retry:
+                return evaluate(user, _retry=False)
+            raise
     return result, newly
 
 
