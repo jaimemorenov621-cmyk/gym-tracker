@@ -1,22 +1,17 @@
 """Emblemas de rango: app/static/ranks/<rango>-<división>.svg (y titan.svg).
 
-Cada rango es un escudo histórico del material de su rango, con un elemento
-de gimnasio integrado:
-  Hierro     escudo celta de la Edad de Hierro; el umbo es un disco
-  Bronce     hoplon griego con meandro; halteres (las pesas griegas) en
-             estilo de figuras rojas
-  Plata      scutum romano con alas y rayos de Júpiter; umbo-disco
-  Oro        Egipto: sol alado (un disco) en oro y lapislázuli
-  Platino    heráldica medieval: una "barra" que es una barra con discos,
-             y roeles (discos) sobre campo adamascado
-  Diamante   tarja renacentista; diamante talla brillante sobre mancuernas
-  Esmeralda  chimalli azteca: mosaico, greca escalonada, plumas de quetzal
-  Campeón    escudo español carmesí; barra dentro de la corona de olivo
-             olímpica (kotinos)
-  Titán      la bóveda celeste de Atlas: esfera armilar en torno a un disco,
-             corona radiada
-Divisiones: I escudo + cinta con el numeral; II + ramas de laurel;
-III + corona de laurel completa, corona y halo.
+Una sola familia: el mismo escudo para todos, y cada rango hereda lo del
+anterior y suma más, para que se vea de un vistazo cuál es mejor:
+  - material: hierro, bronce, plata, oro, platino, diamante, esmeralda,
+    campeón (carmesí y oro), titán (obsidiana y oro fundido);
+  - el peso que lleva: disco, kettlebell, mancuerna, dos mancuernas, y una
+    barra con 1, 2, 3, 4 y 5 discos por lado (la de Titán se dobla);
+  - el escudo crece y el canto engorda; cimera, alas cada vez mayores,
+    gemas, laurel y corona.
+Detallitos históricos: remaches (hierro), dentículos griegos (bronce),
+perlado, flor de lis, corona radiada y numerales romanos.
+Divisiones: el numeral de la cinta; II + filete interior y halo suave;
+III + halo intenso y destellos.
 
 Ejecutar: python tools/make_rank_emblems.py
 """
@@ -42,6 +37,7 @@ METALS = {
     "platinum": ["#ffffff", "#d3e2ec", "#7d95a6", "#dbe8f0", "#ffffff", "#869db0"],
     "steelblue": ["#eef8ff", "#93badb", "#2d4d76", "#a9cbe8", "#ffffff", "#34557e"],
     "darkbronze": ["#ffcf73", "#b0671c", "#3a1a06", "#8a4a14", "#ffc36b", "#2a1204"],
+    "emerald": ["#d2ffe6", "#2fbf78", "#0a5a32", "#25a866", "#eafff3", "#06401f"],
 }
 
 
@@ -283,10 +279,10 @@ def numeral_glyph(x, y, h=13):
             f'<rect x="{n(x - sw / 2)}" y="{n(y + h - 1.8)}" width="{n(sw)}" height="1.8" rx=".6"/>')
 
 
-def ribbon(doc, cloth, metal, division, ink=None):
+def ribbon(doc, cloth, metal, division, ink=None, y=200):
     top = doc.lin([(0, cloth[0]), (1, cloth[1])], 0, 0, 0, 1)
     fold = cloth[2]
-    y = 200
+    y = round(y, 1)
     band = f"M54 {y}Q128 {y + 18} 202 {y}L202 {y + 20}Q128 {y + 38} 54 {y + 20}Z"
     tails = (f'<path d="M58 {y + 4}L32 {y + 8}L42 {y + 17}L30 {y + 28}L60 {y + 26}Z" fill="{top}" stroke="#000" stroke-opacity=".5" stroke-width="1"/>'
              f'<path d="M198 {y + 4}L224 {y + 8}L214 {y + 17}L226 {y + 28}L196 {y + 26}Z" fill="{top}" stroke="#000" stroke-opacity=".5" stroke-width="1"/>'
@@ -302,341 +298,256 @@ def ribbon(doc, cloth, metal, division, ink=None):
             + emboss(glyphs, m, d=0.8, light=0.25, dark=0.6))
 
 
-def halo(doc, color):
-    g = doc.rad([(0, color, 0.55), (0.45, color, 0.22), (1, color, 0)], 0.5, 0.5, 0.5)
+def halo(doc, color, op=0.55):
+    g = doc.rad([(0, color, op), (0.45, color, op * 0.4), (1, color, 0)], 0.5, 0.5, 0.5)
     return f'<circle cx="128" cy="118" r="126" fill="{g}"/>'
 
 
-# ------------------------------------------------------------ escudos
-def hierro(doc):
-    d = ellipse_d(128, 120, 58, 84)
-    field = doc.rad([(0, "#5d646d"), (0.6, "#3a3f46"), (1, "#1f2226")], 0.38, 0.3, 0.8)
-    out = [shield_base(doc, d, doc.metal("iron"), field, 0.87)]
-    tex = []
-    for _ in range(70):  # martillado
-        x, y = doc.rng.uniform(72, 184), doc.rng.uniform(40, 200)
-        r = doc.rng.uniform(1.5, 4.5)
-        tex.append(f'<circle cx="{n(x)}" cy="{n(y)}" r="{n(r)}" fill="{"#fff" if doc.rng.random() < .5 else "#000"}" opacity="{doc.rng.choice([.05, .07, .09])}"/>')
-    rust = doc.rad([(0, "#8a4318", 0.5), (1, "#8a4318", 0)], 0.5, 0.5, 0.5)
-    for x, y, r in [(92, 70, 16), (168, 160, 20), (100, 178, 12), (160, 64, 10)]:
-        tex.append(f'<circle cx="{x}" cy="{y}" r="{r}" fill="{rust}"/>')
-    out.append(f'<g clip-path="{doc.clip(d)}">{"".join(tex)}</g>')
-    # espina central con bulbos y trisqueles en los extremos
-    out.append(emboss('<rect x="121.5" y="50" width="13" height="140" rx="6.5"/>', doc.metal("iron", 1, 0)))
-    for y in (66, 174):
-        out.append(f'<circle cx="128" cy="{y + 1.5}" r="14" fill="#000" opacity=".45"/><circle cx="128" cy="{y}" r="14" fill="{doc.metal("iron")}" stroke="#000" stroke-opacity=".5"/>')
-        arms = "".join(f'<path d="M0 0C3 -2 7 -6 4 -9.5C1.5 -12 -3 -9.5 -1.2 -6.8" transform="translate(128 {y}) rotate({k * 120})"/>' for k in range(3))
-        out.append(f'<g fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="1.8" stroke-linecap="round" transform="translate(.5 .7)">{arms}</g>'
-                   f'<g fill="none" stroke="#15171a" stroke-width="1.8" stroke-linecap="round">{arms}</g>')
-    out.append(plate(doc, 128, 120, 33, "iron"))
-    rv = doc.rad([(0, "#f2f5f8"), (0.4, "#8c949d"), (1, "#26292d")], 0.35, 0.3, 0.7)
-    for i in range(18):  # remaches
-        a = math.radians(i * 20 + 10)
-        x, y = 128 + 54.5 * math.sin(a), 120 - 79 * math.cos(a)
-        out.append(f'<circle cx="{n(x)}" cy="{n(y)}" r="2.7" fill="{rv}" stroke="#000" stroke-opacity=".5" stroke-width=".6"/>')
-    out.append(specular(doc, d, 104, 70, 70, 60, 0.35))
-    return d, "".join(out), 36
+# ------------------------------------------------------------ piezas
+SHIELD = "M66 46H190V112C190 160 160 188 128 202C96 188 66 160 66 112Z"
+SC = (128, 124)  # centro de escala del escudo
 
 
-def meander(cx, cy, r_in, r_out, units):
-    """Greca en anillo: espirales que nacen de la línea base."""
-    def P(u, v, k):
-        return polar(cx, cy, r_in + (r_out - r_in) * v / 4, (k + u / 4) * 360 / units)
-    paths = []
-    for k in range(units):
-        pts = [(0, 0), (0, 4), (3, 4), (3, 1), (1, 1), (1, 2.6), (2, 2.6)]
-        dense = []
-        for (u0, v0), (u1, v1) in zip(pts, pts[1:]):
-            for j in range(4):
-                t = j / 4
-                dense.append(P(u0 + (u1 - u0) * t, v0 + (v1 - v0) * t, k))
-        dense.append(P(*pts[-1], k))
-        paths.append(poly(dense))
-    return " ".join(paths), circle_d(cx, cy, r_in)
+def kettlebell(doc, cx, cy, size, metal):
+    c = METALS[metal]
+    body = doc.rad([(0, c[4]), (0.55, c[1]), (1, c[2])], 0.36, 0.32, 0.8)
+    r = size / 2
+    by = cy + r * 0.25
+    handle = (f"M{n(cx - r * 0.6)} {n(by - r * 0.55)}C{n(cx - r * 0.8)} {n(by - r * 1.75)} "
+              f"{n(cx + r * 0.8)} {n(by - r * 1.75)} {n(cx + r * 0.6)} {n(by - r * 0.55)}")
+    return (f'<path d="{handle}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="{n(r * 0.36)}" transform="translate(1 2)"/>'
+            f'<path d="{handle}" fill="none" stroke="#1b1208" stroke-width="{n(r * 0.36)}"/>'
+            f'<path d="{handle}" fill="none" stroke="{c[1]}" stroke-width="{n(r * 0.26)}"/>'
+            f'<path d="{handle}" fill="none" stroke="{c[4]}" stroke-opacity=".7" stroke-width="{n(r * 0.07)}" transform="translate(-.6 -.8)"/>'
+            f'<circle cx="{n(cx)}" cy="{n(by + 2)}" r="{n(r)}" fill="#000" opacity=".45"/>'
+            f'<circle cx="{n(cx)}" cy="{n(by)}" r="{n(r)}" fill="{body}" stroke="#1b1208" stroke-width="1.2"/>'
+            f'<rect x="{n(cx - r * 0.6)}" y="{n(by + r * 0.82)}" width="{n(r * 1.2)}" height="{n(r * 0.22)}" rx="2" fill="{c[2]}"/>'
+            f'<path d="M{n(cx - r * 0.62)} {n(by - r * 0.3)}A{n(r * 0.72)} {n(r * 0.72)} 0 0 1 {n(cx + r * 0.1)} {n(by - r * 0.72)}" '
+            f'fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="{n(r * 0.1)}" stroke-linecap="round"/>')
 
 
-def bronce(doc):
-    d = circle_d(128, 120, 80)
-    field = doc.rad([(0, "#ffd9a6"), (0.35, "#d08a4a"), (0.8, "#8a4818"), (1, "#5a2d0f")], 0.38, 0.3, 0.75)
-    out = [shield_base(doc, d, doc.metal("bronze"), field, 0.84)]
-    mp, base = meander(128, 120, 69.5, 77.5, 26)
-    out.append(engrave(mp, "#4a2008", 1.5) + engrave(base, "#4a2008", 1.3))
-    # episema en estilo de figuras rojas: disco negro con mancuernas cruzadas
-    out.append(f'<circle cx="128" cy="121.5" r="46" fill="#000" opacity=".45"/>'
-               f'<circle cx="128" cy="120" r="46" fill="{doc.rad([(0, "#3a261b"), (1, "#0c0705")], 0.4, 0.35, 0.8)}" stroke="#e0a066" stroke-width="2"/>'
-               f'<circle cx="128" cy="120" r="41" fill="none" stroke="#d9773c" stroke-width="1" stroke-dasharray="2 3"/>')
-    terra = doc.lin([(0, "#f7b27a"), (0.5, "#dc7c40"), (1, "#a8501f")], 0, 0, 0, 1)
-    out.append(dumbbell(doc, 128, 120, 70, 38, "bronze", plate_fill=terra) + dumbbell(doc, 128, 120, 70, -38, "bronze", plate_fill=terra))
-    olive = "#d9773c"
-    for side in (-1, 1):  # ramitas de olivo pintadas
-        for i in range(5):
-            x, y = polar(128, 120, 34, 180 + side * (40 + i * 22))
-            out.append(f'<ellipse cx="{n(x)}" cy="{n(y)}" rx="4.4" ry="1.8" fill="{olive}" transform="rotate({n(side * (40 + i * 22) + 90)} {n(x)} {n(y)})"/>')
-    out.append(specular(doc, d, 98, 72, 80, 56, 0.45))
-    return d, "".join(out), 40
+def loaded_bar(doc, cx, cy, plates, metal, plate_metal=None, bend=0.0):
+    """Barra con `plates` discos por lado (cabe dentro del escudo); `bend`
+    la dobla por el peso."""
+    c = METALS[metal]
+    pc = METALS[plate_metal or metal]
+    pf = doc.lin([(0, pc[2]), (0.35, pc[1]), (0.55, pc[4]), (0.8, pc[1]), (1, pc[2])], 0, 0, 1, 0)
+    half = 54
 
+    def y(x):
+        return cy + bend * (x / half) ** 2
 
-def plata(doc):
-    d = "M88 36H168Q182 36 182 50V190Q182 204 168 204H88Q74 204 74 190V50Q74 36 88 36Z"
-    field = doc.lin([(0, "#121821"), (0.2, "#2c3644"), (0.45, "#3d4a5c"), (0.7, "#2a3442"), (1, "#0e131a")], 0, 0, 1, 0)
-    out = [shield_base(doc, d, doc.metal("silver"), field, 0.9)]
-    silver = doc.metal("silver")
-    # rayos de Júpiter en aspa, en plata
-    bolt = "M0 -3L18 -6.5L15 -1.2L40 0L19 6.5L22 1.2L0 3Z"
-    bolts = "".join(f'<path d="{bolt}" transform="translate({n(polar(128, 120, 27, a)[0])} {n(polar(128, 120, 27, a)[1])}) rotate({a - 90})"/>'
-                    for a in (38, 142, 218, 322))
-    out.append(emboss(bolts, silver, 1.1, 0.25, 0.6))
-    # alas de águila desplegadas desde el umbo
-    wing = doc.lin([(0, "#ffffff"), (0.5, "#c3cbd4"), (1, "#7d8793")], 0, 0, 1, 1)
+    def ang(x):
+        return math.degrees(math.atan(2 * bend * x / (half * half)))
+
+    pts = [(cx + x, y(x)) for x in [half * (i / 10 - 1) for i in range(21)]]
+    bar = poly(pts)
+    out = [f'<path d="{bar}" fill="none" stroke="#000" stroke-opacity=".45" stroke-width="5" transform="translate(1 2)"/>',
+           f'<path d="{bar}" fill="none" stroke="#1d1f23" stroke-width="4.6" stroke-linecap="round"/>',
+           f'<path d="{bar}" fill="none" stroke="{c[1]}" stroke-width="3.2" stroke-linecap="round"/>',
+           f'<path d="{bar}" fill="none" stroke="{c[4]}" stroke-opacity=".7" stroke-width="1" transform="translate(0 -.8)"/>']
+
+    def piece(x, w, h, fill, rx=1.6):
+        return (f'<g transform="translate({n(cx + x)} {n(y(x))}) rotate({n(ang(x))})">'
+                f'<rect x="{n(-w / 2 + 1)}" y="{n(-h / 2 + 2)}" width="{n(w)}" height="{n(h)}" rx="{n(rx)}" fill="#000" opacity=".45"/>'
+                f'<rect x="{n(-w / 2)}" y="{n(-h / 2)}" width="{n(w)}" height="{n(h)}" rx="{n(rx)}" fill="{fill}" stroke="#000" stroke-opacity=".65" stroke-width=".9"/>'
+                f'<rect x="{n(-w / 2 + 0.8)}" y="{n(-h / 2 + 1.5)}" width="1.2" height="{n(h - 3)}" rx=".6" fill="#fff" opacity=".45"/></g>')
+    collar = doc.metal(metal, 0, 1)
     for side in (-1, 1):
-        feathers = []
-        for i in range(7):
-            ang = -8 - i * 9
-            L = 46 - i * 2.2
-            rot = ang if side > 0 else 180 - ang
-            feathers.append(f'<g transform="translate({128 + side * 16} 124) rotate({rot})">'
-                            f'<path d="M0 -3C{n(L * 0.3)} -7 {n(L * 0.8)} -6 {n(L)} 0C{n(L * 0.8)} 3 {n(L * 0.3)} 4 0 3Z" fill="{wing}" stroke="#141a22" stroke-width=".9"/></g>')
-        out.append(f'<g clip-path="{doc.clip(d)}">{"".join(reversed(feathers))}</g>')
-    out.append(plate(doc, 128, 120, 25, "silver"))
-    for y in (48, 192):  # clavos del canto
-        for x in (90, 128, 166):
-            out.append(f'<circle cx="{x}" cy="{y}" r="2.4" fill="{silver}" stroke="#000" stroke-opacity=".5" stroke-width=".6"/>')
-    out.append(specular(doc, d, 104, 66, 60, 70, 0.3))
-    return d, "".join(out), 36
+        out.append(piece(side * 20, 3.4, 11, collar, 1))
+        x = side * 22
+        w = 8 if plates <= 3 else 6.6
+        for k in range(plates):
+            h = 48 - k * 3.5
+            out.append(piece(x + side * w / 2, w, h, pf))
+            x += side * (w + 0.5)
+    return "".join(out)
 
 
-def oro(doc):
-    d = "M72 204L75 100A53 64 0 0 1 181 100L184 204Z"
-    field = doc.rad([(0, "#fff0b0"), (0.45, "#e2ae38"), (1, "#8a5a0c")], 0.4, 0.3, 0.85)
-    out = [shield_base(doc, d, doc.metal("gold"), field, 0.88)]
-    clip = doc.clip(d)
-    lapis = doc.lin([(0, "#3a63c9"), (1, "#16307a")], 0, 0, 0, 1)
-    turq = doc.lin([(0, "#7ae8da"), (1, "#1f9a8e")], 0, 0, 0, 1)
-    carn = doc.lin([(0, "#ff8a6a"), (1, "#a3241a")], 0, 0, 0, 1)
-    gold = doc.metal("gold", 0, 1)
-    # collar usej: arcos de cuentas de lapislázuli, turquesa y cornalina
-    rows = []
-    cx, cy = 128, 118
-    for r, fill, w in [(30, lapis, 6), (37, gold, 4), (43, turq, 6), (50, gold, 4), (56, carn, 6), (63, lapis, 7)]:
-        a0, a1 = 112, 248
-        p0, p1 = polar(cx, cy, r, a0), polar(cx, cy, r, a1)
-        rows.append(f'<path d="M{n(p0[0])} {n(p0[1])}A{r} {r} 0 0 1 {n(p1[0])} {n(p1[1])}" fill="none" stroke="#3a2404" stroke-width="{w + 1.4}"/>'
-                    f'<path d="M{n(p0[0])} {n(p0[1])}A{r} {r} 0 0 1 {n(p1[0])} {n(p1[1])}" fill="none" stroke="{fill}" stroke-width="{w}"/>')
-        if fill is lapis or fill is turq or fill is carn:
-            for k in range(a0 + 6, a1 - 4, 9):  # separación entre cuentas
-                q0, q1 = polar(cx, cy, r - w / 2, k), polar(cx, cy, r + w / 2, k)
-                rows.append(f'<path d="M{n(q0[0])} {n(q0[1])}L{n(q1[0])} {n(q1[1])}" stroke="#3a2404" stroke-width=".8"/>')
-    drops = []  # colgantes en gota
-    for k in range(118, 246, 8):
-        x, y = polar(cx, cy, 70, k)
-        drops.append(f'<path d="M0 -4C3 -1 3 4 0 6C-3 4 -3 -1 0 -4Z" fill="{lapis}" stroke="#3a2404" stroke-width=".7" transform="translate({n(x)} {n(y)}) rotate({k - 180})"/>')
-    out.append(f'<g clip-path="{clip}">{"".join(rows)}{"".join(drops)}</g>')
-    # sol alado: el sol es un disco
-    wingclip = doc.clip(d)
-    for side in (-1, 1):
-        tiers = []
-        for fill, L, dy in [(lapis, 13, 6), (turq, 9, 3), (gold, 6, 0)]:
-            for i in range(8):
-                x = 128 + side * (19 + i * 4.4)
-                y = 74 + dy - i * 0.9
-                tiers.append(f'<path d="M{n(x)} {n(y)}l{n(side * 4.2)} -.6l0 {n(L - i * 0.5)}q{n(-side * 2.1)} 2.4 {n(-side * 4.2)} .6Z" fill="{fill}" stroke="#3a2404" stroke-width=".7"/>')
-        out.append(f'<g clip-path="{wingclip}">{"".join(tiers)}</g>')
-        out.append(f'<path d="M{128 + side * 15} 84q{side * 4} 5 {side} 10q{-side * 3} 4 {side * 2} 7" fill="none" stroke="#7a4d08" stroke-width="2.4" stroke-linecap="round"/>')
-    out.append(plate(doc, 128, 78, 17, "gold", hub=doc.rad([(0, "#ff9a7a"), (1, "#a3241a")], 0.35, 0.3, 0.8)))
-    out.append(plate(doc, 128, 140, 21, "gold", face=lapis))
-    out.append(specular(doc, d, 104, 70, 64, 58, 0.45))
-    return d, "".join(out), 36
+def wings(doc, size, metal, count):
+    """Alas a los lados del escudo; más grandes cuanto más alto el rango."""
+    back = doc.lin([(0, METALS[metal][1]), (1, METALS[metal][2])], 0, 0, 1, 1)
+    front = doc.lin([(0, METALS[metal][4]), (0.6, METALS[metal][1]), (1, METALS[metal][2])], 0, 0, 1, 1)
+    side_svg = []
+    for row, fill, k in ((0, back, 1.0), (1, front, 0.68)):
+        for i in range(count):
+            t = i / (count - 1)
+            a = 12 - t * 92
+            L = size * k * (0.62 + 0.38 * math.sin(math.pi * (0.35 + 0.65 * t)))
+            w = L * 0.13
+            side_svg.append(f'<g transform="translate(176 {84 + row * 6}) rotate({n(a)})">'
+                            f'<path d="M0 {n(-w)}C{n(L * 0.35)} {n(-w * 1.9)} {n(L * 0.85)} {n(-w * 1.2)} {n(L)} 0C{n(L * 0.8)} {n(w)} {n(L * 0.35)} {n(w * 1.3)} 0 {n(w)}Z" '
+                            f'fill="{fill}" stroke="#000" stroke-opacity=".55" stroke-width=".8"/>'
+                            f'<path d="M2 0L{n(L * 0.8)} {n(-w * 0.2)}" stroke="#fff" stroke-opacity=".3" stroke-width=".7"/></g>')
+    one = "".join(side_svg)
+    return f'<g filter="url(#ds)">{one}<g transform="translate(256 0) scale(-1 1)">{one}</g></g>'
 
 
-def platino(doc):
-    d = "M64 40H192V110C192 158 162 188 128 204C94 188 64 158 64 110Z"
-    field = doc.rad([(0, "#ffffff"), (0.5, "#dbe7ef"), (1, "#8fa6b8")], 0.38, 0.28, 0.85)
-    out = [shield_base(doc, d, doc.metal("platinum"), field, 0.9)]
-    clip = doc.clip(d)
-    lat = " ".join(f"M{60 + i * 14} 30L{250 + i * 14} 220M{196 + i * 14} 30L{6 + i * 14} 220" for i in range(-12, 13))
-    dots = "".join(f'<circle cx="{x}" cy="{y}" r="1"/>' for x in range(57, 200, 14) for y in range(37, 206, 14))
-    out.append(f'<g clip-path="{clip}"><path d="{lat}" stroke="#6f8aa0" stroke-opacity=".22" stroke-width=".9" fill="none"/>'
-               f'<g fill="#6f8aa0" opacity=".35">{dots}</g></g>')
-    azure = doc.lin([(0, "#5b8fe0"), (0.5, "#1f4fae"), (1, "#0f2c6e")], 0, 0, 0, 1)
-    for x, y in ((94, 76), (158, 158)):  # roeles (discos) en azur
-        out.append(plate(doc, x, y, 15, "platinum", face=azure))
-    out.append(f'<g clip-path="{clip}">{barbell(doc, 128, 117, 150, -45, "platinum", plate_fill=azure)}</g>')
-    out.append(specular(doc, d, 100, 66, 70, 56, 0.4))
-    return d, "".join(out), 40
+def fleur(doc, cx, cy, sc, metal):
+    m = doc.metal(metal, 0, 1)
+    shape = ("M0 -22C6 -14 7 -6 0 2C-7 -6 -6 -14 0 -22Z"
+             "M-3 0C-8 -2 -16 -2 -17 -10C-18 -16 -12 -18 -10 -13C-12 -12 -12 -8 -8 -6C-6 -5 -4 -4 -3 -2Z"
+             "M3 0C8 -2 16 -2 17 -10C18 -16 12 -18 10 -13C12 -12 12 -8 8 -6C6 -5 4 -4 3 -2Z"
+             "M-9 0H9V4H-9Z M-6 4C-6 9 -2 10 0 8C2 10 6 9 6 4Z")
+    return (f'<g transform="translate({n(cx)} {n(cy)}) scale({sc})" filter="url(#ds)">'
+            f'<path d="{shape}" fill="{m}" stroke="#000" stroke-opacity=".55" stroke-width=".9"/></g>')
 
 
-def diamante(doc):
-    d = ("M70 44Q96 32 128 42Q160 32 186 44Q180 58 192 70V118C192 162 162 190 128 206"
-         "C94 190 64 162 64 118V70Q76 58 70 44Z")
-    field = doc.rad([(0, "#3b6fb8"), (0.55, "#173a73"), (1, "#0a1a3a")], 0.45, 0.35, 0.8)
-    out = [shield_base(doc, d, doc.metal("steelblue"), field, 0.88)]
-    rays = []
-    for i in range(24):
-        p0, p1 = polar(128, 120, 120, i * 15), polar(128, 120, 120, i * 15 + 6)
-        rays.append(f"M128 120L{n(p0[0])} {n(p0[1])}L{n(p1[0])} {n(p1[1])}Z")
-    out.append(f'<g clip-path="{doc.clip(d)}"><path d="{" ".join(rays)}" fill="#9cc8ff" opacity=".12"/></g>')
-    # filete de oro renacentista siguiendo el contorno
-    gold = doc.metal("gold", 0, 1)
-    out.append(f'<g {inset(0.78)}><path d="{d}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="3.6"/>'
-               f'<path d="{d}" fill="none" stroke="{gold}" stroke-width="2.2"/></g>')
-    for x, y in ((92, 62), (164, 62)):
-        out.append(f'<path d="{star_path(x, y, 5, 1.8, 4)}" fill="{gold}"/>')
-    out.append(dumbbell(doc, 128, 122, 112, 40, "steelblue") + dumbbell(doc, 128, 122, 112, -40, "steelblue"))
-    # diamante talla brillante (vista cenital)
-    R, r = 31, 15
-    outer = [polar(128, 120, R, 22.5 + i * 45) for i in range(8)]
-    inner = [polar(128, 120, r, 22.5 + i * 45) for i in range(8)]
-    mid = [polar(128, 120, R * 0.92, i * 45) for i in range(8)]
-    shades = ["#ffffff", "#d6ecff", "#9fd0ff", "#e9f6ff", "#7fb8f0", "#c7e4ff", "#ffffff", "#a9d6ff"]
-    facets = [f'<path d="{poly(outer)}Z" fill="#000" opacity=".5" transform="translate(1 2)"/>']
-    for i in range(8):
-        a, b = outer[i], outer[(i + 1) % 8]
-        ia, ib = inner[i], inner[(i + 1) % 8]
-        m = mid[(i + 1) % 8]
-        facets.append(f'<path d="{poly([a, m, ia])}Z" fill="{shades[i]}"/>')
-        facets.append(f'<path d="{poly([m, b, ib])}Z" fill="{shades[(i + 3) % 8]}"/>')
-        facets.append(f'<path d="{poly([ia, m, ib])}Z" fill="{shades[(i + 5) % 8]}"/>')
-    table = doc.rad([(0, "#ffffff"), (1, "#bfe2ff")], 0.4, 0.35, 0.8)
-    facets.append(f'<path d="{poly(inner)}Z" fill="{table}"/>')
-    facets.append(f'<path d="{poly(outer)}Z" fill="none" stroke="#0d2550" stroke-width="1.2"/>')
-    out.append(f'<g stroke="#2b5a9a" stroke-width=".5" stroke-linejoin="round">{"".join(facets)}</g>')
-    out.append('<path d="M116 108l5 -2l-3 6z" fill="#fff"/>')
-    out.append(specular(doc, d, 100, 66, 70, 56, 0.35))
-    return d, "".join(out), 38
+def finial(doc, x, y, r, metal):
+    m = doc.metal(metal)
+    return (f'<rect x="{n(x - 1.6)}" y="{n(y - r * 1.6)}" width="3.2" height="{n(r * 1.6)}" fill="{m}" stroke="#000" stroke-opacity=".5" stroke-width=".6"/>'
+            f'<circle cx="{n(x)}" cy="{n(y - r * 1.9)}" r="{n(r)}" fill="{m}" stroke="#000" stroke-opacity=".55" stroke-width=".8"/>')
 
 
-def esmeralda(doc):
-    cy = 110
-    d = circle_d(128, cy, 72)
+def gem(doc, x, y, r, colors):
+    g = doc.rad([(0, "#fff"), (0.3, colors[0]), (1, colors[1])], 0.35, 0.3, 0.8)
+    return (f'<circle cx="{n(x)}" cy="{n(y + 1)}" r="{n(r + 1.4)}" fill="#000" opacity=".4"/>'
+            f'<circle cx="{n(x)}" cy="{n(y)}" r="{n(r + 1.4)}" fill="{doc.metal("gold")}"/>'
+            f'<circle cx="{n(x)}" cy="{n(y)}" r="{n(r)}" fill="{g}" stroke="#000" stroke-opacity=".5" stroke-width=".6"/>')
+
+
+def crystal(doc, cx, cy, h):
+    w = h * 0.42
+    pts = [(cx, cy - h / 2), (cx + w, cy - h * 0.12), (cx, cy + h / 2), (cx - w, cy - h * 0.12)]
+    c = (cx, cy - h * 0.12)
+    shades = ["#ffffff", "#a8d4ff", "#5a9be0", "#d8eeff"]
+    faces = "".join(f'<path d="{poly([pts[i], pts[(i + 1) % 4], c])}Z" fill="{shades[i]}"/>' for i in range(4))
+    return (f'<g filter="url(#ds)" stroke="#1b3766" stroke-width=".8" stroke-linejoin="round">{faces}'
+            f'<path d="{poly(pts)}Z" fill="none" stroke-width="1.2"/></g>')
+
+
+def rays(doc, color, count=18, r=124, op=0.45):
+    fade = doc.rad([(0, color, op), (0.6, color, op * 0.5), (1, color, 0)], 0.5, 0.5, 0.5)
+    tri = []
+    for i in range(count):
+        a = i * 360 / count
+        p0, p1 = polar(128, 118, r, a - 4), polar(128, 118, r, a + 4)
+        tri.append(f"M128 118L{n(p0[0])} {n(p0[1])}L{n(p1[0])} {n(p1[1])}Z")
+    return f'<path d="{" ".join(tri)}" fill="{fade}"/>'
+
+
+def sparkles(points):
     out = []
-    fe = doc.lin([(0, "#1fbf7a"), (0.6, "#0b7a6a"), (1, "#0d3d7a")], 0, 0, 0, 1)
-    for i in range(11):  # plumas de quetzal (detrás)
-        out.append(f'<g transform="translate(128 {cy + 40}) rotate({-60 + i * 12})">'
-                   f'<path d="M0 0C-9 18 -8 46 0 64C8 46 9 18 0 0Z" fill="{fe}" stroke="#032a22" stroke-width=".9"/>'
-                   f'<path d="M0 6V60" stroke="#9ff5c8" stroke-opacity=".6" stroke-width=".8"/>'
-                   f'<ellipse cx="0" cy="54" rx="3" ry="5" fill="#0d3d7a" opacity=".7"/></g>')
-    field = doc.rad([(0, "#5fe0a0"), (0.5, "#0f7a45"), (1, "#053a20")], 0.4, 0.32, 0.8)
-    out.append(shield_base(doc, d, doc.metal("gold"), field, 0.9, cy=cy))
-    gold = doc.metal("gold", 0, 1)
-    steps = []  # greca escalonada (xicalcoliuhqui)
-    units = 20
-    for k in range(units):
-        pts = [polar(128, cy, 50 + v * 3.3, k * 360 / units + u * (360 / units) / 5)
-               for u, v in [(0, 0), (0, 1), (1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 2), (4, 2), (4, 1), (5, 1), (5, 0)]]
-        steps.append(poly(pts) + "Z")
-    out.append(f'<circle cx="128" cy="{cy}" r="61" fill="#06311d"/><circle cx="128" cy="{cy}" r="49" fill="#0a4a2c"/>')
-    out.append(f'<path d="{" ".join(steps)}" fill="{gold}" stroke="#3a2404" stroke-width=".6"/>')
-    tiles = []  # mosaico de turquesa y jade
-    for ring in range(3):
-        rr = 36 + ring * 4.2
-        cnt = 30 + ring * 4
-        for i in range(cnt):
-            x, y = polar(128, cy, rr, i * 360 / cnt + ring * 3)
-            col = doc.rng.choice(["#3fd6c0", "#22b39b", "#5be3a0", "#1a8f6f", "#7af0d2"])
-            tiles.append(f'<rect x="{n(x - 2)}" y="{n(y - 2)}" width="4" height="4" rx=".8" fill="{col}" transform="rotate({n(i * 360 / cnt)} {n(x)} {n(y)})"/>')
-    out.append(f'<g stroke="#03261a" stroke-width=".5">{"".join(tiles)}</g>')
-    jade = doc.rad([(0, "#b8ffd8"), (0.5, "#1fa866"), (1, "#065a32")], 0.35, 0.3, 0.8)
-    out.append(plate(doc, 128, cy, 31, "gold", face=jade))
-    out.append(specular(doc, d, 100, 66, 70, 52, 0.4))
-    return d, "".join(out), 38
+    for x, y, r in points:
+        out.append(f'<path d="M{x} {y - r}Q{x} {y} {x + r} {y}Q{x} {y} {x} {y + r}Q{x} {y} {x - r} {y}Q{x} {y} {x} {y - r}Z" fill="#fff" opacity=".9"/>')
+    return "".join(out)
 
 
-def campeon(doc):
-    d = "M66 40H190V134A62 70 0 0 1 66 134Z"
-    field = doc.rad([(0, "#ff4a62"), (0.45, "#b0122c"), (1, "#4a0612")], 0.4, 0.3, 0.85)
-    out = [shield_base(doc, d, doc.metal("gold"), field, 0.88)]
-    fleur = "".join(f'<path d="M{x} {y - 4}l2.6 4l-2.6 4l-2.6 -4z"/>'
-                    for y in range(52, 200, 22) for x in range(72 + (y // 22 % 2) * 11, 190, 22))
-    out.append(f'<g clip-path="{doc.clip(d)}" fill="#ffb3c0" opacity=".12">{fleur}</g>')
-    pearl = doc.rad([(0, "#ffffff"), (0.6, "#efe2cf"), (1, "#a8957a")], 0.35, 0.3, 0.8)
-    for x in range(78, 182, 13):  # perlas del canto
-        out.append(f'<circle cx="{x}" cy="46" r="2.3" fill="{pearl}"/>')
-    # corona de olivo (kotinos), abierta arriba
-    olive = doc.lin([(0, "#d9e6a0"), (0.5, "#8fa64a"), (1, "#4e6420")], 0, 0, 1, 1)
-    for side in (-1, 1):
-        stem = [polar(128, 124, 46, 180 + side * a) for a in range(8, 166, 6)]
-        out.append(f'<path d="{poly(stem)}" fill="none" stroke="#5a4210" stroke-width="1.6"/>')
-        for i in range(11):
-            a = 180 + side * (14 + i * 14.5)
-            x, y = polar(128, 124, 46, a)
-            heading = a if side > 0 else a + 180  # hacia arriba, siguiendo la rama
-            out.append(f'<g transform="translate({n(x)} {n(y)}) rotate({n(heading)})">{leaf(11, olive, -35)}{leaf(11, olive, 35)}</g>')
-    out.append(barbell(doc, 128, 124, 112, 0, "gold"))
-    out.append(emboss(f'<path d="{star_path(128, 96, 8, 3.4, 5)}"/>', doc.metal("gold"), 0.9))
-    out.append(specular(doc, d, 100, 66, 70, 58, 0.35))
-    return d, "".join(out), 40
-
-
-def titan(doc):
-    d = "M58 44Q128 30 198 44L192 116C188 162 160 192 128 208C96 192 68 162 64 116Z"
-    glow = doc.uid("gl")
-    doc.defs.append(f'<filter id="{glow}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>')
-    field = doc.rad([(0, "#3a1d5c"), (0.55, "#160b26"), (1, "#05030a")], 0.5, 0.42, 0.8)
-    out = [f'<path d="{d}" fill="none" stroke="#ff8a1e" stroke-width="7" opacity=".75" filter="url(#{glow})"/>',
-           shield_base(doc, d, doc.metal("darkbronze"), field, 0.88)]
-    stars = []
-    for _ in range(46):
-        x, y = doc.rng.uniform(66, 190), doc.rng.uniform(44, 200)
-        stars.append(f'<circle cx="{n(x)}" cy="{n(y)}" r="{n(doc.rng.uniform(.4, 1.2))}" fill="#fff" opacity="{doc.rng.choice([.4, .6, .9])}"/>')
-    const = "M84 70L98 62L112 68L120 56M150 172L162 160L176 166M156 60L170 70L166 84"
-    out.append(f'<g clip-path="{doc.clip(d)}">{"".join(stars)}<path d="{const}" fill="none" stroke="#c9b6ff" stroke-opacity=".45" stroke-width=".8"/></g>')
-    gold = doc.metal("gold")
-    dark = "#3a1a06"
-    R = 46
-    # esfera armilar de Atlas: eje, meridiano, ecuador, trópicos y eclíptica
-    back = doc.clip("M60 30H196V120H60Z")
-    front = doc.clip("M60 120H196V210H60Z")
-
-    def ring(rx, ry, rot, w, dash=False, cy=120):
-        e = f'<ellipse cx="128" cy="{cy}" rx="{rx}" ry="{ry}" transform="rotate({rot} 128 120)" fill="none" stroke="{gold}" stroke-width="{w}"/>'
-        if dash:
-            e += f'<ellipse cx="128" cy="{cy}" rx="{rx}" ry="{ry}" transform="rotate({rot} 128 120)" fill="none" stroke="{dark}" stroke-width="1.2" stroke-dasharray="1.2 3.6"/>'
-        return e
-
-    axis = (f'<path d="M128 {120 - R - 12}V{120 + R + 12}" stroke="{dark}" stroke-width="4.4" stroke-linecap="round"/>'
-            f'<path d="M128 {120 - R - 12}V{120 + R + 12}" stroke="{gold}" stroke-width="2.6" stroke-linecap="round"/>'
-            f'<circle cx="128" cy="{120 - R - 13}" r="3.6" fill="{gold}" stroke="{dark}"/><circle cx="128" cy="{120 + R + 13}" r="3.6" fill="{gold}" stroke="{dark}"/>')
-    rings = (ring(R, 11, 0, 2.2) + ring(R * 0.8, 8, 0, 1.6, cy=120 - 26) + ring(R * 0.8, 8, 0, 1.6, cy=120 + 26)
-             + ring(R + 2, 13, -24, 5, dash=True))
-    meridian = f'<circle cx="128" cy="120" r="{R}" fill="none" stroke="{dark}" stroke-width="5.4"/><circle cx="128" cy="120" r="{R}" fill="none" stroke="{gold}" stroke-width="3.6"/>'
-    out.append(f'<g clip-path="{back}">{rings}</g>{axis}')
-    out.append(plate(doc, 128, 120, 24, "gold", hub=doc.rad([(0, "#ffe2a0"), (1, "#c45a10")], 0.35, 0.3, 0.8)))
-    out.append(f'<g clip-path="{front}">{rings}</g>{meridian}')
-    out.append(specular(doc, d, 100, 64, 70, 54, 0.3))
-    return d, "".join(out), 38
-
-
+# ------------------------------------------------------------ rangos
+#   s: escala del escudo; rim: grosor relativo del canto (inset del campo)
 RANKS = {
-    # clave: (dibujo, metal de adornos, cinta (claro, oscuro, pliegue), gema, halo)
-    "hierro": (hierro, "iron", ("#7a2e22", "#4a1610", "#2a0a06"), ("#ff7a5a", "#7a1a0a"), "#c9d2dc"),
-    "bronce": (bronce, "bronze", ("#22477a", "#122848", "#081428"), ("#7ab8ff", "#123a7a"), "#ffb070"),
-    "plata": (plata, "silver", ("#8a1f2e", "#561018", "#30070c"), ("#ff8a9a", "#7a0a1a"), "#a9d4ff"),
-    "oro": (oro, "gold", ("#24439a", "#132a66", "#0a1638"), ("#ff8a6a", "#8a1a0a"), "#ffd25a"),
-    "platino": (platino, "platinum", ("#2b5aa8", "#173670", "#0b1d40"), ("#9fd0ff", "#1a4a9a"), "#bfe6ff"),
-    "diamante": (diamante, "steelblue", ("#e9f4ff", "#9cbde0", "#5a7aa0"), ("#ffffff", "#5aa0ff"), "#8fc8ff"),
-    "esmeralda": (esmeralda, "gold", ("#b0182a", "#6a0a16", "#3a040a"), ("#b8ffd8", "#0a7a40"), "#4fe39a"),
-    "campeon": (campeon, "gold", ("#fff0b0", "#d9a030", "#8a5a0c"), ("#ff8aa0", "#9a0a2a"), "#ff5a7a"),
-    "titan": (titan, "gold", ("#3a1a06", "#1c0c02", "#0a0400"), ("#ffd27a", "#c45a10"), "#ff8a2a"),
+    "hierro": dict(tier=0, s=0.8, rim="iron", field=("#4a5058", "#2a2e34", "#16181b"), item=("plate", "iron"),
+                   cloth=("#7a2e22", "#4a1610", "#2a0a06"), halo="#c9d2dc"),
+    "bronce": dict(tier=1, s=0.83, rim="bronze", field=("#7a4218", "#3e1e08", "#1e0e03"), item=("kettlebell", "bronze"),
+                   cloth=("#22477a", "#122848", "#081428"), halo="#ffb070"),
+    "plata": dict(tier=2, s=0.86, rim="silver", field=("#3f4c5e", "#232b36", "#10141a"), item=("dumbbell", "silver"),
+                  cloth=("#8a1f2e", "#561018", "#30070c"), halo="#bfe0ff"),
+    "oro": dict(tier=3, s=0.88, rim="gold", field=("#7a4e0c", "#4a2c04", "#221402"), item=("dumbbells", "gold"),
+                cloth=("#24439a", "#132a66", "#0a1638"), halo="#ffd25a"),
+    "platino": dict(tier=4, s=0.9, rim="platinum", field=("#2f5a6c", "#173240", "#0a1820"), item=("bar", "platinum", 1),
+                    cloth=("#2b5aa8", "#173670", "#0b1d40"), halo="#bfe6ff"),
+    "diamante": dict(tier=5, s=0.92, rim="steelblue", field=("#2a58a0", "#132f60", "#08152e"), item=("bar", "steelblue", 2),
+                     cloth=("#e9f4ff", "#9cbde0", "#5a7aa0"), halo="#8fc8ff", ink="#1b3766", gems=("#bfe2ff", "#3a7ad0")),
+    "esmeralda": dict(tier=6, s=0.94, rim="emerald", field=("#13804a", "#0a4a2b", "#031f12"), item=("bar", "gold", 3, "emerald"),
+                      cloth=("#b0182a", "#6a0a16", "#3a040a"), halo="#4fe39a", gems=("#7dffb8", "#0a7a40")),
+    "campeon": dict(tier=7, s=0.96, rim="gold", field=("#c0142e", "#7a0a1c", "#3a030c"), item=("bar", "gold", 4),
+                    cloth=("#fff0b0", "#d9a030", "#8a5a0c"), halo="#ff5a7a", ink="#8a0f22", gems=("#ff7a90", "#9a0a2a")),
+    "titan": dict(tier=8, s=1.0, rim="darkbronze", field=("#3a1d5c", "#160b26", "#05030a"), item=("bar", "gold", 5),
+                  cloth=("#3a1a06", "#1c0c02", "#0a0400"), halo="#ff8a2a", gems=("#ffd27a", "#d0500a")),
 }
+WINGS = {"oro": ("gold", 38, 5), "platino": ("platinum", 42, 6), "diamante": ("steelblue", 48, 6),
+         "esmeralda": ("emerald", 54, 7), "campeon": ("gold", 58, 7), "titan": ("gold", 64, 8)}
+
+
+def center_item(doc, item):
+    kind, metal = item[0], item[1]
+    if kind == "plate":
+        return plate(doc, 128, 120, 34, metal)
+    if kind == "kettlebell":
+        return kettlebell(doc, 128, 122, 52, metal)
+    if kind == "dumbbell":
+        return dumbbell(doc, 128, 122, 104, -20, metal)
+    if kind == "dumbbells":
+        return dumbbell(doc, 128, 122, 104, 35, metal) + dumbbell(doc, 128, 122, 104, -35, metal)
+    plates = item[2]
+    plate_metal = item[3] if len(item) > 3 else None
+    return loaded_bar(doc, 128, 122, plates, metal, plate_metal, bend=7 if plates == 5 else 0)
+
+
+def crest(doc, key, cfg):
+    t = cfg["tier"]
+    m = cfg["rim"]
+    if t == 2:
+        return finial(doc, 128, 47, 5.5, m)
+    if t == 3:
+        return fleur(doc, 128, 44, 1.0, m)
+    if t == 4:
+        return fleur(doc, 128, 44, 1.15, m) + finial(doc, 70, 48, 4.5, m) + finial(doc, 186, 48, 4.5, m)
+    if t == 5:
+        return crystal(doc, 128, 30, 34) + finial(doc, 70, 48, 4.5, m) + finial(doc, 186, 48, 4.5, m)
+    if t == 6:
+        return (fleur(doc, 128, 44, 1.2, "gold") + gem(doc, 128, 28, 6, cfg["gems"])
+                + finial(doc, 70, 48, 4.5, "gold") + finial(doc, 186, 48, 4.5, "gold"))
+    if t >= 7:
+        return coronet(doc, "gold", cfg["gems"], 48)
+    return ""
 
 
 def build(key, division):
-    draw, metal, cloth, gem, glow = RANKS[key]
+    cfg = RANKS[key]
+    t = cfg["tier"]
     doc = Doc(key)
-    d, body, top = draw(doc)
-    parts = []
-    if division == 3:
-        parts.append(halo(doc, glow))
-    if key == "titan":
-        parts.append(radiate_crown(doc, top))
+    sc = cfg["s"]
+    group = f'transform="translate({SC[0]} {SC[1]}) scale({sc}) translate({-SC[0]} {-SC[1]})"'
+    back, front = [], []
     if division >= 2:
-        parts.append(laurel(doc, metal, 1.0 if division == 3 else 0.5))
-    parts.append(body)
-    if division == 3 and key != "titan":
-        parts.append(coronet(doc, metal, gem, top))
-    ink = {"diamante": "#1b3766", "campeon": "#8a0f22"}.get(key)
-    parts.append(ribbon(doc, cloth, metal, None if key == "titan" else division, ink))
-    return doc.svg("".join(parts))
+        back.append(halo(doc, cfg["halo"], 0.3 if division == 2 else 0.6))
+    if t == 8:
+        back.append(rays(doc, "#ffb347"))
+    inner = []  # dentro del grupo escalado
+    if t == 8:
+        inner.append(radiate_crown(doc, 40))
+    if key in WINGS:
+        metal, size, count = WINGS[key]
+        inner.append(wings(doc, size, metal, count))
+    if t >= 6:
+        inner.append(laurel(doc, "gold", {6: 0.45, 7: 0.55, 8: 0.6}[t]))
+    # escudo: el canto engorda con el rango
+    rim_inset = 0.9 - t * 0.006
+    f0, f1, f2 = cfg["field"]
+    field = doc.rad([(0, f0), (0.6, f1), (1, f2)], 0.42, 0.3, 0.85)
+    if t == 8:
+        glow = doc.uid("gl")
+        doc.defs.append(f'<filter id="{glow}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>')
+        inner.append(f'<path d="{SHIELD}" fill="none" stroke="#ff8a1e" stroke-width="7" opacity=".8" filter="url(#{glow})"/>')
+    inner.append(shield_base(doc, SHIELD, doc.metal(cfg["rim"]), field, rim_inset, cy=124))
+    c = METALS[cfg["rim"]]
+    if t == 0:  # remaches
+        inner.append(f'<g {inset(0.95, cy=124)}><path d="{SHIELD}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="5.4" stroke-linecap="round" stroke-dasharray="0.1 13" transform="translate(.6 .9)"/>'
+                     f'<path d="{SHIELD}" fill="none" stroke="#c6cdd4" stroke-width="4.6" stroke-linecap="round" stroke-dasharray="0.1 13"/></g>')
+    elif t == 1:  # dentículos griegos
+        inner.append(f'<g {inset(0.948, cy=124)}><path d="{SHIELD}" fill="none" stroke="#3a1a06" stroke-width="5" stroke-dasharray="2.4 2.4" opacity=".75"/></g>')
+    else:  # perlado
+        inner.append(f'<g {inset(0.952 - t * 0.003, cy=124)}><path d="{SHIELD}" fill="none" stroke="#000" stroke-opacity=".45" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="0.1 6.5" transform="translate(.4 .7)"/>'
+                     f'<path d="{SHIELD}" fill="none" stroke="{c[4]}" stroke-width="2.8" stroke-linecap="round" stroke-dasharray="0.1 6.5"/></g>')
+    if division >= 2:  # filete interior
+        inner.append(f'<g {inset(rim_inset - 0.07, cy=124)}><path d="{SHIELD}" fill="none" stroke="{c[4]}" stroke-opacity=".8" stroke-width="1.6"/></g>')
+    if t == 8:  # estrellas en la obsidiana
+        stars = "".join(f'<circle cx="{n(doc.rng.uniform(76, 180))}" cy="{n(doc.rng.uniform(56, 190))}" r="{n(doc.rng.uniform(.4, 1.1))}" fill="#fff" opacity="{doc.rng.choice([.4, .7])}"/>'
+                        for _ in range(36))
+        inner.append(f'<g clip-path="{doc.clip(SHIELD)}">{stars}</g>')
+    inner.append(center_item(doc, cfg["item"]))
+    if "gems" in cfg:
+        for x, y in ((80, 58), (176, 58), (72, 116), (184, 116), (128, 192)):
+            inner.append(gem(doc, x, y, 3.6 if t < 7 else 4.2, cfg["gems"]))
+    inner.append(specular(doc, SHIELD, 100, 70, 70, 58, 0.3))
+    inner.append(crest(doc, key, cfg))
+    if division == 3:
+        inner.append(sparkles([(60, 60, 7), (200, 78, 5), (52, 170, 5), (206, 176, 7)]))
+    body = f'<g {group}>{"".join(inner)}</g>'
+    ry = SC[1] + (202 - SC[1]) * sc - 8
+    ribbon_svg = ribbon(doc, cfg["cloth"], cfg["rim"] if t != 8 else "gold", None if key == "titan" else division, cfg.get("ink"), y=ry)
+    return doc.svg("".join(back) + body + ribbon_svg)
 
 
 if __name__ == "__main__":
