@@ -10,7 +10,7 @@ Cada división mejora el emblema del mismo rango:
 import math
 import os
 
-OUT = r"C:\Proyectos\gym_tracker\app\static\ranks"
+OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "app", "static", "ranks")
 os.makedirs(OUT, exist_ok=True)
 
 SHIELD = ("M50 40 Q100 28 150 40 L162 48 L160 104 C158 144 132 166 100 180 "
