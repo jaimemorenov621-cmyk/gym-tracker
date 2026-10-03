@@ -4057,6 +4057,35 @@ a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: upperca
     background: var(--surface); border: 1px solid var(--border-subtle); text-decoration: none; transition: color 0.15s ease, transform 0.3s ease; }
 .tab-gear:hover, .tab-gear:focus-visible { color: var(--accent); }
 .tab-gear:active { transform: rotate(45deg); }
-.settings-more { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.settings-more .form-section-title { margin: 0 0 4px; }
-.settings-more .settings-more-link { display: flex; align-items: center; gap: 10px; justify-content: flex-start; width: 100%; box-sizing: border-box; min-height: 46px; margin: 0; padding: 10px 14px; font-size: 0.92rem; text-decoration: none; }
+.settings-list { display: flex; flex-direction: column; margin-top: 16px; padding: 4px 16px; }
+.settings-list a { display: flex; align-items: center; gap: 12px; min-height: 52px; color: var(--color-text); font-weight: 600; text-decoration: none; }
+.settings-list a + a { border-top: 1px solid var(--border-subtle); }
+.settings-list a > span:nth-child(2) { flex: 1; }
+.settings-list a > .icon:last-child { color: var(--color-text-muted); }
+.settings-list-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 9px; background: var(--color-surface-active); color: var(--accent); flex-shrink: 0; }
+.settings-list a.is-danger { color: var(--color-danger); }
+.settings-list a.is-danger .settings-list-icon { background: rgba(229, 72, 77, 0.12); color: var(--color-danger); }
+@media (hover: hover) { .settings-list a:hover > span:nth-child(2) { color: var(--accent); } .settings-list a.is-danger:hover > span:nth-child(2) { color: var(--color-danger); } }
+
+/* Modo oscuro: tarjetas neutras y el color solo como acento. Mezclar el
+   color del bloque o de la sección con el fondo oscuro daba tonos sucios
+   (oliva, burdeos, verde negruzco). */
+:root[data-theme="dark"] .routine-card,
+:root[data-theme="dark"] .routine-block-details > summary {
+    background: var(--surface);
+    border-color: var(--border-subtle);
+    box-shadow: inset 3px 0 0 var(--block-color, transparent);
+}
+:root[data-theme="dark"] .routine-block-details.block-neutral > summary,
+:root[data-theme="dark"] .routine-card:not([style*="--block-color"]) { box-shadow: none; }
+:root[data-theme="dark"] .routine-block-details > summary .icon { color: var(--color-text-soft); }
+:root[data-theme="dark"] .routine-block-color-input { border-color: var(--surface); box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.25); }
+:root[data-theme="dark"] button.routine-start-btn:disabled { opacity: 1; background: var(--surface-3, var(--color-surface-active)); color: var(--color-text-muted); }
+:root[data-theme="dark"] .analysis-summary,
+:root[data-theme="dark"] .analysis-fortalezas,
+:root[data-theme="dark"] .analysis-areas-mejora,
+:root[data-theme="dark"] .analysis-proximos-pasos { background: var(--surface); border-color: var(--border-subtle); border-left-width: 3px; }
+:root[data-theme="dark"] .analysis-summary { border-left-color: var(--accent); }
+:root[data-theme="dark"] .analysis-fortalezas { border-left-color: #2fd99a; }
+:root[data-theme="dark"] .analysis-areas-mejora { border-left-color: #ff7a7a; }
+:root[data-theme="dark"] .analysis-proximos-pasos { border-left-color: var(--accent); }

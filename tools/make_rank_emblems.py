@@ -4,8 +4,10 @@ Una sola familia: el mismo escudo para todos, y cada rango hereda lo del
 anterior y suma más, para que se vea de un vistazo cuál es mejor:
   - material: hierro, bronce, plata, oro, platino, diamante, esmeralda,
     campeón (carmesí y oro), titán (obsidiana y oro fundido);
-  - el peso que lleva: disco, kettlebell, mancuerna, dos mancuernas, y una
-    barra con 1, 2, 3, 4 y 5 discos por lado (la de Titán se dobla);
+  - en el centro, la G de Gyre en relieve con una barra que cruza el escudo
+    y sobresale: 1 disco por lado en Hierro y Bronce, 2 en Plata y Oro,
+    3 en Platino y Diamante, 4 en Esmeralda y Campeón y 5 en Titán (que
+    además dobla la barra);
   - el escudo crece y el canto engorda; cimera, alas cada vez mayores,
     gemas, laurel y corona.
 Detallitos históricos: remaches (hierro), dentículos griegos (bronce),
@@ -459,19 +461,66 @@ WINGS = {"oro": ("gold", 38, 5), "platino": ("platinum", 42, 6), "diamante": ("s
          "esmeralda": ("emerald", 54, 7), "campeon": ("gold", 58, 7), "titan": ("gold", 64, 8)}
 
 
-def center_item(doc, item):
-    kind, metal = item[0], item[1]
-    if kind == "plate":
-        return plate(doc, 128, 120, 34, metal)
-    if kind == "kettlebell":
-        return kettlebell(doc, 128, 122, 52, metal)
-    if kind == "dumbbell":
-        return dumbbell(doc, 128, 122, 104, -20, metal)
-    if kind == "dumbbells":
-        return dumbbell(doc, 128, 122, 104, 35, metal) + dumbbell(doc, 128, 122, 104, -35, metal)
-    plates = item[2]
-    plate_metal = item[3] if len(item) > 3 else None
-    return loaded_bar(doc, 128, 122, plates, metal, plate_metal, bend=7 if plates == 5 else 0)
+def g_mark(doc, metal, cx=128, cy=120, r=31, w=13):
+    """La G de Gyre en relieve, del metal del rango."""
+    c = METALS[metal]
+    a = math.radians(-42)
+    sx, sy = cx + r * math.cos(a), cy + r * math.sin(a)
+    d = f"M{n(sx)} {n(sy)}A{r} {r} 0 1 0 {n(cx + r)} {n(cy + 1)}H{n(cx + 3)}"
+    m = doc.metal(metal)
+    return (f'<path d="{d}" fill="none" stroke="#000" stroke-opacity=".55" stroke-width="{w + 3}" transform="translate(1.2 2.2)"/>'
+            f'<path d="{d}" fill="none" stroke="{c[2]}" stroke-width="{w + 2.4}"/>'
+            f'<path d="{d}" fill="none" stroke="{m}" stroke-width="{w}"/>'
+            f'<path d="{d}" fill="none" stroke="{c[4]}" stroke-opacity=".55" stroke-width="1.6" transform="translate(-1.6 -1.6)"/>')
+
+
+def cross_bar(doc, plates, metal, bar_metal="silver", bend=0.0, cy=124):
+    """Barra con discos que cruza el escudo y sobresale por los lados; más
+    discos cuanto más alto el rango."""
+    c = METALS[bar_metal]
+    pc = METALS[metal]
+    pf = doc.lin([(0, pc[2]), (0.35, pc[1]), (0.55, pc[4]), (0.8, pc[1]), (1, pc[2])], 0, 0, 1, 0)
+    w, gap, start = (10.5 if plates <= 2 else 9.2), 0.8, 60
+    half = start + plates * (w + gap) + 7
+
+    def y(x):
+        return cy + bend * (x / half) ** 2
+
+    def ang(x):
+        return math.degrees(math.atan(2 * bend * x / (half * half)))
+
+    bar = poly([(128 + x, y(x)) for x in [half * (i / 12 - 1) for i in range(25)]])
+    out = [f'<path d="{bar}" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="7" transform="translate(1 2.4)"/>',
+           f'<path d="{bar}" fill="none" stroke="#17181b" stroke-width="6.4" stroke-linecap="round"/>',
+           f'<path d="{bar}" fill="none" stroke="{c[1]}" stroke-width="4.6" stroke-linecap="round"/>',
+           f'<path d="{bar}" fill="none" stroke="{c[4]}" stroke-opacity=".75" stroke-width="1.4" transform="translate(0 -1.2)"/>']
+
+    def piece(x, pw, h, fill, rx=2.8):
+        return (f'<g transform="translate({n(128 + x)} {n(y(x))}) rotate({n(ang(x))})">'
+                f'<rect x="{n(-pw / 2 + 1.2)}" y="{n(-h / 2 + 2.4)}" width="{n(pw)}" height="{n(h)}" rx="{n(rx)}" fill="#000" opacity=".5"/>'
+                f'<rect x="{n(-pw / 2)}" y="{n(-h / 2)}" width="{n(pw)}" height="{n(h)}" rx="{n(rx)}" fill="{fill}" stroke="#000" stroke-opacity=".7" stroke-width=".9"/>'
+                f'<rect x="{n(-pw / 2 + 1)}" y="{n(-h / 2 + 2)}" width="1.3" height="{n(h - 4)}" rx=".6" fill="#fff" opacity=".5"/></g>')
+    collar = doc.metal(bar_metal, 0, 1)
+    for side in (-1, 1):
+        out.append(piece(side * (start - 2.5), 4, 13, collar, 1))
+        x = side * start
+        for k in range(plates):
+            h = 64 - k * 5
+            out.append(piece(x + side * w / 2, w, h, pf))
+            x += side * (w + gap)
+        out.append(piece(x + side * 3, 5, 9, collar, 1))
+    return "".join(out)
+
+
+PLATES = {"hierro": 1, "bronce": 1, "plata": 2, "oro": 2, "platino": 3, "diamante": 3, "esmeralda": 4, "campeon": 4, "titan": 5}
+
+
+def center_item(doc, key, cfg):
+    t = cfg["tier"]
+    metal = cfg["rim"] if t != 8 else "gold"
+    plate_metal = {"esmeralda": "emerald", "titan": "gold"}.get(key, metal)
+    bar = "gold" if t >= 7 else "silver"
+    return cross_bar(doc, PLATES[key], plate_metal, bar, bend=6 if t == 8 else 0) + g_mark(doc, metal)
 
 
 def crest(doc, key, cfg):
@@ -536,7 +585,7 @@ def build(key, division):
         stars = "".join(f'<circle cx="{n(doc.rng.uniform(76, 180))}" cy="{n(doc.rng.uniform(56, 190))}" r="{n(doc.rng.uniform(.4, 1.1))}" fill="#fff" opacity="{doc.rng.choice([.4, .7])}"/>'
                         for _ in range(36))
         inner.append(f'<g clip-path="{doc.clip(SHIELD)}">{stars}</g>')
-    inner.append(center_item(doc, cfg["item"]))
+    inner.append(center_item(doc, key, cfg))
     if "gems" in cfg:
         for x, y in ((80, 58), (176, 58), (72, 116), (184, 116), (128, 192)):
             inner.append(gem(doc, x, y, 3.6 if t < 7 else 4.2, cfg["gems"]))

@@ -132,10 +132,9 @@
     </form>
 
     {# Lo que antes estaba en la pestaña "Más" #}
-    <div class="card card-elevated settings-more">
-        <h3 class="form-section-title">Más</h3>
-        <a class="btn-outline settings-more-link" href="{{ url_for('achievements_page') }}">{{ macros.icon('trophy', 18) }}<span>Logros</span></a>
-        <a class="btn-outline settings-more-link" href="{{ url_for('privacy') }}">{{ macros.icon('shield', 18) }}<span>Privacidad</span></a>
-        <a class="btn-danger-outline settings-more-link" href="{{ url_for('logout') }}">{{ macros.icon('log-out', 18) }}<span>Cerrar sesión</span></a>
-    </div>
+    <nav class="card card-elevated settings-list" aria-label="Más opciones">
+        <a href="{{ url_for('achievements_page') }}"><span class="settings-list-icon">{{ macros.icon('trophy', 18) }}</span><span>Logros</span>{{ macros.icon('chevron-right', 18) }}</a>
+        <a href="{{ url_for('privacy') }}"><span class="settings-list-icon">{{ macros.icon('shield', 18) }}</span><span>Privacidad</span>{{ macros.icon('chevron-right', 18) }}</a>
+        <a href="{{ url_for('logout') }}" class="is-danger"><span class="settings-list-icon">{{ macros.icon('log-out', 18) }}</span><span>Cerrar sesión</span></a>
+    </nav>
 {% endblock %}
