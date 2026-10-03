@@ -422,18 +422,46 @@ class ProgressTextTests(unittest.TestCase):
             self.assertEqual(achievements.progress_text(hours, 49.96, False), "49,9 / 50 h")
 
 
-class ProgressPageTests(DbTestCase):
-    def test_card_shows_what_is_missing(self):
+class RankPageTests(DbTestCase):
+    def test_rank_tab_shows_what_is_missing_with_buttons(self):
         uid = self.make_user("atleta")
         self.login(uid)
-        html = self.client.get("/progress").get_data(as_text=True)
-        self.assertIn("Rango de fuerza", html)
+        html = self.client.get("/rango").get_data(as_text=True)
+        self.assertIn("Por levantamiento", html)
+        self.assertIn("Aún sin rango", html)
         self.assertIn("Para darte un rango falta", html)
+        self.assertIn('class="btn-inline" href="/settings"', html)   # botones, no enlaces sueltos
         self.assertIn("exrx.net", html)
-        # El bloque profesional va primero: índice de fuerza, estándares y peso.
-        self.assertLess(html.index('id="fuerza"'), html.index('id="estandares"'))
-        self.assertLess(html.index('id="estandares"'), html.index("progress-weight"))
+        # Progreso ya no lleva la tarjeta de rango (pestaña propia) y el orden es fuerza -> volumen -> peso.
+        progress = self.client.get("/progress").get_data(as_text=True)
+        self.assertNotIn('id="estandares"', progress)
+        self.assertLess(progress.index('id="fuerza"'), progress.index('id="volumen"'))
+        self.assertLess(progress.index('id="volumen"'), progress.index("progress-weight"))
 
+
+class RankCelebrationTests(_LifterCase):
+    def setUp(self):
+        super().setUp()
+        self.set_sex("hombre")
+        self.weigh(80, datetime.now() - timedelta(days=30))
+        recent = datetime.now() - timedelta(days=3)
+        for ex, kg in (("press de banca", 90), ("sentadilla", 120), ("peso muerto", 150)):
+            self.lift(ex, kg, recent)
+        self.login(self.uid)
+
+    def test_intro_once_then_celebrates_only_going_up(self):
+        html = self.client.get("/index").get_data(as_text=True)
+        self.assertIn("rankCelebration", html)
+        self.assertIn("Tu rango de fuerza", html)                       # presentación
+        self.assertNotIn('id="rankCelebration"', self.client.get("/index").get_data(as_text=True))
+        self.lift("peso muerto", 260, datetime.now() - timedelta(days=1))
+        html = self.client.get("/index").get_data(as_text=True)
+        self.assertIn("¡Has subido de rango!", html)
+        with app.app_context():
+            u = db.session.get(User, self.uid)
+            u.rank_seen = 99  # como si viniera de un rango más alto: bajar no se anuncia
+            db.session.commit()
+        self.assertNotIn('id="rankCelebration"', self.client.get("/index").get_data(as_text=True))
 
 if __name__ == "__main__":
     unittest.main()

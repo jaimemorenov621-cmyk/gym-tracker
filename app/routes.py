@@ -874,6 +874,7 @@ def index():
         home_cta=cta,
         new_achievements=achievements.unseen(current_user.id),
         profile=profile,
+        rank_event=standards.rank_notice(current_user, profile["global_rank"]),
         xp=progression.level_for(xp_total),
         level_up=progression.level_up_notice(current_user.id, xp_total),
         checkin=checkin,
@@ -1652,11 +1653,29 @@ def progress():
         items=items,
         threshold=current_user.stagnation_threshold,
         latest_weight=latest_weight,
-        profile=standards.strength_profile(current_user),
-        standards=standards,
         volume=volume_mod.weekly_volume(current_user.id),
         volume_mod=volume_mod,
         muscle_svg=muscle_svg_markup(current_user.sex),
+    )
+
+
+@app.route("/rango")
+@login_required
+def rank_page():
+    """Pestaña Rango: tu emblema, el rango de cada básico (estándares), tu
+    nivel y tus logros."""
+    profile = standards.strength_profile(current_user)
+    return render_template(
+        "rango.html",
+        title="Rango",
+        profile=profile,
+        standards=standards,
+        next_label=standards.next_rank_label(profile["global_rank"]),
+        xp=progression.level_for(progression.current_xp(current_user.id)),
+        achievements_unlocked=db.session.scalar(
+            sa.select(sa.func.count()).select_from(UserAchievement).where(UserAchievement.user_id == current_user.id)
+        ),
+        achievements_total=len(achievements.ACHIEVEMENTS),
     )
 
 
@@ -1670,11 +1689,56 @@ def update_exercise_translation(name):
         return redirect(url_for("exercise_progress", name=name))
     form = ExerciseTranslationForm()
     if form.validate_on_submit():
-        catalog_exercise.name_es = form.name_es.data.strip() or None
+        old_key = (catalog_exercise.name_es or catalog_exercise.name).strip().lower()
+        new_es = form.name_es.data.strip() or None
+        new_key = (new_es or catalog_exercise.name).strip().lower()
+        if len(new_key) > 64:
+            flash("Ese nombre es demasiado largo (máximo 64 caracteres).")
+            return redirect(url_for("exercise_progress", name=name))
+        catalog_exercise.name_es = new_es
+        moved = rename_exercise_everywhere(old_key, new_key) if new_key != old_key else 0
         db.session.commit()
         _clear_catalog_cache()
-        flash("Nombre en español guardado.")
+        flash("Nombre en español guardado." + (f" Se actualizó en {moved} series para que sigan contando." if moved else ""))
+        if name == old_key:
+            name = new_key
     return redirect(url_for("exercise_progress", name=name))
+
+
+def rename_exercise_everywhere(old, new):
+    """Al cambiar el nombre de un ejercicio del catálogo, lo guardado con el
+    nombre antiguo (series, rutinas, notas) pasa al nuevo, para todos los
+    usuarios: si no, ese historial dejaba de coincidir con el catálogo (sin
+    músculos ni imagen) y quedaba partido en dos. Solo cambia lo que tenía
+    EXACTAMENTE el nombre antiguo. Devuelve cuántas series se movieron."""
+    affected = set(db.session.scalars(
+        sa.select(Workout.user_id).join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(SetEntry.exercise == old).distinct()
+    ))
+    moved = db.session.execute(
+        sa.update(SetEntry).where(SetEntry.exercise == old).values(exercise=new)
+        # Se invalida el XP solo de los usuarios afectados (abajo), no de todos.
+        .execution_options(xp_irrelevant=True, synchronize_session=False)
+    ).rowcount
+    progression._bump_users(db.session.connection(), affected)
+    db.session.execute(
+        sa.update(RoutineExercise).where(RoutineExercise.exercise == old).values(exercise=new)
+        .execution_options(synchronize_session=False)
+    )
+    # Notas: única por (usuario, ejercicio). Si ya hay una con el nombre
+    # nuevo, se fusionan los textos en vez de perder ninguno.
+    for note in db.session.scalars(sa.select(ExerciseNote).where(ExerciseNote.exercise == old)).all():
+        existing = db.session.scalar(
+            sa.select(ExerciseNote).where(ExerciseNote.user_id == note.user_id, ExerciseNote.exercise == new)
+        )
+        if existing is None:
+            note.exercise = new
+        else:
+            if note.notes:
+                existing.notes = (existing.notes + "\n\n" if existing.notes else "") + note.notes
+            existing.default_rest_seconds = existing.default_rest_seconds or note.default_rest_seconds
+            db.session.delete(note)
+    return moved
 
 
 @app.route("/exercise/<name>/notes", methods=["GET", "POST"])

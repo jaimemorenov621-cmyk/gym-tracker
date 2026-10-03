@@ -1,6 +1,7 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block content %}
-    <h1 class="page-title">Configuración</h1>
+    {{ macros.tab_title('Configuración', 'settings') }}
 
     {# Apariencia: preferencia de este dispositivo (localStorage), no de la cuenta. #}
     <div class="form-ui card card-elevated">
@@ -26,7 +27,8 @@
                     </button>
                 {% endfor %}
             </div>
-            <small class="field-help">Se desbloquean subiendo de <a href="{{ url_for('level_page') }}">nivel</a>. Se guarda en este dispositivo.</small>
+            <small class="field-help">Se desbloquean subiendo de nivel y se guardan en este dispositivo.</small>
+            <a class="btn-inline" href="{{ url_for('level_page') }}">Ver ventajas por nivel</a>
         </div>
     </div>
     <script>

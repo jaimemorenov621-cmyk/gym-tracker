@@ -55,6 +55,9 @@ class User(UserMixin, db.Model):
     xp_rules: so.Mapped[Optional[int]] = so.mapped_column()
     xp_cached_at: so.Mapped[Optional[datetime]] = so.mapped_column()
     xp_level_seen: so.Mapped[Optional[int]] = so.mapped_column()
+    # Último rango global anunciado (rango*3 + división). NULL = aún no se le
+    # ha presentado su rango (la primera vez se le muestra, sin "subida").
+    rank_seen: so.Mapped[Optional[int]] = so.mapped_column()
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

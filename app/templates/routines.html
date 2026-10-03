@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1 style="font-weight:800; letter-spacing:-0.02em;">Mis rutinas</h1>
+    {{ macros.tab_title('Rutinas', 'list') }}
     <p style="display:flex; gap:10px; flex-wrap:wrap;">
         <form action="{{ url_for('new_workout') }}" method="post" style="display:inline; margin:0;">
             {{ empty_form.hidden_tag() }}

@@ -683,3 +683,31 @@ def strength_profile(user, rows=None, weights=None, now=None):
         "global_label": level_label(global_level),
         "dots": dots_score,
     }
+
+
+def rank_key(rank):
+    """Orden total de rangos: rango*3 + división (Titán, sin división, el mayor)."""
+    return None if rank is None else rank["tier"] * 3 + (rank["division"] or 3)
+
+
+def rank_notice(user, rank):
+    """Qué animación de rango toca mostrar en Inicio, y la deja anotada:
+    "intro" la primera vez que tiene rango, "up" al subir (también al
+    recuperar un rango que había perdido); None si nada cambió o bajó (las
+    bajadas no se anuncian con una animación, se ven en la pestaña Rango)."""
+    from app import db
+    from app.models import User
+
+    key = rank_key(rank)
+    if key is None:
+        return None
+    seen = user.rank_seen
+    if seen == key:
+        return None
+    kind = "intro" if seen is None else ("up" if key > seen else None)
+    db.session.execute(
+        sa.update(User).where(User.id == user.id).values(rank_seen=key)
+        .execution_options(synchronize_session=False)
+    )
+    db.session.commit()
+    return kind

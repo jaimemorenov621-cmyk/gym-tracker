@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1 style="font-weight:800; letter-spacing:-0.02em;">🔍 Análisis de IA</h1>
+    {{ macros.tab_title('Análisis de IA', 'sparkle') }}
 
     {% if latest %}
         <p class="pill">📅 {{ to_local(latest.created_at).strftime('%d/%m/%Y %H:%M') }}</p>

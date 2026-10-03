@@ -12,7 +12,7 @@
             </div>
         </div>
         <div class="dash-level-bar"><i style="width: {{ xp.pct }}%"></i></div>
-        <a class="level-strength" href="{{ url_for('progress') }}#estandares">
+        <a class="level-strength" href="{{ url_for('rank_page') }}">
             <span>Rango de fuerza</span>
             {% if profile.global_rank %}
                 <span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 30) }}<b class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</b></span>
@@ -23,8 +23,8 @@
             {% endif %}
         </a>
         <p class="level-note">
-            El nivel mide la constancia con la que entrenas y registras; tu fuerza real está en
-            <a href="{{ url_for('progress') }}">Progreso</a> (índice de fuerza, 1RM estimados y estándares).
+            El nivel mide la constancia con la que entrenas y registras; tu fuerza real está en Progreso
+            (índice de fuerza y 1RM estimados) y en Rango (estándares).
         </p>
     </div>
 
@@ -40,7 +40,8 @@
         </ul>
         <p class="level-note">
             Son cosméticas o de comodidad a propósito: ningún dato, gráfico ni análisis depende de tu nivel.
-            Los colores se eligen en <a href="{{ url_for('settings') }}">Configuración</a> y los diseños, al compartir un récord.
+            Los colores se eligen en Configuración y los diseños, al compartir un récord.
+            <a class="btn-inline" href="{{ url_for('settings') }}">Elegir color</a>
         </p>
     </div>
 

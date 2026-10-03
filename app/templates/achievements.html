@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1 class="page-title">Logros</h1>
+    {{ macros.tab_title('Logros', 'trophy') }}
 
     <div class="achv-summary">
         <div class="achv-summary-ring" style="--p: {{ (100 * unlocked_count / total)|round|int }};">

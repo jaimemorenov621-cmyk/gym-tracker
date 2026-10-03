@@ -3901,3 +3901,76 @@ a.dash-muscle-caption { display: flex; flex-wrap: wrap; justify-content: center;
 a.dash-muscle-caption span { display: inline-flex; align-items: center; gap: 4px; }
 a.dash-muscle-caption small { flex-basis: 100%; text-align: center; font-size: 0.72rem; }
 .dash-muscle-caption .vol-dot { width: 8px; height: 8px; }
+
+/* ===== Título de pestaña compacto (macro tab_title) ===== */
+.tab-title { display: flex; align-items: center; gap: 9px; margin: 4px 0 14px; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; }
+.tab-title-icon { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: var(--accent); color: #fff; flex-shrink: 0; box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.3); }
+.page-title { font-size: 1.3rem; margin: 4px 0 12px; }
+
+/* Botón pequeño en línea (acciones dentro de un texto: nada de enlaces sueltos). */
+a.btn-inline, button.btn-inline { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin: 6px 6px 0 0; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--color-brand); background: var(--surface); color: var(--color-brand-dark); font-weight: 700; font-size: 0.8rem; text-decoration: none; font-style: normal; cursor: pointer; vertical-align: middle; }
+@media (hover: hover) { a.btn-inline:hover { background: var(--color-surface-active); } }
+.std-actions { display: block; }
+
+/* ===== Pestaña Rango ===== */
+.rank-hero { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; padding: 18px 16px 20px; border-radius: var(--radius-card); background: var(--surface); overflow: hidden; }
+.rank-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(260px 200px at 50% 30%, var(--rank-glow, rgba(var(--accent-rgb), 0.25)), transparent 70%); pointer-events: none; }
+.rank-hero > * { position: relative; }
+.rank-hero-emblem { position: relative; width: 190px; height: 190px; display: grid; place-items: center; }
+.rank-hero-emblem.is-locked { filter: grayscale(1); opacity: 0.45; }
+.rank-hero-glow { position: absolute; inset: 18px; border-radius: 50%; background: var(--rank-glow, rgba(var(--accent-rgb), 0.35)); filter: blur(26px); }
+.rank-hero-emblem .rank-emblem { position: relative; width: 190px; height: 190px; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.25)); }
+.rank-hero-kicker { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-muted); }
+.rank-hero-name { font-size: 2rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.1; }
+.rank-hero-bar { width: min(260px, 80%); height: 8px; margin-top: 6px; border-radius: 999px; background: var(--color-surface-active); overflow: hidden; }
+.rank-hero-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--accent-light), var(--accent-2)); }
+.rank-hero-next { font-size: 0.82rem; font-weight: 700; color: var(--color-text-soft); }
+.rank-hero-sub { font-size: 0.75rem; color: var(--color-text-muted); }
+.tier-hierro { --rank-glow: rgba(120, 128, 140, 0.35); }
+.tier-bronce { --rank-glow: rgba(229, 154, 92, 0.45); }
+.tier-plata { --rank-glow: rgba(160, 175, 200, 0.5); }
+.tier-oro { --rank-glow: rgba(255, 196, 0, 0.5); }
+.tier-platino { --rank-glow: rgba(46, 220, 200, 0.45); }
+.tier-diamante { --rank-glow: rgba(80, 130, 255, 0.5); }
+.tier-esmeralda { --rank-glow: rgba(40, 210, 120, 0.5); }
+.tier-campeon { --rank-glow: rgba(255, 70, 150, 0.5); }
+.tier-titan { --rank-glow: rgba(150, 100, 255, 0.6); }
+.rank-links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 16px; }
+a.rank-link { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border-subtle); color: var(--color-text); text-decoration: none; min-width: 0; }
+a.rank-link > span:nth-child(2) { display: flex; flex-direction: column; flex: 1; min-width: 0; font-size: 0.82rem; }
+a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); }
+.rank-link-badge { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 800; flex-shrink: 0; }
+.rank-link-badge.is-trophy { background: #f5b301; }
+@media (prefers-reduced-motion: no-preference) {
+    .rank-hero-emblem .rank-emblem { animation: rank-float 4s ease-in-out infinite; }
+    .rank-hero-glow { animation: rank-glow 2.8s ease-in-out infinite; }
+    @keyframes rank-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+    @keyframes rank-glow { 0%, 100% { opacity: 0.6; transform: scale(0.92); } 50% { opacity: 1; transform: scale(1.05); } }
+}
+
+/* ===== Celebración de rango (Inicio) ===== */
+.rank-celebration { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 16px; background: rgba(10, 6, 30, 0.72); backdrop-filter: blur(6px); }
+.rank-celebration.is-closing { opacity: 0; transition: opacity 0.25s; }
+.rank-celebration-card { width: min(360px, 100%); padding: 22px 18px 18px; border-radius: 24px; text-align: center; color: #fff;
+    background: radial-gradient(320px 240px at 50% 25%, var(--rank-glow, rgba(var(--accent-rgb), 0.5)), transparent 70%), linear-gradient(160deg, #1a1236, #0e0a22); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5); }
+.rank-celebration-card small { display: block; margin-top: 4px; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.8; }
+.rank-celebration-card strong { display: block; font-size: 2.2rem; font-weight: 900; letter-spacing: -0.02em; }
+.rank-celebration-card p { margin: 6px 0 16px; font-size: 0.88rem; opacity: 0.85; line-height: 1.45; }
+.rank-celebration-actions { display: flex; gap: 10px; justify-content: center; }
+.rank-celebration-actions .btn-outline { color: #fff; border-color: rgba(255, 255, 255, 0.5); background: transparent; }
+.rank-celebration-emblem { position: relative; width: 200px; height: 200px; margin: 0 auto; display: grid; place-items: center; }
+.rank-celebration-emblem .rank-emblem { position: relative; width: 190px; height: 190px; filter: drop-shadow(0 0 24px var(--rank-glow, rgba(255, 255, 255, 0.4))); }
+.rank-celebration-rays { position: absolute; inset: -30px; border-radius: 50%; background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, 0.16) 0 8deg, transparent 8deg 22deg); -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); }
+.rank-spark { position: absolute; left: 50%; top: 50%; width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: #fff; opacity: 0; }
+@media (prefers-reduced-motion: no-preference) {
+    .rank-celebration { animation: rank-fade 0.3s ease-out; }
+    .rank-celebration-card { animation: rank-card-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+    .rank-celebration-emblem .rank-emblem { animation: rank-emblem-in 0.9s cubic-bezier(0.2, 0.9, 0.25, 1.25) 0.1s both, rank-float 4s ease-in-out 1s infinite; }
+    .rank-celebration-rays { animation: rank-rays 14s linear infinite; }
+    .rank-spark { animation: rank-spark 1.1s ease-out var(--d) both; }
+    @keyframes rank-fade { from { opacity: 0; } }
+    @keyframes rank-card-in { from { transform: scale(0.85) translateY(20px); opacity: 0; } }
+    @keyframes rank-emblem-in { 0% { transform: scale(0.1) rotate(-25deg); opacity: 0; } 60% { transform: scale(1.12) rotate(4deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+    @keyframes rank-rays { to { transform: rotate(360deg); } }
+    @keyframes rank-spark { 0% { opacity: 0; transform: rotate(var(--a)) translateY(0) scale(0.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateY(-120px) scale(1); } }
+}

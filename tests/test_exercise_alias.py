@@ -44,10 +44,10 @@ class AliasTests(DbTestCase):
 
     def test_assigned_name_counts_for_weekly_volume(self):
         html = self.client.get("/progress").get_data(as_text=True)
-        self.assertIn("asígnales músculos", html)
+        self.assertIn("Asignar músculos", html)
         self.assign()
         html = self.client.get("/progress").get_data(as_text=True)
-        self.assertNotIn("asígnales músculos", html)
+        self.assertNotIn("Asignar músculos", html)
         self.assertIn("12 series", html)  # pecho
 
     def test_history_name_is_never_renamed(self):
