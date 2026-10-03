@@ -3781,3 +3781,37 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .std-extra { font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted); }
 .std-defs .rank-badge { min-width: 76px; text-align: center; margin-right: 6px; }
 .std-defs li { margin-bottom: 4px; }
+
+/* ===== Volumen semanal por músculo (progress.html) ===== */
+:root { --vol-base: #e4e1f0; --vol-none: #d4d0e6; --vol-low: #f4b740; --vol-ok: #22c98c; --vol-high: #5b8def; }
+:root[data-theme="dark"] { --vol-base: #3a3550; --vol-none: #4a4466; }
+.vol-card { margin-top: 16px; }
+.vol-map .mm-row { display: flex; justify-content: center; gap: 12px; }
+.vol-map .mm-figure { width: 42%; max-width: 150px; height: auto; }
+.vol-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 10px 0 6px; font-size: 0.75rem; color: var(--color-text-muted); }
+.vol-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.vol-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.vol-dot.none { background: var(--vol-none); }
+.vol-dot.low { background: var(--vol-low); }
+.vol-dot.ok { background: var(--vol-ok); }
+.vol-dot.high { background: var(--vol-high); }
+.vol-list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.vol-list li { padding: 8px 0; border-top: 1px solid var(--border-subtle); min-width: 0; }
+.vol-row-top { display: flex; justify-content: space-between; gap: 6px; font-size: 0.85rem; }
+.vol-row-top b { white-space: nowrap; }
+.vol-row-top b.vol-low { color: #8a5a00; }
+.vol-row-top b.vol-ok { color: var(--color-success-text); }
+.vol-row-top b.vol-high { color: #2952b3; }
+.vol-row-top b.vol-none { color: var(--color-text-muted); }
+:root[data-theme="dark"] .vol-row-top b.vol-low { color: #ffd27a; }
+:root[data-theme="dark"] .vol-row-top b.vol-ok { color: #5cf0b4; }
+:root[data-theme="dark"] .vol-row-top b.vol-high { color: #a9c2ff; }
+.vol-bar { position: relative; height: 6px; margin: 6px 0 4px; border-radius: 999px; background: var(--color-surface-active); overflow: hidden; }
+.vol-band { position: absolute; left: 40%; width: 40%; top: 0; bottom: 0; background: rgba(34, 201, 140, 0.18); }
+.vol-bar i { position: relative; display: block; height: 100%; border-radius: inherit; }
+.vol-bar i.vol-low { background: var(--vol-low); }
+.vol-bar i.vol-ok { background: var(--vol-ok); }
+.vol-bar i.vol-high { background: var(--vol-high); }
+.vol-bar i.vol-none { background: transparent; }
+.vol-list small { font-size: 0.72rem; color: var(--color-text-muted); }
+@media (max-width: 360px) { .vol-list { grid-template-columns: 1fr; } }

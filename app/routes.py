@@ -51,6 +51,7 @@ from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from app import achievements, usage
 from app import strength_standards as standards
 from app import progression
+from app import volume as volume_mod
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
@@ -1560,6 +1561,9 @@ def progress():
         latest_weight=latest_weight,
         profile=standards.strength_profile(current_user),
         standards=standards,
+        volume=volume_mod.weekly_volume(current_user.id),
+        volume_mod=volume_mod,
+        muscle_svg=muscle_svg_markup(current_user.sex),
     )
 
 

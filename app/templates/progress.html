@@ -207,6 +207,75 @@
         </details>
     </div>
 
+    <div class="card card-elevated vol-card" id="volumen">
+        <div class="strength-head">
+            <div>
+                <h2>Volumen semanal por músculo</h2>
+                <p>Series duras de los últimos 7 días frente al rango de {{ volume_mod.LOW }}-{{ volume_mod.HIGH }}</p>
+            </div>
+        </div>
+        {% if volume.hard_sets %}
+            {% set colors = {'none': 'var(--vol-none)', 'low': 'var(--vol-low)', 'ok': 'var(--vol-ok)', 'high': 'var(--vol-high)'} %}
+            <div class="vol-map">
+                <style>
+                    .vol-map .mm-neutral { fill: var(--vol-base); }
+                    {% for group, status in volume.status.items() %}.vol-map .mm-{{ group }} { fill: {{ colors[status] }}; }
+                    {% endfor %}
+                </style>
+                <div class="mm-row">
+                    <svg viewBox="0 0 724 1448" aria-hidden="true" class="mm-figure">{{ muscle_svg.front }}</svg>
+                    <svg viewBox="724 0 724 1448" aria-hidden="true" class="mm-figure">{{ muscle_svg.back }}</svg>
+                </div>
+            </div>
+            <div class="vol-legend">
+                <span><i class="vol-dot low"></i>Menos de {{ volume_mod.LOW }}</span>
+                <span><i class="vol-dot ok"></i>{{ volume_mod.LOW }}-{{ volume_mod.HIGH }}</span>
+                <span><i class="vol-dot high"></i>Más de {{ volume_mod.HIGH }}</span>
+                <span><i class="vol-dot none"></i>Sin series</span>
+            </div>
+            <ul class="vol-list">
+                {% for g in volume['items'] %}
+                    <li>
+                        <div class="vol-row-top">
+                            <span>{{ g.label }}</span>
+                            <b class="vol-{{ g.status }}">{{ g.last7|num }} serie{{ '' if g.last7 == 1 else 's' }}</b>
+                        </div>
+                        <div class="vol-bar" aria-hidden="true">
+                            <span class="vol-band"></span>
+                            <i class="vol-{{ g.status }}" style="width: {{ g.bar_pct }}%"></i>
+                        </div>
+                        <small>Media 4 semanas: {{ g.avg4|num }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+            {% if volume.unmapped or volume.no_effort %}
+                <p class="progress-footnote">
+                    {% if volume.unmapped %}{{ volume.unmapped }} serie{{ '' if volume.unmapped == 1 else 's' }} de ejercicios sin músculo en el catálogo no cuenta{{ '' if volume.unmapped == 1 else 'n' }}.{% endif %}
+                    {% if volume.no_effort %}{{ volume.no_effort }} serie{{ '' if volume.no_effort == 1 else 's' }} sin RIR/RPE anotado cuenta{{ '' if volume.no_effort == 1 else 'n' }} como dura.{% endif %}
+                </p>
+            {% endif %}
+        {% else %}
+            <p class="progress-footnote" style="margin:8px 0 0;">Sin series duras en las últimas 4 semanas.</p>
+        {% endif %}
+        <details class="strength-how">
+            <summary>¿De dónde sale el rango de {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} series?</summary>
+            <p>
+                Un metaanálisis de Schoenfeld, Ogborn y Krieger (2017) encontró que más series semanales por músculo
+                dan más hipertrofia, con 10 o más claramente por encima de menos de 5. Pelland y colaboradores (2024),
+                con 67 estudios, vieron que el beneficio sigue subiendo con más volumen, pero cada serie extra aporta
+                menos. Por eso {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} series es el rango práctico más citado:
+                <b>pasar de {{ volume_mod.HIGH }} no es malo</b>, solo rinde menos por serie. Es una referencia para ganar
+                músculo; para fuerza máxima el volumen extra aporta todavía menos.
+            </p>
+            <p>
+                <b>Cómo contamos.</b> Una serie dura es una serie hecha, con peso, que no es de calentamiento y con RIR 4
+                o menos (RPE 6 o más); si no anotaste el esfuerzo, cuenta. Cada ejercicio suma 1 serie a sus músculos
+                principales y media a los secundarios (como en Pelland y col.), según el catálogo de ejercicios.
+                No es una medida de recuperación ni de fatiga.
+            </p>
+        </details>
+    </div>
+
     <a class="card card-elevated progress-weight" href="{{ url_for('weight') }}">
         <span class="progress-weight-icon">{{ macros.icon('scale', 22) }}</span>
         <span class="progress-weight-text">
