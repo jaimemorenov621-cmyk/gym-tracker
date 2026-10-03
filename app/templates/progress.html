@@ -93,7 +93,7 @@
         <div class="strength-head">
             <div>
                 <h2>Rango de fuerza</h2>
-                <p>Tu fuerza actual frente a los estándares de Lon Kilgore</p>
+                <p>Tu fuerza actual frente a estándares de referencia (Kilgore y StrengthLevel)</p>
             </div>
             {% if profile.global_rank %}
                 <div class="std-global">
@@ -109,14 +109,19 @@
                 {% for m in profile.missing %}{% if m == 'sexo' %}<a href="{{ url_for('settings') }}">tu sexo</a>{% else %}<a href="{{ url_for('weight') }}">tu peso corporal</a>{% endif %}{{ ' y ' if not loop.last }}{% endfor %}.
                 Las tablas son distintas para hombres y mujeres y dependen del peso.
             </p>
-        {% elif profile.rank_missing %}
+        {% elif not profile.global_rank %}
             <p class="std-missing">
-                Rango global (media de banca, sentadilla y peso muerto): falta un 1RM válido de los últimos
-                {{ standards.RANK_WINDOW_DAYS }} días en {{ profile.rank_missing|join(', ')|lower }}
-                (con barra, series de hasta 10 repeticiones).
+                El rango global es la media de tus básicos con un 1RM válido de los últimos {{ standards.RANK_WINDOW_DAYS }} días
+                (hacen falta al menos {{ standards.MIN_BASICS_FOR_GLOBAL }}; ahora tienes {{ profile.basics_counted }}).
+                Sin datos recientes: {{ profile.rank_missing|join(', ')|lower }}.
             </p>
-        {% elif profile.lagging %}
-            <p class="std-missing">Tu {{ profile.lagging|lower }} va un rango entero o más por detrás de tu media: es el que más sube tu rango global.</p>
+        {% else %}
+            {% if profile.rank_missing %}
+                <p class="std-note">Rango global con {{ profile.basics_counted }} de {{ standards.BASICS|length }} básicos. Sin datos recientes: {{ profile.rank_missing|join(', ')|lower }}.</p>
+            {% endif %}
+            {% if profile.lagging %}
+                <p class="std-missing">Tu {{ profile.lagging|lower }} va un rango entero o más por detrás de tu media: es el que más sube tu rango global.</p>
+            {% endif %}
         {% endif %}
 
         <div class="std-list">
@@ -124,7 +129,7 @@
                 {% set l = profile.lifts[lift] %}
                 <div class="std-row">
                     <div class="std-row-head">
-                        <strong>{{ l.label }}{% if lift == 'press' %} <small class="std-extra">no cuenta para el global</small>{% endif %}</strong>
+                        <strong>{{ l.label }}{% if lift in standards.VERTICAL %} <small class="std-extra">cuenta el mejor de dominadas y jalón</small>{% endif %}</strong>
                         {% if l.rank %}
                             <span class="rank-badge rank-{{ l.rank.key }}">{{ l.rank.label }}</span>
                         {% elif l.rank_stale %}
@@ -135,14 +140,16 @@
                         <p class="std-sub">Sin series válidas todavía.</p>
                     {% else %}
                         <p class="std-sub">
-                            {% if l.rank_e1rm %}1RM estimado {{ l.rank_e1rm|num }} kg{% if profile.latest_bw %} · {{ (l.rank_e1rm / profile.latest_bw)|num(2) }}× tu peso{% endif %}
+                            {% if l.rank_e1rm is not none and lift == 'pullup' %}1RM estimado: tu peso {{ '+' if l.rank_e1rm >= 0 else '−' }}{{ (l.rank_e1rm|abs)|num }} kg
+                            {% elif l.rank_e1rm %}1RM estimado {{ l.rank_e1rm|num }} kg{% if profile.latest_bw %} · {{ (l.rank_e1rm / profile.latest_bw)|num(2) }}× tu peso{% endif %}
                             {% elif l.rank_stale %}Sin series válidas en los últimos {{ standards.RANK_WINDOW_DAYS }} días (mejor 1RM: {{ l.best_e1rm_all|num }} kg)
                             {% else %}1RM estimado {{ l.best_e1rm_all|num }} kg{% endif %}
                             {% if l.reached is not none %} · nivel <span class="std-level lvl-{{ l.reached }}">{{ l.reached_label }}</span>{% endif %}
                         </p>
                         {% if l.rank and l.rank_next %}
                             <div class="std-bar"><span style="width: {{ l.rank.pct }}%"></span></div>
-                            <p class="std-next">{{ l.rank_next }}: {{ l.rank_next_kg|num }} kg con tu peso actual · te faltan {{ l.rank_missing_kg|num }} kg</p>
+                            <p class="std-next">{{ l.rank_next }}: {% if lift == 'pullup' %}tu peso {{ '+' if l.rank_next_kg >= 0 else '−' }}{{ (l.rank_next_kg|abs)|num }} kg{% else %}{{ l.rank_next_kg|num }} kg con tu peso actual{% endif %} · te faltan {{ l.rank_missing_kg|num }} kg</p>
+                            <p class="std-source">Tabla: {{ 'StrengthLevel' if lift in standards.SL_LIFTS else 'Kilgore (ExRx)' }}</p>
                         {% elif l.rank and not l.rank_next %}
                             <p class="std-next">Rango máximo.</p>
                         {% endif %}
@@ -165,14 +172,29 @@
                 es un rango con tres divisiones (I, II y III). Usa tu <b>mejor 1RM estimado de los últimos
                 {{ standards.RANK_WINDOW_DAYS }} días</b> y tu peso actual, así que <b>puede bajar</b> si dejas de
                 entrenar un levantamiento o pierdes fuerza; tu mejor rango histórico queda guardado aparte.
-                El <b>rango global</b> es la media de banca, sentadilla y peso muerto: cualquier mejora en
-                cualquiera de los tres lo sube.
+                El <b>rango global</b> es la media de tus básicos (banca, sentadilla, peso muerto, press militar,
+                remo con barra y el mejor de dominadas o jalón) con datos de los últimos 90 días; hacen falta al menos 3.
+                Cualquier mejora en cualquiera de ellos lo sube.
             </p>
             <ul class="std-defs">
                 {% for name in standards.RANKS %}
                     <li><span class="rank-badge rank-{{ standards.RANK_KEYS[loop.index0] }}">{{ name }}</span> {{ standards.RANK_RANGES[loop.index0] }}</li>
                 {% endfor %}
             </ul>
+        </details>
+        <details class="strength-how">
+            <summary>Remo, dominadas y jalón: otra fuente</summary>
+            <p>
+                Kilgore no tiene tablas para estos tres, así que salen de <a href="{{ standards.SL_SOURCE_URL }}" target="_blank" rel="noopener">StrengthLevel</a>:
+                cientos de miles de levantamientos que registran sus usuarios (datos autodeclarados, no verificados),
+                agrupados por peso corporal y sexo. Ahí los niveles son percentiles: Principiante = más fuerte que el 5 %
+                de sus usuarios, Novato el 20 %, Intermedio el 50 %, Avanzado el 80 % y Élite el 95 %. No es exactamente
+                el mismo criterio que Kilgore, aunque usa los mismos nombres de nivel.
+            </p>
+            <p>
+                En <b>dominadas</b>, el peso que apuntes es el <b>lastre</b> (0 = solo tu peso corporal) y se compara tu
+                peso más el lastre. Por eso necesitan tu peso corporal registrado. Las dominadas asistidas no cuentan.
+            </p>
         </details>
         <details class="strength-how">
             <summary>¿De dónde salen estos niveles?</summary>

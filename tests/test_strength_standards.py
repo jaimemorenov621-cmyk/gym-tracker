@@ -250,10 +250,18 @@ class RankMathTests(unittest.TestCase):
         self.assertEqual(label(0.34), "Bronce II")
         self.assertEqual(label(2.7), "Oro III")
         self.assertEqual(label(4.99), "Diamante III")
-        self.assertEqual(label(5), "Titán")
+        self.assertEqual(label(5), "Esmeralda I")
+        self.assertEqual(label(6.5), "Campeón II")
+        self.assertEqual(label(7), "Titán")
         self.assertEqual(std.next_rank_label(std.rank_for(2.7)), "Platino I")
-        self.assertEqual(std.next_rank_label(std.rank_for(4.9)), "Titán")
-        self.assertIsNone(std.next_rank_label(std.rank_for(6)))
+        self.assertEqual(std.next_rank_label(std.rank_for(4.9)), "Esmeralda I")
+        self.assertEqual(std.next_rank_label(std.rank_for(6.9)), "Titán")
+        self.assertIsNone(std.next_rank_label(std.rank_for(8)))
+
+    def test_titan_is_around_the_world_record(self):
+        # Banca, hombre de 82 kg: ExRx da un récord mundial de 556 lb (≈ 252 kg).
+        ths = std.thresholds("hombre", "bench", 82)
+        self.assertAlmostEqual(std.kg_for_score(7, ths), 252, delta=6)
 
 
 class RankProfileTests(_LifterCase):
@@ -288,7 +296,7 @@ class RankProfileTests(_LifterCase):
         self.assertTrue(bench["rank_stale"])
         self.assertIsNotNone(bench["rank_peak"])
         self.assertIsNone(p["global_rank"])
-        self.assertEqual(p["rank_missing"], ["Press de banca", "Sentadilla", "Peso muerto"])
+        self.assertEqual(p["rank_missing"], list(std.BASIC_LABELS.values()))
 
     def test_next_division_target(self):
         self.lift("press de banca", 100, self.T0)
@@ -297,6 +305,65 @@ class RankProfileTests(_LifterCase):
         self.assertEqual(bench["rank"]["name"], "Oro")
         self.assertAlmostEqual(bench["rank_missing_kg"], bench["rank_next_kg"] - 100)
         self.assertAlmostEqual(std.strength_score(bench["rank_next_kg"], ths), bench["rank"]["next_score"])
+
+
+class NewBasicsTests(unittest.TestCase):
+    def test_detection(self):
+        cases = {
+            "remo con barra": "row", "Barbell Row": "row", "remo pendlay": "row",
+            "dominadas": "pullup", "dominadas lastradas": "pullup", "pull-ups": "pullup",
+            "jalón al pecho": "pulldown", "Lat Pulldown": "pulldown", "jalon al pecho en maquina": "pulldown",
+        }
+        for name, lift in cases.items():
+            self.assertEqual(std.lift_of(name), lift, name)
+        for name in ("remo con mancuerna", "remo en polea baja", "remo al mentón", "remo en barra T",
+                     "dominadas asistidas", "jalón al pecho unilateral", "pulldown brazos rectos"):
+            self.assertIsNone(std.lift_of(name), name)
+
+    def test_strengthlevel_thresholds(self):
+        self.assertEqual(std.thresholds("hombre", "row", 80), [48, 66, 88, 114, 141])
+        mid = std.thresholds("hombre", "row", 82.5)
+        self.assertAlmostEqual(mid[2], (88 + 93) / 2)
+        self.assertEqual(std.thresholds("hombre", "row", 200), std.thresholds("hombre", "row", 140))  # sin extrapolar
+        # Dominadas: la tabla es de lastre; los umbrales son de carga total.
+        self.assertEqual(std.thresholds("hombre", "pullup", 80), [78, 94, 113, 134, 155])
+        self.assertEqual(std.thresholds("mujer", "pullup", 60), [44, 56, 69, 83, 98])
+
+
+class PullupAndGlobalTests(_LifterCase):
+    def setUp(self):
+        super().setUp()
+        self.set_sex("hombre")
+        self.weigh(80, self.T0 - timedelta(days=1))
+
+    def test_bodyweight_pullups_count_with_your_weight(self):
+        # 8 dominadas sin lastre a RIR 2: carga total 80 / 0,739 ≈ 108,3 kg,
+        # es decir, un lastre equivalente de ≈ 28,3 kg -> entre Novato (+14) e Intermedio (+33).
+        self.lift("dominadas", 0, self.T0, reps=8, rir=2)
+        pull = self.profile()["lifts"]["pullup"]
+        self.assertAlmostEqual(pull["rank_e1rm"], 80 / 0.739 - 80, places=3)
+        self.assertEqual(pull["reached"], 1)
+        self.assertEqual(pull["rank"]["name"], "Plata")
+        self.assertIsNone(pull["ratio"])
+
+    def test_vertical_pull_is_the_best_of_pullups_and_pulldown(self):
+        self.lift("press de banca", 90, self.T0)
+        self.lift("sentadilla", 120, self.T0)
+        self.lift("jalón al pecho", 60, self.T0)
+        p = self.profile()
+        self.assertEqual(p["basics_counted"], 3)  # banca, sentadilla y tirón vertical
+        self.assertIsNotNone(p["global_rank"])
+        low = p["global_rank"]
+        self.lift("dominadas", 30, self.T0 + timedelta(days=1), reps=1, rir=0)  # mucho mejor que el jalón
+        self.assertGreater(self.profile()["global_rank"]["tier"] * 3 + self.profile()["global_rank"]["division"],
+                           low["tier"] * 3 + low["division"])
+
+    def test_global_needs_three_basics(self):
+        self.lift("press de banca", 90, self.T0)
+        self.lift("sentadilla", 120, self.T0)
+        p = self.profile()
+        self.assertEqual(p["basics_counted"], 2)
+        self.assertIsNone(p["global_rank"])
 
 
 class StandardsAchievementTests(_LifterCase):

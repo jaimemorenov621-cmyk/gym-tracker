@@ -62,20 +62,40 @@ LEVEL_DESCRIPTIONS = {
     "elite": "Compite en deportes de fuerza.",
 }
 
-LIFTS = ["bench", "squat", "deadlift", "press"]
+LIFTS = ["bench", "squat", "deadlift", "press", "row", "pullup", "pulldown"]
 BIG_THREE = ["bench", "squat", "deadlift"]
+# Básicos del rango global. El tirón vertical vale lo que el mejor de
+# dominadas y jalón al pecho (son el mismo patrón de movimiento).
+BASICS = ["bench", "squat", "deadlift", "press", "row", "vertical"]
+VERTICAL = ("pullup", "pulldown")
+BASIC_LABELS = {
+    "bench": "Press de banca", "squat": "Sentadilla", "deadlift": "Peso muerto",
+    "press": "Press militar", "row": "Remo con barra", "vertical": "Dominadas / jalón al pecho",
+}
+MIN_BASICS_FOR_GLOBAL = 3
 LIFT_LABELS = {
     "bench": "Press de banca",
     "squat": "Sentadilla",
     "deadlift": "Peso muerto",
     "press": "Press militar",
+    "row": "Remo con barra",
+    "pullup": "Dominadas",
+    "pulldown": "Jalón al pecho",
 }
 LIFT_RULES = {  # condición de la fuente para que el estándar aplique
     "bench": "La barra toca el pecho con una pausa breve y se extienden los codos del todo.",
     "squat": "Los muslos bajan por debajo de la paralela.",
     "deadlift": "Rodillas, cadera y espalda alta se extienden del todo.",
     "press": "De pie, piernas rectas, sin echar el tronco atrás y extendiendo los codos.",
+    "row": "Remo con barra inclinado hacia delante (bent over row).",
+    "pullup": "Dominada completa; el peso que apuntes es el lastre (0 = solo tu peso).",
+    "pulldown": "Jalón al pecho en polea; el peso es el de la máquina.",
 }
+# De qué tabla sale cada levantamiento.
+KILGORE_LIFTS = ("bench", "squat", "deadlift", "press")
+SL_LIFTS = ("row", "pullup", "pulldown")
+SL_SOURCE_NAME = "StrengthLevel (strengthlevel.com), percentiles de sus usuarios"
+SL_SOURCE_URL = "https://strengthlevel.com/strength-standards"
 
 # Tablas ORIGINALES en libras, tal cual la fuente (ExRx publica también una
 # versión en kg, pero no es una conversión exacta: difiere hasta 4,4 kg y
@@ -139,6 +159,55 @@ TABLES = {
 }
 assert all(len(rows) == len(_MEN_LB if sex == "hombre" else _WOMEN_LB) for (sex, _), rows in TABLES_LB.items())
 
+# StrengthLevel (consultado el 03/10/2026, tablas en kg por peso corporal de
+# 5 en 5). No hay estándares de Kilgore para remo, dominadas ni jalón, así
+# que estos tres salen de otra fuente con otro método: percentiles de los
+# levantamientos que registran sus usuarios (Principiante = más fuerte que el
+# 5 %, Novato 20 %, Intermedio 50 %, Avanzado 80 %, Élite 95 %). Datos
+# autodeclarados, no verificados; se dice en la app. Dominadas: LASTRE
+# añadido en kg (negativo = asistida), como lo publica la fuente.
+_SL_MEN_BW = list(range(50, 141, 5))
+_SL_WOMEN_BW = list(range(40, 121, 5))
+SL_TABLES = {
+    ("hombre", "row"): [
+        (23, 36, 52, 72, 94), (27, 41, 59, 80, 103), (31, 46, 65, 87, 111), (36, 51, 71, 94, 119),
+        (40, 56, 77, 101, 127), (44, 61, 83, 107, 134), (48, 66, 88, 114, 141), (52, 71, 93, 120, 147),
+        (56, 75, 99, 125, 154), (59, 79, 104, 131, 160), (63, 84, 108, 136, 166), (67, 88, 113, 142, 172),
+        (70, 92, 118, 147, 178), (74, 96, 122, 152, 183), (77, 100, 127, 157, 188), (80, 103, 131, 161, 194),
+        (84, 107, 135, 166, 199), (87, 111, 139, 170, 203), (90, 114, 143, 175, 208)],
+    ("mujer", "row"): [
+        (12, 21, 33, 48, 65), (14, 23, 36, 51, 69), (15, 25, 38, 54, 72), (17, 27, 41, 57, 75),
+        (18, 29, 43, 59, 78), (19, 30, 44, 62, 80), (20, 32, 46, 64, 83), (22, 33, 48, 66, 85),
+        (23, 35, 50, 68, 87), (24, 36, 51, 69, 89), (25, 37, 53, 71, 91), (26, 38, 54, 73, 93),
+        (27, 40, 56, 74, 95), (28, 41, 57, 76, 97), (29, 42, 58, 78, 99), (29, 43, 60, 79, 100),
+        (30, 44, 61, 80, 102)],
+    ("hombre", "pulldown"): [
+        (29, 43, 60, 79, 101), (32, 47, 64, 85, 107), (35, 50, 69, 90, 113), (39, 54, 73, 95, 118),
+        (42, 57, 77, 99, 123), (44, 61, 81, 104, 128), (47, 64, 85, 108, 133), (50, 67, 88, 112, 137),
+        (52, 70, 92, 116, 142), (55, 73, 95, 120, 146), (57, 76, 98, 123, 150), (60, 79, 101, 127, 154),
+        (62, 81, 104, 130, 157), (64, 84, 107, 133, 161), (66, 86, 110, 136, 164), (68, 89, 112, 139, 167),
+        (70, 91, 115, 142, 171), (72, 93, 118, 145, 174), (74, 95, 120, 148, 177)],
+    ("mujer", "pulldown"): [
+        (17, 26, 38, 51, 66), (19, 28, 40, 54, 69), (20, 30, 42, 56, 72), (22, 32, 44, 58, 74),
+        (23, 33, 46, 60, 76), (24, 35, 47, 62, 79), (25, 36, 49, 64, 81), (26, 37, 51, 66, 83),
+        (27, 38, 52, 68, 85), (28, 40, 53, 69, 86), (29, 41, 55, 71, 88), (30, 42, 56, 72, 90),
+        (31, 43, 57, 74, 91), (32, 44, 58, 75, 93), (33, 45, 59, 76, 94), (34, 46, 61, 77, 95),
+        (34, 47, 62, 79, 97)],
+    ("hombre", "pullup"): [
+        (-5, 7, 22, 39, 56), (-4, 9, 25, 42, 61), (-4, 11, 27, 45, 64), (-3, 12, 29, 48, 68),
+        (-2, 13, 31, 50, 71), (-2, 14, 32, 52, 73), (-2, 14, 33, 54, 75), (-2, 15, 34, 56, 77),
+        (-2, 15, 35, 57, 79), (-2, 15, 36, 58, 81), (-3, 15, 36, 59, 82), (-3, 15, 37, 60, 83),
+        (-4, 15, 37, 60, 84), (-5, 15, 37, 60, 85), (-6, 14, 36, 61, 85), (-7, 13, 36, 61, 86),
+        (-8, 13, 36, 61, 86), (-9, 12, 35, 60, 86), (-10, 11, 35, 60, 86)],
+    ("mujer", "pullup"): [
+        (-14, -5, 6, 17, 30), (-14, -5, 7, 19, 33), (-14, -4, 8, 21, 35), (-15, -4, 8, 22, 37),
+        (-16, -4, 9, 23, 38), (-16, -5, 9, 24, 39), (-18, -5, 9, 24, 40), (-19, -6, 8, 24, 41),
+        (-20, -7, 8, 24, 41), (-21, -8, 7, 24, 41), (-23, -9, 7, 24, 41), (-24, -10, 6, 23, 41),
+        (-26, -12, 5, 22, 40), (-28, -13, 3, 21, 40), (-30, -15, 2, 20, 39), (-32, -17, 1, 19, 38),
+        (-34, -18, -1, 18, 37)],
+}
+assert all(len(rows) == len(_SL_MEN_BW if sex == "hombre" else _SL_WOMEN_BW) for (sex, _), rows in SL_TABLES.items())
+
 MAX_EFFECTIVE_REPS = 10
 BW_AFTER_MAX_DAYS = 30
 CURRENT_WINDOW_DAYS = 365
@@ -152,6 +221,10 @@ _LIFT_WORDS = {
     "squat": ("sentadilla", "squat"),
     "deadlift": ("peso muerto", "deadlift"),
     "press": ("press militar", "military press", "overhead press", "press por encima de la cabeza"),
+    "row": ("remo con barra", "remo barra", "remo inclinado con barra", "barbell row", "bent over row",
+            "bent-over row", "remo pendlay", "pendlay row"),
+    "pullup": ("dominada", "pull up", "pull-up", "pullup"),
+    "pulldown": ("jalon al pecho", "jalon", "lat pulldown", "pulldown", "pull down"),
 }
 _COMMON_EXCLUDE = (
     "mancuerna", "dumbbell", "kettlebell", "pesa rusa", "smith", "multipower", "maquina", "machine",
@@ -169,6 +242,10 @@ _LIFT_EXCLUDE = {
                  "rack", "bloque", "block", "trap", "hexagonal", "parcial", "partial", "snatch",
                  "arranque"),
     "press": ("sentado", "seated", "arnold", "push press", "tras nuca", "behind", "nuca"),
+    "row": ("polea", "cable", "barra t", "en t", "t-bar", "t bar", "seal", "menton", "upright", "invertido",
+            "inverted", "australian"),
+    "pullup": ("asistida", "assisted", "negativa", "negative", "invertida", "australian", "jalon"),
+    "pulldown": ("brazos rectos", "straight arm", "straight-arm", "tras nuca", "behind", "pullover"),
 }
 
 
@@ -179,24 +256,44 @@ def _strip(s):
 
 
 def lift_of(exercise_name):
-    """"bench"/"squat"/"deadlift"/"press" si el nombre es ESE levantamiento
-    (con barra, sin variantes); None si no. "banca" a secas cuenta como
+    """Clave del levantamiento (ver LIFTS) si el nombre es ESE ejercicio, sin
+    variantes con otra carga; None si no. "banca" a secas cuenta como
     banca, pero no como parte de otro nombre ("fondos en banca")."""
     name = _strip(exercise_name or "").strip()
     if name == "banca":
         return "bench"
     for lift in LIFTS:
         if any(w in name for w in _LIFT_WORDS[lift]):
-            if any(w in name for w in _COMMON_EXCLUDE + _LIFT_EXCLUDE[lift]):
+            common = tuple(w for w in _COMMON_EXCLUDE if not (lift == "pulldown" and w in ("maquina", "machine")))
+            if any(w in name for w in common + _LIFT_EXCLUDE[lift]):
                 return None
             return lift
     return None
 
 
 # ------------------------------------------------------------ umbrales
+def _sl_thresholds(sex, lift, body_weight):
+    rows = SL_TABLES.get((sex, lift))
+    if rows is None or not body_weight:
+        return None
+    bws = _SL_MEN_BW if sex == "hombre" else _SL_WOMEN_BW
+    bw = min(max(body_weight, bws[0]), bws[-1])  # sin extrapolar
+    for i in range(len(bws) - 1):
+        if bws[i] <= bw <= bws[i + 1]:
+            t = (bw - bws[i]) / (bws[i + 1] - bws[i])
+            ths = [a + (b - a) * t for a, b in zip(rows[i], rows[i + 1])]
+            break
+    if lift == "pullup":  # lastre -> carga total (tu peso + lastre)
+        ths = [body_weight + x for x in ths]
+    return ths
+
+
 def thresholds(sex, lift, body_weight):
     """Umbrales en kg (Principiante..Élite) para ese sexo, levantamiento y
-    peso corporal. None si el sexo no es "hombre"/"mujer"."""
+    peso corporal. None si el sexo no es "hombre"/"mujer". En dominadas son
+    de CARGA TOTAL (peso corporal + lastre)."""
+    if lift in SL_LIFTS:
+        return _sl_thresholds(sex, lift, body_weight)
     table = TABLES.get((sex, lift))
     if table is None or not body_weight:
         return None
@@ -228,19 +325,26 @@ def level_index(e1rm, ths):
 #   puntuación -1..0: por debajo de Principiante -> Hierro
 #   0..1 Principiante->Novato  -> Bronce     1..2 Novato->Intermedio -> Plata
 #   2..3 Intermedio->Avanzado  -> Oro        3..4 Avanzado->Élite    -> Platino
-#   4..5 Élite (un tramo más)  -> Diamante   5 o más                 -> Titán
+# Por encima de Élite, cada rango es un "tramo" más (la anchura del tramo
+# Avanzado->Élite): 4..5 Diamante, 5..6 Esmeralda, 6..7 Campeón, 7+ Titán.
+# En banca, sentadilla, peso muerto y press militar, Titán cae en torno al
+# récord mundial de las tablas de ExRx (comprobado para 82 kg: banca 253 kg
+# frente a 252, peso muerto 397 frente a 404).
 # Cada rango (salvo Titán) tiene divisiones I < II < III, en tercios.
 RANK_WINDOW_DAYS = 90
-RANKS = ["Hierro", "Bronce", "Plata", "Oro", "Platino", "Diamante", "Titán"]
-RANK_KEYS = ["hierro", "bronce", "plata", "oro", "platino", "diamante", "titan"]
+RANKS = ["Hierro", "Bronce", "Plata", "Oro", "Platino", "Diamante", "Esmeralda", "Campeón", "Titán"]
+RANK_KEYS = ["hierro", "bronce", "plata", "oro", "platino", "diamante", "esmeralda", "campeon", "titan"]
+TOP_TIER = len(RANKS) - 1
 RANK_RANGES = [
     "por debajo de Principiante",
     "de Principiante a Novato",
     "de Novato a Intermedio",
     "de Intermedio a Avanzado",
     "de Avanzado a Élite",
-    "Élite (hasta un tramo más)",
-    "muy por encima de Élite",
+    "Élite: nivel de competición",
+    "un tramo por encima de Élite",
+    "dos tramos por encima de Élite",
+    "tres tramos o más por encima de Élite: en torno al récord mundial",
 ]
 _ROMAN = {1: "I", 2: "II", 3: "III"}
 
@@ -271,10 +375,10 @@ def rank_for(score):
     """Rango, división y progreso dentro de la división para `score`."""
     if score is None:
         return None
-    tier = min(6, max(0, int(score // 1) + 1))
-    if tier == 6:
-        return {"tier": 6, "key": RANK_KEYS[6], "name": RANKS[6], "division": None,
-                "label": RANKS[6], "pct": 100, "next_score": None}
+    tier = min(TOP_TIER, max(0, int(score // 1) + 1))
+    if tier == TOP_TIER:
+        return {"tier": tier, "key": RANK_KEYS[tier], "name": RANKS[tier], "division": None,
+                "label": RANKS[tier], "pct": 100, "next_score": None}
     start = tier - 1  # puntuación donde empieza el rango
     within = min(max(score - start, 0.0), 0.9999)
     division = int(within * 3) + 1
@@ -291,11 +395,11 @@ def rank_for(score):
 
 
 def next_rank_label(rank):
-    if rank is None or rank["tier"] == 6:
+    if rank is None or rank["tier"] == TOP_TIER:
         return None
     if rank["division"] < 3:
         return f"{rank['name']} {_ROMAN[rank['division'] + 1]}"
-    return RANKS[rank["tier"] + 1] + ("" if rank["tier"] + 1 == 6 else " I")
+    return RANKS[rank["tier"] + 1] + ("" if rank["tier"] + 1 == TOP_TIER else " I")
 
 
 def level_label(idx):
@@ -330,6 +434,30 @@ def _valid_e1rm(entry):
     if effective_reps(entry) > MAX_EFFECTIVE_REPS:
         return None
     return estimated_1rm(entry)
+
+
+def _pullup_added_1rm(entry, body_weight):
+    """Dominadas: el peso apuntado es el lastre (0 = solo tu peso). Devuelve
+    el LASTRE equivalente a tu 1RM (carga total estimada menos tu peso), o
+    None si la serie no vale."""
+    from types import SimpleNamespace
+
+    from app.routes import effective_reps, estimated_1rm
+
+    if (not entry.completed or entry.reps <= 0 or entry.weight < 0 or body_weight is None
+            or (entry.set_type or "normal") == "calentamiento"):
+        return None
+    if effective_reps(entry) > MAX_EFFECTIVE_REPS:
+        return None
+    total = SimpleNamespace(weight=body_weight + entry.weight, reps=entry.reps, rir=entry.rir, rpe=entry.rpe)
+    return estimated_1rm(total) - body_weight
+
+
+def _load(lift, value, body_weight):
+    """Lo que se compara con la tabla: en dominadas, tu peso + el lastre."""
+    if value is None:
+        return None
+    return value + body_weight if lift == "pullup" else value
 
 
 def _body_weight_at(points, when):
@@ -393,7 +521,10 @@ def strength_profile(user, rows=None, weights=None, now=None):
             continue
         if is_real_set(s) and (s.set_type or "normal") != "calentamiento":
             max_weight[lift] = max(max_weight[lift], s.weight)
-        e1rm = _valid_e1rm(s)
+        if lift == "pullup":
+            e1rm = _pullup_added_1rm(s, _body_weight_at(bw_points, w.timestamp))
+        else:
+            e1rm = _valid_e1rm(s)
         if e1rm is None:
             continue
         prev = sessions[lift].get(w.id)
@@ -429,7 +560,7 @@ def strength_profile(user, rows=None, weights=None, now=None):
                 ths = thresholds(sex, lift, bw)
                 if ths is None:
                     continue
-                idx = level_index(e1rm, ths)
+                idx = level_index(_load(lift, e1rm, bw), ths)
                 if info["reached"] is None or idx > info["reached"]:
                     info.update(reached=idx, reached_at=ts, reached_e1rm=e1rm)
             if info["reached"] is not None:
@@ -440,14 +571,15 @@ def strength_profile(user, rows=None, weights=None, now=None):
                     info["next_label"] = LEVEL_LABELS[LEVELS[nxt]]
                     info["next_kg"] = ths_now[nxt]
                     if info["best_e1rm"] is not None:
-                        info["missing_kg"] = max(0.0, ths_now[nxt] - info["best_e1rm"])
-                        info["meets_next_now"] = info["best_e1rm"] >= ths_now[nxt]
+                        load_now = _load(lift, info["best_e1rm"], latest_bw)
+                        info["missing_kg"] = max(0.0, ths_now[nxt] - load_now)
+                        info["meets_next_now"] = load_now >= ths_now[nxt]
                         # Barra: del umbral del nivel actual (0 si aún no hay
                         # nivel) al del siguiente, con tu peso actual.
                         floor = ths_now[nxt - 1] if nxt > 0 else 0.0
                         span = ths_now[nxt] - floor
-                        info["bar_pct"] = round(100 * min(1.0, max(0.0, (info["best_e1rm"] - floor) / span))) if span > 0 else 100
-        if info["best_e1rm"] is not None and latest_bw:
+                        info["bar_pct"] = round(100 * min(1.0, max(0.0, (load_now - floor) / span))) if span > 0 else 100
+        if info["best_e1rm"] is not None and latest_bw and lift != "pullup":
             info["ratio"] = info["best_e1rm"] / latest_bw
 
         # Rango actual (últimos 90 días, peso actual) y mejor rango histórico
@@ -457,22 +589,26 @@ def strength_profile(user, rows=None, weights=None, now=None):
         if sex and bw_points:
             peak = None
             for ts, e1rm in sessions[lift].values():
-                ths = thresholds(sex, lift, _body_weight_at(bw_points, ts))
+                bw = _body_weight_at(bw_points, ts)
+                ths = thresholds(sex, lift, bw)
                 if ths is not None:
-                    sc = strength_score(e1rm, ths)
+                    sc = strength_score(_load(lift, e1rm, bw), ths)
                     peak = sc if peak is None else max(peak, sc)
             info["rank_peak"] = rank_for(peak)
             window = [e for ts, e in sessions[lift].values() if now - ts <= timedelta(days=RANK_WINDOW_DAYS)]
             if window:
                 ths_now = thresholds(sex, lift, latest_bw)
                 best = max(window)
-                info["score"] = strength_score(best, ths_now)
+                load = _load(lift, best, latest_bw)
+                info["score"] = strength_score(load, ths_now)
                 info["rank"] = rank_for(info["score"])
-                info["rank_e1rm"] = best
+                info["rank_e1rm"] = best  # en dominadas: lastre equivalente
                 if info["rank"]["next_score"] is not None:
                     info["rank_next"] = next_rank_label(info["rank"])
-                    info["rank_next_kg"] = kg_for_score(info["rank"]["next_score"], ths_now)
-                    info["rank_missing_kg"] = max(0.0, info["rank_next_kg"] - best)
+                    target = kg_for_score(info["rank"]["next_score"], ths_now)
+                    info["rank_missing_kg"] = max(0.0, target - load)
+                    # Objetivo en la misma unidad que se apunta (lastre en dominadas).
+                    info["rank_next_kg"] = target - latest_bw if lift == "pullup" else target
             elif sessions[lift]:
                 info["rank_stale"] = True  # entrenado, pero no en los últimos 90 días
         lifts[lift] = info
@@ -494,22 +630,31 @@ def strength_profile(user, rows=None, weights=None, now=None):
         total = sum(lifts[l]["best_e1rm"] for l in BIG_THREE)
         dots_score = dots(total, latest_bw, sex)
 
-    # Rango global: MEDIA de las puntuaciones de banca, sentadilla y peso
-    # muerto (así cualquier mejora cuenta). Para no esconder desequilibrios,
-    # se avisa si un levantamiento va un rango entero o más por detrás.
-    scores = {l: lifts[l]["score"] for l in BIG_THREE}
+    # Rango global: MEDIA de los básicos entrenados en los últimos 90 días
+    # (así cualquier mejora cuenta), con un mínimo de 3. El tirón vertical
+    # vale lo que el mejor de dominadas y jalón. Para no esconder
+    # desequilibrios, se avisa si un básico va un rango entero por detrás.
+    def basic_score(basic):
+        if basic == "vertical":
+            vals = [lifts[l]["score"] for l in VERTICAL if lifts[l]["score"] is not None]
+            return max(vals) if vals else None
+        return lifts[basic]["score"]
+
+    scores = {b: basic_score(b) for b in BASICS}
+    counted = {b: sc for b, sc in scores.items() if sc is not None}
+    rank_missing = [BASIC_LABELS[b] for b in BASICS if scores[b] is None]
     global_rank = lagging = None
-    rank_missing = [LIFT_LABELS[l] for l in BIG_THREE if scores[l] is None]
-    if not missing and not rank_missing:
-        mean = sum(scores.values()) / 3
+    if not missing and len(counted) >= MIN_BASICS_FOR_GLOBAL:
+        mean = sum(counted.values()) / len(counted)
         global_rank = rank_for(mean)
-        weakest = min(BIG_THREE, key=lambda l: scores[l])
-        if mean - scores[weakest] >= 1:
-            lagging = LIFT_LABELS[weakest]
+        weakest = min(counted, key=counted.get)
+        if mean - counted[weakest] >= 1:
+            lagging = BASIC_LABELS[weakest]
 
     return {
         "global_rank": global_rank,
         "rank_missing": rank_missing,
+        "basics_counted": len(counted),
         "lagging": lagging,
         "sex": sex,
         "latest_bw": latest_bw,

@@ -3770,6 +3770,8 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .rank-platino { background: #d3f2ef; color: #0f5c57; }
 .rank-diamante { background: #dce7ff; color: #1f3f8f; }
 .rank-titan { background: #3d2b8a; color: #fff; }
+.rank-esmeralda { background: #d2f5df; color: #0b5a2e; }
+.rank-campeon { background: #f6d6e8; color: #7d1650; }
 :root[data-theme="dark"] .rank-none, :root[data-theme="dark"] .rank-hierro { background: #2e2e36; color: #c9c9d4; }
 :root[data-theme="dark"] .rank-bronce { background: #3d2516; color: #f4c49c; }
 :root[data-theme="dark"] .rank-plata { background: #2a3240; color: #d0d8e6; }
@@ -3777,6 +3779,10 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 :root[data-theme="dark"] .rank-platino { background: #0f3a37; color: #8ce8df; }
 :root[data-theme="dark"] .rank-diamante { background: #1b2a52; color: #a9c2ff; }
 :root[data-theme="dark"] .rank-titan { background: #b9a6ff; color: #1b1238; }
+:root[data-theme="dark"] .rank-esmeralda { background: #0d3a22; color: #86efac; }
+:root[data-theme="dark"] .rank-campeon { background: #44122f; color: #f9a8d4; }
+.std-note { margin: 0 0 10px; font-size: 0.78rem; color: var(--color-text-muted); }
+.std-source { margin: 2px 0 0; font-size: 0.7rem; color: var(--color-text-muted); }
 .std-sub .std-level { padding: 1px 7px; font-size: 0.7rem; }
 .std-extra { font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted); }
 .std-defs .rank-badge { min-width: 76px; text-align: center; margin-right: 6px; }

@@ -143,7 +143,8 @@ ACHIEVEMENTS = [
         A(f"std_{lift}_{level}", "estandares", _LEVEL_EMOJI[level],
           f"{standards.LIFT_LABELS[lift]}: {standards.LEVEL_LABELS[level]}",
           f"Alcanza el nivel {standards.LEVEL_LABELS[level]} en {standards.LIFT_LABELS[lift].lower()} "
-          f"según los estándares de Lon Kilgore (1RM estimado con series de hasta 10 reps, "
+          f"según los estándares de {'StrengthLevel' if lift in standards.SL_LIFTS else 'Lon Kilgore'} "
+          f"(1RM estimado con series de hasta 10 reps, "
           f"según tu sexo y tu peso corporal).",
           check=(lambda s, lift=lift, i=i: s[f"std_{lift}"] is not None and s[f"std_{lift}"] >= i))
         for lift in standards.LIFTS
