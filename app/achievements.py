@@ -363,7 +363,9 @@ def _has(name, words):
 
 def compute_stats(user):
     """Todas las métricas que usan los logros, para un usuario."""
-    from app.routes import compute_smart_streak, estimated_1rm, is_real_set, to_local
+    from app.routes import compute_smart_streak, estimated_1rm, is_real_set, latest_bodyweight, to_local
+
+    bodyweight = latest_bodyweight(user.id)  # dominadas: carga = peso + lastre
 
     rows = db.session.execute(
         sa.select(Workout, SetEntry)
@@ -454,7 +456,7 @@ def compute_stats(user):
                 st["true_single"] = True
             if s.weight == 100 and s.reps == 10:
                 st["exact_100x10"] = True
-            best_e1rm["any"] = max(best_e1rm["any"], estimated_1rm(s))
+            best_e1rm["any"] = max(best_e1rm["any"], estimated_1rm(s, bodyweight))
 
     sorted_days = sorted(days)
     for a, b in zip(sorted_days, sorted_days[1:]):

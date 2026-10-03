@@ -322,29 +322,37 @@ def level_index(e1rm, ths):
 # Rango = posición CONTINUA en la tabla, con tu forma actual (mejor 1RM
 # estimado válido de los últimos 90 días y tu último peso): puede bajar si
 # dejas de entrenar un levantamiento, como en un juego por temporadas.
-#   puntuación -1..0: por debajo de Principiante -> Hierro
-#   0..1 Principiante->Novato  -> Bronce     1..2 Novato->Intermedio -> Plata
-#   2..3 Intermedio->Avanzado  -> Oro        3..4 Avanzado->Élite    -> Platino
-# Por encima de Élite, cada rango es un "tramo" más (la anchura del tramo
-# Avanzado->Élite): 4..5 Diamante, 5..6 Esmeralda, 6..7 Campeón, 7+ Titán.
-# En banca, sentadilla, peso muerto y press militar, Titán cae en torno al
-# récord mundial de las tablas de ExRx (comprobado para 82 kg: banca 253 kg
-# frente a 252, peso muerto 397 frente a 404).
+# Puntuación: 0 = umbral de Principiante, 1 = Novato, 2 = Intermedio,
+# 3 = Avanzado, 4 = Élite; por encima, tramos de la anchura Avanzado->Élite.
+# Los rangos altos son más estrechos para que haya progresión visible donde
+# más cuesta subir:
+#   Hierro    < 0      por debajo de Principiante
+#   Bronce    0-1      Principiante
+#   Plata     1-2      Novato
+#   Oro       2-2,5    Intermedio
+#   Platino   2,5-3    Intermedio alto
+#   Diamante  3-3,5    Avanzado reciente
+#   Esmeralda 3,5-4    Avanzado consolidado
+#   Campeón   4-7      Élite (nivel de competición; cada división, un tramo más)
+#   Titán     7 o más  en torno al récord mundial de las tablas de ExRx
+#                      (comprobado para 82 kg: banca 253 kg frente a 252,
+#                      peso muerto 397 frente a 404). Casi inalcanzable a propósito.
 # Cada rango (salvo Titán) tiene divisiones I < II < III, en tercios.
 RANK_WINDOW_DAYS = 90
 RANKS = ["Hierro", "Bronce", "Plata", "Oro", "Platino", "Diamante", "Esmeralda", "Campeón", "Titán"]
 RANK_KEYS = ["hierro", "bronce", "plata", "oro", "platino", "diamante", "esmeralda", "campeon", "titan"]
+RANK_BOUNDS = [0, 1, 2, 2.5, 3, 3.5, 4, 7]  # dónde empieza cada rango a partir de Bronce
 TOP_TIER = len(RANKS) - 1
 RANK_RANGES = [
     "por debajo de Principiante",
-    "de Principiante a Novato",
-    "de Novato a Intermedio",
-    "de Intermedio a Avanzado",
-    "de Avanzado a Élite",
+    "Principiante",
+    "Novato",
+    "Intermedio",
+    "Intermedio alto",
+    "Avanzado (recién llegado)",
+    "Avanzado consolidado",
     "Élite: nivel de competición",
-    "un tramo por encima de Élite",
-    "dos tramos por encima de Élite",
-    "tres tramos o más por encima de Élite: en torno al récord mundial",
+    "en torno al récord mundial",
 ]
 _ROMAN = {1: "I", 2: "II", 3: "III"}
 
@@ -371,26 +379,36 @@ def kg_for_score(score, ths):
     return ths[i] + (score - i) * (ths[i + 1] - ths[i])
 
 
+def _tier_span(tier):
+    """(inicio, fin) de la puntuación de un rango."""
+    lo = -1 if tier == 0 else RANK_BOUNDS[tier - 1]
+    hi = RANK_BOUNDS[tier] if tier < TOP_TIER else None
+    return lo, hi
+
+
 def rank_for(score):
     """Rango, división y progreso dentro de la división para `score`."""
     if score is None:
         return None
-    tier = min(TOP_TIER, max(0, int(score // 1) + 1))
+    import bisect
+
+    tier = bisect.bisect_right(RANK_BOUNDS, score)
     if tier == TOP_TIER:
         return {"tier": tier, "key": RANK_KEYS[tier], "name": RANKS[tier], "division": None,
                 "label": RANKS[tier], "pct": 100, "next_score": None}
-    start = tier - 1  # puntuación donde empieza el rango
-    within = min(max(score - start, 0.0), 0.9999)
-    division = int(within * 3) + 1
-    div_start = start + (division - 1) / 3
+    lo, hi = _tier_span(tier)
+    width = (hi - lo) / 3
+    within = min(max(score - lo, 0.0), hi - lo - 1e-9)
+    division = int(within / width) + 1
+    div_start = lo + (division - 1) * width
     return {
         "tier": tier,
         "key": RANK_KEYS[tier],
         "name": RANKS[tier],
         "division": division,
         "label": f"{RANKS[tier]} {_ROMAN[division]}",
-        "pct": round(100 * (score - div_start) * 3),
-        "next_score": div_start + 1 / 3,
+        "pct": round(100 * (score - div_start) / width),
+        "next_score": div_start + width,
     }
 
 

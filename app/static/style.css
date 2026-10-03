@@ -3872,3 +3872,9 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .perk-level { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--color-surface-active); color: var(--color-text-soft); font-weight: 800; flex-shrink: 0; font-size: 0.8rem; }
 .perk-list li.is-unlocked .perk-level { background: var(--accent); color: #fff; }
 .perk-list li.is-unlocked span:last-child::after { content: " ✓"; color: var(--color-success-text); font-weight: 800; }
+
+/* Emblemas de rango (app/static/ranks/*.svg) */
+.rank-emblem { display: inline-block; vertical-align: middle; flex-shrink: 0; }
+.rank-chip { display: inline-flex; align-items: center; gap: 4px; }
+.std-global { gap: 2px; }
+.std-defs li.rank-def { display: flex; align-items: center; gap: 6px; list-style: none; margin-left: -18px; }

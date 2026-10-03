@@ -117,6 +117,7 @@ class XpInputs:
     workouts: list
     checkin_days: set
     goals: list  # [(fecha desde la que vale, mínimo | None)], más reciente primero
+    bodyweight: float = 0.0  # último peso: en dominadas, carga = peso + lastre
 
 
 def load_xp_inputs(user_id):
@@ -151,7 +152,9 @@ def load_xp_inputs(user_id):
             .order_by(WeeklyGoalHistory.effective_from.desc(), WeeklyGoalHistory.id.desc())
         )
     ]
-    return XpInputs(list(workouts.values()), checkin_days, goals)
+    from app.routes import latest_bodyweight
+
+    return XpInputs(list(workouts.values()), checkin_days, goals, latest_bodyweight(user_id))
 
 
 # ------------------------------------------------------------------ cálculo
@@ -197,7 +200,7 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
         for s in w.sets:
             if not is_real_set(s) or (s.set_type or "normal") == "calentamiento":
                 continue
-            e1rm = estimated_1rm(s)
+            e1rm = estimated_1rm(s, inputs.bodyweight)
             session_best[s.exercise] = max(session_best.get(s.exercise, 0.0), e1rm)
             prev = best.get(s.exercise)
             if prev is not None and e1rm < MIN_LOAD_FRACTION * prev:
@@ -405,7 +408,7 @@ def days_since_by_group(user_id, today=None):
         .join(Workout, Workout.id == SetEntry.workout_id)
         .where(
             Workout.user_id == user_id, Workout.timestamp >= since,
-            SetEntry.completed.is_(True), SetEntry.weight > 0, SetEntry.reps > 0,
+            SetEntry.completed.is_(True), SetEntry.weight >= 0, SetEntry.reps > 0,
         )
         .group_by(SetEntry.exercise)
     ).all()

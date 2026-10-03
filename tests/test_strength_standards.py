@@ -248,15 +248,23 @@ class RankMathTests(unittest.TestCase):
         self.assertEqual(label(-0.5), "Hierro II")
         self.assertEqual(label(0), "Bronce I")
         self.assertEqual(label(0.34), "Bronce II")
-        self.assertEqual(label(2.7), "Oro III")
-        self.assertEqual(label(4.99), "Diamante III")
-        self.assertEqual(label(5), "Esmeralda I")
-        self.assertEqual(label(6.5), "Campeón II")
+        self.assertEqual(label(2.2), "Oro II")          # Intermedio
+        self.assertEqual(label(2.7), "Platino II")      # Intermedio alto
+        self.assertEqual(label(3.1), "Diamante I")      # Avanzado reciente
+        self.assertEqual(label(3.9), "Esmeralda III")   # Avanzado consolidado
+        self.assertEqual(label(4), "Campeón I")         # Élite
+        self.assertEqual(label(6.5), "Campeón III")
         self.assertEqual(label(7), "Titán")
-        self.assertEqual(std.next_rank_label(std.rank_for(2.7)), "Platino I")
-        self.assertEqual(std.next_rank_label(std.rank_for(4.9)), "Esmeralda I")
+        self.assertEqual(std.next_rank_label(std.rank_for(2.7)), "Platino III")
+        self.assertEqual(std.next_rank_label(std.rank_for(3.9)), "Campeón I")
         self.assertEqual(std.next_rank_label(std.rank_for(6.9)), "Titán")
         self.assertIsNone(std.next_rank_label(std.rank_for(8)))
+
+    def test_next_score_is_the_next_division(self):
+        for score in (-0.7, 0.2, 2.1, 2.6, 3.4, 3.6, 4.5):
+            r = std.rank_for(score)
+            nxt = std.rank_for(r["next_score"] + 1e-9)
+            self.assertEqual(nxt["label"], std.next_rank_label(r), score)
 
     def test_titan_is_around_the_world_record(self):
         # Banca, hombre de 82 kg: ExRx da un récord mundial de 556 lb (≈ 252 kg).

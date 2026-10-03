@@ -97,7 +97,7 @@
             </div>
             {% if profile.global_rank %}
                 <div class="std-global">
-                    <span>Rango global</span>
+                    {{ macros.rank_emblem(profile.global_rank.key, 64) }}
                     <strong class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</strong>
                 </div>
             {% endif %}
@@ -120,7 +120,7 @@
                 <p class="std-note">Rango global con {{ profile.basics_counted }} de {{ standards.BASICS|length }} básicos. Sin datos recientes: {{ profile.rank_missing|join(', ')|lower }}.</p>
             {% endif %}
             {% if profile.lagging %}
-                <p class="std-missing">Tu {{ profile.lagging|lower }} va un rango entero o más por detrás de tu media: es el que más sube tu rango global.</p>
+                <p class="std-missing"><b>{{ profile.lagging }}</b> va un nivel entero (por ejemplo, de Intermedio a Avanzado) por detrás de tu media: es lo que más subiría tu rango global.</p>
             {% endif %}
         {% endif %}
 
@@ -131,7 +131,7 @@
                     <div class="std-row-head">
                         <strong>{{ l.label }}{% if lift in standards.VERTICAL %} <small class="std-extra">cuenta el mejor de dominadas y jalón</small>{% endif %}</strong>
                         {% if l.rank %}
-                            <span class="rank-badge rank-{{ l.rank.key }}">{{ l.rank.label }}</span>
+                            <span class="rank-chip">{{ macros.rank_emblem(l.rank.key, 26) }}<span class="rank-badge rank-{{ l.rank.key }}">{{ l.rank.label }}</span></span>
                         {% elif l.rank_stale %}
                             <span class="rank-badge rank-none">Sin rango</span>
                         {% endif %}
@@ -178,7 +178,7 @@
             </p>
             <ul class="std-defs">
                 {% for name in standards.RANKS %}
-                    <li><span class="rank-badge rank-{{ standards.RANK_KEYS[loop.index0] }}">{{ name }}</span> {{ standards.RANK_RANGES[loop.index0] }}</li>
+                    <li class="rank-def">{{ macros.rank_emblem(standards.RANK_KEYS[loop.index0], 34) }}<span class="rank-badge rank-{{ standards.RANK_KEYS[loop.index0] }}">{{ name }}</span> {{ standards.RANK_RANGES[loop.index0] }}</li>
                 {% endfor %}
             </ul>
         </details>

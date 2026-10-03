@@ -36,6 +36,15 @@
         });
     }
 
+    function loadImage(src) {
+        return new Promise(function (resolve) {
+            const img = new Image();
+            img.onload = function () { resolve(img); };
+            img.onerror = function () { resolve(null); };
+            img.src = src;
+        });
+    }
+
     function roundRect(ctx, x, y, w, h, r) {
         ctx.beginPath();
         ctx.moveTo(x + r, y);
@@ -128,19 +137,26 @@
         ctx.fillText('Gyre', startX + logoSize + gap, 218);
         ctx.textAlign = 'center';
 
-        // Insignia de nivel (y rango), ventaja a partir del nivel 10.
+        // Insignia de nivel (y rango con su emblema), ventaja a partir del nivel 10.
         if (d.badge) {
+            const emblem = d.rank_key ? await loadImage('/static/ranks/' + d.rank_key + '.svg') : null;
+            const es_ = emblem ? 84 : 0;
             ctx.font = '800 38px ' + FONT;
             setSpacing(ctx, 4);
-            const bw = ctx.measureText(d.badge).width + 64;
-            roundRect(ctx, (W - bw) / 2, 282, bw, 70, 35);
+            const tw = ctx.measureText(d.badge).width;
+            const bw = tw + 64 + (emblem ? es_ - 10 : 0);
+            const bx = (W - bw) / 2;
+            roundRect(ctx, bx, 282, bw, 70, 35);
             ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
             ctx.fill();
             ctx.lineWidth = 2;
             ctx.strokeStyle = design.kicker;
             ctx.stroke();
+            if (emblem) ctx.drawImage(emblem, bx + 6, 275, es_, es_);
             ctx.fillStyle = design.kicker;
-            ctx.fillText(d.badge, W / 2, 330);
+            ctx.textAlign = 'left';
+            ctx.fillText(d.badge, bx + 32 + (emblem ? es_ - 10 : 0), 330);
+            ctx.textAlign = 'center';
             setSpacing(ctx, 0);
         }
 

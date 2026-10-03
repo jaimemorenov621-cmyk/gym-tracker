@@ -1193,18 +1193,20 @@ def api_share_set(set_id):
         if s["best_set"] is not None:
             previous_best = max(previous_best or 0, s["best_1rm"])
 
-    e1rm = estimated_1rm(entry)
+    e1rm = estimated_1rm(entry, latest_bodyweight(current_user.id))
     # Ventajas por nivel: diseños desbloqueados e insignia de nivel/rango.
     level = perks.level_of(current_user)
-    badge = None
+    badge = rank_key = None
     if level >= perks.BADGE_LEVEL:
         rank = standards.strength_profile(current_user)["global_rank"]
         badge = f"NIVEL {level}" + (f" · {rank['label'].upper()}" if rank else "")
+        rank_key = rank["key"] if rank else None
     return jsonify(
         {
             "ok": True,
             "designs": perks.unlocked(perks.SHARE_DESIGNS, level),
             "badge": badge,
+            "rank_key": rank_key,
             "exercise": entry.exercise.title(),
             "weight": f"{entry.weight:g}",
             "reps": entry.reps,
@@ -2596,7 +2598,7 @@ _RTS_PERCENT_1RM = {
 }
 
 
-def estimated_1rm(entry):
+def estimated_1rm(entry, bodyweight=0.0):
     """1RM real vía tabla RTS cuando reps/RIR caen en el rango cubierto
     (1-12 reps, RIR 0-4); si no (RIR>=5, reps>12, o sin RIR/RPE anotado),
     respaldo con Epley y repeticiones efectivas. En el límite RIR4/RIR5 el
@@ -2605,11 +2607,15 @@ def estimated_1rm(entry):
     rir = entry.rir if entry.rir is not None else (
         10 - entry.rpe if entry.rpe is not None else None
     )
+    # Dominadas: carga = tu peso + el lastre apuntado.
+    weight = entry.weight
+    if bodyweight and is_bodyweight_exercise(getattr(entry, "exercise", None)):
+        weight += bodyweight
     row = _RTS_PERCENT_1RM.get(entry.reps)
     pct = row.get(rir) if row else None
     if pct is not None:
-        return entry.weight / pct
-    return entry.weight * (1 + effective_reps(entry) / 30)
+        return weight / pct
+    return weight * (1 + effective_reps(entry) / 30)
 
 
 DEFAULT_WEEKLY_MINIMUM = 1  # sin mínimo configurado: basta con entrenar 1 día a la semana
@@ -2733,13 +2739,16 @@ def sessions_from_rows(rows):
         sessions[workout.id]["sets"].append(entry)
 
     session_list = sorted(sessions.values(), key=lambda s: s["timestamp"])
+    bw = 0.0
+    if rows and is_bodyweight_exercise(rows[0][1].exercise):
+        bw = latest_bodyweight(rows[0][0].user_id)
 
     running_max = float("-inf")
     for s in session_list:
         candidates = [st for st in s["sets"] if is_real_set(st)]
         if candidates:
-            s["best_set"] = max(candidates, key=estimated_1rm)
-            s["best_1rm"] = estimated_1rm(s["best_set"])
+            s["best_set"] = max(candidates, key=lambda st: estimated_1rm(st, bw))
+            s["best_1rm"] = estimated_1rm(s["best_set"], bw)
             s["is_pr"] = s["best_1rm"] > running_max
             running_max = max(running_max, s["best_1rm"])
         else:
@@ -2836,12 +2845,35 @@ def qualifying_sessions(session_list):
     return [s for s in session_list if s["best_set"] is not None]
 
 
+@functools.lru_cache(maxsize=2048)
+def is_bodyweight_exercise(name):
+    """Dominadas: el peso apuntado es el lastre y 0 = solo tu peso corporal
+    (ver strength_standards). Las asistidas no entran."""
+    return standards.lift_of(name or "") == "pullup"
+
+
+def latest_bodyweight(user_id):
+    """Último peso corporal registrado (kg) o 0; memorizado por petición."""
+    cache = g.setdefault("_latest_bw", {})
+    if user_id not in cache:
+        cache[user_id] = db.session.scalar(
+            sa.select(BodyWeightEntry.weight)
+            .where(BodyWeightEntry.user_id == user_id)
+            .order_by(BodyWeightEntry.timestamp.desc())
+            .limit(1)
+        ) or 0.0
+    return cache[user_id]
+
+
 def is_real_set(entry):
-    """Serie que cuenta como dato real: completada, con peso y reps > 0.
+    """Serie que cuenta como dato real: completada, con peso y reps > 0
+    (en dominadas, 0 kg también vale: es tu peso corporal).
     Único criterio para decidir qué serie de una sesión "cuenta" -- lo usan
     get_exercise_sessions() (para 1RM/PR) y get_previous_sets_map() (para
     la referencia "Anterior"), evita mantener el mismo criterio dos veces."""
-    return entry.completed and entry.weight > 0 and entry.reps > 0
+    if not entry.completed or entry.reps <= 0:
+        return False
+    return entry.weight > 0 or (entry.weight == 0 and is_bodyweight_exercise(getattr(entry, "exercise", None)))
 
 
 def apply_pr_flags_for_session(session):
