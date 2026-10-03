@@ -1251,6 +1251,16 @@ def api_update_set(set_id):
     response = {"ok": True, "is_pr": bool(entry.is_pr)}
     if just_completed:
         response["rest_seconds"] = get_rest_seconds(entry.exercise)
+        # Subida de rango en directo: solo si es récord en un básico (no se
+        # calcula el perfil en cada serie) y ya se le presentó su rango.
+        if entry.is_pr and standards.lift_of(entry.exercise) and current_user.rank_seen is not None:
+            try:
+                rank = standards.strength_profile(current_user)["global_rank"]
+                if standards.rank_notice(current_user, rank) == "up":
+                    response["rank_up"] = {k: rank[k] for k in ("key", "label", "division", "file")}
+            except Exception:
+                db.session.rollback()
+                app.logger.exception("Error comprobando la subida de rango")
     return jsonify(response)
 
 
@@ -1281,7 +1291,7 @@ def api_share_set(set_id):
     if level >= perks.BADGE_LEVEL:
         rank = standards.strength_profile(current_user)["global_rank"]
         badge = f"NIVEL {level}" + (f" · {rank['label'].upper()}" if rank else "")
-        rank_key = rank["key"] if rank else None
+        rank_key = (rank["key"] if rank["key"] == "titan" else f"{rank['key']}-{rank['division']}") if rank else None
     return jsonify(
         {
             "ok": True,

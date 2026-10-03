@@ -267,6 +267,7 @@
     {{ macros.exercise_picker_sheet() }}
     <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
     <script src="{{ url_for('static', filename='share_card.js') }}"></script>
+    <script src="{{ url_for('static', filename='rank_fx.js') }}"></script>
 
     {% if effort_scale != 'none' %}
     <div class="sheet-backdrop" id="effortPickerBackdrop" onclick="closeEffortPicker()"></div>
@@ -672,6 +673,9 @@
                     return;
                 }
                 syncPrBadge(row, data.is_pr);
+                if (data.rank_up && window.showRankCelebration) {
+                    showRankCelebration(data.rank_up);
+                }
                 if (willComplete && data.is_pr) {
                     celebrate(70);
                     if (window.showPrShareToast) {

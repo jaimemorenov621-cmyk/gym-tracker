@@ -463,5 +463,28 @@ class RankCelebrationTests(_LifterCase):
             db.session.commit()
         self.assertNotIn('id="rankCelebration"', self.client.get("/index").get_data(as_text=True))
 
+    def test_live_rank_up_while_training(self):
+        self.client.get("/index")  # presentación hecha: rank_seen anotado
+        with app.app_context():
+            w = Workout(user_id=self.uid, timestamp=datetime.now() - timedelta(hours=1))
+            db.session.add(w)
+            db.session.flush()
+            s = SetEntry(workout_id=w.id, exercise="peso muerto", weight=270, reps=1, rir=0)
+            db.session.add(s)
+            db.session.commit()
+            sid = s.id
+        data = self.client.put(f"/set/{sid}", json={"completed": True}).get_json()
+        self.assertTrue(data["is_pr"])
+        self.assertIn("rank_up", data)
+        self.assertIn(data["rank_up"]["file"], ("titan",) + tuple(f"{k}-{d}" for k in std.RANK_KEYS for d in (1, 2, 3)))
+
+    def test_rank_tab_has_showcase_and_animated_bar(self):
+        html = self.client.get("/rango").get_data(as_text=True)
+        self.assertIn("rank-showcase", html)
+        self.assertIn("is-locked", html)
+        self.assertIn('data-pct="', html)
+        self.assertIn("rank_fx.js", html)
+        self.assertIn("rankSplashData", self.client.get("/index").get_data(as_text=True) + self.client.get("/index").get_data(as_text=True))
+
 if __name__ == "__main__":
     unittest.main()

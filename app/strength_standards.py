@@ -395,7 +395,7 @@ def rank_for(score):
     tier = bisect.bisect_right(RANK_BOUNDS, score)
     if tier == TOP_TIER:
         return {"tier": tier, "key": RANK_KEYS[tier], "name": RANKS[tier], "division": None,
-                "label": RANKS[tier], "pct": 100, "next_score": None}
+                "label": RANKS[tier], "pct": 100, "next_score": None, "file": RANK_KEYS[tier]}
     lo, hi = _tier_span(tier)
     width = (hi - lo) / 3
     within = min(max(score - lo, 0.0), hi - lo - 1e-9)
@@ -409,6 +409,7 @@ def rank_for(score):
         "label": f"{RANKS[tier]} {_ROMAN[division]}",
         "pct": round(100 * (score - div_start) / width),
         "next_score": div_start + width,
+        "file": f"{RANK_KEYS[tier]}-{division}",
     }
 
 

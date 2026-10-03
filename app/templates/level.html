@@ -15,7 +15,7 @@
         <a class="level-strength" href="{{ url_for('rank_page') }}">
             <span>Rango de fuerza</span>
             {% if profile.global_rank %}
-                <span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 30) }}<b class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</b></span>
+                <span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 30, profile.global_rank.division) }}<b class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</b></span>
             {% elif profile.missing %}
                 <b>Falta: {{ profile.missing|join(' y ') }}</b>
             {% else %}
