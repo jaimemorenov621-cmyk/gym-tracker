@@ -6,7 +6,7 @@
 
 {# Emblema de rango: cada división (I, II, III) tiene su versión, más
 adornada cuanto más alta; Titán es uno solo. #}
-{% macro rank_emblem(key, size=28, division=3) %}<img class="rank-emblem" src="{{ url_for('static', filename='ranks/' ~ (key if key == 'titan' else key ~ '-' ~ (division or 3)) ~ '.webp') }}" width="{{ size }}" height="{{ size }}" alt="">{% endmacro %}
+{% macro rank_emblem(key, size=28, division=3) %}<img class="rank-emblem" src="{{ url_for('static', filename='ranks/' ~ (key if key == 'titan' else key ~ '-' ~ (division or 3)) ~ '.svg') }}" width="{{ size }}" height="{{ size }}" alt="">{% endmacro %}
 
 {# Título de pestaña: una línea compacta con el icono de la pestaña (el mismo
 de la barra inferior) en un cuadro de color, para que se lea como título. #}

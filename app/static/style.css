@@ -3869,7 +3869,7 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .perk-list li.is-unlocked .perk-level { background: var(--accent); color: #fff; }
 .perk-list li.is-unlocked span:last-child::after { content: " ✓"; color: var(--color-success-text); font-weight: 800; }
 
-/* Emblemas de rango (app/static/ranks/*.webp, tools/make_rank_emblems.py) */
+/* Emblemas de rango (app/static/ranks/*.svg, tools/make_rank_emblems.py) */
 .rank-emblem { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 .rank-chip { display: inline-flex; align-items: center; gap: 4px; }
 .std-global { gap: 2px; }
