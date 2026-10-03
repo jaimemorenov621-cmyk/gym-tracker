@@ -133,6 +133,30 @@ def privacy():
     return render_template("privacy.html", title="Política de privacidad")
 
 
+def queue_xp_gain(reason, gain, parts):
+    """Deja el XP ganado para el aviso tipo videojuego de la siguiente carga
+    de Inicio (xp_fx.js), en vez de un flash informativo."""
+    session["xp_gain"] = {"reason": reason, "gain": gain, "parts": parts}
+
+
+def xp_fx_data(xp_total, gain_info, level_up):
+    """Datos del aviso de XP: barra de antes y de después y, si toca, la
+    subida de nivel (solo la que level_up_notice no había anunciado ya)."""
+    if not gain_info and not level_up:
+        return None
+    gain = gain_info["gain"] if gain_info else 0
+    before = progression.level_for(max(0, xp_total - gain))
+    after = progression.level_for(xp_total)
+    return {
+        "reason": gain_info["reason"] if gain_info else "",
+        "gain": gain,
+        "parts": gain_info["parts"] if gain_info else [],
+        "from": {"level": before["level"], "pct": before["pct"]},
+        "to": {"level": after["level"], "pct": after["pct"], "to_next": after["to_next"]},
+        "level_up": level_up,
+    }
+
+
 @app.route("/checkin", methods=["POST"])
 @login_required
 def recovery_checkin():
@@ -152,7 +176,7 @@ def recovery_checkin():
     db.session.commit()
     gained = progression.current_xp(current_user.id) - before
     if gained > 0:
-        flash(f"Check-in guardado · +{gained} XP")
+        queue_xp_gain("Check-in", gained, [["Check-in", gained]])
     else:
         flash("Check-in actualizado (+0 XP: ya lo habías hecho hoy).")
     session["checkin_saved"] = True
@@ -876,7 +900,8 @@ def index():
         profile=profile,
         rank_event=standards.rank_notice(current_user, profile["global_rank"]),
         xp=progression.level_for(xp_total),
-        level_up=progression.level_up_notice(current_user.id, xp_total),
+        xp_fx=xp_fx_data(xp_total, session.pop("xp_gain", None),
+                         progression.level_up_notice(current_user.id, xp_total)),
         checkin=checkin,
         checkin_form=RecoveryCheckinForm(),
         just_checked_in=just_checked_in,
@@ -1510,6 +1535,7 @@ def finish_workout(workout_id):
         for entry in empty_sets:
             db.session.delete(entry)
 
+        first_finish = workout.performance_rating is None
         workout.performance_rating = form.performance_rating.data
         workout.performance_comment = form.performance_comment.data
         workout.ended_at = workout.timestamp + timedelta(
@@ -1525,6 +1551,20 @@ def finish_workout(workout_id):
                 flash(f"Entrenamiento guardado. Se eliminaron {n} series vacías sin rellenar.")
         else:
             flash("Entrenamiento guardado.")
+        if first_finish:  # editar uno ya terminado no vuelve a "ganar" su XP
+            preview = progression.workout_xp_preview(current_user.id, workout.id)
+            if preview and preview["gain"] > 0:
+                x = preview["workout"]
+                parts = []
+                if x["workout"]:
+                    parts.append(["Entreno", x["workout"]])
+                if x["sets"]:
+                    parts.append([f"{x['sets_n']} serie{'' if x['sets_n'] == 1 else 's'}", x["sets"]])
+                if x["prs"]:
+                    parts.append([f"{x['prs_n']} récord{'' if x['prs_n'] == 1 else 's'}", x["prs"]])
+                if preview["bonus"]:
+                    parts.append(["Semana cumplida", preview["bonus"]])
+                queue_xp_gain("Entreno terminado", preview["gain"], parts)
         check_achievements()
         return redirect(url_for("index", celebrate=1))
     duration_estimated_from = None

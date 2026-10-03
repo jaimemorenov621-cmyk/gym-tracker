@@ -3731,10 +3731,6 @@ a.dash-level-link { display: block; margin: -6px 0 16px; padding: 10px 12px; bor
 .dash-level-next { display: inline-flex; align-items: center; gap: 4px; color: var(--color-text-muted); font-weight: 600; white-space: nowrap; font-size: 0.8rem; }
 .dash-level-bar { display: block; height: 6px; margin-top: 8px; border-radius: 999px; background: var(--color-surface-active); overflow: hidden; }
 .dash-level-bar i { display: block; height: 100%; border-radius: inherit; background: var(--color-brand); }
-a.level-toast { display: flex; align-items: center; gap: 12px; margin: 0 0 14px; padding: 10px 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--color-brand-soft); color: var(--color-text); text-decoration: none; }
-.level-toast-badge { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px; background: var(--color-brand); color: #fff; font-weight: 800; flex-shrink: 0; }
-.level-toast-text { flex: 1; display: flex; flex-direction: column; }
-.level-toast-text small { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
 a.finish-xp { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin: 0 0 16px; padding: 10px 14px; border-radius: 14px; border: 1px solid var(--border-subtle); background: var(--surface); color: var(--color-text); text-decoration: none; font-size: 0.85rem; }
 .finish-xp-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0; }
 .finish-xp-main b { color: var(--color-brand-dark); }
@@ -3873,7 +3869,7 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .perk-list li.is-unlocked .perk-level { background: var(--accent); color: #fff; }
 .perk-list li.is-unlocked span:last-child::after { content: " ✓"; color: var(--color-success-text); font-weight: 800; }
 
-/* Emblemas de rango (app/static/ranks/*.svg) */
+/* Emblemas de rango (app/static/ranks/*.webp, tools/make_rank_emblems.py) */
 .rank-emblem { display: inline-block; vertical-align: middle; flex-shrink: 0; }
 .rank-chip { display: inline-flex; align-items: center; gap: 4px; }
 .std-global { gap: 2px; }
@@ -4006,3 +4002,50 @@ a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: upperca
     .rank-splash .rank-emblem { animation: rank-emblem-in 0.7s cubic-bezier(0.2, 0.9, 0.25, 1.25) both; }
     .rank-splash strong { animation: rank-card-in 0.5s ease-out 0.25s both; }
 }
+
+/* Aviso de XP tipo videojuego (Inicio, xp_fx.js) */
+.xp-pop { position: fixed; z-index: 2050; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 70px); width: min(360px, calc(100% - 32px)); transform: translateX(-50%); cursor: pointer; }
+.xp-pop-card { position: relative; overflow: hidden; padding: 14px 16px 16px; border-radius: 20px; color: #fff;
+    background: radial-gradient(120% 140% at 0% 0%, rgba(var(--accent-rgb), 0.55), transparent 60%), linear-gradient(160deg, #1d1543, #120d2b);
+    border: 1px solid rgba(255, 214, 102, 0.55); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 14px 40px rgba(10, 6, 30, 0.55), 0 0 28px rgba(255, 196, 64, 0.25); }
+.xp-pop-card::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.18) 50%, transparent 65%); transform: translateX(-120%); }
+.xp-pop-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.xp-pop-reason { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
+.xp-pop-gain { font-size: 2.3rem; line-height: 1; font-weight: 900; font-style: italic; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #fff6c8 0%, #ffd34d 45%, #ff9d1a 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 2px 0 rgba(120, 50, 0, 0.9)) drop-shadow(0 0 12px rgba(255, 190, 60, 0.6)); }
+.xp-pop-gain small { font-size: 1.1rem; margin-left: 2px; }
+.xp-pop-parts { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0 12px; }
+.xp-pop-parts span { padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.14); font-size: 0.74rem; font-weight: 700; }
+.xp-pop-parts b { color: #ffd34d; }
+.xp-pop-level { display: flex; align-items: center; gap: 10px; }
+.xp-pop-badge { position: relative; display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; border-radius: 13px; line-height: 1;
+    background: linear-gradient(160deg, rgba(var(--accent-rgb), 1), rgba(var(--accent-rgb), 0.55)); border: 2px solid rgba(255, 214, 102, 0.8); box-shadow: 0 0 14px rgba(var(--accent-rgb), 0.6); }
+.xp-pop-badge small { position: absolute; top: 4px; font-size: 0.5rem; font-weight: 900; letter-spacing: 0.12em; opacity: 0.85; }
+.xp-pop-badge b { margin-top: 8px; font-size: 1.15rem; font-weight: 900; }
+.xp-pop-track { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.xp-pop-bar { position: relative; height: 12px; border-radius: 999px; overflow: hidden; background: rgba(255, 255, 255, 0.12); box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5); }
+.xp-pop-bar i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: linear-gradient(90deg, rgba(var(--accent-rgb), 1), #ffd34d); box-shadow: 0 0 10px rgba(255, 211, 77, 0.7); }
+.xp-pop-bar i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent); background-size: 50% 100%; background-repeat: no-repeat; animation: xp-shine 1.2s linear infinite; }
+.xp-pop-next { font-size: 0.7rem; font-weight: 700; color: rgba(255, 255, 255, 0.65); }
+.xp-pop-up { margin-top: 12px; text-align: center; font-size: 1.7rem; font-weight: 900; font-style: italic; letter-spacing: 0.02em;
+    color: #ffe27a; text-shadow: 0 2px 0 #7a3b00, 0 0 18px rgba(255, 200, 60, 0.85); }
+.xp-pop-up[hidden] { display: none; }
+.xp-pop.is-levelup .xp-pop-card { border-color: #ffd34d; box-shadow: 0 14px 40px rgba(10, 6, 30, 0.55), 0 0 40px rgba(255, 196, 64, 0.6); }
+.xp-pop.is-closing { opacity: 0; transform: translate(-50%, -16px); transition: opacity 0.3s ease, transform 0.3s ease; }
+@keyframes xp-shine { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+@keyframes xp-pop-in { 0% { opacity: 0; transform: translateY(-24px) scale(0.85); } 60% { opacity: 1; transform: translateY(4px) scale(1.04); } 100% { transform: none; } }
+@keyframes xp-sweep { to { transform: translateX(120%); } }
+@keyframes xp-chip-in { from { opacity: 0; transform: translateY(6px) scale(0.9); } to { opacity: 1; transform: none; } }
+@keyframes xp-gain-punch { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes xp-level-in { 0% { opacity: 0; transform: scale(0.4) rotate(-6deg); } 60% { opacity: 1; transform: scale(1.15) rotate(2deg); } 100% { transform: none; } }
+@keyframes xp-badge-flash { 0% { transform: scale(1); } 35% { transform: scale(1.3); box-shadow: 0 0 30px #ffd34d; } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: no-preference) {
+    .xp-pop-card { animation: xp-pop-in 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+    .xp-pop-card::after { animation: xp-sweep 0.9s ease-out 0.35s both; }
+    .xp-pop-parts span { animation: xp-chip-in 0.3s ease-out both; }
+    .xp-pop-gain.is-done { animation: xp-gain-punch 0.35s ease-out; }
+    .xp-pop-up { animation: xp-level-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; }
+    .xp-pop.is-levelup .xp-pop-badge { animation: xp-badge-flash 0.6s ease-out; }
+}
+@media (prefers-reduced-motion: reduce) { .xp-pop-bar i::after { animation: none; } }

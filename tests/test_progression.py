@@ -122,6 +122,12 @@ class RuleTests(unittest.TestCase):
 
 
 # ------------------------------------------------------------------ base de datos
+def xp_fx(html):
+    """Datos del aviso de XP de la página, o None."""
+    m = re.search(r'<script type="application/json" id="xpFxData">(.*?)</script>', html, re.S)
+    return json.loads(m.group(1)) if m else None
+
+
 class _XpCase(DbTestCase):
     def setUp(self):
         super().setUp()
@@ -367,9 +373,11 @@ class CheckinRouteTests(_XpCase):
     def test_checkin_gives_ten_xp_once_per_day(self):
         self.login(self.a)
         html = self.post().get_data(as_text=True)
-        self.assertIn("+10 XP", html)
+        fx = xp_fx(html)
+        self.assertEqual((fx["reason"], fx["gain"], fx["parts"]), ("Check-in", 10, [["Check-in", 10]]))
         html = self.post(sleep=2).get_data(as_text=True)
         self.assertIn("+0 XP", html)
+        self.assertIsNone(xp_fx(html))
         with app.app_context():
             rows = db.session.scalars(sa.select(DailyCheckin).where(DailyCheckin.user_id == self.a)).all()
         self.assertEqual(len(rows), 1)
@@ -434,6 +442,41 @@ class PagesTests(_XpCase):
         self.assertIn("+160 XP", html)
         self.assertIn("semana cumplida +40", html)
         self.assertLess(html.index("finish-hero"), html.index("finish-xp"))
+
+
+class XpPopupTests(_XpCase):
+    """Aviso de XP tipo videojuego en Inicio (xp_fx.js), no un flash."""
+
+    def finish(self, wid):
+        return self.client.post(f"/workout/{wid}/finish", data={
+            "performance_rating": 7, "performance_comment": "", "duration_hours": 1, "duration_minutes": 0,
+        }, follow_redirects=True).get_data(as_text=True)
+
+    def test_finishing_a_workout_shows_the_gain_once(self):
+        wid = self.add_workout(self.a, finished=False)
+        self.login(self.a)
+        fx = xp_fx(self.finish(wid))
+        self.assertEqual(fx["reason"], "Entreno terminado")
+        self.assertEqual(fx["gain"], 160)
+        self.assertEqual(fx["parts"], [["Entreno", 100], ["4 series", 20], ["Semana cumplida", 40]])
+        self.assertEqual((fx["from"]["level"], fx["to"]["level"]), (1, 1))
+        # Se consume: recargar Inicio no lo repite...
+        self.assertIsNone(xp_fx(self.client.get("/index").get_data(as_text=True)))
+        # ...y editar un entreno ya terminado no vuelve a "ganar" su XP.
+        self.assertIsNone(xp_fx(self.finish(wid)))
+
+    def test_level_up_is_part_of_the_popup(self):
+        self.add_workout(self.a, day_offset=-7)
+        self.add_workout(self.a, day_offset=-14)
+        self.add_workout(self.a, day_offset=-21)  # 3 x 160 = 480 XP: nivel 1
+        self.login(self.a)
+        self.client.get("/index")  # primer cálculo: fija el nivel visto sin avisar
+        wid = self.add_workout(self.a, finished=False)
+        fx = xp_fx(self.finish(wid))
+        self.assertEqual(fx["from"]["level"], 1)
+        self.assertEqual(fx["to"]["level"], 2)
+        self.assertEqual(fx["level_up"], 2)
+        self.assertNotIn("level-toast", self.client.get("/index").get_data(as_text=True))
 
 
 class CommandTests(_XpCase):

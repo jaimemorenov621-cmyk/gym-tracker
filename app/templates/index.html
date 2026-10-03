@@ -227,12 +227,10 @@
         </script>
     {% endif %}
 
-    {% if level_up %}
-        <a class="level-toast" href="{{ url_for('level_page') }}">
-            <span class="level-toast-badge">{{ level_up }}</span>
-            <span class="level-toast-text"><small>Has subido de nivel</small><strong>Nivel {{ level_up }}</strong></span>
-            {{ macros.icon('chevron-right', 18) }}
-        </a>
+    {% if xp_fx %}
+        {# Aviso de XP tipo videojuego: +N XP, barra y subida de nivel (xp_fx.js). #}
+        <script type="application/json" id="xpFxData">{{ xp_fx|tojson }}</script>
+        <script src="{{ url_for('static', filename='xp_fx.js') }}"></script>
     {% endif %}
 
     <div class="dashboard-panel">
