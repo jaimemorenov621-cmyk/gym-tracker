@@ -4049,3 +4049,14 @@ a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: upperca
     .xp-pop.is-levelup .xp-pop-badge { animation: xp-badge-flash 0.6s ease-out; }
 }
 @media (prefers-reduced-motion: reduce) { .xp-pop-bar i::after { animation: none; } }
+
+/* Título de pestaña + rueda de ajustes en la esquina (antes, pestaña "Más") */
+.tab-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0 14px; }
+.tab-title-row .tab-title { margin: 0; min-width: 0; }
+.tab-gear { display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; color: var(--color-text-soft);
+    background: var(--surface); border: 1px solid var(--border-subtle); text-decoration: none; transition: color 0.15s ease, transform 0.3s ease; }
+.tab-gear:hover, .tab-gear:focus-visible { color: var(--accent); }
+.tab-gear:active { transform: rotate(45deg); }
+.settings-more { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+.settings-more .form-section-title { margin: 0 0 4px; }
+.settings-more .settings-more-link { display: flex; align-items: center; gap: 10px; justify-content: flex-start; width: 100%; box-sizing: border-box; min-height: 46px; margin: 0; padding: 10px 14px; font-size: 0.92rem; text-decoration: none; }

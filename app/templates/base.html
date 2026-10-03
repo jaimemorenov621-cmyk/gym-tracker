@@ -142,44 +142,7 @@
                 <span class="nav-icon-wrap">{{ macros.icon('shield', 22) }}</span>
                 <span>Rango</span>
             </a>
-            <div class="bottom-nav-item bottom-nav-profile">
-                <button type="button" class="bottom-nav-profile-btn{% if request.endpoint == 'settings' %} active{% endif %}" onclick="toggleProfileMenu()">
-                    <span class="nav-icon-wrap">{{ macros.icon('user', 22) }}</span>
-                    <span>Más</span>
-                </button>
-                <div class="bottom-nav-profile-menu" id="bottomNavProfileMenu">
-                    <a href="{{ url_for('achievements_page') }}" onclick="closeProfileMenu()">{{ macros.icon('trophy', 18) }}<span>Logros</span></a>
-                    <a href="{{ url_for('settings') }}" onclick="closeProfileMenu()">{{ macros.icon('settings', 18) }}<span>Configuración</span></a>
-                    <a href="{{ url_for('logout') }}" class="danger" onclick="closeProfileMenu()">{{ macros.icon('log-out', 18) }}<span>Salir</span></a>
-                </div>
-            </div>
         </nav>
-        <script>
-            function toggleProfileMenu() {
-                document.getElementById('bottomNavProfileMenu').classList.toggle('open');
-            }
-            function closeProfileMenu() {
-                document.getElementById('bottomNavProfileMenu').classList.remove('open');
-            }
-            document.addEventListener('click', function (e) {
-                const wrap = document.querySelector('.bottom-nav-profile');
-                if (wrap && !wrap.contains(e.target)) {
-                    document.getElementById('bottomNavProfileMenu').classList.remove('open');
-                }
-            });
-
-            // :active por sí solo no se pinta de forma fiable en todos los
-            // Android/WebView al tocar -- se fuerza a mano con touchstart/
-            // touchend, en vez de depender de que el navegador lo aplique.
-            document.querySelectorAll('.bottom-nav-profile-btn, .bottom-nav-profile-menu a').forEach(function (el) {
-                el.addEventListener('touchstart', function () { el.classList.add('touch-pressed'); }, { passive: true });
-                ['touchend', 'touchcancel'].forEach(function (evt) {
-                    el.addEventListener(evt, function () {
-                        setTimeout(function () { el.classList.remove('touch-pressed'); }, 150);
-                    });
-                });
-            });
-        </script>
     {% endif %}
 
     {% if active_workout and request.endpoint not in ("new_workout", "workout_detail", "index") %}

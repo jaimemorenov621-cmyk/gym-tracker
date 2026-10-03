@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    {{ macros.tab_title('Configuración', 'settings') }}
+    {{ macros.tab_title('Configuración', 'settings', gear=False) }}
 
     {# Apariencia: preferencia de este dispositivo (localStorage), no de la cuenta. #}
     <div class="form-ui card card-elevated">
@@ -130,4 +130,12 @@
 
         {{ form.submit(class="btn form-submit") }}
     </form>
+
+    {# Lo que antes estaba en la pestaña "Más" #}
+    <div class="card card-elevated settings-more">
+        <h3 class="form-section-title">Más</h3>
+        <a class="btn-outline settings-more-link" href="{{ url_for('achievements_page') }}">{{ macros.icon('trophy', 18) }}<span>Logros</span></a>
+        <a class="btn-outline settings-more-link" href="{{ url_for('privacy') }}">{{ macros.icon('shield', 18) }}<span>Privacidad</span></a>
+        <a class="btn-danger-outline settings-more-link" href="{{ url_for('logout') }}">{{ macros.icon('log-out', 18) }}<span>Cerrar sesión</span></a>
+    </div>
 {% endblock %}
