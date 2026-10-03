@@ -44,6 +44,26 @@
         </div>
     {% endif %}
 
+    {# XP: una línea sobria DEBAJO del resumen profesional. #}
+    {% if xp_preview %}
+        {% set x = xp_preview.workout %}
+        <a class="finish-xp" href="{{ url_for('level_page') }}">
+            <span class="finish-xp-main">
+                <b>{{ '+' if xp_preview.gain >= 0 }}{{ xp_preview.gain }} XP</b>
+                <span>
+                    {%- set bits = [] -%}
+                    {%- if x.workout %}{% set _ = bits.append('entreno +' ~ x.workout) %}{% endif -%}
+                    {%- if x.sets_n %}{% set _ = bits.append(x.sets_n ~ ' serie' ~ ('' if x.sets_n == 1 else 's') ~ ' +' ~ x.sets) %}{% endif -%}
+                    {%- if x.prs_n %}{% set _ = bits.append(x.prs_n ~ ' récord' ~ ('' if x.prs_n == 1 else 's') ~ ' +' ~ x.prs) %}{% endif -%}
+                    {%- if xp_preview.bonus %}{% set _ = bits.append('semana cumplida +' ~ xp_preview.bonus) %}{% endif -%}
+                    {{ bits|join(' · ') if bits else 'Sin XP en este entreno' }}
+                </span>
+            </span>
+            <span class="finish-xp-week">{{ xp_preview.week_days }} día{{ '' if xp_preview.week_days == 1 else 's' }} esta semana (mín. {{ xp_preview.minimum }})</span>
+            {% if x.notes %}<small class="finish-xp-note">{{ x.notes|join(' · ')|capitalize }}.</small>{% endif %}
+        </a>
+    {% endif %}
+
     <form action="" method="post" class="card card-elevated finish-form" onsubmit="return validateFinish(this);">
         {{ form.hidden_tag() }}
 

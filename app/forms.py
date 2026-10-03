@@ -10,6 +10,7 @@ from wtforms import (
     TextAreaField,
     HiddenField,
     SelectMultipleField,
+    RadioField,
 )
 from wtforms.widgets import CheckboxInput, ListWidget
 
@@ -111,6 +112,23 @@ class AiCheckinForm(FlaskForm):
         validators=[Optional(), Length(max=500)],
     )
     submit = SubmitField("🔍 Analizar mi progreso")
+
+
+class RecoveryCheckinForm(FlaskForm):
+    """Check-in de recuperación (≤ 30 s). Valoración autodeclarada."""
+    sleep = RadioField(
+        "Sueño", coerce=int, validators=[InputRequired()],
+        choices=[(1, "Fatal"), (2, "Mal"), (3, "Normal"), (4, "Bien"), (5, "Genial")],
+    )
+    energy = RadioField(
+        "Energía", coerce=int, validators=[InputRequired()],
+        choices=[(1, "Muy baja"), (2, "Baja"), (3, "Normal"), (4, "Alta"), (5, "Muy alta")],
+    )
+    soreness = RadioField(
+        "Agujetas", coerce=int, validators=[InputRequired()],
+        choices=[(0, "Nada"), (1, "Leves"), (2, "Moderadas"), (3, "Fuertes")],
+    )
+    submit = SubmitField("Guardar check-in")
 
 
 class WeightForm(FlaskForm):

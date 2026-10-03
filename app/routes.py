@@ -28,6 +28,7 @@ from app.forms import (
     WeightForm,
     AiCheckinForm,
     NotesForm,
+    RecoveryCheckinForm,
 )
 from app.models import (
     User,
@@ -44,10 +45,12 @@ from app.models import (
     BodyWeightEntry,
     WeeklyGoalHistory,
     UserAchievement,
+    DailyCheckin,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from app import achievements, usage
 from app import strength_standards as standards
+from app import progression
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
@@ -125,6 +128,51 @@ def achievements_page():
 @app.route("/privacy")
 def privacy():
     return render_template("privacy.html", title="Política de privacidad")
+
+
+@app.route("/checkin", methods=["POST"])
+@login_required
+def recovery_checkin():
+    """Check-in de recuperación del día (uno por día; reenviarlo lo
+    actualiza). Valoración autodeclarada: da XP y contexto, nunca bloquea."""
+    form = RecoveryCheckinForm()
+    if not form.validate_on_submit():
+        flash("Marca sueño, energía y agujetas para guardar el check-in.")
+        return redirect(url_for("index"))
+    before = progression.current_xp(current_user.id)
+    checkin = progression.today_checkin(current_user.id)
+    if checkin is None:
+        checkin = DailyCheckin(user_id=current_user.id, day=usage.local_today(),
+                               sleep=0, energy=0, soreness=0)
+        db.session.add(checkin)
+    checkin.sleep, checkin.energy, checkin.soreness = form.sleep.data, form.energy.data, form.soreness.data
+    db.session.commit()
+    gained = progression.current_xp(current_user.id) - before
+    if gained > 0:
+        flash(f"Check-in guardado · +{gained} XP")
+    else:
+        flash("Check-in actualizado (+0 XP: ya lo habías hecho hoy).")
+    session["checkin_saved"] = True
+    return redirect(url_for("index"))
+
+
+@app.route("/nivel")
+@login_required
+def level_page():
+    """Nivel y XP con TODO documentado: reglas y su versión, topes, curva y
+    desglose semanal."""
+    report, _ = progression.refresh_xp(current_user.id)
+    weeks = list(report.weeks.items())[:12]
+    return render_template(
+        "level.html",
+        title="Nivel",
+        xp=progression.level_for(report.total),
+        weeks=weeks,
+        profile=standards.strength_profile(current_user),
+        p=progression,
+        curve=[(lvl, progression.xp_to_reach(lvl), progression.xp_to_reach(lvl + 1) - progression.xp_to_reach(lvl))
+               for lvl in range(1, 31)],
+    )
 
 
 @app.route("/healthz")
@@ -709,6 +757,19 @@ def index():
     ) is None and workouts:
         check_achievements()
 
+    # Nivel de fuerza global: reutiliza las series y pesos ya cargados.
+    profile = standards.strength_profile(
+        current_user,
+        rows=[(w, s) for w in reversed(workouts) for s in sets_by_workout.get(w.id, [])],
+        weights=weight_entries,
+    )
+    # XP: de la caché si está al día (normalmente no recalcula nada).
+    xp_total = progression.current_xp(current_user.id)
+    cta = home_cta(current_user)
+    checkin = progression.today_checkin(current_user.id)
+    just_checked_in = session.pop("checkin_saved", False)
+    show_facts = cta["kind"] == "rest" or just_checked_in
+
     return render_template(
         "index.html",
         title="Inicio",
@@ -726,8 +787,15 @@ def index():
         muscle_colors=compute_muscle_intensity(),
         muscle_svg=muscle_svg_markup(current_user.sex),
         notes_form=notes_form,
-        home_cta=home_cta(current_user),
+        home_cta=cta,
         new_achievements=achievements.unseen(current_user.id),
+        profile=profile,
+        xp=progression.level_for(xp_total),
+        level_up=progression.level_up_notice(current_user.id, xp_total),
+        checkin=checkin,
+        checkin_form=RecoveryCheckinForm(),
+        just_checked_in=just_checked_in,
+        rest_facts=progression.rest_day_facts(current_user.id, cta.get("routine")) if show_facts else None,
         achievements_unlocked=db.session.scalar(
             sa.select(sa.func.count()).select_from(UserAchievement).where(UserAchievement.user_id == current_user.id)
         ),
@@ -1386,6 +1454,7 @@ def finish_workout(workout_id):
         form=form,
         workout=workout,
         summary=workout_summary(workout),
+        xp_preview=progression.workout_xp_preview(current_user.id, workout.id),
         duration_estimated_from=duration_estimated_from,
         duration_suspicious=duration_suspicious,
         rating_choices=[
@@ -2143,6 +2212,7 @@ def delete_routine(routine_id):
         sa.update(Workout)
         .where(Workout.routine_id == routine.id)
         .values(routine_id=None)
+        .execution_options(xp_irrelevant=True)  # el XP no depende de la rutina
     )
     db.session.delete(routine)
     db.session.commit()
@@ -3073,6 +3143,16 @@ def generate_ai_analysis(how_you_feel=None):
         if w["comment"]:
             parts.append(f"comentario: {w['comment']}")
         lines.append("- " + " · ".join(parts))
+
+    checkins = progression.recent_checkins(current_user.id, days=14)
+    if checkins:
+        lines.append("")
+        lines.append(
+            "Check-in de recuperación de los últimos 14 días (valoración SUBJETIVA AUTODECLARADA por el usuario, "
+            "no medida; úsala como contexto, no como dato objetivo). Sueño y energía 1-5, agujetas 0-3:"
+        )
+        for c in checkins:
+            lines.append(f"- {c.day.strftime('%d/%m')}: sueño {c.sleep}, energía {c.energy}, agujetas {c.soreness}")
 
     if how_you_feel:
         lines.append("")

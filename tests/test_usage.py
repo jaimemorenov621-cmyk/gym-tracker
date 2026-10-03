@@ -147,8 +147,24 @@ class RestDayReportTests(DbTestCase):
         self.assertEqual(week["opened"], 3)  # a: d1, d4; b: d5
         self.assertEqual(week["a"], round(100 * 3 / 11))
         self.assertEqual(week["opened_no_checkin"], 3)
-        self.assertIsNone(week["b"])  # el check-in aún no existe
+        self.assertEqual(week["b"], 0)  # nadie hizo check-in
         self.assertEqual(sorted(u["rest"] for u in week["per_user"]), [5, 6])
+
+    def test_checkin_counts_for_b_and_not_for_a_prime(self):
+        from app.models import DailyCheckin
+
+        d = lambda i: self.MONDAY + timedelta(days=i)
+        self.train(self.a, d(0))
+        self.opened(self.a, d(0), d(1), d(2))  # se mide desde el lunes (día entrenado)
+        with app.app_context():
+            db.session.add(DailyCheckin(user_id=self.a, day=d(1), sleep=3, energy=3, soreness=1))
+            db.session.commit()
+        week = self.report()["weeks"][0]
+        self.assertEqual(week["rest"], 6)
+        self.assertEqual(week["opened"], 2)
+        self.assertEqual(week["opened_no_checkin"], 1)  # d2
+        self.assertEqual(week["checkin"], 1)
+        self.assertEqual(week["b"], round(100 / 6))
 
     def test_report_starts_at_first_tracked_day(self):
         d = lambda i: self.MONDAY + timedelta(days=i)
