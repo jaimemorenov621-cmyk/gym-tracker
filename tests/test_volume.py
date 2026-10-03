@@ -111,5 +111,69 @@ class WeeklyVolumeTests(DbTestCase):
         self.assertNotIn("recuperado", html.lower())
 
 
+class PersonalRangeTests(DbTestCase):
+    TODAY = date(2026, 6, 30)
+
+    def setUp(self):
+        super().setUp()
+        self.uid = self.make_user("atleta")
+        with app.app_context():
+            db.session.add(Exercise(id="Bench_Press", name="Bench Press", name_es="Press de banca",
+                                    primary_muscles="chest", secondary_muscles="triceps"))
+            db.session.commit()
+
+    def build(self, pattern, rounds):
+        """Una sesión por semana. El cambio de 1RM de cada sesión depende de las
+        series de la sesión anterior (12 -> +2 %, 8 -> +0,5 %, 20 -> -0,5 %)."""
+        effect = {12: 0.02, 8: 0.005, 20: -0.005}
+        counts = pattern * rounds
+        weight = 100.0
+        start = self.TODAY - timedelta(weeks=len(counts))
+        with app.app_context():
+            for i, n in enumerate(counts + [12]):
+                if i:
+                    weight *= 1 + effect[counts[i - 1]]
+                when = datetime.combine(start + timedelta(weeks=i), time(18, 0), tzinfo=MADRID)
+                w = Workout(user_id=self.uid, timestamp=when.astimezone(timezone.utc).replace(tzinfo=None))
+                db.session.add(w)
+                db.session.flush()
+                for _ in range(n):
+                    db.session.add(SetEntry(workout_id=w.id, exercise="press de banca", weight=round(weight, 2),
+                                            reps=1, rir=0, completed=True))
+            db.session.commit()
+
+    def test_learns_the_sweet_spot_and_the_ceiling(self):
+        self.build([12, 8, 20], 5)
+        with app.app_context():
+            ranges = volume.personal_ranges(self.uid, today=self.TODAY)
+            vol = volume.weekly_volume(self.uid, today=self.TODAY, personal=ranges)
+        chest = ranges["pecho"]
+        self.assertEqual((chest["low"], chest["high"]), (10, 14))
+        self.assertEqual(chest["over_from"], 18)
+        self.assertAlmostEqual(chest["gain_pct"], 2.0, places=1)
+        self.assertEqual(chest["confidence"], "baja")
+        item = next(i for i in vol["items"] if i["group"] == "pecho")
+        self.assertEqual(item["status"], "ok")          # 12 series dentro de su 10-14
+        self.assertTrue(item["personal"])
+        triceps = next(i for i in vol["items"] if i["group"] == "triceps")
+        self.assertFalse(triceps["personal"])           # sin ejercicios principales: rango por defecto
+        self.assertEqual((triceps["low"], triceps["high"]), (10, 20))
+
+    def test_not_enough_data_keeps_the_default_range(self):
+        self.build([12, 8], 2)
+        with app.app_context():
+            self.assertEqual(volume.personal_ranges(self.uid, today=self.TODAY), {})
+
+    def test_map_colors_cover_every_group(self):
+        from app.routes import MUSCLE_GROUPS
+
+        self.build([12, 8, 20], 5)
+        with app.app_context():
+            colors = volume.map_colors(volume.weekly_volume(self.uid, today=self.TODAY))
+        self.assertEqual(set(colors), set(MUSCLE_GROUPS))
+        self.assertEqual(colors["pecho"], volume.MAP_COLORS["ok"])
+        self.assertEqual(colors["dorsales"], volume.MAP_COLORS["none"])
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -291,7 +291,10 @@
                     <svg viewBox="0 0 724 1448" aria-hidden="true" class="mm-figure">{{ muscle_svg.front }}</svg>
                     <svg viewBox="724 0 724 1448" aria-hidden="true" class="mm-figure">{{ muscle_svg.back }}</svg>
                 </div>
-                <span class="dash-muscle-caption">Frente · Espalda — últimos 14 días</span>
+                <a class="dash-muscle-caption" href="{{ url_for('progress') }}#volumen">
+                    <span><i class="vol-dot low"></i>Corto</span><span><i class="vol-dot ok"></i>En tu rango</span><span><i class="vol-dot high"></i>Te pasas</span>
+                    <small>Series de los últimos 7 días frente a tu rango →</small>
+                </a>
             </div>
             <div class="dash-calendar" id="dashCalendar">
                 <div class="calendar-grid">

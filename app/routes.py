@@ -866,7 +866,9 @@ def index():
         latest_weight=latest_weight,
         weight_chart_labels=[to_local(e.timestamp).strftime("%d/%m") for e in weight_entries],
         weight_chart_values=[e.weight for e in weight_entries],
-        muscle_colors=compute_muscle_intensity(),
+        # Mapa: series duras de 7 días frente a TU rango (personal si hay
+        # datos, si no el respaldado de 10-20), no frente a tu músculo más entrenado.
+        muscle_colors=volume_mod.map_colors(volume_mod.weekly_volume(current_user.id)),
         muscle_svg=muscle_svg_markup(current_user.sex),
         notes_form=notes_form,
         home_cta=cta,

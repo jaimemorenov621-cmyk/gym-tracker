@@ -3795,7 +3795,7 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .std-defs li { margin-bottom: 4px; }
 
 /* ===== Volumen semanal por músculo (progress.html) ===== */
-:root { --vol-base: #e4e1f0; --vol-none: #d4d0e6; --vol-low: #f4b740; --vol-ok: #22c98c; --vol-high: #5b8def; }
+:root { --vol-base: #e4e1f0; --vol-none: #d4d0e6; --vol-low: #f4b740; --vol-ok: #22c98c; --vol-high: #e5484d; }
 :root[data-theme="dark"] { --vol-base: #3a3550; --vol-none: #4a4466; }
 .vol-card { margin-top: 16px; }
 .vol-map .mm-row { display: flex; justify-content: center; gap: 12px; }
@@ -3813,11 +3813,11 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .vol-row-top b { white-space: nowrap; }
 .vol-row-top b.vol-low { color: #8a5a00; }
 .vol-row-top b.vol-ok { color: var(--color-success-text); }
-.vol-row-top b.vol-high { color: #2952b3; }
+.vol-row-top b.vol-high { color: #c62828; }
 .vol-row-top b.vol-none { color: var(--color-text-muted); }
 :root[data-theme="dark"] .vol-row-top b.vol-low { color: #ffd27a; }
 :root[data-theme="dark"] .vol-row-top b.vol-ok { color: #5cf0b4; }
-:root[data-theme="dark"] .vol-row-top b.vol-high { color: #a9c2ff; }
+:root[data-theme="dark"] .vol-row-top b.vol-high { color: #ff8a8a; }
 .vol-bar { position: relative; height: 6px; margin: 6px 0 4px; border-radius: 999px; background: var(--color-surface-active); overflow: hidden; }
 .vol-band { position: absolute; left: 40%; width: 40%; top: 0; bottom: 0; background: rgba(34, 201, 140, 0.18); }
 .vol-bar i { position: relative; display: block; height: 100%; border-radius: inherit; }
@@ -3892,3 +3892,12 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .alias-name small { font-size: 0.75rem; color: var(--color-text-muted); }
 .alias-list button { min-height: 40px; flex-shrink: 0; }
 .alias-empty { margin: 0; color: var(--color-text-muted); }
+
+.vol-personal { color: var(--color-brand-dark); }
+.vol-personal-box { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--color-surface-active); font-size: 0.82rem; line-height: 1.45; }
+.vol-personal-box ul { margin: 6px 0 0; padding-left: 18px; }
+.vol-personal-box small { color: var(--color-text-muted); }
+a.dash-muscle-caption { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 10px; color: var(--color-text-muted); text-decoration: none; font-size: 0.72rem; }
+a.dash-muscle-caption span { display: inline-flex; align-items: center; gap: 4px; }
+a.dash-muscle-caption small { flex-basis: 100%; text-align: center; font-size: 0.72rem; }
+.dash-muscle-caption .vol-dot { width: 8px; height: 8px; }

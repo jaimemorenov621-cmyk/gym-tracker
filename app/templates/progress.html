@@ -233,15 +233,14 @@
         <div class="strength-head">
             <div>
                 <h2>Volumen semanal por músculo</h2>
-                <p>Series duras de los últimos 7 días frente al rango de {{ volume_mod.LOW }}-{{ volume_mod.HIGH }}</p>
+                <p>Series duras de los últimos 7 días frente a tu rango (el respaldado de {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} hasta que la app aprenda el tuyo)</p>
             </div>
         </div>
         {% if volume.hard_sets %}
-            {% set colors = {'none': 'var(--vol-none)', 'low': 'var(--vol-low)', 'ok': 'var(--vol-ok)', 'high': 'var(--vol-high)'} %}
             <div class="vol-map">
                 <style>
                     .vol-map .mm-neutral { fill: var(--vol-base); }
-                    {% for group, status in volume.status.items() %}.vol-map .mm-{{ group }} { fill: {{ colors[status] }}; }
+                    {% for group, color in volume_mod.map_colors(volume).items() %}.vol-map .mm-{{ group }} { fill: {{ color }}; }
                     {% endfor %}
                 </style>
                 <div class="mm-row">
@@ -250,9 +249,9 @@
                 </div>
             </div>
             <div class="vol-legend">
-                <span><i class="vol-dot low"></i>Menos de {{ volume_mod.LOW }}</span>
-                <span><i class="vol-dot ok"></i>{{ volume_mod.LOW }}-{{ volume_mod.HIGH }}</span>
-                <span><i class="vol-dot high"></i>Más de {{ volume_mod.HIGH }}</span>
+                <span><i class="vol-dot low"></i>Por debajo</span>
+                <span><i class="vol-dot ok"></i>En tu rango</span>
+                <span><i class="vol-dot high"></i>Te pasas</span>
                 <span><i class="vol-dot none"></i>Sin series</span>
             </div>
             <ul class="vol-list">
@@ -263,10 +262,13 @@
                             <b class="vol-{{ g.status }}">{{ g.last7|num }} serie{{ '' if g.last7 == 1 else 's' }}</b>
                         </div>
                         <div class="vol-bar" aria-hidden="true">
-                            <span class="vol-band"></span>
+                            <span class="vol-band" style="left: {{ g.band_left }}%; width: {{ g.band_width }}%"></span>
                             <i class="vol-{{ g.status }}" style="width: {{ g.bar_pct }}%"></i>
                         </div>
-                        <small>Media 4 semanas: {{ g.avg4|num }}</small>
+                        <small>
+                            {% if g.personal %}<b class="vol-personal">Tu rango {{ g.low }}-{{ g.high if g.high is not none else '+' }}</b>{% else %}{{ g.low }}-{{ g.high }}{% endif %}
+                            · media {{ g.avg4|num }}/sem
+                        </small>
                     </li>
                 {% endfor %}
             </ul>
@@ -279,6 +281,40 @@
         {% else %}
             <p class="progress-footnote" style="margin:8px 0 0;">Sin series duras en las últimas 4 semanas.</p>
         {% endif %}
+        {% set personal = volume['items']|selectattr('personal')|list %}
+        {% if personal %}
+            <div class="vol-personal-box">
+                <strong>Tu punto dulce estimado</strong>
+                <ul>
+                    {% for g in personal %}
+                        {% set p = g.personal %}
+                        <li>
+                            <b>{{ g.label }}</b>: {{ p.low }}-{{ p.high if p.high is not none else '+' }} series/semana
+                            {% if p.rir is not none %}a RIR ≈ {{ p.rir|round(1)|num }}{% endif %}
+                            · progreso medio {{ '+' if p.gain_pct >= 0 else '' }}{{ p.gain_pct|num }} % por sesión
+                            {% if p.over_from is not none %}· por encima de {{ p.over_from }} progresaste menos{% endif %}
+                            <small>(confianza {{ p.confidence }}, {{ p.n }} mediciones)</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% else %}
+            <p class="progress-footnote">Con unas semanas más de datos, la app estimará tu propio rango para cada músculo.</p>
+        {% endif %}
+        <details class="strength-how">
+            <summary>¿Cómo aprende la app tu rango?</summary>
+            <p>
+                Cada persona tolera y aprovecha un volumen distinto. Cada vez que repites un ejercicio, la app mira cuánto
+                cambió tu 1RM estimado frente a la vez anterior y cuántas series duras hiciste de ese músculo los 7 días
+                previos. Agrupa esas mediciones por tramos de volumen (menos de 6, 6-10, 10-14, 14-18, 18-22 y más de 22
+                series) y tu punto dulce es el tramo en el que más progresaste, con el RIR medio con el que entrenaste ahí.
+            </p>
+            <p>
+                Necesita al menos 12 mediciones y 2 tramos con 4 o más; hasta entonces usa el rango de 10-20. Es una
+                <b>estimación</b>: el progreso también depende del sueño, la comida o las descargas, y el 1RM mide fuerza,
+                no tamaño muscular. Por eso se muestra la confianza y se recalcula con tus últimas 26 semanas.
+            </p>
+        </details>
         <details class="strength-how">
             <summary>¿De dónde sale el rango de {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} series?</summary>
             <p>

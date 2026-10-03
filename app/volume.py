@@ -57,14 +57,144 @@ def is_hard_set(entry):
     return True
 
 
-def status_for(sets):
+def status_for(sets, low=LOW, high=HIGH):
     if sets <= 0:
         return "none"
-    if sets < LOW:
+    if sets < low:
         return "low"
-    if sets <= HIGH:
+    if high is None or sets <= high:
         return "ok"
     return "high"
+
+
+# ------------------------------------------------------------ rango personal
+# Cada persona responde distinto al volumen. Con tus datos, para cada grupo:
+# cada vez que repites un ejercicio cuyo músculo PRINCIPAL es ese grupo, se
+# mide el cambio de tu 1RM estimado frente a la sesión anterior (hasta 21
+# días antes) y se anota el volumen (series duras) que hiciste de ese grupo
+# en los 7 días previos. Se agrupan esas mediciones por tramos de volumen y
+# tu "punto dulce" es el tramo en que más progresaste. Requisitos: 12
+# mediciones y al menos 2 tramos con 4 o más. Es una CORRELACIÓN (influyen
+# sueño, dieta, descargas...) y el 1RM mide fuerza, no tamaño: la app lo
+# presenta como estimación, con su confianza, y hasta tener datos usa 10-20.
+PERSONAL_WEEKS = 26
+MIN_PAIRS = 12
+MIN_PER_BIN = 4
+MAX_GAP_DAYS = 21
+BINS = [(0, 6), (6, 10), (10, 14), (14, 18), (18, 22), (22, None)]
+_CHANGE_CAP = 0.2
+_WORSE_BY = 0.005  # medio punto por sesión menos que el mejor tramo
+
+
+def _bin_of(sets):
+    for lo, hi in BINS:
+        if hi is None or sets < hi:
+            return (lo, hi)
+    return BINS[-1]
+
+
+def _rir_of(entry):
+    if entry.rir is not None:
+        return entry.rir
+    if entry.rpe is not None:
+        return 10 - entry.rpe
+    return None
+
+
+def personal_ranges(user_id, today=None):
+    """{grupo: estimación} para los grupos con datos suficientes."""
+    import math
+
+    from app.routes import estimated_1rm, is_real_set, latest_bodyweight, prefetch_catalog_exercises, to_local
+    from app.usage import local_today
+
+    today = today or local_today()
+    first_day = today - timedelta(weeks=PERSONAL_WEEKS)
+    since = datetime.combine(first_day - timedelta(days=1), datetime.min.time())
+    rows = db.session.execute(
+        sa.select(
+            Workout.timestamp, SetEntry.exercise, SetEntry.weight, SetEntry.reps,
+            SetEntry.rir, SetEntry.rpe, SetEntry.set_type, SetEntry.completed,
+        )
+        .join(Workout, Workout.id == SetEntry.workout_id)
+        .where(Workout.user_id == user_id, Workout.timestamp >= since)
+    ).all()
+    if not rows:
+        return {}
+    prefetch_catalog_exercises({r.exercise for r in rows})
+    bw = latest_bodyweight(user_id)
+
+    daily_sets = defaultdict(lambda: defaultdict(float))   # grupo -> día -> series
+    daily_rir = defaultdict(lambda: defaultdict(list))     # grupo -> día -> [rir]
+    best = defaultdict(dict)                               # ejercicio -> día -> mejor 1RM
+    primary = {}
+    cache = {}
+    for r in rows:
+        d = to_local(r.timestamp).date()
+        if d < first_day:
+            continue
+        if r.exercise not in cache:
+            cache[r.exercise] = _groups_for(r.exercise)
+            primary[r.exercise] = [g for g, w in cache[r.exercise] if w == 1.0]
+        groups = cache[r.exercise]
+        if not groups:
+            continue
+        if is_hard_set(r):
+            rir = _rir_of(r)
+            for g, w in groups:
+                daily_sets[g][d] += w
+                if rir is not None and w == 1.0:
+                    daily_rir[g][d].append(rir)
+        if is_real_set(r) and (r.set_type or "normal") != "calentamiento":
+            e = estimated_1rm(r, bw)
+            if e > best[r.exercise].get(d, 0):
+                best[r.exercise][d] = e
+
+    pairs = defaultdict(list)  # grupo -> [(series 7 días antes, cambio, rir medio)]
+    for exercise, by_day in best.items():
+        days = sorted(by_day)
+        for d0, d1 in zip(days, days[1:]):
+            if (d1 - d0).days > MAX_GAP_DAYS or by_day[d0] <= 0:
+                continue
+            change = max(-_CHANGE_CAP, min(_CHANGE_CAP, math.log(by_day[d1] / by_day[d0])))
+            window = [d1 - timedelta(days=i) for i in range(1, 8)]
+            for g in primary.get(exercise, []):
+                vol = sum(daily_sets[g].get(d, 0.0) for d in window)
+                rirs = [x for d in window for x in daily_rir[g].get(d, [])]
+                pairs[g].append((vol, change, sum(rirs) / len(rirs) if rirs else None))
+
+    out = {}
+    for g, items in pairs.items():
+        if len(items) < MIN_PAIRS:
+            continue
+        bins = defaultdict(list)
+        for vol, change, rir in items:
+            bins[_bin_of(vol)].append((change, rir))
+        stats = {
+            b: {
+                "n": len(v),
+                "mean": sum(c for c, _ in v) / len(v),
+                "rir": (lambda xs: sum(xs) / len(xs) if xs else None)([x for _, x in v if x is not None]),
+            }
+            for b, v in bins.items()
+        }
+        usable = {b: st for b, st in stats.items() if st["n"] >= MIN_PER_BIN}
+        if len(usable) < 2:
+            continue
+        sweet = max(usable, key=lambda b: usable[b]["mean"])
+        worse_above = [b for b in usable if b[0] > sweet[0] and usable[b]["mean"] < usable[sweet]["mean"] - _WORSE_BY]
+        n = len(items)
+        out[g] = {
+            "low": sweet[0],
+            "high": sweet[1],               # None = "o más" (aún sin techo visto)
+            "n": n,
+            "confidence": "alta" if n >= 40 else ("media" if n >= 20 else "baja"),
+            "gain_pct": (math.exp(usable[sweet]["mean"]) - 1) * 100,
+            "rir": usable[sweet]["rir"],
+            "over_from": min((b[0] for b in worse_above), default=None),
+            "bins": {f"{b[0]}-{b[1] if b[1] is not None else '+'}": st for b, st in sorted(usable.items())},
+        }
+    return out
 
 
 def _groups_for(exercise_name):
@@ -87,7 +217,7 @@ def _groups_for(exercise_name):
     return list(weights.items())
 
 
-def weekly_volume(user_id, today=None):
+def weekly_volume(user_id, today=None, personal=None):
     from app.progression import MUSCLE_GROUP_LABELS
     from app.routes import MUSCLE_GROUPS, prefetch_catalog_exercises, to_local
     from app.usage import local_today
@@ -128,19 +258,28 @@ def weekly_volume(user_id, today=None):
             if recent:
                 last7[group] += weight
 
+    if personal is None:
+        personal = personal_ranges(user_id, today=today)
     items = []
     for group in MUSCLE_GROUPS:
         if group not in MAIN_GROUPS and not total.get(group):
             continue
         sets7 = last7.get(group, 0.0)
+        own = personal.get(group)
+        low, high = (own["low"], own["high"]) if own else (LOW, HIGH)
         items.append({
             "group": group,
             "label": MUSCLE_GROUP_LABELS.get(group, group),
             "last7": sets7,
             "avg4": total.get(group, 0.0) / WEEKS,
-            "status": status_for(sets7),
-            # Barra de 0 a 25 series: 10 y 20 caen en el 40 % y el 80 %.
+            "low": low,
+            "high": high,
+            "personal": own,
+            "status": status_for(sets7, low, high),
+            # Barra de 0 a 25 series, con la banda del rango (personal o 10-20).
             "bar_pct": round(min(sets7, 25) / 25 * 100),
+            "band_left": round(min(low, 25) / 25 * 100),
+            "band_width": round((min(high if high is not None else 25, 25) - min(low, 25)) / 25 * 100),
         })
     return {
         "items": items,
@@ -151,3 +290,31 @@ def weekly_volume(user_id, today=None):
         "hard_sets": hard_sets,
         "counts": {s: sum(1 for g in items if g["status"] == s) for s in ("none", "low", "ok", "high")},
     }
+
+
+# Colores del mapa (inicio y Progreso). Por debajo del rango, el ámbar se
+# intensifica según lo cerca que estés del mínimo.
+MAP_COLORS = {"none": "#d9d5ef", "ok": "#22c98c", "high": "#e5484d"}
+
+
+def _mix(a, b, t):
+    a = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    b = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(f"{round(x + (y - x) * t):02x}" for x, y in zip(a, b))
+
+
+def map_colors(volume):
+    """{grupo: color} para TODOS los grupos del mapa."""
+    from app.routes import MUSCLE_GROUPS
+
+    by_group = {i["group"]: i for i in volume["items"]}
+    colors = {}
+    for g in MUSCLE_GROUPS:
+        item = by_group.get(g)
+        status = item["status"] if item else "none"
+        if status == "low":
+            t = min(1.0, item["last7"] / item["low"]) if item["low"] else 1.0
+            colors[g] = _mix("#f9e3b0", "#f0a020", t)
+        else:
+            colors[g] = MAP_COLORS[status]
+    return colors
