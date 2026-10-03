@@ -3974,3 +3974,14 @@ a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: upperca
     @keyframes rank-rays { to { transform: rotate(360deg); } }
     @keyframes rank-spark { 0% { opacity: 0; transform: rotate(var(--a)) translateY(0) scale(0.4); } 25% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--a)) translateY(-120px) scale(1); } }
 }
+
+/* Rango de series y repeticiones en la fila de la rutina (mín – máx). */
+.plan-range { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.plan-range > span { font-size: 0.68rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.plan-range-inputs { display: flex; align-items: center; gap: 3px; }
+.plan-range-inputs > span { color: var(--color-text-muted); font-weight: 700; }
+.plan-range input { width: 40px; box-sizing: border-box; padding: 8px 2px; font-family: inherit; font-size: 16px; font-weight: 800; text-align: center; color: var(--color-brand-dark); border: 1.5px solid var(--color-border-soft); border-radius: 10px; background: var(--surface-2); transition: border-color 0.2s ease, background 0.2s ease; }
+.plan-range input::placeholder { font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted); }
+.plan-range input:focus { outline: none; border-color: var(--color-brand); background: var(--surface); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15); }
+.plan-range.saved input { border-color: var(--color-success); background: rgba(34, 201, 140, 0.08); }
+@media (max-width: 420px) { .plan-range input { width: 36px; } }

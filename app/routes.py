@@ -1367,6 +1367,7 @@ def workout_detail(workout_id):
                 {
                     "exercise": re.exercise,
                     "target_sets": re.target_sets,
+                    "sets_label": sets_label(re),
                     "target_reps": re.target_reps,
                     "rir": re.rir,
                     "rpe": re.rpe,
@@ -2331,7 +2332,34 @@ def update_routine_exercise(routine_id, ex_id):
         if not 1 <= sets <= 15:
             return jsonify({"ok": False, "error": "Las series van de 1 a 15."}), 400
         ex.target_sets = sets
-    if "target_reps" in data:
+        if ex.target_sets_max is not None and ex.target_sets_max <= sets:
+            ex.target_sets_max = None
+    if "target_sets_max" in data:
+        raw = str(data["target_sets_max"] or "").strip()
+        if not raw:
+            ex.target_sets_max = None
+        else:
+            try:
+                top = int(raw)
+            except ValueError:
+                top = 0
+            if not ex.target_sets <= top <= 15:
+                return jsonify({"ok": False, "error": f"El máximo de series va de {ex.target_sets} a 15."}), 400
+            ex.target_sets_max = top if top > ex.target_sets else None
+    if "reps_min" in data or "reps_max" in data:
+        low, high = reps_range(ex.target_reps)
+        try:
+            if "reps_min" in data:
+                low = int(str(data["reps_min"]).strip())
+            if "reps_max" in data:
+                raw = str(data["reps_max"] or "").strip()
+                high = int(raw) if raw else None
+        except ValueError:
+            return jsonify({"ok": False, "error": "Las repeticiones tienen que ser números."}), 400
+        if not low or not 1 <= low <= 100 or (high is not None and not low <= high <= 100):
+            return jsonify({"ok": False, "error": "Repeticiones de 1 a 100, y el máximo no puede ser menor que el mínimo."}), 400
+        ex.target_reps = f"{low}-{high}" if high and high > low else str(low)
+    if "target_reps" in data:  # compatibilidad: texto libre
         reps = " ".join(str(data["target_reps"] or "").split())
         if not reps or len(reps) > 16:
             return jsonify({"ok": False, "error": "Escribe las reps (máx. 16 caracteres), p. ej. 8-10."}), 400
@@ -2345,9 +2373,13 @@ def update_routine_exercise(routine_id, ex_id):
         ex.rpe = (effort or None) if scale == "rpe" else None
 
     db.session.commit()
+    low, high = reps_range(ex.target_reps)
     return jsonify({
         "ok": True,
         "target_sets": ex.target_sets,
+        "target_sets_max": ex.target_sets_max or "",
+        "reps_min": low or "",
+        "reps_max": high or "",
         "target_reps": ex.target_reps,
         "effort": ex.rir if ex.rir is not None else (ex.rpe or ""),
     })
@@ -2394,6 +2426,23 @@ def delete_routine(routine_id):
     return redirect(url_for("routines"))
 
 
+_REPS_RE = re.compile(r"(\d+)\s*(?:-\s*(\d+))?")
+
+
+def reps_range(text):
+    """"8-10" -> (8, 10); "5" -> (5, None); "5 @RIR3" -> (5, None)."""
+    m = _REPS_RE.search(text or "")
+    if not m:
+        return None, None
+    low = int(m.group(1))
+    high = int(m.group(2)) if m.group(2) else None
+    return low, (high if high and high > low else None)
+
+
+def sets_label(ex):
+    return f"{ex.target_sets}-{ex.target_sets_max}" if ex.target_sets_max else str(ex.target_sets)
+
+
 def _parse_single_int(value):
     """Convierte un objetivo de RIR/RPE en un entero 0-10 solo si es un
     número simple (ej. "2") -- un rango (ej. "2-3") u otro texto no
@@ -2435,7 +2484,7 @@ def start_routine(routine_id):
         .order_by(RoutineExercise.order_index)
     ).all()
     for re_ in routine_exercises:
-        for _ in range(re_.target_sets):
+        for _ in range(re_.target_sets_max or re_.target_sets):  # las que sobren se borran al terminar
             db.session.add(
                 SetEntry(
                     exercise=re_.exercise,

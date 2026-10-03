@@ -49,15 +49,24 @@
                     </form>
                 </div>
                 <div class="routine-ex-plan">
-                    <label class="plan-field">
-                        <input type="number" inputmode="numeric" min="1" max="15" value="{{ ex.target_sets }}" data-field="target_sets" aria-label="Series">
+                    {% set rmin, rmax = reps_range(ex.target_reps) %}
+                    <div class="plan-range">
+                        <div class="plan-range-inputs">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="{{ ex.target_sets }}" data-field="target_sets" aria-label="Series (mínimo)">
+                            <span aria-hidden="true">–</span>
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="{{ ex.target_sets_max or '' }}" placeholder="máx" data-field="target_sets_max" aria-label="Series (máximo, opcional)">
+                        </div>
                         <span>series</span>
-                    </label>
+                    </div>
                     <span class="plan-x" aria-hidden="true">×</span>
-                    <label class="plan-field plan-field-reps">
-                        <input type="text" maxlength="16" value="{{ ex.target_reps }}" data-field="target_reps" aria-label="Repeticiones">
+                    <div class="plan-range">
+                        <div class="plan-range-inputs">
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="{{ rmin or '' }}" data-field="reps_min" aria-label="Repeticiones (mínimo)">
+                            <span aria-hidden="true">–</span>
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="{{ rmax or '' }}" placeholder="máx" data-field="reps_max" aria-label="Repeticiones (máximo, opcional)">
+                        </div>
                         <span>reps</span>
-                    </label>
+                    </div>
                     {% if effort_scale != 'none' %}
                         <label class="plan-field">
                             <input type="text" inputmode="numeric" maxlength="5" value="{{ effort }}" placeholder="—" data-field="effort" aria-label="{{ effort_scale|upper }} objetivo">
@@ -118,10 +127,15 @@
                         body: JSON.stringify(payload)
                     }).then(r => r.json()).then(data => {
                         if (!data.ok) throw new Error(data.error);
-                        const saved = String(data[input.dataset.field] ?? value);
-                        input.value = saved;
-                        input.dataset.saved = saved;
-                        const field = input.closest('.plan-field');
+                        // Actualiza también la casilla hermana (p. ej. el máximo
+                        // que se borra si el mínimo lo alcanza).
+                        row.querySelectorAll('input[data-field]').forEach(function (other) {
+                            if (other.dataset.field in data) {
+                                other.value = String(data[other.dataset.field] ?? '');
+                                other.dataset.saved = other.value;
+                            }
+                        });
+                        const field = input.closest('.plan-field, .plan-range');
                         field.classList.remove('saved');
                         void field.offsetWidth;
                         field.classList.add('saved');

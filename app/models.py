@@ -201,6 +201,9 @@ class RoutineExercise(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     exercise: so.Mapped[str] = so.mapped_column(sa.String(64))
     target_sets: so.Mapped[int] = so.mapped_column(default=3)
+    # Rango de series: target_sets es el mínimo; target_sets_max (o NULL si
+    # es un número fijo) el máximo, p. ej. 3-4 series.
+    target_sets_max: so.Mapped[Optional[int]] = so.mapped_column()
     target_reps: so.Mapped[str] = so.mapped_column(sa.String(16), default="8-10")
     rir: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
     rpe: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))

@@ -29,3 +29,4 @@ app.jinja_env.globals["get_exercise_image"] = get_exercise_image
 app.jinja_env.globals["to_local"] = to_local
 app.jinja_env.filters["num"] = fmt_num
 app.jinja_env.filters["relative_day"] = relative_day
+app.jinja_env.globals["reps_range"] = routes.reps_range

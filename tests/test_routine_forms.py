@@ -82,6 +82,41 @@ class InlineEditTests(_RoutineFixtures):
         self.assertIn("/login", self.client.post(self.url(), json={"target_sets": 4}).headers["Location"])
 
 
+class RangeTests(_RoutineFixtures):
+    def test_reps_range_with_numeric_boxes(self):
+        self.login(self.uid)
+        data = self.client.post(self.url(), json={"reps_max": "12"}).get_json()
+        self.assertEqual((data["reps_min"], data["reps_max"], data["target_reps"]), (8, 12, "8-12"))
+        data = self.client.post(self.url(), json={"reps_max": ""}).get_json()       # sin máximo: número fijo
+        self.assertEqual(data["target_reps"], "8")
+        self.assertFalse(self.client.post(self.url(), json={"reps_min": "abc"}).get_json()["ok"])
+        self.client.post(self.url(), json={"reps_max": "10"})
+        self.assertFalse(self.client.post(self.url(), json={"reps_min": "12"}).get_json()["ok"])  # mín > máx
+        self.assertEqual(self.ex(self.exid)["reps"], "8-10")
+
+    def test_sets_range_and_precreated_sets(self):
+        self.login(self.uid)
+        data = self.client.post(self.url(), json={"target_sets_max": "4"}).get_json()
+        self.assertEqual(data["target_sets_max"], 4)
+        self.assertFalse(self.client.post(self.url(), json={"target_sets_max": "2"}).get_json()["ok"])
+        # Subir el mínimo al máximo deja de ser un rango.
+        self.assertEqual(self.client.post(self.url(), json={"target_sets": "4"}).get_json()["target_sets_max"], "")
+        self.client.post(self.url(), json={"target_sets": "3"})
+        self.client.post(self.url(), json={"target_sets_max": "4"})
+        from app.models import SetEntry, Workout
+        import sqlalchemy as sa
+        self.client.post(f"/routines/{self.rid}/start")
+        with app.app_context():
+            n = db.session.scalar(sa.select(sa.func.count()).select_from(SetEntry))
+        self.assertEqual(n, 4)  # se crean las del máximo; las vacías se borran al terminar
+
+    def test_routine_page_uses_numeric_keyboard(self):
+        self.login(self.uid)
+        html = self.client.get(f"/routines/{self.rid}").get_data(as_text=True)
+        self.assertIn('inputmode="numeric" pattern="[0-9]*" maxlength="3" value="8" data-field="reps_min"', html)
+        self.assertIn('value="10" placeholder="máx" data-field="reps_max"', html)
+
+
 class ReplaceTests(_RoutineFixtures):
     def test_replace_keeps_plan(self):
         self.login(self.uid)

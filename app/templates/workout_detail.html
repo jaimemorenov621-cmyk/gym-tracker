@@ -103,7 +103,7 @@
             {% for p in routine_plan %}
                 <div class="plan-row">
                     <span class="pill pill-label">{{ p.exercise|title }}</span>
-                    <span class="pill">{{ p.target_sets }}x{{ p.target_reps }}{% if p.rir is not none %} @RIR{{ p.rir }}{% elif p.rpe is not none %} @RPE{{ p.rpe }}{% endif %}</span>
+                    <span class="pill">{{ p.sets_label }}x{{ p.target_reps }}{% if p.rir is not none %} @RIR{{ p.rir }}{% elif p.rpe is not none %} @RPE{{ p.rpe }}{% endif %}</span>
                     <span class="pill{% if p.done >= p.target_sets %} pill-success{% endif %}"
                           data-plan-exercise="{{ p.exercise|trim|lower }}"
                           data-done="{{ p.done }}"
