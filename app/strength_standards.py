@@ -221,6 +221,83 @@ def level_index(e1rm, ths):
     return idx
 
 
+# ------------------------------------------------------------ rangos
+# Rango = posición CONTINUA en la tabla, con tu forma actual (mejor 1RM
+# estimado válido de los últimos 90 días y tu último peso): puede bajar si
+# dejas de entrenar un levantamiento, como en un juego por temporadas.
+#   puntuación -1..0: por debajo de Principiante -> Hierro
+#   0..1 Principiante->Novato  -> Bronce     1..2 Novato->Intermedio -> Plata
+#   2..3 Intermedio->Avanzado  -> Oro        3..4 Avanzado->Élite    -> Platino
+#   4..5 Élite (un tramo más)  -> Diamante   5 o más                 -> Titán
+# Cada rango (salvo Titán) tiene divisiones I < II < III, en tercios.
+RANK_WINDOW_DAYS = 90
+RANKS = ["Hierro", "Bronce", "Plata", "Oro", "Platino", "Diamante", "Titán"]
+RANK_KEYS = ["hierro", "bronce", "plata", "oro", "platino", "diamante", "titan"]
+RANK_RANGES = [
+    "por debajo de Principiante",
+    "de Principiante a Novato",
+    "de Novato a Intermedio",
+    "de Intermedio a Avanzado",
+    "de Avanzado a Élite",
+    "Élite (hasta un tramo más)",
+    "muy por encima de Élite",
+]
+_ROMAN = {1: "I", 2: "II", 3: "III"}
+
+
+def strength_score(e1rm, ths):
+    """Puntuación continua: 0 = umbral de Principiante, 1 = Novato, ...,
+    4 = Élite. Por debajo de Principiante, de -1 (0 kg) a 0. Por encima de
+    Élite se sigue con la anchura del último tramo (Avanzado->Élite)."""
+    if e1rm < ths[0]:
+        return -1 + max(0.0, e1rm) / ths[0]
+    for i in range(4):
+        if e1rm < ths[i + 1]:
+            return i + (e1rm - ths[i]) / (ths[i + 1] - ths[i])
+    return 4 + (e1rm - ths[4]) / (ths[4] - ths[3])
+
+
+def kg_for_score(score, ths):
+    """Inversa de strength_score: 1RM estimado necesario para `score`."""
+    if score < 0:
+        return (score + 1) * ths[0]
+    i = min(int(score), 4)
+    if i >= 4:
+        return ths[4] + (score - 4) * (ths[4] - ths[3])
+    return ths[i] + (score - i) * (ths[i + 1] - ths[i])
+
+
+def rank_for(score):
+    """Rango, división y progreso dentro de la división para `score`."""
+    if score is None:
+        return None
+    tier = min(6, max(0, int(score // 1) + 1))
+    if tier == 6:
+        return {"tier": 6, "key": RANK_KEYS[6], "name": RANKS[6], "division": None,
+                "label": RANKS[6], "pct": 100, "next_score": None}
+    start = tier - 1  # puntuación donde empieza el rango
+    within = min(max(score - start, 0.0), 0.9999)
+    division = int(within * 3) + 1
+    div_start = start + (division - 1) / 3
+    return {
+        "tier": tier,
+        "key": RANK_KEYS[tier],
+        "name": RANKS[tier],
+        "division": division,
+        "label": f"{RANKS[tier]} {_ROMAN[division]}",
+        "pct": round(100 * (score - div_start) * 3),
+        "next_score": div_start + 1 / 3,
+    }
+
+
+def next_rank_label(rank):
+    if rank is None or rank["tier"] == 6:
+        return None
+    if rank["division"] < 3:
+        return f"{rank['name']} {_ROMAN[rank['division'] + 1]}"
+    return RANKS[rank["tier"] + 1] + ("" if rank["tier"] + 1 == 6 else " I")
+
+
 def level_label(idx):
     if idx is None:
         return None
@@ -372,6 +449,32 @@ def strength_profile(user, rows=None, weights=None, now=None):
                         info["bar_pct"] = round(100 * min(1.0, max(0.0, (info["best_e1rm"] - floor) / span))) if span > 0 else 100
         if info["best_e1rm"] is not None and latest_bw:
             info["ratio"] = info["best_e1rm"] / latest_bw
+
+        # Rango actual (últimos 90 días, peso actual) y mejor rango histórico
+        # (cada sesión con el peso de entonces, como el nivel alcanzado).
+        info.update(rank=None, score=None, rank_peak=None, rank_next=None, rank_next_kg=None,
+                    rank_missing_kg=None, rank_e1rm=None, rank_stale=False)
+        if sex and bw_points:
+            peak = None
+            for ts, e1rm in sessions[lift].values():
+                ths = thresholds(sex, lift, _body_weight_at(bw_points, ts))
+                if ths is not None:
+                    sc = strength_score(e1rm, ths)
+                    peak = sc if peak is None else max(peak, sc)
+            info["rank_peak"] = rank_for(peak)
+            window = [e for ts, e in sessions[lift].values() if now - ts <= timedelta(days=RANK_WINDOW_DAYS)]
+            if window:
+                ths_now = thresholds(sex, lift, latest_bw)
+                best = max(window)
+                info["score"] = strength_score(best, ths_now)
+                info["rank"] = rank_for(info["score"])
+                info["rank_e1rm"] = best
+                if info["rank"]["next_score"] is not None:
+                    info["rank_next"] = next_rank_label(info["rank"])
+                    info["rank_next_kg"] = kg_for_score(info["rank"]["next_score"], ths_now)
+                    info["rank_missing_kg"] = max(0.0, info["rank_next_kg"] - best)
+            elif sessions[lift]:
+                info["rank_stale"] = True  # entrenado, pero no en los últimos 90 días
         lifts[lift] = info
 
     # Qué falta para poder dar niveles.
@@ -391,7 +494,23 @@ def strength_profile(user, rows=None, weights=None, now=None):
         total = sum(lifts[l]["best_e1rm"] for l in BIG_THREE)
         dots_score = dots(total, latest_bw, sex)
 
+    # Rango global: MEDIA de las puntuaciones de banca, sentadilla y peso
+    # muerto (así cualquier mejora cuenta). Para no esconder desequilibrios,
+    # se avisa si un levantamiento va un rango entero o más por detrás.
+    scores = {l: lifts[l]["score"] for l in BIG_THREE}
+    global_rank = lagging = None
+    rank_missing = [LIFT_LABELS[l] for l in BIG_THREE if scores[l] is None]
+    if not missing and not rank_missing:
+        mean = sum(scores.values()) / 3
+        global_rank = rank_for(mean)
+        weakest = min(BIG_THREE, key=lambda l: scores[l])
+        if mean - scores[weakest] >= 1:
+            lagging = LIFT_LABELS[weakest]
+
     return {
+        "global_rank": global_rank,
+        "rank_missing": rank_missing,
+        "lagging": lagging,
         "sex": sex,
         "latest_bw": latest_bw,
         "lifts": lifts,

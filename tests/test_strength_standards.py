@@ -228,6 +228,77 @@ class ProfileTests(_LifterCase):
         self.assertEqual(bench["reached"], 2)  # lo alcanzado no caduca
 
 
+class RankMathTests(unittest.TestCase):
+    THS = [60.0, 75.0, 90.0, 125.0, 157.5]
+
+    def test_score_is_continuous_along_the_table(self):
+        sc = std.strength_score
+        self.assertAlmostEqual(sc(30, self.THS), -0.5)
+        self.assertAlmostEqual(sc(60, self.THS), 0)
+        self.assertAlmostEqual(sc(82.5, self.THS), 1.5)
+        self.assertAlmostEqual(sc(157.5, self.THS), 4)
+        self.assertAlmostEqual(sc(190, self.THS), 5)  # un tramo (32,5 kg) por encima de Élite
+
+    def test_kg_for_score_is_the_inverse(self):
+        for score in (-0.7, 0, 0.4, 1.5, 2.99, 3.2, 4.6):
+            self.assertAlmostEqual(std.strength_score(std.kg_for_score(score, self.THS), self.THS), score)
+
+    def test_ranks_and_divisions(self):
+        label = lambda x: std.rank_for(x)["label"]
+        self.assertEqual(label(-0.5), "Hierro II")
+        self.assertEqual(label(0), "Bronce I")
+        self.assertEqual(label(0.34), "Bronce II")
+        self.assertEqual(label(2.7), "Oro III")
+        self.assertEqual(label(4.99), "Diamante III")
+        self.assertEqual(label(5), "Titán")
+        self.assertEqual(std.next_rank_label(std.rank_for(2.7)), "Platino I")
+        self.assertEqual(std.next_rank_label(std.rank_for(4.9)), "Titán")
+        self.assertIsNone(std.next_rank_label(std.rank_for(6)))
+
+
+class RankProfileTests(_LifterCase):
+    def setUp(self):
+        super().setUp()
+        self.set_sex("hombre")
+        self.weigh(82, self.T0 - timedelta(days=1))
+
+    def test_global_rank_is_the_average_so_any_improvement_counts(self):
+        self.lift("sentadilla", 200, self.T0)
+        self.lift("press de banca", 80, self.T0)
+        self.lift("peso muerto", 180, self.T0)
+        before = self.profile()["global_rank"]
+        # Mejorar la sentadilla (que NO es el más flojo) también sube el global.
+        self.lift("sentadilla", 215, self.T0 + timedelta(days=1))
+        after_squat = self.profile()
+        self.assertGreater(after_squat["lifts"]["squat"]["score"], 0)
+        self.assertGreater(
+            sum(after_squat["lifts"][l]["score"] for l in std.BIG_THREE),
+            sum(std.strength_score(e, std.thresholds("hombre", l, 82)) for l, e in
+                (("squat", 200), ("bench", 80), ("deadlift", 180))),
+        )
+        self.assertIsNotNone(before)
+        self.assertEqual(after_squat["lagging"], "Press de banca")  # avisa del desequilibrio
+
+    def test_rank_drops_after_90_days_without_the_lift_but_peak_stays(self):
+        for lift in ("press de banca", "sentadilla", "peso muerto"):
+            self.lift(lift, 140, self.T0)
+        p = self.profile(now=self.T0 + timedelta(days=100))
+        bench = p["lifts"]["bench"]
+        self.assertIsNone(bench["rank"])
+        self.assertTrue(bench["rank_stale"])
+        self.assertIsNotNone(bench["rank_peak"])
+        self.assertIsNone(p["global_rank"])
+        self.assertEqual(p["rank_missing"], ["Press de banca", "Sentadilla", "Peso muerto"])
+
+    def test_next_division_target(self):
+        self.lift("press de banca", 100, self.T0)
+        bench = self.profile()["lifts"]["bench"]
+        ths = std.thresholds("hombre", "bench", 82)
+        self.assertEqual(bench["rank"]["name"], "Oro")
+        self.assertAlmostEqual(bench["rank_missing_kg"], bench["rank_next_kg"] - 100)
+        self.assertAlmostEqual(std.strength_score(bench["rank_next_kg"], ths), bench["rank"]["next_score"])
+
+
 class StandardsAchievementTests(_LifterCase):
     def unlocked(self):
         with app.app_context():
@@ -281,8 +352,8 @@ class ProgressPageTests(DbTestCase):
         uid = self.make_user("atleta")
         self.login(uid)
         html = self.client.get("/progress").get_data(as_text=True)
-        self.assertIn("Estándares de fuerza", html)
-        self.assertIn("Para darte un nivel falta", html)
+        self.assertIn("Rango de fuerza", html)
+        self.assertIn("Para darte un rango falta", html)
         self.assertIn("exrx.net", html)
         # El bloque profesional va primero: índice de fuerza, estándares y peso.
         self.assertLess(html.index('id="fuerza"'), html.index('id="estandares"'))

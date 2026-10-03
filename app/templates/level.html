@@ -13,13 +13,13 @@
         </div>
         <div class="dash-level-bar"><i style="width: {{ xp.pct }}%"></i></div>
         <a class="level-strength" href="{{ url_for('progress') }}#estandares">
-            <span>Nivel de fuerza</span>
-            {% if profile.global_label %}
-                <b class="std-level lvl-{{ profile.global }}">{{ profile.global_label }}</b>
+            <span>Rango de fuerza</span>
+            {% if profile.global_rank %}
+                <b class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</b>
             {% elif profile.missing %}
                 <b>Falta: {{ profile.missing|join(' y ') }}</b>
             {% else %}
-                <b>Falta un 1RM válido de {{ profile.missing_lifts|join(', ')|lower }}</b>
+                <b>Falta un 1RM reciente de {{ profile.rank_missing|join(', ')|lower }}</b>
             {% endif %}
         </a>
         <p class="level-note">

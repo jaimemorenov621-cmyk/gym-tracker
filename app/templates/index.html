@@ -262,7 +262,7 @@
         {# Nivel: después de lo profesional (mosaicas), nunca en su lugar. #}
         <a class="dash-level-link" href="{{ url_for('level_page') }}">
             <span class="dash-level-top">
-                <span><b>Nivel {{ xp.level }}</b> · Fuerza: {{ profile.global_label or 'completa tu perfil' }}</span>
+                <span><b>Nivel {{ xp.level }}</b> · {% if profile.global_rank %}<span class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</span>{% else %}Rango: sin datos{% endif %}</span>
                 <span class="dash-level-next">faltan {{ xp.to_next|num }} XP {{ macros.icon('chevron-right', 16) }}</span>
             </span>
             <span class="dash-level-bar" aria-hidden="true"><i style="width: {{ xp.pct }}%"></i></span>

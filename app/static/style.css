@@ -3760,3 +3760,24 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .level-week-top b { white-space: nowrap; }
 .level-week-parts { margin-top: 2px; font-size: 0.75rem; color: var(--color-text-muted); }
 .level-capped { color: var(--color-brand-dark); font-weight: 800; margin-left: 2px; }
+
+/* ===== Rangos de fuerza (progress.html, index.html, level.html) ===== */
+.rank-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; white-space: nowrap; }
+.rank-none, .rank-hierro { background: #e6e6ea; color: #4a4a55; }
+.rank-bronce { background: #f3dcc8; color: #7a3f12; }
+.rank-plata { background: #e3e8f0; color: #3d4656; }
+.rank-oro { background: #fbecc0; color: #6b4e00; }
+.rank-platino { background: #d3f2ef; color: #0f5c57; }
+.rank-diamante { background: #dce7ff; color: #1f3f8f; }
+.rank-titan { background: #3d2b8a; color: #fff; }
+:root[data-theme="dark"] .rank-none, :root[data-theme="dark"] .rank-hierro { background: #2e2e36; color: #c9c9d4; }
+:root[data-theme="dark"] .rank-bronce { background: #3d2516; color: #f4c49c; }
+:root[data-theme="dark"] .rank-plata { background: #2a3240; color: #d0d8e6; }
+:root[data-theme="dark"] .rank-oro { background: #3d3110; color: #ffdd7a; }
+:root[data-theme="dark"] .rank-platino { background: #0f3a37; color: #8ce8df; }
+:root[data-theme="dark"] .rank-diamante { background: #1b2a52; color: #a9c2ff; }
+:root[data-theme="dark"] .rank-titan { background: #b9a6ff; color: #1b1238; }
+.std-sub .std-level { padding: 1px 7px; font-size: 0.7rem; }
+.std-extra { font-size: 0.7rem; font-weight: 600; color: var(--color-text-muted); }
+.std-defs .rank-badge { min-width: 76px; text-align: center; margin-right: 6px; }
+.std-defs li { margin-bottom: 4px; }
