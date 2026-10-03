@@ -71,7 +71,7 @@
             <div class="ai-cta-body">
                 <small>Próximo análisis</small>
                 <strong>Disponible {{ wait_label }}</strong>
-                <span class="ai-cta-detail">El {{ local_next.strftime('%d/%m') }} a las {{ local_next.strftime('%H:%M') }} · un análisis por semana</span>
+                <span class="ai-cta-detail">El {{ local_next.strftime('%d/%m') }} a las {{ local_next.strftime('%H:%M') }} · {{ 'dos análisis por semana (ventaja de nivel)' if allowance > 1 else 'un análisis por semana' }}</span>
                 <div class="ai-cta-progress" aria-hidden="true"><span style="width: {{ cooldown_pct }}%"></span></div>
             </div>
         </div>

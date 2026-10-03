@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es"{% if current_user.is_authenticated %} data-accents="{{ unlocked_accents|join(',') }}"{% endif %}>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,6 +12,23 @@
             var lock = "{% block theme_lock %}{% endblock %}";
             var pref = "auto";
             try { pref = localStorage.getItem("gyre-theme") || "auto"; } catch (e) {}
+            // Color de acento (ventaja por nivel): por dispositivo, como el
+            // tema. Solo se aplica si el servidor lo da por desbloqueado.
+            var root = document.documentElement;
+            var allowed = (root.getAttribute("data-accents") || "").split(",");
+            function applyAccent(value) {
+                if (!lock && value && value !== "morado" && allowed.indexOf(value) >= 0) root.setAttribute("data-accent", value);
+                else root.removeAttribute("data-accent");
+            }
+            var accent = "morado";
+            try { accent = localStorage.getItem("gyre-accent") || "morado"; } catch (e) {}
+            applyAccent(accent);
+            window.setGyreAccent = function (value) {
+                accent = value;
+                try { localStorage.setItem("gyre-accent", value); } catch (e) {}
+                applyAccent(value);
+            };
+            window.getGyreAccent = function () { return allowed.indexOf(accent) >= 0 ? accent : "morado"; };
             var mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
             function apply() {
                 var dark = lock ? lock === "dark" : (pref === "dark" || (pref === "auto" && mq && mq.matches));

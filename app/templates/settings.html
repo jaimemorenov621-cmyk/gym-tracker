@@ -14,8 +14,40 @@
             </select>
             <small class="field-help">Se guarda en este dispositivo y se aplica al momento.</small>
         </div>
+        <div class="field">
+            <span class="field-label">Color de acento</span>
+            {% set swatch = {'morado': '#7c4dff', 'azul': '#2563eb', 'verde': '#0b7a54', 'naranja': '#c2410c'} %}
+            <div class="accent-swatches" role="radiogroup" aria-label="Color de acento">
+                {% for a in accents %}
+                    {% set open = user_level >= a.level %}
+                    <button type="button" class="accent-swatch" data-accent="{{ a.key }}" role="radio" aria-checked="false"
+                            {% if not open %}disabled{% endif %} onclick="pickAccent('{{ a.key }}')">
+                        <i style="background: {{ swatch[a.key] }}"></i>{{ a.name }}{% if not open %} <small>Nivel {{ a.level }}</small>{% endif %}
+                    </button>
+                {% endfor %}
+            </div>
+            <small class="field-help">Se desbloquean subiendo de <a href="{{ url_for('level_page') }}">nivel</a>. Se guarda en este dispositivo.</small>
+        </div>
     </div>
-    <script>document.getElementById('themeSelect').value = getGyreTheme();</script>
+    <script>
+        document.getElementById('themeSelect').value = getGyreTheme();
+        function pickAccent(key) {
+            setGyreAccent(key);
+            document.querySelectorAll('.accent-swatch').forEach(function (b) {
+                var on = b.dataset.accent === key;
+                b.classList.toggle('selected', on);
+                b.setAttribute('aria-checked', on ? 'true' : 'false');
+            });
+        }
+        (function () {
+            var current = getGyreAccent();
+            document.querySelectorAll('.accent-swatch').forEach(function (b) {
+                var on = b.dataset.accent === current;
+                b.classList.toggle('selected', on);
+                b.setAttribute('aria-checked', on ? 'true' : 'false');
+            });
+        })();
+    </script>
 
     <form action="" method="post" class="form-ui">
         {{ form.hidden_tag() }}

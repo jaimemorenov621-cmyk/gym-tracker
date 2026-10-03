@@ -52,6 +52,7 @@ from app import achievements, usage
 from app import strength_standards as standards
 from app import progression
 from app import volume as volume_mod
+from app import perks
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
@@ -164,10 +165,12 @@ def level_page():
     desglose semanal."""
     report, _ = progression.refresh_xp(current_user.id)
     weeks = list(report.weeks.items())[:12]
+    xp = progression.level_for(report.total)
     return render_template(
         "level.html",
         title="Nivel",
-        xp=progression.level_for(report.total),
+        xp=xp,
+        perk_rows=perks.perk_list(xp["level"]),
         weeks=weeks,
         profile=standards.strength_profile(current_user),
         p=progression,
@@ -1191,9 +1194,17 @@ def api_share_set(set_id):
             previous_best = max(previous_best or 0, s["best_1rm"])
 
     e1rm = estimated_1rm(entry)
+    # Ventajas por nivel: diseños desbloqueados e insignia de nivel/rango.
+    level = perks.level_of(current_user)
+    badge = None
+    if level >= perks.BADGE_LEVEL:
+        rank = standards.strength_profile(current_user)["global_rank"]
+        badge = f"NIVEL {level}" + (f" · {rank['label'].upper()}" if rank else "")
     return jsonify(
         {
             "ok": True,
+            "designs": perks.unlocked(perks.SHARE_DESIGNS, level),
+            "badge": badge,
             "exercise": entry.exercise.title(),
             "weight": f"{entry.weight:g}",
             "reps": entry.reps,
@@ -1683,7 +1694,7 @@ def settings():
         form.training_days.data = [int(c) for c in (current_user.training_days or "")]
         latest = _latest_weekly_goal_row(current_user.id)
         form.weekly_workout_goal.data = latest.goal if latest else None
-    return render_template("settings.html", title="Configuración", form=form)
+    return render_template("settings.html", title="Configuración", form=form, accents=perks.ACCENTS)
 
 
 @app.route("/weight", methods=["GET", "POST"])
@@ -1747,9 +1758,11 @@ def ai_analysis():
     next_available = None
     wait_label = None
     cooldown_pct = 0
-    if latest:
+    allowance = perks.ai_per_week(perks.level_of(current_user))
+    blocking = ai_analysis_blocking(current_user.id, allowance, now)
+    if blocking is not None:
         cooldown = timedelta(days=7)
-        available_at = latest.created_at + cooldown
+        available_at = blocking.created_at + cooldown
         if available_at > now:
             next_available = available_at
             remaining = available_at - now
@@ -1785,21 +1798,32 @@ def ai_analysis():
         total_workouts=total_workouts,
         min_workouts=MIN_WORKOUTS_FOR_AI_ANALYSIS,
         checkin_form=AiCheckinForm(),
+        allowance=allowance,
+        extra_level=perks.AI_EXTRA_LEVEL,
     )
+
+
+def ai_analysis_blocking(user_id, allowance, now=None):
+    """El análisis que impide generar otro, o None si queda cupo. Cupo:
+    `allowance` análisis en los últimos 7 días (2 a partir del nivel 20).
+    Con el cupo lleno, se libera cuando el más antiguo de esos cumple 7 días."""
+    now = now or datetime.now(timezone.utc).replace(tzinfo=None)
+    recent = db.session.scalars(
+        sa.select(AiAnalysis)
+        .where(AiAnalysis.user_id == user_id, AiAnalysis.created_at >= now - timedelta(days=7))
+        .order_by(AiAnalysis.created_at.desc())
+    ).all()
+    return recent[allowance - 1] if len(recent) >= allowance else None
 
 
 @app.route("/ai/analyze", methods=["POST"])
 @login_required
 def request_ai_analysis():
     checkin_form = AiCheckinForm()
-    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=7)
-    has_recent = db.session.scalar(
-        sa.select(AiAnalysis.id)
-        .where(AiAnalysis.user_id == current_user.id, AiAnalysis.created_at >= cutoff)
-        .limit(1)
-    )
-    if has_recent:
-        flash("Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante.")
+    allowance = perks.ai_per_week(perks.level_of(current_user))
+    if ai_analysis_blocking(current_user.id, allowance) is not None:
+        flash("Ya has usado tus análisis de esta semana. Vuelve a intentarlo más adelante."
+              if allowance > 1 else "Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante.")
         return redirect(url_for("ai_analysis"))
 
     total_workouts = db.session.scalar(
@@ -2352,6 +2376,16 @@ def reorder_routines():
             routines_by_id[routine_id].order_index = index
     db.session.commit()
     return jsonify({"ok": True})
+
+
+@app.context_processor
+def inject_level_perks():
+    """Nivel (de la caché de XP, sin recalcular) y colores de acento
+    desbloqueados, para base.html y Configuración."""
+    if current_user.is_authenticated:
+        level = perks.level_of(current_user)
+        return {"user_level": level, "unlocked_accents": [a["key"] for a in perks.unlocked(perks.ACCENTS, level)]}
+    return {}
 
 
 @app.context_processor

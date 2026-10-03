@@ -8,6 +8,19 @@
     const W = 1080, H = 1920;
     const FONT = '"Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
     let currentBlob = null, currentData = null, currentUrl = null, toastTimer = null;
+    // Diseño por defecto (siempre disponible); los demás se desbloquean por
+    // nivel y llegan en data.designs (app/perks.py).
+    const CLASSIC = {
+        key: 'clasico', bg: ['#120c2c', '#251663'], glows: ['rgba(124, 77, 255, 0.55)', 'rgba(34, 201, 140, 0.25)'],
+        kicker: '#c9b8ff', metric: ['#b69cff', '#7fd8ff', '#5cf0b4'], link: '#b69cff'
+    };
+
+    function chosenDesign(d) {
+        const designs = (d.designs && d.designs.length) ? d.designs : [CLASSIC];
+        let key = null;
+        try { key = localStorage.getItem('gyre-share-design'); } catch (e) {}
+        return designs.find(function (x) { return x.key === key; }) || designs[0];
+    }
 
     function toast(message) {
         if (window.showPickerErrorToast) return window.showPickerErrorToast(message);
@@ -78,7 +91,8 @@
         if ('letterSpacing' in ctx) ctx.letterSpacing = px + 'px';
     }
 
-    async function drawCard(d) {
+    async function drawCard(d, design) {
+        design = design || CLASSIC;
         const canvas = document.createElement('canvas');
         canvas.width = W;
         canvas.height = H;
@@ -88,11 +102,11 @@
 
         // Fondo: mismo lenguaje que la landing (oscuro + brillos morado/verde).
         const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, '#120c2c');
-        bg.addColorStop(1, '#251663');
+        bg.addColorStop(0, design.bg[0]);
+        bg.addColorStop(1, design.bg[1]);
         ctx.fillStyle = bg;
         ctx.fillRect(0, 0, W, H);
-        [[880, 260, 760, 'rgba(124, 77, 255, 0.55)'], [140, 1700, 700, 'rgba(34, 201, 140, 0.25)']].forEach(function (g) {
+        [[880, 260, 760, design.glows[0]], [140, 1700, 700, design.glows[1]]].forEach(function (g) {
             const rg = ctx.createRadialGradient(g[0], g[1], 0, g[0], g[1], g[2]);
             rg.addColorStop(0, g[3]);
             rg.addColorStop(1, 'rgba(0, 0, 0, 0)');
@@ -114,6 +128,22 @@
         ctx.fillText('Gyre', startX + logoSize + gap, 218);
         ctx.textAlign = 'center';
 
+        // Insignia de nivel (y rango), ventaja a partir del nivel 10.
+        if (d.badge) {
+            ctx.font = '800 38px ' + FONT;
+            setSpacing(ctx, 4);
+            const bw = ctx.measureText(d.badge).width + 64;
+            roundRect(ctx, (W - bw) / 2, 282, bw, 70, 35);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = design.kicker;
+            ctx.stroke();
+            ctx.fillStyle = design.kicker;
+            ctx.fillText(d.badge, W / 2, 330);
+            setSpacing(ctx, 0);
+        }
+
         // Centrado vertical del bloque central: sin la píldora de mejora y
         // con el nombre en una sola línea queda más bajo, así no deja un
         // hueco grande encima de la fecha.
@@ -127,7 +157,7 @@
         ctx.fillText(d.is_pr ? '🏅' : '💪', W / 2, 610);
         ctx.font = '800 44px ' + FONT;
         setSpacing(ctx, 8);
-        ctx.fillStyle = '#c9b8ff';
+        ctx.fillStyle = design.kicker;
         ctx.fillText(d.is_pr ? 'NUEVO RÉCORD PERSONAL' : 'MI ENTRENO DE HOY', W / 2, 730);
         setSpacing(ctx, 0);
 
@@ -148,9 +178,9 @@
         y += 120;
         const mw = ctx.measureText(main).width;
         const grad = ctx.createLinearGradient((W - mw) / 2, 0, (W + mw) / 2, 0);
-        grad.addColorStop(0, '#b69cff');
-        grad.addColorStop(0.55, '#7fd8ff');
-        grad.addColorStop(1, '#5cf0b4');
+        grad.addColorStop(0, design.metric[0]);
+        grad.addColorStop(0.55, design.metric[1]);
+        grad.addColorStop(1, design.metric[2]);
         ctx.fillStyle = grad;
         ctx.fillText(main, W / 2, y);
 
@@ -187,7 +217,7 @@
         ctx.fillStyle = '#ffffff';
         ctx.fillText('Registra tus entrenos gratis con Gyre', W / 2, 1755);
         ctx.font = '600 38px ' + FONT;
-        ctx.fillStyle = '#b69cff';
+        ctx.fillStyle = design.link;
         ctx.fillText(new URL(d.share_url).host, W / 2, 1818);
 
         return new Promise(function (resolve) { canvas.toBlob(resolve, 'image/png'); });
@@ -213,6 +243,7 @@
             '<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
             '</button></div>' +
             '<div class="share-card-preview"><span class="share-card-loading">Preparando tarjeta…</span></div>' +
+            '<div class="share-designs" role="radiogroup" aria-label="Diseño de la tarjeta"></div>' +
             '<div class="share-card-actions">' +
             '<button type="button" class="btn share-card-share" disabled>Compartir</button>' +
             '<button type="button" class="btn-outline share-card-download" disabled>Descargar</button>' +
@@ -224,6 +255,39 @@
         document.body.appendChild(backdrop);
         document.body.appendChild(sheet);
         return sheet;
+    }
+
+    async function redraw(sheet, design) {
+        const preview = sheet.querySelector('.share-card-preview');
+        currentBlob = await drawCard(currentData, design);
+        if (currentUrl) URL.revokeObjectURL(currentUrl);
+        currentUrl = URL.createObjectURL(currentBlob);
+        preview.innerHTML = '<img src="' + currentUrl + '" alt="Tarjeta de récord de ' + currentData.exercise.replace(/"/g, '') + '">';
+        sheet.querySelectorAll('.share-design').forEach(function (b) {
+            const on = b.dataset.key === design.key;
+            b.classList.toggle('selected', on);
+            b.setAttribute('aria-checked', on ? 'true' : 'false');
+        });
+    }
+
+    function renderDesignChips(sheet, data) {
+        const box = sheet.querySelector('.share-designs');
+        box.innerHTML = '';
+        const designs = data.designs || [];
+        box.hidden = designs.length < 2;
+        designs.forEach(function (design) {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'share-design';
+            b.dataset.key = design.key;
+            b.setAttribute('role', 'radio');
+            b.textContent = design.name;
+            b.addEventListener('click', function () {
+                try { localStorage.setItem('gyre-share-design', design.key); } catch (e) {}
+                redraw(sheet, design);
+            });
+            box.appendChild(b);
+        });
     }
 
     function closeShareCard() {
@@ -249,10 +313,8 @@
             const data = await res.json();
             if (!data.ok) throw new Error(data.error || 'No se pudo preparar la tarjeta.');
             currentData = data;
-            currentBlob = await drawCard(data);
-            if (currentUrl) URL.revokeObjectURL(currentUrl);
-            currentUrl = URL.createObjectURL(currentBlob);
-            preview.innerHTML = '<img src="' + currentUrl + '" alt="Tarjeta de récord de ' + data.exercise.replace(/"/g, '') + '">';
+            renderDesignChips(sheet, data);
+            await redraw(sheet, chosenDesign(data));
             sheet.querySelectorAll('.share-card-actions button').forEach(function (b) { b.disabled = false; });
         } catch (e) {
             closeShareCard();

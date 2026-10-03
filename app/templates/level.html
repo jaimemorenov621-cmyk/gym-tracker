@@ -29,6 +29,22 @@
     </div>
 
     <div class="card card-elevated level-section">
+        <h2>Ventajas por nivel</h2>
+        <ul class="perk-list">
+            {% for perk in perk_rows %}
+                <li class="{{ 'is-unlocked' if perk.unlocked }}">
+                    <span class="perk-level">{{ perk.level }}</span>
+                    <span>{{ perk.text }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+        <p class="level-note">
+            Son cosméticas o de comodidad a propósito: ningún dato, gráfico ni análisis depende de tu nivel.
+            Los colores se eligen en <a href="{{ url_for('settings') }}">Configuración</a> y los diseños, al compartir un récord.
+        </p>
+    </div>
+
+    <div class="card card-elevated level-section">
         <h2>Cómo se gana XP <span class="level-version">reglas v{{ p.XP_RULES_VERSION }}</span></h2>
         <table class="level-rules">
             <thead><tr><th>Qué</th><th>XP</th><th>Tope</th></tr></thead>
