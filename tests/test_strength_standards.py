@@ -59,11 +59,25 @@ class LiftDetectionTests(unittest.TestCase):
             "press de banca inclinado", "press banca declinado", "press banca con mancuernas",
             "dumbbell bench press", "press de banca en multipower", "fondos en banca",
             "press banca agarre cerrado", "sentadilla búlgara", "sentadilla hack", "sentadilla frontal",
-            "goblet squat", "smith machine squat", "prensa", "peso muerto rumano", "romanian deadlift",
+            "goblet squat", "prensa", "peso muerto rumano con mancuernas", "romanian deadlift dumbbell",
+            "sentadilla búlgara en smith", "peso muerto rumano a una pierna",
             "peso muerto piernas rígidas", "trap bar deadlift", "press militar sentado",
             "press militar con mancuernas", "push press", "press inclinado",
         ):
             self.assertIsNone(std.lift_of(name), name)
+
+
+    def test_smith_squat_and_rdl_have_their_own_table(self):
+        cases = {
+            "sentadilla en smith": "smith_squat", "Sentadilla en máquina Smith": "smith_squat",
+            "smith machine squat": "smith_squat", "sentadilla multipower": "smith_squat",
+            "peso muerto rumano": "rdl", "Peso Muerto Rumano Con Barra": "rdl", "romanian deadlift": "rdl",
+            "RDL": "rdl",
+        }
+        for name, lift in cases.items():
+            self.assertEqual(std.lift_of(name), lift, name)
+        self.assertEqual(std.thresholds("hombre", "smith_squat", 80), [57, 84, 118, 158, 202])
+        self.assertEqual(std.thresholds("mujer", "rdl", 60), [31, 47, 67, 90, 116])
 
 
 class ThresholdTests(unittest.TestCase):
@@ -365,6 +379,20 @@ class PullupAndGlobalTests(_LifterCase):
         self.lift("dominadas", 30, self.T0 + timedelta(days=1), reps=1, rir=0)  # mucho mejor que el jalón
         self.assertGreater(self.profile()["global_rank"]["tier"] * 3 + self.profile()["global_rank"]["division"],
                            low["tier"] * 3 + low["division"])
+
+    def test_smith_squat_and_rdl_fill_their_basic(self):
+        self.lift("press de banca", 90, self.T0)
+        self.lift("sentadilla en smith", 110, self.T0)
+        self.lift("peso muerto rumano", 120, self.T0)
+        p = self.profile()
+        self.assertEqual(p["basics_counted"], 3)  # banca, sentadilla (Smith) y peso muerto (rumano)
+        self.assertIsNotNone(p["global_rank"])
+        self.assertNotIn("Sentadilla (libre o en Smith)", p["rank_missing"])
+        self.assertIsNotNone(p["lifts"]["smith_squat"]["rank"])
+        # Si además hace sentadilla libre, cuenta la mejor de las dos.
+        best = max(p["lifts"]["smith_squat"]["score"], 0)
+        self.lift("sentadilla", 200, self.T0 + timedelta(days=1))
+        self.assertGreater(self.profile()["lifts"]["squat"]["score"], best)
 
     def test_global_needs_three_basics(self):
         self.lift("press de banca", 90, self.T0)

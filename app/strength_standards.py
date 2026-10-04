@@ -62,21 +62,38 @@ LEVEL_DESCRIPTIONS = {
     "elite": "Compite en deportes de fuerza.",
 }
 
-LIFTS = ["bench", "squat", "deadlift", "press", "row", "pullup", "pulldown"]
+LIFTS = ["bench", "squat", "smith_squat", "deadlift", "rdl", "press", "row", "pullup", "pulldown"]
 BIG_THREE = ["bench", "squat", "deadlift"]
-# Básicos del rango global. El tirón vertical vale lo que el mejor de
-# dominadas y jalón al pecho (son el mismo patrón de movimiento).
+# Básicos del rango global. Cada uno vale lo que la MEJOR de sus variantes
+# (mismo patrón de movimiento, cada una comparada con su propia tabla): el
+# tirón vertical, dominadas o jalón; la sentadilla, libre o en Smith (no
+# todos los gimnasios tienen jaula); el peso muerto, convencional o rumano.
 BASICS = ["bench", "squat", "deadlift", "press", "row", "vertical"]
 VERTICAL = ("pullup", "pulldown")
+BASIC_SOURCES = {
+    "bench": ("bench",), "squat": ("squat", "smith_squat"), "deadlift": ("deadlift", "rdl"),
+    "press": ("press",), "row": ("row",), "vertical": VERTICAL,
+}
 BASIC_LABELS = {
-    "bench": "Press de banca", "squat": "Sentadilla", "deadlift": "Peso muerto",
+    "bench": "Press de banca", "squat": "Sentadilla (libre o en Smith)", "deadlift": "Peso muerto (convencional o rumano)",
     "press": "Press militar", "row": "Remo con barra", "vertical": "Dominadas / jalón al pecho",
+}
+# Nota en la pestaña Rango para los levantamientos que comparten básico.
+SHARED_NOTE = {
+    "squat": "cuenta la mejor de sentadilla libre y en Smith",
+    "smith_squat": "cuenta la mejor de sentadilla libre y en Smith",
+    "deadlift": "cuenta el mejor de peso muerto y rumano",
+    "rdl": "cuenta el mejor de peso muerto y rumano",
+    "pullup": "cuenta el mejor de dominadas y jalón",
+    "pulldown": "cuenta el mejor de dominadas y jalón",
 }
 MIN_BASICS_FOR_GLOBAL = 3
 LIFT_LABELS = {
     "bench": "Press de banca",
     "squat": "Sentadilla",
+    "smith_squat": "Sentadilla en Smith",
     "deadlift": "Peso muerto",
+    "rdl": "Peso muerto rumano",
     "press": "Press militar",
     "row": "Remo con barra",
     "pullup": "Dominadas",
@@ -85,7 +102,9 @@ LIFT_LABELS = {
 LIFT_RULES = {  # condición de la fuente para que el estándar aplique
     "bench": "La barra toca el pecho con una pausa breve y se extienden los codos del todo.",
     "squat": "Los muslos bajan por debajo de la paralela.",
+    "smith_squat": "Sentadilla en máquina Smith (multipower).",
     "deadlift": "Rodillas, cadera y espalda alta se extienden del todo.",
+    "rdl": "Peso muerto rumano con barra (piernas casi rectas, bisagra de cadera).",
     "press": "De pie, piernas rectas, sin echar el tronco atrás y extendiendo los codos.",
     "row": "Remo con barra inclinado hacia delante (bent over row).",
     "pullup": "Dominada completa; el peso que apuntes es el lastre (0 = solo tu peso).",
@@ -93,7 +112,7 @@ LIFT_RULES = {  # condición de la fuente para que el estándar aplique
 }
 # De qué tabla sale cada levantamiento.
 KILGORE_LIFTS = ("bench", "squat", "deadlift", "press")
-SL_LIFTS = ("row", "pullup", "pulldown")
+SL_LIFTS = ("smith_squat", "rdl", "row", "pullup", "pulldown")
 SL_SOURCE_NAME = "StrengthLevel (strengthlevel.com), percentiles de sus usuarios"
 SL_SOURCE_URL = "https://strengthlevel.com/strength-standards"
 
@@ -159,8 +178,8 @@ TABLES = {
 }
 assert all(len(rows) == len(_MEN_LB if sex == "hombre" else _WOMEN_LB) for (sex, _), rows in TABLES_LB.items())
 
-# StrengthLevel (consultado el 03/10/2026, tablas en kg por peso corporal de
-# 5 en 5). No hay estándares de Kilgore para remo, dominadas ni jalón, así
+# StrengthLevel (consultado el 03/10/2026; sentadilla en Smith y rumano, el
+# 04/10/2026; tablas en kg por peso corporal de 5 en 5). No hay estándares de Kilgore para remo, dominadas ni jalón, así
 # que estos tres salen de otra fuente con otro método: percentiles de los
 # levantamientos que registran sus usuarios (Principiante = más fuerte que el
 # 5 %, Novato 20 %, Intermedio 50 %, Avanzado 80 %, Élite 95 %). Datos
@@ -181,6 +200,30 @@ SL_TABLES = {
         (23, 35, 50, 68, 87), (24, 36, 51, 69, 89), (25, 37, 53, 71, 91), (26, 38, 54, 73, 93),
         (27, 40, 56, 74, 95), (28, 41, 57, 76, 97), (29, 42, 58, 78, 99), (29, 43, 60, 79, 100),
         (30, 44, 61, 80, 102)],
+    ("hombre", "smith_squat"): [
+        (27, 47, 73, 105, 141), (32, 53, 81, 115, 152), (37, 60, 89, 124, 163), (42, 66, 97, 133, 174),
+        (47, 72, 104, 142, 183), (52, 78, 111, 150, 193), (57, 84, 118, 158, 202), (62, 90, 125, 166, 210),
+        (66, 95, 131, 173, 219), (71, 101, 138, 180, 227), (75, 106, 144, 187, 234), (79, 111, 149, 194, 242),
+        (83, 116, 155, 200, 249), (87, 120, 161, 207, 256), (91, 125, 166, 213, 263), (95, 130, 171, 219, 270),
+        (99, 134, 176, 225, 276), (103, 138, 181, 230, 282), (107, 143, 186, 236, 288)],
+    ("mujer", "smith_squat"): [
+        (15, 29, 48, 73, 101), (17, 31, 52, 77, 106), (18, 34, 55, 81, 111), (20, 36, 58, 85, 115),
+        (22, 38, 61, 88, 119), (23, 40, 63, 91, 122), (25, 42, 66, 94, 126), (26, 44, 68, 97, 129),
+        (28, 46, 70, 99, 132), (29, 48, 72, 102, 135), (30, 49, 74, 104, 138), (32, 51, 76, 107, 140),
+        (33, 52, 78, 109, 143), (34, 54, 80, 111, 145), (35, 55, 82, 113, 148), (36, 57, 83, 115, 150),
+        (37, 58, 85, 117, 152)],
+    ("hombre", "rdl"): [
+        (32, 51, 76, 106, 140), (37, 58, 85, 117, 152), (43, 65, 93, 127, 163), (49, 72, 102, 136, 174),
+        (54, 79, 110, 145, 184), (60, 85, 117, 154, 194), (65, 92, 125, 163, 203), (70, 98, 132, 171, 213),
+        (75, 104, 139, 179, 221), (80, 110, 145, 186, 230), (85, 115, 152, 194, 238), (90, 121, 158, 201, 246),
+        (95, 126, 164, 208, 254), (99, 132, 170, 214, 261), (104, 137, 176, 221, 268), (108, 142, 182, 227, 275),
+        (112, 147, 188, 233, 282), (116, 151, 193, 240, 289), (121, 156, 198, 245, 295)],
+    ("mujer", "rdl"): [
+        (23, 37, 55, 77, 101), (25, 40, 58, 81, 105), (27, 42, 61, 84, 109), (29, 44, 64, 87, 113),
+        (31, 47, 67, 90, 116), (32, 49, 69, 93, 119), (34, 51, 71, 96, 122), (36, 52, 73, 98, 125),
+        (37, 54, 75, 100, 128), (38, 56, 77, 103, 130), (40, 57, 79, 105, 132), (41, 59, 81, 107, 135),
+        (42, 60, 83, 109, 137), (43, 62, 84, 111, 139), (44, 63, 86, 112, 141), (45, 64, 87, 114, 143),
+        (46, 65, 89, 116, 145)],
     ("hombre", "pulldown"): [
         (29, 43, 60, 79, 101), (32, 47, 64, 85, 107), (35, 50, 69, 90, 113), (39, 54, 73, 95, 118),
         (42, 57, 77, 99, 123), (44, 61, 81, 104, 128), (47, 64, 85, 108, 133), (50, 67, 88, 112, 137),
@@ -255,6 +298,25 @@ def _strip(s):
     return "".join(c for c in unicodedata.normalize("NFKD", s) if not unicodedata.combining(c)).lower()
 
 
+# Variantes con tabla propia (se miran antes que el levantamiento base, que
+# las excluye): sentadilla en Smith y peso muerto rumano con barra.
+_SMITH_WORDS = ("smith", "multipower")
+_RDL_WORDS = ("peso muerto rumano", "rumano", "romanian", "rdl")
+
+
+def _variant_of(name):
+    """"smith_squat"/"rdl" si es esa variante, None si es una variante de
+    ella que no vale (con mancuernas, a una pierna...), "" si no es ninguna."""
+    if any(w in name for w in _LIFT_WORDS["squat"]) and any(w in name for w in _SMITH_WORDS):
+        allowed = _SMITH_WORDS + ("maquina", "machine")
+        excl = tuple(w for w in _COMMON_EXCLUDE if w not in allowed) + _LIFT_EXCLUDE["squat"]
+        return None if any(w in name for w in excl) else "smith_squat"
+    if any(w in name for w in _RDL_WORDS):
+        excl = _COMMON_EXCLUDE + ("deficit", "bloque", "block", "trap", "hexagonal", "parcial", "partial", "sumo")
+        return None if any(w in name for w in excl) else "rdl"
+    return ""
+
+
 def lift_of(exercise_name):
     """Clave del levantamiento (ver LIFTS) si el nombre es ESE ejercicio, sin
     variantes con otra carga; None si no. "banca" a secas cuenta como
@@ -262,7 +324,10 @@ def lift_of(exercise_name):
     name = _strip(exercise_name or "").strip()
     if name == "banca":
         return "bench"
-    for lift in LIFTS:
+    variant = _variant_of(name)
+    if variant != "":
+        return variant
+    for lift in _LIFT_WORDS:  # las variantes ya se han mirado arriba
         if any(w in name for w in _LIFT_WORDS[lift]):
             common = tuple(w for w in _COMMON_EXCLUDE if not (lift == "pulldown" and w in ("maquina", "machine")))
             if any(w in name for w in common + _LIFT_EXCLUDE[lift]):
@@ -654,10 +719,8 @@ def strength_profile(user, rows=None, weights=None, now=None):
     # vale lo que el mejor de dominadas y jalón. Para no esconder
     # desequilibrios, se avisa si un básico va un rango entero por detrás.
     def basic_score(basic):
-        if basic == "vertical":
-            vals = [lifts[l]["score"] for l in VERTICAL if lifts[l]["score"] is not None]
-            return max(vals) if vals else None
-        return lifts[basic]["score"]
+        vals = [lifts[l]["score"] for l in BASIC_SOURCES[basic] if lifts[l]["score"] is not None]
+        return max(vals) if vals else None
 
     scores = {b: basic_score(b) for b in BASICS}
     counted = {b: sc for b, sc in scores.items() if sc is not None}

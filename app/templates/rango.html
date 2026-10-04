@@ -90,7 +90,7 @@
                 {% set l = profile.lifts[lift] %}
                 <div class="std-row">
                     <div class="std-row-head">
-                        <strong>{{ l.label }}{% if lift in standards.VERTICAL %} <small class="std-extra">cuenta el mejor de dominadas y jalón</small>{% endif %}</strong>
+                        <strong>{{ l.label }}{% if standards.SHARED_NOTE[lift] %} <small class="std-extra">{{ standards.SHARED_NOTE[lift] }}</small>{% endif %}</strong>
                         {% if l.rank %}
                             <span class="rank-chip">{{ macros.rank_emblem(l.rank.key, 26, l.rank.division) }}<span class="rank-badge rank-{{ l.rank.key }}">{{ l.rank.label }}</span></span>
                         {% elif l.rank_stale %}
@@ -172,7 +172,8 @@
             <p>
                 <b>Cómo lo aplicamos.</b> Usamos tu 1RM estimado con series de hasta 10 repeticiones efectivas
                 (más allá la estimación es poco fiable), solo del levantamiento con barra: las variantes
-                (inclinado, mancuernas, Smith, búlgara, frontal, rumano...) no cuentan porque tienen otras cargas.
+                (inclinado, mancuernas, búlgara, frontal...) no cuentan porque tienen otras cargas. La sentadilla en Smith
+                y el peso muerto rumano sí cuentan, cada uno con su propia tabla (StrengthLevel), en el básico de su patrón.
                 Las tablas van por categorías de peso corporal y entre dos categorías interpolamos.
                 El <b>nivel alcanzado</b> es el mejor de todas tus sesiones, cada una con el peso que tenías entonces,
                 así que pesarte hoy no te quita un nivel. El <b>nivel global</b> es el menor de banca, sentadilla
