@@ -4156,3 +4156,21 @@ tr[data-set-type="calentamiento"] .cell-input { opacity: 0.75; }
 .dash-tile-sub .pace-slow { color: #d08a00; font-weight: 700; }
 :root[data-theme="dark"] .pace-verdict.pace-ok, :root[data-theme="dark"] .dash-tile-sub .pace-ok { color: #5cf0b4; }
 :root[data-theme="dark"] .pace-verdict.pace-slow { color: #ffc561; }
+
+/* Tipo de serie: la pastilla es un botón que abre un panel propio */
+button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
+.set-type-options { display: flex; flex-direction: column; gap: 6px; padding: 4px 0 calc(8px + env(safe-area-inset-bottom, 0px)); }
+.set-type-option { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 60px; padding: 10px 12px; border-radius: 14px;
+    border: 1.5px solid var(--border-subtle); background: var(--surface); color: var(--color-text); text-align: left; cursor: pointer; font-family: inherit; }
+.set-type-option .set-type-pill { min-width: 34px; height: 34px; padding: 0; font-size: 0.95rem; flex-shrink: 0; cursor: inherit; }
+.set-type-option-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.set-type-option-text strong { font-size: 0.98rem; font-weight: 800; }
+.set-type-option-text small { font-size: 0.78rem; color: var(--color-text-muted); line-height: 1.3; }
+.set-type-option-check { color: var(--accent); opacity: 0; flex-shrink: 0; }
+.set-type-option.selected { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.08); }
+.set-type-option.selected .set-type-option-check { opacity: 1; }
+.set-type-option:active { transform: scale(0.98); }
+
+/* Casilla Objetivo de Inicio: de qué emblema a cuál pasas */
+.goal-ranks { display: flex; align-items: center; gap: 4px; margin: 2px 0 2px; }
+.goal-arrow { font-weight: 800; color: var(--color-text-muted); font-size: 0.85rem; }

@@ -180,15 +180,11 @@
                         {% endif %}
                         {% set st = s.set_type if s.set_type in type_short else 'normal' %}
                         <td>
-                            <label class="set-type-pill set-type-{{ st }}">
+                            <button type="button" class="set-type-pill set-type-{{ st }}" data-type="{{ st }}" aria-label="Tipo de serie: {{ type_label[st] }}"
+                                    onclick="openSetTypePicker({{ s.id }}, this)">
                                 <span class="set-type-short">{{ type_short[st] }}</span>
                                 <span class="set-type-long">{{ type_label[st] }}</span>
-                                <select class="set-type-select" aria-label="Tipo de serie" onchange="onSetTypeChange({{ s.id }}, this)">
-                                    {% for val, label in type_label.items() %}
-                                        <option value="{{ val }}" {% if st == val %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </label>
+                            </button>
                         </td>
                         <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" aria-label="Marcar serie como hecha" onclick="toggleSetComplete({{ s.id }}, this, '{{ exercise }}')">{{ macros.icon('check', 18) }}</button></td>
                         <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})" aria-label="Eliminar serie">{{ macros.icon('trash') }}</button></td>
@@ -268,6 +264,29 @@
     <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
     <script src="{{ url_for('static', filename='share_card.js') }}"></script>
     <script src="{{ url_for('static', filename='rank_fx.js') }}"></script>
+
+    <div class="sheet-backdrop" id="setTypeBackdrop" onclick="closeSetTypePicker()"></div>
+    <div class="bottom-sheet set-type-sheet" id="setTypeSheet" role="dialog" aria-modal="true" aria-labelledby="setTypeTitle">
+        <div class="bottom-sheet-grabber" aria-hidden="true"></div>
+        <div class="bottom-sheet-header">
+            <h3 id="setTypeTitle" class="bottom-sheet-title">Tipo de serie</h3>
+            <button type="button" class="sheet-close-btn" onclick="closeSetTypePicker()" aria-label="Cerrar">{{ macros.icon('close', 20) }}</button>
+        </div>
+        <div class="set-type-options" role="radiogroup" aria-labelledby="setTypeTitle">
+            {% set type_desc = {
+                'normal': 'Serie de trabajo de siempre.',
+                'calentamiento': 'Para entrar en calor: no cuenta para volumen, XP ni rango.',
+                'fallo': 'Llegaste al fallo muscular: no podías hacer otra repetición.',
+                'dropset': 'Bajas el peso sin descansar y sigues hasta el fallo.'} %}
+            {% for val, label in type_label.items() %}
+                <button type="button" class="set-type-option" role="radio" data-type="{{ val }}" onclick="chooseSetType('{{ val }}')">
+                    <span class="set-type-pill set-type-{{ val }}" aria-hidden="true"><span class="set-type-letter">{{ type_short[val] }}</span></span>
+                    <span class="set-type-option-text"><strong>{{ label }}</strong><small>{{ type_desc[val] }}</small></span>
+                    <span class="set-type-option-check" aria-hidden="true">{{ macros.icon('check', 18) }}</span>
+                </button>
+            {% endfor %}
+        </div>
+    </div>
 
     {% if effort_scale != 'none' %}
     <div class="sheet-backdrop" id="effortPickerBackdrop" onclick="closeEffortPicker()"></div>
@@ -408,27 +427,49 @@
         const SET_TYPE_LABEL = {{ type_label|tojson }};
 
         function setTypeCellHtml(id, type) {
-            let options = '';
-            Object.keys(SET_TYPE_LABEL).forEach(function (val) {
-                options += '<option value="' + val + '"' + (val === type ? ' selected' : '') + '>' + SET_TYPE_LABEL[val] + '</option>';
-            });
-            return '<td><label class="set-type-pill set-type-' + type + '">' +
+            return '<td><button type="button" class="set-type-pill set-type-' + type + '" data-type="' + type + '"' +
+                ' aria-label="Tipo de serie: ' + SET_TYPE_LABEL[type] + '" onclick="openSetTypePicker(' + id + ', this)">' +
                 '<span class="set-type-short">' + SET_TYPE_SHORT[type] + '</span>' +
-                '<span class="set-type-long">' + SET_TYPE_LABEL[type] + '</span>' +
-                '<select class="set-type-select" aria-label="Tipo de serie" onchange="onSetTypeChange(' + id + ', this)">' + options + '</select>' +
-                '</label></td>';
+                '<span class="set-type-long">' + SET_TYPE_LABEL[type] + '</span></button></td>';
         }
 
-        function onSetTypeChange(id, select) {
-            const pill = select.closest('.set-type-pill');
-            const type = SET_TYPE_LABEL[select.value] ? select.value : 'normal';
+        // Panel propio para elegir el tipo de serie (el selector nativo del
+        // sistema se veía pobre): un toque elige y cierra.
+        let setTypePickerId = null;
+        let setTypePickerPill = null;
+
+        function openSetTypePicker(id, pill) {
+            setTypePickerId = id;
+            setTypePickerPill = pill;
+            document.querySelectorAll('#setTypeSheet .set-type-option').forEach(function (btn) {
+                const on = btn.dataset.type === pill.dataset.type;
+                btn.classList.toggle('selected', on);
+                btn.setAttribute('aria-checked', on ? 'true' : 'false');
+            });
+            document.getElementById('setTypeBackdrop').classList.add('open');
+            document.getElementById('setTypeSheet').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSetTypePicker() {
+            document.getElementById('setTypeBackdrop').classList.remove('open');
+            document.getElementById('setTypeSheet').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+
+        function chooseSetType(type) {
+            const pill = setTypePickerPill;
+            closeSetTypePicker();
+            if (!pill || !SET_TYPE_LABEL[type] || pill.dataset.type === type) return;
             pill.className = 'set-type-pill set-type-' + type;
+            pill.dataset.type = type;
+            pill.setAttribute('aria-label', 'Tipo de serie: ' + SET_TYPE_LABEL[type]);
             pill.closest('tr').dataset.setType = type;  // franja y número de la fila
             pill.querySelector('.set-type-short').textContent = SET_TYPE_SHORT[type];
             pill.querySelector('.set-type-long').textContent = SET_TYPE_LABEL[type];
             pill.classList.add('set-type-bump');
             setTimeout(() => pill.classList.remove('set-type-bump'), 250);
-            updateSet(id, 'set_type', type);
+            updateSet(setTypePickerId, 'set_type', type);
         }
 
         function tapFeedback() {

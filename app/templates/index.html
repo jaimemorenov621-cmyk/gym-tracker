@@ -273,6 +273,11 @@
                 <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('shield', 15) }}</span>Objetivo</span>
                 {% if rank_goal %}
                     <strong class="dash-tile-value">+{{ rank_goal.missing_kg|num(1) }}<small> kg</small></strong>
+                    <span class="goal-ranks" aria-label="De {{ rank_goal.rank.label }} a {{ rank_goal.next }}">
+                        {{ macros.rank_emblem(rank_goal.rank.key, 26, rank_goal.rank.division, eager=True) }}
+                        <span class="goal-arrow" aria-hidden="true">→</span>
+                        {{ macros.rank_emblem(rank_goal.next_rank.key, 26, rank_goal.next_rank.division, eager=True) }}
+                    </span>
                     <span class="dash-tile-sub">{{ rank_goal.label }} para <b>{{ rank_goal.next }}</b></span>
                 {% elif profile.missing %}
                     <strong class="dash-tile-value is-empty">—</strong>

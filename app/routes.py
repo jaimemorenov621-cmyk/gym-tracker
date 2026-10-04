@@ -753,7 +753,8 @@ def next_rank_goal(profile):
         effort = info["rank_missing_kg"] / base if base else float("inf")
         if best is None or effort < best[0]:
             best = (effort, {"lift": lift, "label": info["label"], "missing_kg": info["rank_missing_kg"],
-                             "next": info["rank_next"], "rank": info["rank"]})
+                             "next": info["rank_next"], "rank": info["rank"],
+                             "next_rank": standards.rank_for(info["rank"]["next_score"] + 1e-9)})
     return best[1] if best else None
 
 
@@ -889,7 +890,7 @@ def index():
     ).all()
     latest_weight = weight_entries[-1] if weight_entries else None
     pace = bodyweight_mod.summary([(e.timestamp, e.weight) for e in weight_entries], current_user.body_phase,
-                                  datetime.now(timezone.utc).replace(tzinfo=None))
+                                  datetime.now(timezone.utc).replace(tzinfo=None), _global_tier(current_user))
     # Cambio de peso frente al registro más reciente de hace >= 30 días.
     weight_change = None
     if latest_weight:
@@ -2048,7 +2049,7 @@ def weight():
         form=form,
         empty_form=EmptyForm(),
         pace=bodyweight_mod.summary([(e.timestamp, e.weight) for e in entries], current_user.body_phase,
-                                    datetime.now(timezone.utc).replace(tzinfo=None)),
+                                    datetime.now(timezone.utc).replace(tzinfo=None), _global_tier(current_user)),
         phases=bodyweight_mod.PHASES,
         entries=list(reversed(entries)),
         chart_labels=[to_local(e.timestamp).strftime("%d/%m/%Y") for e in entries],
@@ -3432,6 +3433,12 @@ def history_rows(user_id):
 
 def cached_profile(user):
     return datacache.cached("profile", user.id, lambda: standards.strength_profile(user, rows=history_rows(user.id)))
+
+
+def _global_tier(user):
+    """Rango global de fuerza (0-8) o None; para ajustar el ritmo de peso."""
+    rank = cached_profile(user)["global_rank"]
+    return rank["tier"] if rank else None
 
 
 def cached_strength(user_id):

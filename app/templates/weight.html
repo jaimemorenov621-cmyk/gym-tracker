@@ -36,7 +36,7 @@
             </p>
         {% endif %}
         <p class="pace-verdict pace-{{ pace.status }}">{{ pace.text }}</p>
-        {% if pace.phase_info %}<p class="std-note">Para {{ pace.phase_info.label|lower }} se recomienda {{ pace.phase_info.range }}.</p>{% endif %}
+        {% if pace.phase_info %}<p class="std-note">Para {{ pace.phase_info.label|lower }}{% if pace.phase != 'recomposicion' %}, a tu nivel ({{ pace.level_label }}{% if not pace.has_tier %}: aún sin rango de fuerza, se usa este{% endif %}),{% endif %} se recomienda {{ pace.target }}.</p>{% endif %}
         <details class="strength-how">
             <summary>¿De dónde salen estos ritmos?</summary>
             <p>
@@ -44,8 +44,12 @@
                 más sal no lo distorsione. Pésate en condiciones parecidas (por ejemplo, al levantarte).
                 <b>Volumen</b>: +0,25 a +0,5 % de tu peso por semana (Iraki y cols., 2019; los principiantes toleran la
                 parte alta). <b>Definición</b>: −0,5 a −1 % por semana (Helms y cols., 2014; más rápido aumenta el riesgo
-                de perder músculo). <b>Recomposición</b>: peso estable (±0,25 % por semana, margen de la app). Son
-                referencias para culturismo natural, no una medida de tu grasa.
+                de perder músculo). <b>Recomposición</b>: peso estable (±0,25 % por semana, margen de la app).
+                Según tu nivel (lo sacamos de tu rango de fuerza): en volumen, los principiantes pueden subir más rápido
+                y los avanzados deben ir más despacio; en definición, cuanto más avanzado, más lento (Garthe y cols.,
+                2011: bajar un 0,7 % por semana conservó más músculo que un 1,4 %). Los extremos salen de esos estudios;
+                los cortes del nivel intermedio son criterio de la app. Son referencias para culturismo natural, no una
+                medida de tu grasa.
             </p>
         </details>
     </div>

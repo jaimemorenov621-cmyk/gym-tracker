@@ -63,3 +63,18 @@ class PhaseRouteTests(DbTestCase):
         self.client.post("/weight/fase", data={"phase": ""})  # quitar la fase
         with app.app_context():
             self.assertIsNone(db.session.get(User, uid).body_phase)
+
+
+class LevelTests(unittest.TestCase):
+    def test_ranges_depend_on_level(self):
+        self.assertEqual(bw.level_for_tier(None), "principiante")
+        self.assertEqual(bw.level_for_tier(3), "principiante")   # Oro
+        self.assertEqual(bw.level_for_tier(4), "intermedio")     # Platino
+        self.assertEqual(bw.level_for_tier(6), "avanzado")       # Esmeralda
+        rate = bw.weekly_rate(series(80, 0.32), NOW)             # ~0,4 %/sem
+        self.assertEqual(bw.assessment(rate, "volumen", "principiante")["status"], "ok")
+        self.assertEqual(bw.assessment(rate, "volumen", "avanzado")["status"], "fast")
+        cut = bw.weekly_rate(series(80, -0.75), NOW)             # ~-0,95 %/sem
+        self.assertEqual(bw.assessment(cut, "definicion", "principiante")["status"], "ok")
+        self.assertEqual(bw.assessment(cut, "definicion", "avanzado")["status"], "fast")
+        self.assertIn("0,1-0,25 %", bw.summary(series(80, 0.1), "volumen", NOW, tier=7)["target"])

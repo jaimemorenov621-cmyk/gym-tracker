@@ -12,6 +12,13 @@ Rangos de referencia, en % del peso corporal por semana:
                                 (más rápido aumenta el riesgo de perder
                                 músculo).
   Recomposición  -0,25 a +0,25  peso estable; el margen es criterio de la app.
+
+Por nivel (se usa el rango de fuerza como indicador de experiencia): Iraki y
+cols. recomiendan la parte alta del volumen para principiantes y la baja
+para avanzados, y en definición ir más despacio cuanto más avanzado y magro
+(Helms 2014; Garthe y cols. 2011, IJSNEM 21(2): 0,7 %/sem conservó más masa
+magra que 1,4 %). Los extremos salen de esos trabajos; los cortes del nivel
+intermedio son criterio de la app.
 """
 from datetime import timedelta
 
@@ -23,6 +30,28 @@ PHASES = {
     "recomposicion": {"label": "Recomposición", "lo": -0.25, "hi": 0.25,
                       "range": "mantener el peso (±0,25 % por semana)"},
 }
+# (volumen lo-hi, definición lo-hi) por nivel; recomposición igual para todos.
+LEVELS = {
+    "principiante": {"label": "principiante o novato", "volumen": (0.25, 0.5), "definicion": (-1.0, -0.5)},
+    "intermedio": {"label": "intermedio", "volumen": (0.2, 0.35), "definicion": (-0.9, -0.5)},
+    "avanzado": {"label": "avanzado", "volumen": (0.1, 0.25), "definicion": (-0.75, -0.5)},
+}
+
+
+def level_for_tier(tier):
+    """Nivel de experiencia a partir del rango global (None = sin rango)."""
+    if tier is None or tier <= 3:      # Hierro..Oro: hasta Novato alto
+        return "principiante"
+    return "intermedio" if tier <= 5 else "avanzado"   # Platino/Diamante; Esmeralda+
+
+
+def phase_range(phase, level):
+    """(lo, hi) en % por semana para la fase y el nivel."""
+    if phase == "recomposicion":
+        return PHASES[phase]["lo"], PHASES[phase]["hi"]
+    return LEVELS[level][phase]
+
+
 WINDOW_DAYS = 28
 MIN_ENTRIES = 4
 MIN_SPAN_DAYS = 14
@@ -47,15 +76,17 @@ def weekly_rate(entries, now):
     return {"kg_week": kg_week, "pct_week": 100 * kg_week / my, "entries": len(recent), "days": round(span)}
 
 
-def assessment(rate, phase):
-    """Cómo va el ritmo para la fase: status ok | fast | slow | wrong | none
-    y un mensaje corto."""
+def assessment(rate, phase, level="principiante"):
+    """Cómo va el ritmo para la fase y el nivel: status ok | fast | slow |
+    wrong | none y un mensaje corto."""
     if rate is None:
         return {"status": "none", "text": f"Registra al menos {MIN_ENTRIES} pesos en {MIN_SPAN_DAYS} días para ver tu ritmo."}
     info = PHASES.get(phase)
     if info is None:
         return {"status": "none", "text": "Elige tu fase para saber si vas al ritmo adecuado."}
     pct = rate["pct_week"]
+    lo, hi = phase_range(phase, level)
+    info = dict(info, lo=lo, hi=hi)
     if phase == "volumen":
         if pct <= 0:
             return {"status": "wrong", "text": "No estás subiendo de peso: para ganar músculo en volumen hace falta algo de superávit."}
@@ -78,7 +109,20 @@ def assessment(rate, phase):
     return {"status": "ok", "text": "Vas al ritmo recomendado para tu fase."}
 
 
-def summary(entries, phase, now):
-    """Todo lo que pintan Inicio y la página de peso."""
+def _pct(x):
+    return f"{x:.2f}".rstrip("0").rstrip(".").replace(".", ",")
+
+
+def summary(entries, phase, now, tier=None):
+    """Todo lo que pintan Inicio y la página de peso. `tier`: rango global
+    de fuerza (indicador del nivel); sin rango se usa el de principiante."""
     rate = weekly_rate(entries, now)
-    return {"rate": rate, "phase": phase, "phase_info": PHASES.get(phase), **assessment(rate, phase)}
+    level = level_for_tier(tier)
+    out = {"rate": rate, "phase": phase, "phase_info": PHASES.get(phase), "level": level,
+           "level_label": LEVELS[level]["label"], "has_tier": tier is not None, **assessment(rate, phase, level)}
+    if phase in PHASES:
+        lo, hi = phase_range(phase, level)
+        verb = "subir" if phase == "volumen" else ("bajar" if phase == "definicion" else "")
+        out["target"] = (f"{verb} un {_pct(min(abs(lo), abs(hi)))}-{_pct(max(abs(lo), abs(hi)))} % de tu peso por semana"
+                         if verb else "mantener el peso (±0,25 % por semana)")
+    return out
