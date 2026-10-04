@@ -5,11 +5,23 @@ let pickerErrorTimeout;
 let pickerReplaceUrl = null;
 let pickerReplaceExtra = null;
 const MUSCLE_OPTIONS = [
-    ['shoulders', 'Hombros'], ['neck', 'Cuello'], ['chest', 'Pecho'], ['abdominals', 'Abdomen'],
-    ['biceps', 'Bíceps'], ['triceps', 'Tríceps'], ['forearms', 'Antebrazos'], ['quadriceps', 'Cuádriceps'],
-    ['adductors', 'Aductores'], ['abductors', 'Abductores'], ['glutes', 'Glúteos'], ['hamstrings', 'Isquiotibiales'],
-    ['lats', 'Dorsales'], ['middle back', 'Espalda media'], ['lower back', 'Espalda baja'], ['traps', 'Trapecios'],
-    ['calves', 'Pantorrillas'],
+    ['shoulders', T('Hombros')],
+    ['neck', T('Cuello')],
+    ['chest', T('Pecho')],
+    ['abdominals', T('Abdomen')],
+    ['biceps', T('Bíceps')],
+    ['triceps', T('Tríceps')],
+    ['forearms', T('Antebrazos')],
+    ['quadriceps', T('Cuádriceps')],
+    ['adductors', T('Aductores')],
+    ['abductors', T('Abductores')],
+    ['glutes', T('Glúteos')],
+    ['hamstrings', T('Isquiotibiales')],
+    ['lats', T('Dorsales')],
+    ['middle back', T('Espalda media')],
+    ['lower back', T('Espalda baja')],
+    ['traps', T('Trapecios')],
+    ['calves', T('Pantorrillas')],
 ];
 
 const STAR_ICON_SVG = '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
@@ -21,7 +33,7 @@ function resultRowHTML(ex) {
         (ex.muscles ? '<div class="exercise-result-muscles">' + ex.muscles + '</div>' : '') +
         '</div>' +
         (ex.id ? '<button type="button" class="exercise-favorite-star' + (ex.is_favorite ? ' is-favorite' : '') +
-            '" onclick="toggleFavorite(event, \'' + ex.id + '\')" aria-label="Marcar como favorito">' + STAR_ICON_SVG + '</button>' : '') +
+            '" onclick="toggleFavorite(event, \'' + ex.id + '\')" aria-label="' + T('Marcar como favorito') + '">' + STAR_ICON_SVG + '</button>' : '') +
         '</div>';
 }
 
@@ -57,9 +69,9 @@ function renderResults() {
     const box = document.getElementById('exercisePickerResults');
     let html = lastSearchResults.length
         ? lastSearchResults.map(resultRowHTML).join('')
-        : '<div class="exercise-picker-hint">Sin resultados en el catálogo.</div>';
+        : '<div class="exercise-picker-hint">' + T('Sin resultados en el catálogo.') + '</div>';
     html += '<div class="exercise-picker-footer">' +
-        '<button type="button" onclick="startCreateExercise()" class="btn-outline" style="width:100%;">+ Crear ejercicio nuevo</button>' +
+        '<button type="button" onclick="startCreateExercise()" class="btn-outline" style="width:100%;">' + T('+ Crear ejercicio nuevo') + '</button>' +
         '</div>';
     box.innerHTML = html;
 }
@@ -67,10 +79,10 @@ function renderResults() {
 function startCreateExercise() {
     const box = document.getElementById('exercisePickerResults');
     if (lastSearchResults.length) {
-        box.innerHTML = '<div class="exercise-picker-hint" style="text-align:left; padding:10px 16px;">¿Es alguno de estos?</div>' +
+        box.innerHTML = '<div class="exercise-picker-hint" style="text-align:left; padding:10px 16px;">' + T('¿Es alguno de estos?') + '</div>' +
             lastSearchResults.map(resultRowHTML).join('') +
             '<div class="exercise-picker-footer">' +
-            '<button type="button" onclick="renderCreateExerciseForm()" class="btn-outline" style="width:100%;">Ninguno, crear nuevo</button>' +
+            '<button type="button" onclick="renderCreateExerciseForm()" class="btn-outline" style="width:100%;">' + T('Ninguno, crear nuevo') + '</button>' +
             '</div>';
     } else {
         renderCreateExerciseForm();
@@ -87,15 +99,15 @@ function renderCreateExerciseForm() {
     ).join('');
     box.innerHTML =
         '<div class="exercise-picker-create-form">' +
-        '<input id="newExName" type="text" value="' + lastSearchQuery.replace(/"/g, '&quot;') + '" placeholder="Nombre del ejercicio">' +
-        '<div style="font-size:0.75rem; color:#888; margin-bottom:4px;">Músculos primarios (los que más trabajan)</div>' +
+        '<input id="newExName" type="text" value="' + lastSearchQuery.replace(/"/g, '&quot;') + '" placeholder="' + T('Nombre del ejercicio') + '">' +
+        '<div style="font-size:0.75rem; color:#888; margin-bottom:4px;">' + T('Músculos primarios (los que más trabajan)') + '</div>' +
         '<div class="exercise-picker-muscle-grid">' + primaryCheckboxes + '</div>' +
-        '<div style="font-size:0.75rem; color:#888; margin:8px 0 4px;">Músculos secundarios (opcional)</div>' +
+        '<div style="font-size:0.75rem; color:#888; margin:8px 0 4px;">' + T('Músculos secundarios (opcional)') + '</div>' +
         '<div class="exercise-picker-muscle-grid">' + secondaryCheckboxes + '</div>' +
-        '<input id="newExCategory" type="text" placeholder="Categoría (opcional)">' +
-        '<input id="newExEquipment" type="text" placeholder="Equipo (opcional)">' +
+        '<input id="newExCategory" type="text" placeholder="' + T('Categoría (opcional)') + '">' +
+        '<input id="newExEquipment" type="text" placeholder="' + T('Equipo (opcional)') + '">' +
         '<div id="newExError" class="exercise-picker-error"></div>' +
-        '<button type="button" onclick="submitNewExercise()" class="btn" style="width:100%;">Crear y usar</button>' +
+        '<button type="button" onclick="submitNewExercise()" class="btn" style="width:100%;">' + T('Crear y usar') + '</button>' +
         '</div>';
 }
 
@@ -106,7 +118,7 @@ function submitNewExercise() {
     const secondaryMuscles = Array.from(box.querySelectorAll('input.new-ex-secondary:checked')).map(c => c.value);
     const errorBox = document.getElementById('newExError');
     if (!name || !muscles.length) {
-        errorBox.textContent = !name ? 'El nombre es obligatorio.' : 'Elige al menos un músculo primario.';
+        errorBox.textContent = !name ? T('El nombre es obligatorio.') : T('Elige al menos un músculo primario.');
         errorBox.style.display = 'block';
         return;
     }
@@ -124,7 +136,7 @@ function submitNewExercise() {
     .then(r => r.json())
     .then(data => {
         if (!data.ok) {
-            errorBox.textContent = data.error || 'No se pudo crear el ejercicio.';
+            errorBox.textContent = data.error || T('No se pudo crear el ejercicio.');
             errorBox.style.display = 'block';
             return;
         }
@@ -143,7 +155,7 @@ function selectExercise(name) {
         .then(r => r.json())
         .then(data => {
             if (!data.ok) {
-                showPickerErrorToast('No se pudo reemplazar el ejercicio.');
+                showPickerErrorToast(T('No se pudo reemplazar el ejercicio.'));
                 return;
             }
             window.location.reload();
@@ -160,7 +172,7 @@ function selectExercise(name) {
     if (form && form.dataset.autosubmit === '1') {
         form.classList.add('is-submitting');
         const title = form.querySelector('.add-exercise-tile strong');
-        if (title) title.textContent = 'Añadiendo ' + name + '…';
+        if (title) title.textContent = T('Añadiendo {name}…').replace('{name}', name);
         HTMLFormElement.prototype.submit.call(form);
         return;
     }
@@ -173,12 +185,12 @@ function resetExercisePickerResults() {
     lastSearchResults = [];
     lastSearchQuery = '';
     const box = document.getElementById('exercisePickerResults');
-    box.innerHTML = '<div class="exercise-picker-hint">Escribe al menos 2 letras para buscar.</div>';
+    box.innerHTML = '<div class="exercise-picker-hint">' + T('Escribe al menos 2 letras para buscar.') + '</div>';
     fetch('/api/exercises/search?q=')
         .then(r => r.json())
         .then(results => {
             if (!results.length) return;
-            box.innerHTML = '<div class="exercise-picker-hint" style="text-align:left; padding:10px 16px; font-weight:600;">Favoritos</div>' +
+            box.innerHTML = '<div class="exercise-picker-hint" style="text-align:left; padding:10px 16px; font-weight:600;">' + T('Favoritos') + '</div>' +
                 results.map(resultRowHTML).join('');
         });
 }
@@ -208,7 +220,7 @@ document.addEventListener('keydown', function(e) {
 function validateExerciseChosen() {
     const val = document.querySelector('[name="exercise"]').value.trim();
     if (!val) {
-        showPickerErrorToast('Elige un ejercicio del catálogo primero.');
+        showPickerErrorToast(T('Elige un ejercicio del catálogo primero.'));
         return false;
     }
     return true;

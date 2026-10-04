@@ -22,15 +22,15 @@
             '<div class="xp-pop-card">' +
             '<div class="xp-pop-head"><span class="xp-pop-reason"></span><strong class="xp-pop-gain"></strong></div>' +
             '<div class="xp-pop-parts"></div>' +
-            '<div class="xp-pop-level"><span class="xp-pop-badge"><small>NV</small><b></b></span>' +
+            '<div class="xp-pop-level"><span class="xp-pop-badge"><small>' + T('NV') + '</small><b></b></span>' +
             '<span class="xp-pop-track"><span class="xp-pop-bar"><i></i></span><span class="xp-pop-next"></span></span></div>' +
             '<div class="xp-pop-up" hidden></div></div>';
         const gainEl = el.querySelector('.xp-pop-gain');
         const badge = el.querySelector('.xp-pop-badge b');
         const bar = el.querySelector('.xp-pop-bar i');
         const up = el.querySelector('.xp-pop-up');
-        el.querySelector('.xp-pop-reason').textContent = d.reason || 'Subida de nivel';
-        el.querySelector('.xp-pop-next').textContent = 'Faltan ' + d.to.to_next.toLocaleString('es-ES') + ' XP para el nivel ' + (d.to.level + 1);
+        el.querySelector('.xp-pop-reason').textContent = d.reason || T('Subida de nivel');
+        el.querySelector('.xp-pop-next').textContent = T('Faltan {xp} XP para el nivel {level}').replace('{xp}', d.to.to_next.toLocaleString(GYRE_NUM_LOCALE)).replace('{level}', d.to.level + 1);
         const parts = el.querySelector('.xp-pop-parts');
         (d.parts || []).forEach(function (p, i) {
             const chip = document.createElement('span');
@@ -48,7 +48,7 @@
             badge.textContent = d.to.level;
             el.classList.add('is-levelup');
             if (d.level_up) {
-                up.textContent = '¡NIVEL ' + d.to.level + '!';
+                up.textContent = T('¡NIVEL {n}!').replace('{n}', d.to.level);
                 up.hidden = false;
             }
         }

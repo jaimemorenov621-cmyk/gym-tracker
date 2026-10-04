@@ -26,10 +26,10 @@
             '<div class="rank-celebration-card">' +
             '<div class="rank-celebration-emblem"><span class="rank-celebration-rays" aria-hidden="true"></span>' + sparks +
             '<img class="rank-emblem" src="' + emblemSrc(rank) + '" width="190" height="190" alt=""></div>' +
-            '<small>¡Has subido de rango!</small><strong></strong>' +
-            '<p>Acabas de conseguirlo con este récord. Sigue así.</p>' +
-            '<div class="rank-celebration-actions"><a class="btn" href="/rango">Ver mi rango</a>' +
-            '<button type="button" class="btn-outline">Seguir entrenando</button></div></div>';
+            '<small>' + T('¡Has subido de rango!') + '</small><strong></strong>' +
+            '<p>' + T('Acabas de conseguirlo con este récord. Sigue así.') + '</p>' +
+            '<div class="rank-celebration-actions"><a class="btn" href="/rango">' + T('Ver mi rango') + '</a>' +
+            '<button type="button" class="btn-outline">' + T('Seguir entrenando') + '</button></div></div>';
         el.querySelector('strong').textContent = rank.label;
         function close() {
             el.classList.add('is-closing');

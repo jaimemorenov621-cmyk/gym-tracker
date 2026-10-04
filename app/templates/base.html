@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
+        // Textos de los .js estáticos en el idioma de la app (app/i18n.py,
+        // JS_STRINGS). T('texto original') devuelve la traducción o el original.
+        window.GYRE_T = {{ js_translations()|tojson }};
+        window.GYRE_NUM_LOCALE = {{ ('en-US' if get_locale().language == 'en' else 'es-ES')|tojson }};
+        function T(text) { return window.GYRE_T[text] || text; }
+    </script>
+    <script>
         // Tema antes de pintar (sin destello claro en modo oscuro). Preferencia
         // por dispositivo en localStorage: "auto" (sigue al sistema), "light"
         // o "dark"; se cambia en Configuración. Una página puede fijarlo con

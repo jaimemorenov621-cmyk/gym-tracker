@@ -38,3 +38,4 @@ app.jinja_env.globals["reps_range"] = routes.reps_range
 app.jinja_env.globals["LANGUAGES"] = i18n.LANGUAGES
 app.jinja_env.globals["i18n_enabled"] = i18n.enabled
 app.jinja_env.globals["get_locale"] = get_locale
+app.jinja_env.globals["js_translations"] = i18n.js_translations

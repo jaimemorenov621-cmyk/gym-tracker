@@ -94,7 +94,7 @@
         return { size: size, lines: wrapLines(ctx, text, 920, 2) };
     }
 
-    function es(num) { return String(num).replace('.', ','); }
+    function es(num) { return GYRE_NUM_LOCALE === 'en-US' ? String(num) : String(num).replace('.', ','); }
 
     function setSpacing(ctx, px) {
         if ('letterSpacing' in ctx) ctx.letterSpacing = px + 'px';
@@ -174,7 +174,7 @@
         ctx.font = '800 44px ' + FONT;
         setSpacing(ctx, 8);
         ctx.fillStyle = design.kicker;
-        ctx.fillText(d.is_pr ? 'NUEVO RÉCORD PERSONAL' : 'MI ENTRENO DE HOY', W / 2, 730);
+        ctx.fillText(d.is_pr ? T('NUEVO RÉCORD PERSONAL') : T('MI ENTRENO DE HOY'), W / 2, 730);
         setSpacing(ctx, 0);
 
         // Ejercicio (hasta 2 líneas).
@@ -203,11 +203,11 @@
         ctx.font = '600 54px ' + FONT;
         ctx.fillStyle = 'rgba(255, 255, 255, 0.82)';
         y += 100;
-        ctx.fillText('1RM estimado · ' + d.e1rm + ' kg', W / 2, y);
+        ctx.fillText(T('1RM estimado · {kg} kg').replace('{kg}', d.e1rm), W / 2, y);
 
         // Mejora sobre la mejor marca anterior.
         if (hasImprovement) {
-            const txt = '▲ +' + es(d.improvement) + ' kg sobre tu mejor marca';
+            const txt = '▲ ' + T('+{kg} kg sobre tu mejor marca').replace('{kg}', es(d.improvement));
             ctx.font = '700 44px ' + FONT;
             const tw = ctx.measureText(txt).width;
             const pw = tw + 80, ph = 92, px = (W - pw) / 2, py = y + 70;
@@ -231,7 +231,7 @@
         ctx.fillRect(W / 2 - 220, 1665, 440, 3);
         ctx.font = '700 44px ' + FONT;
         ctx.fillStyle = '#ffffff';
-        ctx.fillText('Registra tus entrenos gratis con Gyre', W / 2, 1755);
+        ctx.fillText(T('Registra tus entrenos gratis con Gyre'), W / 2, 1755);
         ctx.font = '600 38px ' + FONT;
         ctx.fillStyle = design.link;
         ctx.fillText(new URL(d.share_url).host, W / 2, 1818);
@@ -254,17 +254,17 @@
         sheet.innerHTML =
             '<div class="bottom-sheet-grabber" aria-hidden="true"></div>' +
             '<div class="bottom-sheet-header">' +
-            '<h3 class="bottom-sheet-title">Comparte tu récord</h3>' +
-            '<button type="button" class="sheet-close-btn" aria-label="Cerrar">' +
+            '<h3 class="bottom-sheet-title">' + T('Comparte tu récord') + '</h3>' +
+            '<button type="button" class="sheet-close-btn" aria-label="' + T('Cerrar') + '">' +
             '<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
             '</button></div>' +
-            '<div class="share-card-preview"><span class="share-card-loading">Preparando tarjeta…</span></div>' +
-            '<div class="share-designs" role="radiogroup" aria-label="Diseño de la tarjeta"></div>' +
+            '<div class="share-card-preview"><span class="share-card-loading">' + T('Preparando tarjeta…') + '</span></div>' +
+            '<div class="share-designs" role="radiogroup" aria-label="' + T('Diseño de la tarjeta') + '"></div>' +
             '<div class="share-card-actions">' +
-            '<button type="button" class="btn share-card-share" disabled>Compartir</button>' +
-            '<button type="button" class="btn-outline share-card-download" disabled>Descargar</button>' +
+            '<button type="button" class="btn share-card-share" disabled>' + T('Compartir') + '</button>' +
+            '<button type="button" class="btn-outline share-card-download" disabled>' + T('Descargar') + '</button>' +
             '</div>' +
-            '<p class="share-card-hint">Perfecta para historias de Instagram o el estado de WhatsApp.</p>';
+            '<p class="share-card-hint">' + T('Perfecta para historias de Instagram o el estado de WhatsApp.') + '</p>';
         sheet.querySelector('.sheet-close-btn').addEventListener('click', closeShareCard);
         sheet.querySelector('.share-card-share').addEventListener('click', shareCurrent);
         sheet.querySelector('.share-card-download').addEventListener('click', downloadCurrent);
@@ -278,7 +278,7 @@
         currentBlob = await drawCard(currentData, design);
         if (currentUrl) URL.revokeObjectURL(currentUrl);
         currentUrl = URL.createObjectURL(currentBlob);
-        preview.innerHTML = '<img src="' + currentUrl + '" alt="Tarjeta de récord de ' + currentData.exercise.replace(/"/g, '') + '">';
+        preview.innerHTML = '<img src="' + currentUrl + '" alt="' + T('Tarjeta de récord de {name}').replace('{name}', currentData.exercise.replace(/"/g, '')) + '">';
         sheet.querySelectorAll('.share-design').forEach(function (b) {
             const on = b.dataset.key === design.key;
             b.classList.toggle('selected', on);
@@ -318,7 +318,7 @@
         hidePrShareToast();
         const sheet = ensureSheet();
         const preview = sheet.querySelector('.share-card-preview');
-        preview.innerHTML = '<span class="share-card-loading">Preparando tarjeta…</span>';
+        preview.innerHTML = '<span class="share-card-loading">' + T('Preparando tarjeta…') + '</span>';
         sheet.querySelectorAll('.share-card-actions button').forEach(function (b) { b.disabled = true; });
         sheet.classList.add('open');
         document.getElementById('shareCardBackdrop').classList.add('open');
@@ -327,20 +327,21 @@
         try {
             const res = await fetch('/set/' + setId + '/share');
             const data = await res.json();
-            if (!data.ok) throw new Error(data.error || 'No se pudo preparar la tarjeta.');
+            if (!data.ok) throw new Error(data.error || T('No se pudo preparar la tarjeta.'));
             currentData = data;
             renderDesignChips(sheet, data);
             await redraw(sheet, chosenDesign(data));
             sheet.querySelectorAll('.share-card-actions button').forEach(function (b) { b.disabled = false; });
         } catch (e) {
             closeShareCard();
-            toast(e.message || 'No se pudo preparar la tarjeta.');
+            toast(e.message || T('No se pudo preparar la tarjeta.'));
         }
     }
 
     function shareText(d) {
-        return '🏅 Nuevo récord en ' + d.exercise + ': ' + es(d.weight) + ' kg × ' + d.reps +
-            ' (1RM est. ' + d.e1rm + ' kg). Lo apunto todo con Gyre 👉 ' + d.share_url;
+        return T('🏅 Nuevo récord en {name}: {kg} kg × {reps} (1RM est. {e1rm} kg). Lo apunto todo con Gyre 👉 {url}')
+            .replace('{name}', d.exercise).replace('{kg}', es(d.weight)).replace('{reps}', d.reps)
+            .replace('{e1rm}', d.e1rm).replace('{url}', d.share_url);
     }
 
     async function shareCurrent() {
@@ -374,8 +375,8 @@
         el.className = 'pr-share-toast';
         el.id = 'prShareToast';
         el.innerHTML = '<span class="pr-share-toast-medal">🏅</span>' +
-            '<span class="pr-share-toast-text"><strong>¡Nuevo récord!</strong><small></small></span>' +
-            '<button type="button" class="pr-share-toast-btn">Compartir</button>';
+            '<span class="pr-share-toast-text"><strong>' + T('¡Nuevo récord!') + '</strong><small></small></span>' +
+            '<button type="button" class="pr-share-toast-btn">' + T('Compartir') + '</button>';
         el.querySelector('small').textContent = exercise || '';
         el.querySelector('button').addEventListener('click', function () { openShareCard(setId); });
         document.body.appendChild(el);
