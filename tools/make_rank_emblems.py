@@ -13,8 +13,10 @@ Presupuesto de adornos por rango (se acumulan; ver RANK_CFG):
   Esmeralda / Campeón  + alas grandes levantadas de 4 filas con puntas de color y
                        resplandor, filigrana floral en el marco (campeón: corona alta)
   Titán                todo, con alas de fuego, + corona radiada, rayos y halo
-Divisiones: el numeral; II y III añaden gemas en la cinta; III, en los
-rangos altos, halo y destellos.
+Divisiones: el numeral; II y III añaden gemas en la cinta.
+Efectos (todos desactivables): destellos solo donde la luz de arriba-izquierda
+reflejaría (SPARKLES, fijos), halo en Esmeralda/Campeón/Titán (GLOW) y rayos
+en Titán.
 
 Ejecutar: python tools/make_rank_emblems.py [--preview]
 """
@@ -324,7 +326,7 @@ def wings(doc, m, rows=2, size=44):
     return f'<g filter="url(#ds)">{one}<g transform="translate(256 0) scale(-1 1)">{one}</g></g>'
 
 
-def grand_wings(doc, m, size=56, tip=None, flame=False):
+def grand_wings(doc, m, size=56, tip=None, flame=False, glow_level=0.55):
     """Alas de los tres rangos más altos: levantadas, de 4 filas, con las
     remeras más largas, puntas del color de la gema y un resplandor propio.
     Titán: plumas de punta afilada que acaban en fuego."""
@@ -367,7 +369,8 @@ def grand_wings(doc, m, size=56, tip=None, flame=False):
                     f'<circle cx="{n(gx - .6)}" cy="{n(gy - .6)}" r=".6" fill="#fff"/>')
     one = "".join(side)
     both = f'{one}<g transform="translate(256 0) scale(-1 1)">{one}</g>'
-    aura = f'<g opacity=".55" filter="url(#blur3)"><g fill="{glow}" stroke="{glow}" stroke-width="3">{both}</g></g>'
+    aura = (f'<g opacity="{glow_level}" filter="url(#blur3)"><g fill="{glow}" stroke="{glow}" stroke-width="3">{both}</g></g>'
+            if glow_level else "")
     return f'{aura}<g filter="url(#ds)">{both}</g>'
 
 
@@ -492,35 +495,41 @@ def halo(doc, m, op=0.5):
     return f'<circle cx="128" cy="118" r="126" fill="{g}"/>'
 
 
+
+
+# ------------------------------------------------------------ efectos
+# Una única luz arriba-izquierda para todos. Un destello solo donde esa luz
+# daría un reflejo especular: esquina superior izquierda del marco y, si
+# existen, gema y corona (nunca en laurel, cinta, barra, alas, G ni
+# numeral). Coordenadas FIJAS relativas al lienzo (0-1), calculadas una vez
+# a partir de la geometría de cada rango; el primero es el dominante.
+SPARKLES = {
+    "hierro": [],
+    "bronce": [],
+    "plata": [(0.303, 0.231)],                                   # marco
+    "oro": [(0.303, 0.231)],
+    "platino": [(0.307, 0.237)],
+    "diamante": [(0.310, 0.240), (0.490, 0.104)],                # marco, cristal
+    "esmeralda": [(0.316, 0.248), (0.493, 0.206)],               # marco, gema de la corona
+    "campeon": [(0.318, 0.251), (0.493, 0.206)],
+    "titan": [(0.321, 0.254), (0.494, 0.210), (0.495, 0.137)],   # marco, gema, punta de la corona
+}
+SPARKLE_MAIN = 0.08 * 256      # el dominante mide ~8 % del ancho del emblema
+SPARKLE_MIN_PX = 64            # por debajo de este tamaño de pantalla, sin destellos
+GLOW = {"esmeralda": 0.25, "campeon": 0.42, "titan": 0.6}     # intensidad del halo por rango
+
+
 def sparkles(m, points):
-    out = []
-    for x, y, r in points:
-        out.append(f'<path d="M{x} {y - r}Q{x} {y} {x + r} {y}Q{x} {y} {x} {y + r}Q{x} {y} {x - r} {y}Q{x} {y} {x} {y - r}Z" fill="{m["specular"]}" opacity=".95"/>')
-    return "".join(out)
-
-
-CROWN_GLINT = (128, 18, 7)
-# Destellos: puntos donde el metal brilla, por orden de importancia. Cada
-# emblema enciende los primeros N (más cuanto más alto el rango y la división).
-GLINTS = [(100, 90, 7.5), (186, 52, 6.5), CROWN_GLINT, (70, 56, 5.5), (152, 150, 5.5), (44, 64, 6),
-          (212, 64, 6), (58, 170, 5), (198, 168, 5), (128, 196, 6), (24, 40, 4.5), (232, 40, 4.5)]
-
-
-def glints(m, count, crown=True):
-    """Destellos de cuatro puntas con halo suave (color especular del
-    material). Sin corona no hay brillo en la punta de arriba."""
+    """Estrella cóncava de 4 puntas: la primera dominante, el resto a la mitad."""
     spec = m["specular"]
-    points = [g for g in GLINTS if crown or g != CROWN_GLINT]
     out = []
-    for x, y, r in points[:count]:
-        r *= 1.4
-        star = (f"M{x} {n(y - r)}Q{n(x + r * 0.12)} {n(y - r * 0.12)} {n(x + r)} {y}Q{n(x + r * 0.12)} {n(y + r * 0.12)} {x} {n(y + r)}"
-                f"Q{n(x - r * 0.12)} {n(y + r * 0.12)} {n(x - r)} {y}Q{n(x - r * 0.12)} {n(y - r * 0.12)} {x} {n(y - r)}Z")
-        small = r * 0.45
-        diag = (f"M{n(x - small)} {n(y - small)}L{n(x + small)} {n(y + small)}M{n(x + small)} {n(y - small)}L{n(x - small)} {n(y + small)}")
-        out.append(f'<circle cx="{x}" cy="{y}" r="{n(r * 0.75)}" fill="{spec}" opacity=".35" filter="url(#blur3)"/>'
-                   f'<path d="{star}" fill="{spec}"/>'
-                   f'<path d="{diag}" stroke="{spec}" stroke-width=".7" stroke-linecap="round" opacity=".8"/>')
+    for i, (fx, fy) in enumerate(points):
+        x, y = fx * 256, fy * 256
+        r = SPARKLE_MAIN / 2 * (1 if i == 0 else 0.5)
+        k = r * 0.14
+        star = (f"M{n(x)} {n(y - r)}Q{n(x + k)} {n(y - k)} {n(x + r)} {n(y)}Q{n(x + k)} {n(y + k)} {n(x)} {n(y + r)}"
+                f"Q{n(x - k)} {n(y + k)} {n(x - r)} {n(y)}Q{n(x - k)} {n(y - k)} {n(x)} {n(y - r)}Z")
+        out.append(f'<path d="{star}" fill="{spec}"/><circle cx="{n(x)}" cy="{n(y)}" r="{n(r * 0.16)}" fill="{spec}"/>')
     return "".join(out)
 
 
@@ -597,19 +606,22 @@ RANK_CFG = {
 }
 
 
-def build(key, division):
+def build(key, division, sparkle=True, glow=True, sunburst=True):
+    """Emblema de un rango y división. Los tres efectos (destellos, halo y
+    rayos) se pueden apagar por separado."""
     m = MATERIALS[key]
     cfg = RANK_CFG[key]
     doc = Doc(key)
     scale = cfg["scale"]
+    glow_level = GLOW.get(key, 0) if glow else 0
     back = []
-    if cfg.get("rays"):
-        back.append(halo(doc, m, 0.55) + rays(doc, m))
-    elif division == 3 and cfg["tier"] >= 5:
-        back.append(halo(doc, m, 0.45))
+    if glow_level:
+        back.append(halo(doc, m, glow_level))
+    if sunburst and cfg.get("rays"):
+        back.append(rays(doc, m))
     inner = []
     if cfg.get("grand"):
-        inner.append(grand_wings(doc, m, **cfg["grand"]))
+        inner.append(grand_wings(doc, m, glow_level=glow_level, **cfg["grand"]))
     elif cfg["wings"]:
         rows, size = cfg["wings"]
         inner.append(wings(doc, m, rows=rows, size=size))
@@ -627,23 +639,27 @@ def build(key, division):
         inner.append(crown(doc, m, 46, sc, pts))
         if cfg.get("crystal"):
             inner.append(crystal(doc, m, 128, 46 - 30 * sc, 16))
-    # Destellos: 1 en Hierro I ... hasta 12 en Titán.
-    count = 1 + cfg["tier"] + (3 if key == "titan" else division - 1)
-    inner.append(glints(m, count, crown=bool(cfg["crown"])))
     body = f'<g transform="{inset(scale)}">{"".join(inner)}</g>'
     div = None if key == "titan" else division
-    return doc.svg("".join(back) + body + ribbon(doc, m, div, y=CY + (202 - CY) * scale - 8))
+    fx = sparkles(m, SPARKLES[key]) if sparkle else ""
+    return doc.svg("".join(back) + body + ribbon(doc, m, div, y=CY + (202 - CY) * scale - 8) + fx)
 
 
 if __name__ == "__main__":
+    # --preview: a app/static/ranks_preview/ sin publicar. --no-sparkles,
+    # --no-glow, --no-sunburst: apagar efectos. Siempre se genera además la
+    # versión "-small" sin destellos para tamaños de pantalla < 64 px.
     out = PREVIEW if "--preview" in sys.argv else OUT
+    fx = dict(sparkle="--no-sparkles" not in sys.argv, glow="--no-glow" not in sys.argv,
+              sunburst="--no-sunburst" not in sys.argv)
     os.makedirs(out, exist_ok=True)
     total = 0
     for key in RANK_CFG:
         for div in ((3,) if key == "titan" else (1, 2, 3)):
             name = "titan" if key == "titan" else f"{key}-{div}"
-            path = os.path.join(out, f"{name}.svg")
-            with open(path, "w", encoding="utf-8") as fh:
-                fh.write(build(key, div))
-            total += os.path.getsize(path)
+            for suffix, opts in (("", fx), ("-small", dict(fx, sparkle=False))):
+                path = os.path.join(out, f"{name}{suffix}.svg")
+                with open(path, "w", encoding="utf-8") as fh:
+                    fh.write(build(key, div, **opts))
+                total += os.path.getsize(path)
     print("ok", out, round(total / 1024), "KB")

@@ -19,6 +19,37 @@
         </div>
     </form>
 
+    {# Ritmo de cambio frente a la fase (app/bodyweight.py) #}
+    <div class="card card-elevated pace-card" id="ritmo">
+        <h2>Tu ritmo</h2>
+        <form action="{{ url_for('set_body_phase') }}" method="post" class="pace-phases" aria-label="Fase">
+            {{ empty_form.hidden_tag() }}
+            {% for key, info in phases.items() %}
+                <button type="submit" name="phase" value="{{ '' if pace.phase == key else key }}" class="pace-phase{% if pace.phase == key %} is-active{% endif %}"
+                        aria-pressed="{{ 'true' if pace.phase == key else 'false' }}">{{ info.label }}</button>
+            {% endfor %}
+        </form>
+        {% if pace.rate %}
+            <p class="pace-rate">
+                <strong>{{ '+' if pace.rate.kg_week > 0 }}{{ pace.rate.kg_week|num(2) }} kg/semana</strong>
+                <span>{{ '+' if pace.rate.pct_week > 0 }}{{ pace.rate.pct_week|num(2) }} % de tu peso · {{ pace.rate.entries }} pesos en {{ pace.rate.days }} días</span>
+            </p>
+        {% endif %}
+        <p class="pace-verdict pace-{{ pace.status }}">{{ pace.text }}</p>
+        {% if pace.phase_info %}<p class="std-note">Para {{ pace.phase_info.label|lower }} se recomienda {{ pace.phase_info.range }}.</p>{% endif %}
+        <details class="strength-how">
+            <summary>¿De dónde salen estos ritmos?</summary>
+            <p>
+                El ritmo sale de una recta ajustada a tus pesos de las últimas 4 semanas, para que un día de más agua o
+                más sal no lo distorsione. Pésate en condiciones parecidas (por ejemplo, al levantarte).
+                <b>Volumen</b>: +0,25 a +0,5 % de tu peso por semana (Iraki y cols., 2019; los principiantes toleran la
+                parte alta). <b>Definición</b>: −0,5 a −1 % por semana (Helms y cols., 2014; más rápido aumenta el riesgo
+                de perder músculo). <b>Recomposición</b>: peso estable (±0,25 % por semana, margen de la app). Son
+                referencias para culturismo natural, no una medida de tu grasa.
+            </p>
+        </details>
+    </div>
+
     {% if chart_labels %}
         <div class="card card-elevated">
             <canvas id="weightChart" class="progress-chart" width="600" height="280"></canvas>

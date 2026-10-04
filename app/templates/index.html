@@ -279,7 +279,8 @@
                 {% if latest_weight %}
                     <strong class="dash-tile-value">{{ latest_weight.weight|num }}<small> kg</small></strong>
                     <span class="dash-tile-sub">
-                        {% if weight_change is not none %}{{ '▲ +' if weight_change > 0 else ('▼ ' if weight_change < 0 else '= ') }}{{ weight_change|num }} kg en 30 días{% else %}{{ latest_weight.timestamp|relative_day|capitalize }}{% endif %}
+                        {% if pace.rate %}{{ '+' if pace.rate.kg_week > 0 }}{{ pace.rate.kg_week|num(2) }} kg/sem{% if pace.phase_info %} · <span class="pace-{{ pace.status }}">{{ {'ok': 'buen ritmo', 'fast': 'muy rápido', 'slow': 'lento', 'wrong': 'al revés'}[pace.status] if pace.status in ('ok', 'fast', 'slow', 'wrong') else '' }}</span>{% endif %}
+                        {% elif weight_change is not none %}{{ '▲ +' if weight_change > 0 else ('▼ ' if weight_change < 0 else '= ') }}{{ weight_change|num }} kg en 30 días{% else %}{{ latest_weight.timestamp|relative_day|capitalize }}{% endif %}
                     </span>
                 {% else %}
                     <strong class="dash-tile-value is-empty">—</strong>

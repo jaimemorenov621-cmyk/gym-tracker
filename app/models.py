@@ -42,6 +42,10 @@ class User(UserMixin, db.Model):
     # (p. ej. "0134"). Solo para el "hoy toca / hoy descanso" de Inicio; la
     # racha NO depende de qué días se entrene. NULL = sin configurar.
     training_days: so.Mapped[Optional[str]] = so.mapped_column(sa.String(7))  # _clean_ref limita a 20
+    # Fase de composición corporal que elige el usuario ("volumen",
+    # "definicion", "recomposicion"; NULL = sin elegir): app/bodyweight.py
+    # compara con ella el ritmo al que cambia su peso.
+    body_phase: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
     # XP y nivel (app/progression.py). xp_total es una caché de
     # compute_xp(): vale si xp_cached_seq == xp_seq, xp_rules es la versión
     # de reglas vigente y xp_cached_at tiene menos de 24 h. xp_seq sube (con

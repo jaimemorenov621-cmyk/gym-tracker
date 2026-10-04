@@ -168,7 +168,7 @@
                     {% set p = prev[loop.index0] if prev and loop.index0 < prev|length else none %}
                     {% set untouched = (not s.completed and s.weight == 0 and s.reps == 0) %}
                     {% set ghost = untouched and p %}
-                    <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}"{% if s.completed %} class="set-row-done"{% endif %}>
+                    <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}" data-set-type="{{ s.set_type if s.set_type in type_short else 'normal' }}"{% if s.completed %} class="set-row-done"{% endif %}>
                         <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" role="button" tabindex="0" title="Récord personal · toca para compartir" aria-label="Récord personal, compartir">🏅</span>{% endif %}</td>
                         <td class="set-previous">{{ p.label if p else "—" }}</td>
                         <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="Peso en kg, serie {{ loop.index }}" value="{{ '' if ghost else ('%g' % s.weight).replace('.', ',') }}"{% if ghost %} placeholder="{{ ('%g' % p.weight).replace('.', ',') }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
@@ -423,6 +423,7 @@
             const pill = select.closest('.set-type-pill');
             const type = SET_TYPE_LABEL[select.value] ? select.value : 'normal';
             pill.className = 'set-type-pill set-type-' + type;
+            pill.closest('tr').dataset.setType = type;  // franja y número de la fila
             pill.querySelector('.set-type-short').textContent = SET_TYPE_SHORT[type];
             pill.querySelector('.set-type-long').textContent = SET_TYPE_LABEL[type];
             pill.classList.add('set-type-bump');
@@ -568,6 +569,7 @@
                 const tr = document.createElement('tr');
                 tr.id = 'row-' + data.id;
                 tr.dataset.exercise = exercise;
+                tr.dataset.setType = SET_TYPE_LABEL[lastType] ? lastType : 'normal';
                 const prevForExercise = previousSetsMap[exercise];
                 const prevEntry = prevForExercise && prevForExercise[rows.length];
                 const previousLabel = (prevEntry && prevEntry.label) || '—';

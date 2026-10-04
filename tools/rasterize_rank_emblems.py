@@ -71,7 +71,8 @@ def main():
             im = Image.open(png).convert("RGBA")
             if im.getchannel("A").getextrema()[0] == 255:
                 sys.exit(f"{svg.name}: el navegador no devolvió fondo transparente")
-            for size in SIZES:
+            # La versión "-small" (sin destellos) solo se usa por debajo de 64 px.
+            for size in ((128, 256) if svg.stem.endswith("-small") else SIZES):
                 img = im if size == 512 else im.resize((size, size), Image.LANCZOS)
                 out = RANKS / f"{svg.stem}-{size}.webp"
                 img.save(out, "WEBP", quality=86, method=6, alpha_quality=90)

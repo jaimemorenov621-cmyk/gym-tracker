@@ -52,6 +52,7 @@ from app.models import (
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from app import achievements, usage, datacache
+from app import bodyweight as bodyweight_mod
 from app import strength_standards as standards
 from app import progression
 from app import volume as volume_mod
@@ -869,6 +870,8 @@ def index():
         .order_by(BodyWeightEntry.timestamp.asc())
     ).all()
     latest_weight = weight_entries[-1] if weight_entries else None
+    pace = bodyweight_mod.summary([(e.timestamp, e.weight) for e in weight_entries], current_user.body_phase,
+                                  datetime.now(timezone.utc).replace(tzinfo=None))
     # Cambio de peso frente al registro más reciente de hace >= 30 días.
     weight_change = None
     if latest_weight:
@@ -913,6 +916,7 @@ def index():
         strength=strength,
         strength_spark=sparkline_points([v for _, v in strength["series"][-12:]]) if strength else "",
         latest_weight=latest_weight,
+        pace=pace,
         weight_chart_labels=[to_local(e.timestamp).strftime("%d/%m") for e in weight_entries],
         weight_chart_values=[e.weight for e in weight_entries],
         # Mapa: series duras de 7 días frente a TU rango (personal si hay
@@ -2024,10 +2028,26 @@ def weight():
         title="Peso corporal",
         form=form,
         empty_form=EmptyForm(),
+        pace=bodyweight_mod.summary([(e.timestamp, e.weight) for e in entries], current_user.body_phase,
+                                    datetime.now(timezone.utc).replace(tzinfo=None)),
+        phases=bodyweight_mod.PHASES,
         entries=list(reversed(entries)),
         chart_labels=[to_local(e.timestamp).strftime("%d/%m/%Y") for e in entries],
         chart_values=[e.weight for e in entries],
     )
+
+
+@app.route("/weight/fase", methods=["POST"])
+@login_required
+def set_body_phase():
+    """Elegir (o quitar) la fase: volumen, definición o recomposición."""
+    form = EmptyForm()
+    if form.validate_on_submit():
+        phase = request.form.get("phase") or None
+        if phase is None or phase in bodyweight_mod.PHASES:
+            current_user.body_phase = phase
+            db.session.commit()
+    return redirect(url_for("weight") + "#ritmo")
 
 
 @app.route("/weight/<int:entry_id>/delete", methods=["POST"])

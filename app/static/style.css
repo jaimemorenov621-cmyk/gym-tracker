@@ -4127,3 +4127,32 @@ a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: upperca
 .history-count { font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); }
 .history-pager { display: flex; justify-content: space-between; gap: 10px; margin: 12px 0 20px; }
 .history-pager a { text-decoration: none; }
+
+/* Tipo de serie también en la fila: franja lateral y número del color del
+   tipo (calentamiento ámbar y atenuado, fallo rojo, dropset azul). */
+tr[data-set-type="calentamiento"] { --set-type-color: #f59e0b; }
+tr[data-set-type="fallo"] { --set-type-color: #dc2626; }
+tr[data-set-type="dropset"] { --set-type-color: #2563eb; }
+tr[data-set-type]:not([data-set-type="normal"]) > td.set-num { box-shadow: inset 4px 0 0 var(--set-type-color); color: var(--set-type-color); font-weight: 900; }
+tr[data-set-type="calentamiento"] .cell-input { opacity: 0.75; }
+:root[data-theme="dark"] tr[data-set-type="fallo"] { --set-type-color: #ff5a5a; }
+:root[data-theme="dark"] tr[data-set-type="dropset"] { --set-type-color: #5b8dff; }
+
+/* Ritmo de peso frente a la fase (peso corporal e Inicio) */
+.pace-card h2 { margin: 0 0 10px; font-size: 1.05rem; font-weight: 800; }
+.pace-phases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0 0 12px; }
+.pace-phase { min-height: 40px; padding: 6px 4px; border-radius: 12px; border: 1.5px solid var(--border-subtle); background: var(--surface);
+    color: var(--color-text-soft); font-weight: 700; font-size: 0.78rem; letter-spacing: -0.01em; cursor: pointer; overflow: hidden; text-overflow: ellipsis; }
+.pace-phase.is-active { border-color: var(--accent); background: rgba(var(--accent-rgb), 0.12); color: var(--color-text); }
+.pace-rate { display: flex; flex-direction: column; gap: 2px; margin: 0 0 6px; }
+.pace-rate strong { font-size: 1.3rem; font-weight: 900; }
+.pace-rate span { font-size: 0.78rem; color: var(--color-text-muted); }
+.pace-verdict { margin: 0 0 6px; padding: 8px 10px; border-radius: 10px; font-size: 0.86rem; font-weight: 600; background: var(--color-surface-active); }
+.pace-verdict.pace-ok { background: rgba(34, 201, 140, 0.14); color: var(--color-success-text); }
+.pace-verdict.pace-fast, .pace-verdict.pace-wrong { background: rgba(229, 72, 77, 0.12); color: var(--color-danger); }
+.pace-verdict.pace-slow { background: rgba(245, 158, 11, 0.14); color: #b26a00; }
+.dash-tile-sub .pace-ok { color: var(--color-success-text); font-weight: 700; }
+.dash-tile-sub .pace-fast, .dash-tile-sub .pace-wrong { color: var(--color-danger); font-weight: 700; }
+.dash-tile-sub .pace-slow { color: #d08a00; font-weight: 700; }
+:root[data-theme="dark"] .pace-verdict.pace-ok, :root[data-theme="dark"] .dash-tile-sub .pace-ok { color: #5cf0b4; }
+:root[data-theme="dark"] .pace-verdict.pace-slow { color: #ffc561; }
