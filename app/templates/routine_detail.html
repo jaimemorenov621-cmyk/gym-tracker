@@ -14,7 +14,7 @@
             <button type="submit" class="btn"{% if not exercises %} disabled title="{{ _('Añade al menos un ejercicio') }}"{% endif %}>{{ macros.icon('play', 16) }} {{ _('Iniciar entrenamiento') }}</button>
         </form>
         <form action="{{ url_for('delete_routine', routine_id=routine.id) }}" method="post"
-            onsubmit="return confirmFormSubmit(this, '¿Eliminar esta rutina? Tus entrenamientos ya hechos no se borran.');">
+            onsubmit="return confirmFormSubmit(this, {{ _('¿Eliminar esta rutina? Tus entrenamientos ya hechos no se borran.')|tojson|forceescape }});">
             {{ empty_form.hidden_tag() }}
             <button type="submit" class="delete-tile">
                 {{ macros.icon('trash', 18) }}
@@ -41,7 +41,7 @@
                         {{ macros.exercise_icon_fallback(40, 10) }}
                     {% endif %}
                     <a class="routine-ex-name" href="{{ url_for('exercise_progress', name=ex.exercise) }}">{{ ex.exercise|title }}</a>
-                    <button type="button" class="btn-icon" title="Reemplazar ejercicio" aria-label="Reemplazar {{ ex.exercise|title }}"
+                    <button type="button" class="btn-icon" title="{{ _('Reemplazar ejercicio') }}" aria-label="{{ _('Reemplazar %(name)s', name=ex.exercise|title) }}"
                         onclick="openExercisePicker('{{ url_for('replace_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}')">{{ macros.icon('repeat') }}</button>
                     <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" class="routine-ex-delete">
                         {{ empty_form.hidden_tag() }}
@@ -74,7 +74,7 @@
                         </label>
                     {% endif %}
                     {% set n = exercise_notes_map.get(ex.exercise) %}
-                    <a class="rest-badge routine-ex-rest" href="{{ url_for('exercise_notes', name=ex.exercise) }}" title="Descanso">
+                    <a class="rest-badge routine-ex-rest" href="{{ url_for('exercise_notes', name=ex.exercise) }}" title="{{ _('Descanso') }}">
                         {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) if n and n.default_rest_seconds else '2min' }}
                     </a>
                 </div>

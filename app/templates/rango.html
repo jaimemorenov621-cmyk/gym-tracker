@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    {{ macros.tab_title('Rango', 'shield') }}
+    {{ macros.tab_title(_('Rango'), 'shield') }}
 
     {# Héroe: tu emblema en grande, animado. #}
     <div class="rank-hero card-elevated{% if profile.global_rank %} tier-{{ profile.global_rank.key }}{% endif %}">
@@ -44,7 +44,7 @@
     <div class="card card-elevated pbasics" id="basicos">
         <div class="pbasics-head">
             <h2>{{ _("Tus básicos") }}</h2>
-            <a class="btn-outline btn-inline" href="{{ url_for('personal_basics') }}">{{ 'Editar' if personal_basics else 'Elegir' }}</a>
+            <a class="btn-outline btn-inline" href="{{ url_for('personal_basics') }}">{{ _('Editar') if personal_basics else _('Elegir') }}</a>
         </div>
         {% if personal_basics %}
             <ul class="pbasics-list">

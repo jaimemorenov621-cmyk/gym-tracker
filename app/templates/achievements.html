@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    {{ macros.tab_title('Logros', 'trophy') }}
+    {{ macros.tab_title(_('Logros'), 'trophy') }}
 
     <div class="achv-summary">
         <div class="achv-summary-ring" style="--p: {{ (100 * unlocked_count / total)|round|int }};">
@@ -46,7 +46,7 @@
                     <div class="achv-card{% if it.unlocked %} is-unlocked{% endif %}{% if hidden %} is-secret{% endif %}">
                         <span class="achv-emoji{% if not it.unlocked %} is-locked{% endif %}">{{ '❔' if hidden else it.a.emoji }}</span>
                         <strong>{{ '???' if hidden else it.a.title }}</strong>
-                        <p>{{ 'Logro secreto. Sigue entrenando…' if hidden else it.a.desc }}</p>
+                        <p>{{ _('Logro secreto. Sigue entrenando…') if hidden else it.a.desc }}</p>
                         {% if it.unlocked %}
                             <small class="achv-date">✓ {{ it.unlocked_at|relative_day|capitalize }}</small>
                         {% elif it.target and not hidden %}

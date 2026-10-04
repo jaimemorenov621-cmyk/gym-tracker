@@ -59,7 +59,7 @@
             <form action="{{ url_for('update_exercise_translation', name=exercise) }}" method="post" style="display:flex; gap:8px;">
                 {{ translation_form.hidden_tag() }}
                 {{ translation_form.name_es(placeholder=_("Ej: Press de banca"), style="flex:1; box-sizing:border-box;") }}
-                <input type="submit" value="Guardar" class="btn-outline">
+                <input type="submit" value="{{ _('Guardar') }}" class="btn-outline">
             </form>
         </div>
     {% endif %}

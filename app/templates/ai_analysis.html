@@ -78,7 +78,7 @@
     {% else %}
         <div class="card card-elevated">
             <form action="{{ url_for('request_ai_analysis') }}" method="post" class="ai-request-form"
-                  onsubmit="const b = this.querySelector('.ai-cta-ready'); b.disabled = true; b.querySelector('strong').textContent = 'Analizando tu progreso…'; b.querySelector('small').textContent = 'Puede tardar unos segundos';">
+                  onsubmit="const b = this.querySelector('.ai-cta-ready'); b.disabled = true; b.querySelector('strong').textContent = {{ _('Analizando tu progreso…')|tojson|forceescape }}; b.querySelector('small').textContent = {{ _('Puede tardar unos segundos')|tojson|forceescape }};">
                 {{ checkin_form.hidden_tag() }}
                 <p>
                     {{ checkin_form.how_you_feel.label }}<br>

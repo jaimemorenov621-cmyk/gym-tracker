@@ -270,7 +270,7 @@
         <div class="bottom-sheet-grabber" aria-hidden="true"></div>
         <div class="bottom-sheet-header">
             <h3 id="setTypeTitle" class="bottom-sheet-title">{{ _("Tipo de serie") }}</h3>
-            <button type="button" class="sheet-close-btn" onclick="closeSetTypePicker()" aria-label="Cerrar">{{ macros.icon('close', 20) }}</button>
+            <button type="button" class="sheet-close-btn" onclick="closeSetTypePicker()" aria-label="{{ _('Cerrar') }}">{{ macros.icon('close', 20) }}</button>
         </div>
         <div class="set-type-options" role="radiogroup" aria-labelledby="setTypeTitle">
             {% set type_desc = {
@@ -294,7 +294,7 @@
         <div class="bottom-sheet-grabber" aria-hidden="true"></div>
         <div class="bottom-sheet-header">
             <h3 id="effortPickerTitle" class="bottom-sheet-title">{{ _('Registro %(scale)s', scale=effort_scale|upper) }}</h3>
-            <button type="button" class="sheet-close-btn" onclick="closeEffortPicker()" aria-label="Cerrar">{{ macros.icon('close', 20) }}</button>
+            <button type="button" class="sheet-close-btn" onclick="closeEffortPicker()" aria-label="{{ _('Cerrar') }}">{{ macros.icon('close', 20) }}</button>
         </div>
         <p class="effort-picker-subtitle" id="effortPickerSubtitle"></p>
         <div class="effort-picker-preview">
@@ -396,7 +396,7 @@
                     </button>
                 </form>
                 <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post"
-                      onsubmit="return confirmFormSubmit(this, '¿Eliminar este entrenamiento y todas sus series? No se puede deshacer.');">
+                      onsubmit="return confirmFormSubmit(this, {{ _('¿Eliminar este entrenamiento y todas sus series? No se puede deshacer.')|tojson|forceescape }});">
                     {{ empty_form.hidden_tag() }}
                     <button type="submit" class="danger menu-item-delete">
                         {{ macros.icon('trash', 18) }}

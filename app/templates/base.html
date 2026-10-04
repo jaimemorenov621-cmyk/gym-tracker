@@ -183,7 +183,7 @@
             <div class="rt-adjust">
                 <button type="button" class="btn-outline" onclick="adjustTimer(-15)">{{ _("−15s") }}</button>
                 <button type="button" class="btn-outline" onclick="adjustTimer(15)">{{ _("+15s") }}</button>
-                <button type="button" class="btn-outline" onclick="stopRestTimer()" aria-label="Parar descanso">⏹</button>
+                <button type="button" class="btn-outline" onclick="stopRestTimer()" aria-label="{{ _('Parar descanso') }}">⏹</button>
             </div>
         </div>
     </div>
@@ -251,7 +251,7 @@
                 overlay.style.display = 'flex';
                 const okBtn = document.getElementById('customConfirmOk');
                 const cancelBtn = document.getElementById('customConfirmCancel');
-                okBtn.textContent = okLabel || 'Eliminar';
+                okBtn.textContent = okLabel || {{ _('Eliminar')|tojson }};
                 okBtn.classList.toggle('btn-danger-outline', !okLabel);
                 okBtn.classList.toggle('btn-outline', !!okLabel);
                 function cleanup(result) {

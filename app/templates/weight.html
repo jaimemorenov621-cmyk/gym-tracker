@@ -22,7 +22,7 @@
     {# Ritmo de cambio frente a la fase (app/bodyweight.py) #}
     <div class="card card-elevated pace-card" id="ritmo">
         <h2>{{ _("Tu ritmo") }}</h2>
-        <form action="{{ url_for('set_body_phase') }}" method="post" class="pace-phases" aria-label="Fase">
+        <form action="{{ url_for('set_body_phase') }}" method="post" class="pace-phases" aria-label="{{ _('Fase') }}">
             {{ empty_form.hidden_tag() }}
             {% for key, info in phases.items() %}
                 <button type="submit" name="phase" value="{{ '' if pace.phase == key else key }}" class="pace-phase{% if pace.phase == key %} is-active{% endif %}"
@@ -80,9 +80,9 @@
                     <li>
                         <span class="weight-entry-date">{{ to_local(e.timestamp).strftime('%d/%m/%Y') }}</span>
                         <span class="weight-entry-value">{{ e.weight|num(2) }} kg</span>
-                        <form action="{{ url_for('delete_weight_entry', entry_id=e.id) }}" method="post" onsubmit="return confirmFormSubmit(this, '¿Eliminar este registro de peso?');">
+                        <form action="{{ url_for('delete_weight_entry', entry_id=e.id) }}" method="post" onsubmit="return confirmFormSubmit(this, {{ _('¿Eliminar este registro de peso?')|tojson|forceescape }});">
                             {{ empty_form.hidden_tag() }}
-                            <button type="submit" class="delete-set-btn" aria-label="Eliminar registro">{{ macros.icon('trash') }}</button>
+                            <button type="submit" class="delete-set-btn" aria-label="{{ _('Eliminar registro') }}">{{ macros.icon('trash') }}</button>
                         </form>
                     </li>
                 {% endfor %}

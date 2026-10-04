@@ -3,11 +3,11 @@
 {% block body_attrs %} {{ _('class="landing-page"') }}{% endblock %}
 {% block theme_lock %}{{ _("light") }}{% endblock %}
 {% block head %}
-    <meta property="og:title" content="Gyre — tu progreso en el gimnasio, de verdad">
-    <meta property="og:description" content="Apunta tus series en segundos, detecta tus récords solo y descubre qué músculos estás dejando atrás. Gratis.">
+    <meta property="og:title" content="{{ _('Gyre — tu progreso en el gimnasio, de verdad') }}">
+    <meta property="og:description" content="{{ _('Apunta tus series en segundos, detecta tus récords solo y descubre qué músculos estás dejando atrás. Gratis.') }}">
     <meta property="og:image" content="{{ request.url_root.rstrip('/') }}{{ url_for('static', filename='icons/og-image.png') }}">
     <meta property="og:type" content="website">
-    <meta name="description" content="Apunta tus series en segundos, detecta tus récords solo y descubre qué músculos estás dejando atrás. Gratis.">
+    <meta name="description" content="{{ _('Apunta tus series en segundos, detecta tus récords solo y descubre qué músculos estás dejando atrás. Gratis.') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">

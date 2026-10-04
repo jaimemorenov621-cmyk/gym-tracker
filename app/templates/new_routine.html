@@ -6,7 +6,7 @@
         {{ form.hidden_tag() }}
         <div class="field">
             <label class="field-label" for="{{ form.name.id }}">{{ _("Nombre") }}</label>
-            {{ form.name(placeholder="Ej: Push A, Pierna, Torso fuerza…", autofocus=true) }}
+            {{ form.name(placeholder=_("Ej: Push A, Pierna, Torso fuerza…"), autofocus=true) }}
             {% for error in form.name.errors %}<span class="field-error">{{ error }}</span>{% endfor %}
             <small class="field-help">{{ _("Después añadirás los ejercicios con sus series y repeticiones.") }}</small>
         </div>

@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    {{ macros.tab_title('Inicio', 'home') }}
+    {{ macros.tab_title(_('Inicio'), 'home') }}
 
     {# Acción principal: continuar / la rutina que toca / entreno libre. #}
     <div class="home-cta">
@@ -39,7 +39,7 @@
                 {% if r %}
                     <form action="{{ url_for('start_routine', routine_id=r.id) }}" method="post">
                         {{ empty_form.hidden_tag() }}
-                        <button type="submit">{{ 'Entrenar igualmente' if home_cta.kind == 'rest' else 'Empezar ' ~ r.name }}</button>
+                        <button type="submit">{{ _('Entrenar igualmente') if home_cta.kind == 'rest' else _('Empezar %(name)s', name=r.name) }}</button>
                     </form>
                 {% endif %}
                 <form action="{{ url_for('new_workout') }}" method="post">
