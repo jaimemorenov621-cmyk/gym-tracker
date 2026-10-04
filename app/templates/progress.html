@@ -12,7 +12,7 @@
             {% if strength %}
                 <div class="strength-pct {{ 'up' if strength.pct >= 0.5 else ('down' if strength.pct <= -0.5 else '') }}">
                     <strong>{{ '+' if strength.pct >= 0.5 }}{{ strength.pct|num }} %</strong>
-                    <span>{{ 'en 4 semanas' if strength.weeks == 4 else ('en 1 semana' if strength.weeks == 1 else 'en ' ~ strength.weeks ~ ' semanas') }}</span>
+                    <span>{{ ngettext('en %(num)d semana', 'en %(num)d semanas', strength.weeks) }}</span>
                 </div>
             {% endif %}
         </div>
@@ -71,7 +71,7 @@
                             maintainAspectRatio: false,
                             plugins: {
                                 legend: { display: false },
-                                tooltip: { callbacks: { title: c => 'Semana del ' + c[0].label, label: c => 'Índice ' + fmt(c.parsed.y) } }
+                                tooltip: { callbacks: { title: c => {{ _('Semana del {d}')|tojson }}.replace('{d}', c[0].label), label: c => {{ _('Índice {n}')|tojson }}.replace('{n}', fmt(c.parsed.y)) } }
                             },
                             scales: {
                                 x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 14 } },
@@ -90,7 +90,7 @@
         <div class="strength-head">
             <div>
                 <h2>{{ _("Volumen semanal por músculo") }}</h2>
-                <p>Series duras de los últimos 7 días frente a tu rango (el respaldado de {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} hasta que la app aprenda el tuyo)</p>
+                <p>{{ _('Series duras de los últimos 7 días frente a tu rango (el respaldado de %(low)s-%(high)s hasta que la app aprenda el tuyo)', low=volume_mod.LOW, high=volume_mod.HIGH) }}</p>
             </div>
         </div>
         {% if volume.hard_sets %}
@@ -116,24 +116,24 @@
                     <li>
                         <div class="vol-row-top">
                             <span>{{ g.label }}</span>
-                            <b class="vol-{{ g.status }}">{{ g.last7|num }} serie{{ '' if g.last7 == 1 else 's' }}</b>
+                            <b class="vol-{{ g.status }}">{{ ngettext('%(n)s serie', '%(n)s series', g.last7, n=g.last7|num) }}</b>
                         </div>
                         <div class="vol-bar" aria-hidden="true">
                             <span class="vol-band" style="left: {{ g.band_left }}%; width: {{ g.band_width }}%"></span>
                             <i class="vol-{{ g.status }}" style="width: {{ g.bar_pct }}%"></i>
                         </div>
                         <small>
-                            {% if g.personal %}<b class="vol-personal">Tu rango {{ g.low }}-{{ g.high if g.high is not none else '+' }}</b>{% else %}{{ g.low }}-{{ g.high }}{% endif %}
-                            · media {{ g.avg4|num }}/sem
+                            {% if g.personal %}<b class="vol-personal">{{ _('Tu rango %(low)s-%(high)s', low=g.low, high=g.high if g.high is not none else '+') }}</b>{% else %}{{ g.low }}-{{ g.high }}{% endif %}
+                            · {{ _('media %(n)s/sem', n=g.avg4|num) }}
                         </small>
                     </li>
                 {% endfor %}
             </ul>
             {% if volume.unmapped or volume.no_effort %}
                 <p class="progress-footnote">
-                    {% if volume.unmapped %}{{ volume.unmapped }} serie{{ '' if volume.unmapped == 1 else 's' }} de ejercicios sin músculo en el catálogo no cuenta{{ '' if volume.unmapped == 1 else 'n' }}.
+                    {% if volume.unmapped %}{{ ngettext('%(n)s serie de ejercicios sin músculo en el catálogo no cuenta.', '%(n)s series de ejercicios sin músculo en el catálogo no cuentan.', volume.unmapped, n=volume.unmapped|num) }}
                     <a class="btn-inline" href="{{ url_for('exercise_muscles') }}">{{ _("Asignar músculos") }}</a>{% endif %}
-                    {% if volume.no_effort %}{{ volume.no_effort }} serie{{ '' if volume.no_effort == 1 else 's' }} sin RIR/RPE anotado cuenta{{ '' if volume.no_effort == 1 else 'n' }} como dura.{% endif %}
+                    {% if volume.no_effort %}{{ ngettext('%(n)s serie sin RIR/RPE anotado cuenta como dura.', '%(n)s series sin RIR/RPE anotado cuentan como dura.', volume.no_effort, n=volume.no_effort|num) }}{% endif %}
                 </p>
             {% endif %}
         {% else %}
@@ -147,11 +147,11 @@
                     {% for g in personal %}
                         {% set p = g.personal %}
                         <li>
-                            <b>{{ g.label }}</b>: {{ p.low }}-{{ p.high if p.high is not none else '+' }} series/semana
-                            {% if p.rir is not none %}a RIR ≈ {{ p.rir|round(1)|num }}{% endif %}
-                            · progreso medio {{ '+' if p.gain_pct >= 0 else '' }}{{ p.gain_pct|num }} % por sesión
-                            {% if p.over_from is not none %}· por encima de {{ p.over_from }} progresaste menos{% endif %}
-                            <small>(confianza {{ p.confidence }}, {{ p.n }} mediciones)</small>
+                            <b>{{ g.label }}</b>: {{ _('%(low)s-%(high)s series/semana', low=p.low, high=p.high if p.high is not none else '+') }}
+                            {% if p.rir is not none %}{{ _('a RIR ≈ %(n)s', n=p.rir|round(1)|num) }}{% endif %}
+                            · {{ _('progreso medio %(pct)s %% por sesión', pct=('+' if p.gain_pct >= 0 else '') ~ p.gain_pct|num) }}
+                            {% if p.over_from is not none %}· {{ _('por encima de %(n)s progresaste menos', n=p.over_from) }}{% endif %}
+                            <small>{{ _('(confianza %(level)s, %(n)s mediciones)', level=p.confidence, n=p.n) }}</small>
                         </li>
                     {% endfor %}
                 </ul>
@@ -170,13 +170,10 @@
             </p>
         </details>
         <details class="strength-how">
-            <summary>¿De dónde sale el rango de {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} series?</summary>
+            <summary>{{ _('¿De dónde sale el rango de %(low)s-%(high)s series?', low=volume_mod.LOW, high=volume_mod.HIGH) }}</summary>
             <p>
-                Un metaanálisis de Schoenfeld, Ogborn y Krieger (2017) encontró que más series semanales por músculo
-                dan más hipertrofia, con 10 o más claramente por encima de menos de 5. Pelland y colaboradores (2024),
-                con 67 estudios, vieron que el beneficio sigue subiendo con más volumen, pero cada serie extra aporta
-                menos. Por eso {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} series es el rango práctico más citado:
-                <b>pasar de {{ volume_mod.HIGH }} no es malo</b>{{ _(", solo rinde menos por serie. Es una referencia para ganar músculo; para fuerza máxima el volumen extra aporta todavía menos.") }}
+                {{ _('Un metaanálisis de Schoenfeld, Ogborn y Krieger (2017) encontró que más series semanales por músculo dan más hipertrofia, con 10 o más claramente por encima de menos de 5. Pelland y colaboradores (2024), con 67 estudios, vieron que el beneficio sigue subiendo con más volumen, pero cada serie extra aporta menos. Por eso %(low)s-%(high)s series es el rango práctico más citado:', low=volume_mod.LOW, high=volume_mod.HIGH) }}
+                <b>{{ _('pasar de %(high)s no es malo', high=volume_mod.HIGH) }}</b>{{ _(", solo rinde menos por serie. Es una referencia para ganar músculo; para fuerza máxima el volumen extra aporta todavía menos.") }}
             </p>
             <p>
                 <b>{{ _("Cómo contamos.") }}</b> {{ _("Una serie dura es una serie hecha, con peso, que no es de calentamiento y con RIR 4 o menos (RPE 6 o más); si no anotaste el esfuerzo, cuenta. Cada ejercicio suma 1 serie a sus músculos principales y media a los secundarios (como en Pelland y col.), según el catálogo de ejercicios. No es una medida de recuperación ni de fatiga.") }}
@@ -190,7 +187,7 @@
             <small>{{ _("Peso corporal") }}</small>
             {% if latest_weight %}
                 <strong>{{ latest_weight.weight|num }} kg</strong>
-                <span>Último registro: {{ latest_weight.timestamp|relative_day }}</span>
+                <span>{{ _('Último registro: %(when)s', when=latest_weight.timestamp|relative_day) }}</span>
             {% else %}
                 <strong>{{ _("Sin registrar") }}</strong>
                 <span>{{ _("Apunta tu peso para ver su evolución") }}</span>
@@ -202,7 +199,7 @@
     {% if items %}
         <div class="progress-toolbar">
             <h2>{{ _("Tus ejercicios") }} <span>{{ items|length }}</span></h2>
-            <input type="search" class="progress-search" placeholder="Buscar ejercicio…" aria-label="Buscar ejercicio"
+            <input type="search" class="progress-search" placeholder="{{ _('Buscar ejercicio…') }}" aria-label="{{ _('Buscar ejercicio') }}"
                    oninput="filterProgress(this.value)">
         </div>
         <ul class="progress-list" id="progressList">
@@ -219,19 +216,19 @@
                             <strong>{{ it.exercise|title }}</strong>
                             <small>
                                 {{ it.last_trained|relative_day|capitalize }}
-                                {% if it.last_pr and it.sessions > 1 %} · 🏅 récord {{ it.last_pr|relative_day }}{% endif %}
+                                {% if it.last_pr and it.sessions > 1 %} · 🏅 {{ _('récord %(when)s', when=it.last_pr|relative_day) }}{% endif %}
                             </small>
                         </span>
                         <span class="progress-figures">
                             <strong>{{ it.last_1rm|num(0) }} kg</strong>
                             {% if it.stagnation %}
-                                <span class="trend trend-stuck" title="Sin récord en las últimas {{ threshold }} sesiones">{{ _("Estancado") }}</span>
+                                <span class="trend trend-stuck" title="{{ _('Sin récord en las últimas %(n)s sesiones', n=threshold) }}">{{ _("Estancado") }}</span>
                             {% elif it.trend_pct is not none %}
                                 <span class="trend {{ 'trend-up' if it.trend_pct > 0 else ('trend-down' if it.trend_pct < 0 else '') }}">
                                     {% if it.trend_pct > 0 %}▲ {{ it.trend_pct }}%{% elif it.trend_pct < 0 %}▼ {{ -it.trend_pct }}%{% else %}= 0%{% endif %}
                                 </span>
                             {% else %}
-                                <span class="trend">{{ it.sessions }} sesión{{ '' if it.sessions == 1 else 'es' }}</span>
+                                <span class="trend">{{ ngettext('%(num)d sesión', '%(num)d sesiones', it.sessions) }}</span>
                             {% endif %}
                         </span>
                     </a>
