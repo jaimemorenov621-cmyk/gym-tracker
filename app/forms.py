@@ -34,72 +34,74 @@ from wtforms.validators import (
     Regexp,
 )
 import sqlalchemy as sa
+from flask_babel import lazy_gettext as _l, lazy_pgettext as _lp
+
 from app import db
 from app.models import User
 
 
 class LoginForm(FlaskForm):
-    username = StringField("Usuario", validators=[DataRequired("Campo obligatorio.")])
-    password = PasswordField("Contraseña", validators=[DataRequired("Campo obligatorio.")])
-    remember_me = BooleanField("Recordarme")
-    submit = SubmitField("Iniciar sesión")
+    username = StringField(_l("Usuario"), validators=[DataRequired(_l("Campo obligatorio."))])
+    password = PasswordField(_l("Contraseña"), validators=[DataRequired(_l("Campo obligatorio."))])
+    remember_me = BooleanField(_l("Recordarme"))
+    submit = SubmitField(_l("Iniciar sesión"))
 
 
 class RegistrationForm(FlaskForm):
-    username = StringField("Usuario", validators=[DataRequired("Elige un nombre de usuario.")])
+    username = StringField(_l("Usuario"), validators=[DataRequired(_l("Elige un nombre de usuario."))])
     email = StringField(
-        "Email",
-        validators=[DataRequired("Escribe tu email."), Email("Ese email no parece válido.")],
+        _l("Email"),
+        validators=[DataRequired(_l("Escribe tu email.")), Email(_l("Ese email no parece válido."))],
     )
-    password = PasswordField("Contraseña", validators=[DataRequired("Elige una contraseña.")])
+    password = PasswordField(_l("Contraseña"), validators=[DataRequired(_l("Elige una contraseña."))])
     password2 = PasswordField(
-        "Repite la contraseña",
+        _l("Repite la contraseña"),
         validators=[
-            DataRequired("Repite la contraseña."),
-            EqualTo("password", "Las contraseñas no coinciden."),
+            DataRequired(_l("Repite la contraseña.")),
+            EqualTo("password", _l("Las contraseñas no coinciden.")),
         ],
     )
-    submit = SubmitField("Crear cuenta gratis")
+    submit = SubmitField(_l("Crear cuenta gratis"))
 
     def validate_username(self, username):
         user = db.session.scalar(sa.select(User).where(User.username == username.data))
         if user is not None:
-            raise ValidationError("Ese usuario ya existe, prueba con otro.")
+            raise ValidationError(_l("Ese usuario ya existe, prueba con otro."))
 
     def validate_email(self, email):
         user = db.session.scalar(sa.select(User).where(User.email == email.data))
         if user is not None:
-            raise ValidationError("Ya hay una cuenta con ese email. ¿Quieres iniciar sesión?")
+            raise ValidationError(_l("Ya hay una cuenta con ese email. ¿Quieres iniciar sesión?"))
 
 
 class SetEntryForm(FlaskForm):
-    exercise = StringField("Ejercicio", validators=[DataRequired()])
+    exercise = StringField(_l("Ejercicio"), validators=[DataRequired()])
     weight = FloatField(
-        "Peso (kg)",
+        _l("Peso (kg)"),
         validators=[DataRequired(), NumberRange(min=0, max=500)],
         render_kw={"min": 0, "max": 500, "step": "any"},
     )
     reps = IntegerField(
-        "Repeticiones",
+        _l("Repeticiones"),
         validators=[DataRequired(), NumberRange(min=1, max=30)],
         render_kw={"min": 1, "max": 30},
     )
     effort_value = IntegerField(
-        "Valor de esfuerzo",
+        _l("Valor de esfuerzo"),
         validators=[Optional(), NumberRange(min=0, max=10)],
         render_kw={"min": 0, "max": 10},
     )
     set_type = SelectField(
-        "Tipo de serie",
+        _l("Tipo de serie"),
         choices=[
-            ("normal", "Normal"),
-            ("calentamiento", "Calentamiento"),
-            ("fallo", "Al fallo"),
-            ("dropset", "Dropset"),
+            ("normal", _l("Normal")),
+            ("calentamiento", _l("Calentamiento")),
+            ("fallo", _l("Al fallo")),
+            ("dropset", _l("Dropset")),
         ],
         default="normal",
     )
-    submit = SubmitField("Añadir serie")
+    submit = SubmitField(_l("Añadir serie"))
 
 
 class EmptyForm(FlaskForm):
@@ -108,171 +110,171 @@ class EmptyForm(FlaskForm):
 
 class AiCheckinForm(FlaskForm):
     how_you_feel = TextAreaField(
-        "¿Cómo te sientes? (fatiga, agujetas, sueño, estrés...)",
+        _l("¿Cómo te sientes? (fatiga, agujetas, sueño, estrés...)"),
         validators=[Optional(), Length(max=500)],
     )
-    submit = SubmitField("🔍 Analizar mi progreso")
+    submit = SubmitField(_l("🔍 Analizar mi progreso"))
 
 
 class RecoveryCheckinForm(FlaskForm):
     """Check-in de recuperación (≤ 30 s). Valoración autodeclarada."""
     sleep = RadioField(
-        "Sueño", coerce=int, validators=[InputRequired()],
-        choices=[(1, "Fatal"), (2, "Mal"), (3, "Normal"), (4, "Bien"), (5, "Genial")],
+        _l("Sueño"), coerce=int, validators=[InputRequired()],
+        choices=[(1, _l("Fatal")), (2, _l("Mal")), (3, _l("Normal")), (4, _l("Bien")), (5, _l("Genial"))],
     )
     energy = RadioField(
-        "Energía", coerce=int, validators=[InputRequired()],
-        choices=[(1, "Muy baja"), (2, "Baja"), (3, "Normal"), (4, "Alta"), (5, "Muy alta")],
+        _l("Energía"), coerce=int, validators=[InputRequired()],
+        choices=[(1, _l("Muy baja")), (2, _l("Baja")), (3, _l("Normal")), (4, _l("Alta")), (5, _l("Muy alta"))],
     )
     soreness = RadioField(
-        "Agujetas", coerce=int, validators=[InputRequired()],
-        choices=[(0, "Nada"), (1, "Leves"), (2, "Moderadas"), (3, "Fuertes")],
+        _l("Agujetas"), coerce=int, validators=[InputRequired()],
+        choices=[(0, _l("Nada")), (1, _l("Leves")), (2, _l("Moderadas")), (3, _l("Fuertes"))],
     )
-    submit = SubmitField("Guardar check-in")
+    submit = SubmitField(_l("Guardar check-in"))
 
 
 class WeightForm(FlaskForm):
     weight = CommaFloatField(
-        "Peso (kg)", validators=[DataRequired(), NumberRange(min=20, max=400)]
+        _l("Peso (kg)"), validators=[DataRequired(), NumberRange(min=20, max=400)]
     )
-    submit = SubmitField("Guardar")
+    submit = SubmitField(_l("Guardar"))
 
 
 class SettingsForm(FlaskForm):
     stagnation_threshold = IntegerField(
-        "Sesiones sin récord para avisar de estancamiento",
+        _l("Sesiones sin récord para avisar de estancamiento"),
         validators=[DataRequired(), NumberRange(min=1, max=20)],
     )
     effort_scale = SelectField(
-        "¿Cómo quieres medir el esfuerzo?",
+        _l("¿Cómo quieres medir el esfuerzo?"),
         choices=[("rir", "RIR"), ("rpe", "RPE")],
         default="rir",
     )
-    rest_sound_enabled = BooleanField("Sonido de notificación del descanso")
-    rest_vibration_enabled = BooleanField("Vibración del descanso")
+    rest_sound_enabled = BooleanField(_l("Sonido de notificación del descanso"))
+    rest_vibration_enabled = BooleanField(_l("Vibración del descanso"))
     sex = SelectField(
-        "Sexo",
-        choices=[("", "Prefiero no decirlo"), ("hombre", "Hombre"), ("mujer", "Mujer")],
+        _l("Sexo"),
+        choices=[("", _l("Prefiero no decirlo")), ("hombre", _l("Hombre")), ("mujer", _l("Mujer"))],
         validators=[Optional()],
     )
     height_cm = IntegerField(
-        "Altura (cm)", validators=[Optional(), NumberRange(min=100, max=250)]
+        _l("Altura (cm)"), validators=[Optional(), NumberRange(min=100, max=250)]
     )
     training_goal = SelectField(
-        "Objetivo principal",
+        _l("Objetivo principal"),
         choices=[
-            ("", "Sin especificar"),
-            ("hipertrofia", "Hipertrofia"),
-            ("fuerza", "Fuerza"),
-            ("perdida_grasa", "Pérdida de grasa"),
+            ("", _l("Sin especificar")),
+            ("hipertrofia", _l("Hipertrofia")),
+            ("fuerza", _l("Fuerza")),
+            ("perdida_grasa", _l("Pérdida de grasa")),
         ],
         validators=[Optional()],
     )
     training_days = SelectMultipleField(
-        "Días que sueles entrenar",
-        choices=[(0, "L"), (1, "M"), (2, "X"), (3, "J"), (4, "V"), (5, "S"), (6, "D")],
+        _l("Días que sueles entrenar"),
+        choices=[(0, _lp("inicial de lunes", "L")), (1, _lp("inicial de martes", "M")), (2, _lp("inicial de miércoles", "X")), (3, _lp("inicial de jueves", "J")), (4, _lp("inicial de viernes", "V")), (5, _lp("inicial de sábado", "S")), (6, _lp("inicial de domingo", "D"))],
         coerce=int,
         validators=[Optional()],
         widget=ListWidget(prefix_label=False),
         option_widget=CheckboxInput(),
     )
     weekly_workout_goal = IntegerField(
-        "Mínimo de días por semana para no perder la racha",
-        validators=[Optional(), NumberRange(min=1, max=7, message="Entre 1 y 7 días.")],
+        _l("Mínimo de días por semana para no perder la racha"),
+        validators=[Optional(), NumberRange(min=1, max=7, message=_l("Entre 1 y 7 días."))],
     )
-    submit = SubmitField("Guardar")
+    submit = SubmitField(_l("Guardar"))
 
 
 class FinishWorkoutForm(FlaskForm):
     performance_rating = SelectField(
-        "¿Cómo ha sido tu rendimiento hoy?",
+        _l("¿Cómo ha sido tu rendimiento hoy?"),
         coerce=int,
         choices=[
-            (1, "1 - Pésimo: no pude completar el entrenamiento planeado"),
-            (2, "2 - Muy mal: rendimiento muy por debajo de lo normal"),
-            (3, "3 - Mal: peso o reps notablemente inferiores a lo habitual"),
-            (4, "4 - Flojo: por debajo de lo normal"),
-            (5, "5 - Regular: cumplí, sin más"),
-            (6, "6 - Normal: sesión estándar, sin sorpresas"),
-            (7, "7 - Bien: mejor de lo esperado en algún ejercicio"),
-            (8, "8 - Muy bien: buena sensación general, progresé"),
-            (9, "9 - Muy buena: cerca de mis mejores marcas"),
-            (10, "10 - Excelente: nuevos récords, gran sesión"),
+            (1, _l("1 - Pésimo: no pude completar el entrenamiento planeado")),
+            (2, _l("2 - Muy mal: rendimiento muy por debajo de lo normal")),
+            (3, _l("3 - Mal: peso o reps notablemente inferiores a lo habitual")),
+            (4, _l("4 - Flojo: por debajo de lo normal")),
+            (5, _l("5 - Regular: cumplí, sin más")),
+            (6, _l("6 - Normal: sesión estándar, sin sorpresas")),
+            (7, _l("7 - Bien: mejor de lo esperado en algún ejercicio")),
+            (8, _l("8 - Muy bien: buena sensación general, progresé")),
+            (9, _l("9 - Muy buena: cerca de mis mejores marcas")),
+            (10, _l("10 - Excelente: nuevos récords, gran sesión")),
         ],
     )
     performance_comment = TextAreaField(
-        "Comentario (opcional)", validators=[Length(max=255)]
+        _l("Comentario (opcional)"), validators=[Length(max=255)]
     )
     duration_hours = IntegerField(
-        "Horas",
+        _l("Horas"),
         validators=[InputRequired(), NumberRange(min=0, max=23)],
         render_kw={"min": 0, "max": 23},
     )
     duration_minutes = IntegerField(
-        "Minutos",
+        _l("Minutos"),
         validators=[InputRequired(), NumberRange(min=0, max=59)],
         render_kw={"min": 0, "max": 59},
     )
-    submit = SubmitField("Guardar entrenamiento")
+    submit = SubmitField(_l("Guardar entrenamiento"))
 
 
 class NotesForm(FlaskForm):
-    notes = TextAreaField("Notas generales", validators=[Length(max=1000)])
+    notes = TextAreaField(_l("Notas generales"), validators=[Length(max=1000)])
 
 
 class ExerciseNoteForm(FlaskForm):
-    notes = TextAreaField("Notas (una línea = un punto)", validators=[Length(max=1000)])
+    notes = TextAreaField(_l("Notas (una línea = un punto)"), validators=[Length(max=1000)])
     rest_minutes = IntegerField(
-        "Minutos de descanso",
+        _l("Minutos de descanso"),
         validators=[Optional(), NumberRange(min=0, max=15)],
         default=1,
     )
     rest_seconds = IntegerField(
-        "Segundos de descanso",
+        _l("Segundos de descanso"),
         validators=[Optional(), NumberRange(min=0, max=59)],
         default=30,
     )
-    submit = SubmitField("Guardar")
+    submit = SubmitField(_l("Guardar"))
 
 
 class RoutineForm(FlaskForm):
     name = StringField(
-        "Nombre de la rutina (ej: Push A)", validators=[DataRequired(), Length(max=64)]
+        _l("Nombre de la rutina (ej: Push A)"), validators=[DataRequired(), Length(max=64)]
     )
-    submit = SubmitField("Crear rutina")
+    submit = SubmitField(_l("Crear rutina"))
 
 
 class RoutineExerciseForm(FlaskForm):
-    exercise = StringField("Ejercicio", validators=[DataRequired(), Length(max=64)])
+    exercise = StringField(_l("Ejercicio"), validators=[DataRequired(), Length(max=64)])
     target_sets = IntegerField(
-        "Series objetivo",
+        _l("Series objetivo"),
         validators=[DataRequired(), NumberRange(min=1, max=15)],
         default=3,
     )
     target_reps = StringField(
-        "Reps objetivo (ej: 8-10)",
+        _l("Reps objetivo (ej: 8-10)"),
         validators=[DataRequired(), Length(max=16)],
         default="8-10",
     )
     effort_value = StringField(
-        "RIR/RPE objetivo (ej: 2 o 2-3)",
+        _l("RIR/RPE objetivo (ej: 2 o 2-3)"),
         validators=[
             Optional(),
             Length(max=16),
-            Regexp(r"^\d{1,2}(-\d{1,2})?$", message="Usa un número (ej. 2) o un rango (ej. 2-3)"),
+            Regexp(r"^\d{1,2}(-\d{1,2})?$", message=_l("Usa un número (ej. 2) o un rango (ej. 2-3)")),
         ],
     )
     replace_ex_id = HiddenField(validators=[Optional()])
-    submit = SubmitField("Añadir ejercicio")
+    submit = SubmitField(_l("Añadir ejercicio"))
 
 
 class NewExerciseForm(FlaskForm):
-    exercise = StringField("Ejercicio", validators=[DataRequired(), Length(max=64)])
-    submit = SubmitField("Añadir ejercicio")
+    exercise = StringField(_l("Ejercicio"), validators=[DataRequired(), Length(max=64)])
+    submit = SubmitField(_l("Añadir ejercicio"))
 
 
 class ExerciseTranslationForm(FlaskForm):
     name_es = StringField(
-        "Nombre en español", validators=[Optional(), Length(max=120)]
+        _l("Nombre en español"), validators=[Optional(), Length(max=120)]
     )
-    submit = SubmitField("Guardar")
+    submit = SubmitField(_l("Guardar"))

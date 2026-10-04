@@ -1,4 +1,5 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify, make_response, g, session
+from flask_babel import gettext, get_locale, lazy_gettext, lazy_pgettext, ngettext
 from flask_login import current_user, login_user, logout_user, login_required
 from markupsafe import Markup, escape
 from urllib.parse import urlsplit
@@ -124,7 +125,7 @@ def achievements_page():
     )[:3]
     return render_template(
         "achievements.html",
-        title="Logros",
+        title=gettext("Logros"),
         categories=[(key, name, emoji, by_category.get(key, [])) for key, name, emoji in achievements.CATEGORIES],
         unlocked_count=sum(1 for it in items if it["unlocked"]),
         total=len(items),
@@ -135,7 +136,7 @@ def achievements_page():
 
 @app.route("/privacy")
 def privacy():
-    return render_template("privacy.html", title="Política de privacidad")
+    return render_template("privacy.html", title=gettext("Política de privacidad"))
 
 
 def queue_xp_gain(reason, gain, parts):
@@ -169,7 +170,7 @@ def recovery_checkin():
     actualiza). Valoración autodeclarada: da XP y contexto, nunca bloquea."""
     form = RecoveryCheckinForm()
     if not form.validate_on_submit():
-        flash("Marca sueño, energía y agujetas para guardar el check-in.")
+        flash(gettext("Marca sueño, energía y agujetas para guardar el check-in."))
         return redirect(url_for("index"))
     before = progression.current_xp(current_user.id)
     checkin = progression.today_checkin(current_user.id)
@@ -181,9 +182,9 @@ def recovery_checkin():
     db.session.commit()
     gained = progression.current_xp(current_user.id) - before
     if gained > 0:
-        queue_xp_gain("Check-in", gained, [["Check-in", gained]])
+        queue_xp_gain(gettext("Check-in"), gained, [[gettext("Check-in"), gained]])
     else:
-        flash("Check-in actualizado (+0 XP: ya lo habías hecho hoy).")
+        flash(gettext("Check-in actualizado (+0 XP: ya lo habías hecho hoy)."))
     session["checkin_saved"] = True
     return redirect(url_for("index"))
 
@@ -198,7 +199,7 @@ def level_page():
     xp = progression.level_for(report.total)
     return render_template(
         "level.html",
-        title="Nivel",
+        title=gettext("Nivel"),
         xp=xp,
         perk_rows=perks.perk_list(xp["level"]),
         weeks=weeks,
@@ -248,7 +249,7 @@ def exercise_muscles():
     ).all()
     return render_template(
         "exercise_muscles.html",
-        title="Músculos de tus ejercicios",
+        title=gettext("Músculos de tus ejercicios"),
         missing=exercises_without_muscles(current_user.id),
         aliases=aliases,
     )
@@ -261,7 +262,7 @@ def api_set_exercise_alias():
     alias = (data.get("alias") or "").strip().lower()
     target = find_catalog_exercise((data.get("exercise") or "").strip(), use_alias=False)
     if not alias or target is None:
-        return jsonify({"ok": False, "error": "Elige un ejercicio del catálogo."}), 400
+        return jsonify({"ok": False, "error": gettext("Elige un ejercicio del catálogo.")}), 400
     key = _strip_accents(alias)[:120]
     row = db.session.scalar(
         sa.select(ExerciseAlias).where(ExerciseAlias.user_id == current_user.id, ExerciseAlias.name == key)
@@ -470,7 +471,7 @@ def _landing_stats_period():
 @login_required
 def landing_stats():
     if current_user.username != "Jaime_309":
-        flash("No tienes acceso a esta página.")
+        flash(gettext("No tienes acceso a esta página."))
         return redirect(url_for("index"))
 
     period_key, period_label, start = _landing_stats_period()
@@ -612,7 +613,10 @@ def suggest_next_routine(user_id):
     return candidates[0]
 
 
-_WEEKDAY_SHORT = ["L", "M", "X", "J", "V", "S", "D"]
+_WEEKDAY_SHORT = [lazy_pgettext("inicial de lunes", "L"), lazy_pgettext("inicial de martes", "M"),
+                  lazy_pgettext("inicial de miércoles", "X"), lazy_pgettext("inicial de jueves", "J"),
+                  lazy_pgettext("inicial de viernes", "V"), lazy_pgettext("inicial de sábado", "S"),
+                  lazy_pgettext("inicial de domingo", "D")]
 
 
 def planned_weekdays(user):
@@ -625,23 +629,23 @@ def _next_training_day_label(plan, today_wd):
     for offset in range(1, 8):
         wd = (today_wd + offset) % 7
         if wd in plan:
-            return "mañana" if offset == 1 else f"el {_WEEKDAYS_ES[wd]}"
+            return gettext("mañana") if offset == 1 else gettext("el %(day)s", day=WEEKDAY_NAMES[wd])
     return None
 
 
 REST_TIPS = [
-    "El músculo crece mientras descansas.",
-    "Recuperar también es entrenar.",
-    "Duerme bien: mañana se nota.",
-    "Hoy toca cargar pilas, no barras.",
-    "Un buen descanso vale un récord.",
-    "Estira, camina, bebe agua. Mañana, a por ello.",
+    lazy_gettext("El músculo crece mientras descansas."),
+    lazy_gettext("Recuperar también es entrenar."),
+    lazy_gettext("Duerme bien: mañana se nota."),
+    lazy_gettext("Hoy toca cargar pilas, no barras."),
+    lazy_gettext("Un buen descanso vale un récord."),
+    lazy_gettext("Estira, camina, bebe agua. Mañana, a por ello."),
 ]
 DONE_TIPS = [
-    "Buen trabajo. Ahora, a recuperar.",
-    "Un día más que suma.",
-    "Hecho. Come bien y descansa.",
-    "Constancia > intensidad. Hoy has cumplido.",
+    lazy_gettext("Buen trabajo. Ahora, a recuperar."),
+    lazy_gettext("Un día más que suma."),
+    lazy_gettext("Hecho. Come bien y descansa."),
+    lazy_gettext("Constancia > intensidad. Hoy has cumplido."),
 ]
 
 
@@ -727,12 +731,12 @@ def onboarding_status(user_id):
         )
     )
     steps = [
-        {"title": "Crea una rutina o empieza un entreno libre",
-         "hint": "Con una rutina, cada entreno viene con tus ejercicios ya puestos.", "done": has_plan},
-        {"title": "Marca tu primera serie",
-         "hint": "Apunta peso y repeticiones y pulsa ✓: el descanso arranca solo.", "done": has_set},
-        {"title": "Termina tu primer entreno",
-         "hint": "Verás el resumen de la sesión y empezará tu historial de progreso.", "done": has_finished},
+        {"title": gettext("Crea una rutina o empieza un entreno libre"),
+         "hint": gettext("Con una rutina, cada entreno viene con tus ejercicios ya puestos."), "done": has_plan},
+        {"title": gettext("Marca tu primera serie"),
+         "hint": gettext("Apunta peso y repeticiones y pulsa ✓: el descanso arranca solo."), "done": has_set},
+        {"title": gettext("Termina tu primer entreno"),
+         "hint": gettext("Verás el resumen de la sesión y empezará tu historial de progreso."), "done": has_finished},
     ]
     done = sum(1 for s in steps if s["done"])
     if done == len(steps):
@@ -824,7 +828,7 @@ def history():
         .offset((page - 1) * HISTORY_PAGE).limit(HISTORY_PAGE)
     ).all()
     return render_template(
-        "history.html", title="Historial", grouped=group_workouts_by_week(workouts),
+        "history.html", title=gettext("Historial"), grouped=group_workouts_by_week(workouts),
         page=page, has_next=page * HISTORY_PAGE < total, total=total,
     )
 
@@ -927,7 +931,7 @@ def index():
 
     return render_template(
         "index.html",
-        title="Inicio",
+        title=gettext("Inicio"),
         grouped=grouped,
         total_workouts=total_workouts,
         streak=streak,
@@ -973,7 +977,7 @@ def update_notes():
     if form.validate_on_submit():
         current_user.notes = form.notes.data
         db.session.commit()
-        flash("Notas guardadas.")
+        flash(gettext("Notas guardadas."))
     return redirect(url_for("index"))
 
 
@@ -987,14 +991,14 @@ def login():
             sa.select(User).where(User.username == form.username.data)
         )
         if user is None or not user.check_password(form.password.data):
-            flash("Usuario o contraseña incorrectos.")
+            flash(gettext("Usuario o contraseña incorrectos."))
             return redirect(url_for("login"))
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get("next")
         if not next_page or urlsplit(next_page).netloc != "":
             next_page = url_for("index")
         return redirect(next_page)
-    return render_template("login.html", title="Iniciar sesión", form=form)
+    return render_template("login.html", title=gettext("Iniciar sesión"), form=form)
 
 
 @app.route("/logout")
@@ -1076,9 +1080,9 @@ def register():
         # Entrar directamente: volver a pedir usuario y contraseña justo
         # después de crearlos es un paso más en el que se pierde gente.
         login_user(user, remember=True)
-        flash("¡Bienvenido a Gyre! Empieza un entreno o crea tu primera rutina.")
+        flash(gettext("¡Bienvenido a Gyre! Empieza un entreno o crea tu primera rutina."))
         return redirect(url_for("index"))
-    return render_template("register.html", title="Crear cuenta", form=form)
+    return render_template("register.html", title=gettext("Crear cuenta"), form=form)
 
 
 ACTIVE_WORKOUT_WINDOW = timedelta(hours=6)
@@ -1100,14 +1104,15 @@ def get_active_workout(user_id):
     )
 
 
-_WEEKDAYS_ES = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+WEEKDAY_NAMES = [lazy_gettext("lunes"), lazy_gettext("martes"), lazy_gettext("miércoles"), lazy_gettext("jueves"),
+                 lazy_gettext("viernes"), lazy_gettext("sábado"), lazy_gettext("domingo")]
 
 
 def default_workout_name(now_utc=None):
     """"Entreno del martes" en hora de Madrid -- nombre automático del
     entreno libre (se puede cambiar luego desde el propio entreno)."""
     local = to_local(now_utc or datetime.now(timezone.utc))
-    return f"Entreno del {_WEEKDAYS_ES[local.weekday()]}"
+    return gettext("Entreno del %(day)s", day=WEEKDAY_NAMES[local.weekday()])
 
 
 @app.route("/workout/new", methods=["GET", "POST"])
@@ -1120,12 +1125,12 @@ def new_workout():
         return redirect(url_for("index"))
     form = EmptyForm()
     if not form.validate_on_submit():
-        flash("No se pudo empezar el entreno. Inténtalo de nuevo.")
+        flash(gettext("No se pudo empezar el entreno. Inténtalo de nuevo."))
         return redirect(url_for("index"))
 
     existing = get_active_workout(current_user.id)
     if existing:
-        flash("Ya tienes un entreno en curso — termínalo antes de empezar otro.")
+        flash(gettext("Ya tienes un entreno en curso — termínalo antes de empezar otro."))
         return redirect(url_for("workout_detail", workout_id=existing.id))
 
     workout = Workout(note=default_workout_name(), author=current_user)
@@ -1143,7 +1148,7 @@ def rename_workout(workout_id):
     data = request.get_json(silent=True) or {}
     name = " ".join(str(data.get("name", "")).split())[:64]
     if not name:
-        return jsonify({"ok": False, "error": "El nombre no puede estar vacío."}), 400
+        return jsonify({"ok": False, "error": gettext("El nombre no puede estar vacío.")}), 400
     workout.note = name
     db.session.commit()
     return jsonify({"ok": True, "name": name})
@@ -1154,7 +1159,7 @@ def rename_workout(workout_id):
 def add_exercise_to_workout(workout_id):
     workout = db.get_or_404(Workout, workout_id)
     if workout.author != current_user:
-        flash("No tienes acceso a este entrenamiento.")
+        flash(gettext("No tienes acceso a este entrenamiento."))
         return redirect(url_for("index"))
     form = NewExerciseForm()
     if form.validate_on_submit():
@@ -1350,7 +1355,7 @@ def api_share_set(set_id):
     if entry.workout.author != current_user:
         return jsonify({"ok": False}), 403
     if not is_real_set(entry):
-        return jsonify({"ok": False, "error": "Marca la serie como hecha para compartirla."}), 400
+        return jsonify({"ok": False, "error": gettext("Marca la serie como hecha para compartirla.")}), 400
 
     session_list, _, _ = get_exercise_sessions(entry.exercise)
     previous_best = None
@@ -1366,7 +1371,7 @@ def api_share_set(set_id):
     badge = rank_key = None
     if level >= perks.BADGE_LEVEL:
         rank = cached_profile(current_user)["global_rank"]
-        badge = f"NIVEL {level}" + (f" · {rank['label'].upper()}" if rank else "")
+        badge = gettext("NIVEL %(n)s", n=level) + (f" · {rank['label'].upper()}" if rank else "")
         rank_key = (rank["key"] if rank["key"] == "titan" else f"{rank['key']}-{rank['division']}") if rank else None
     return jsonify(
         {
@@ -1402,7 +1407,7 @@ def api_delete_set(set_id):
 def workout_detail(workout_id):
     workout = db.get_or_404(Workout, workout_id)
     if workout.author != current_user:
-        flash("No tienes acceso a este entrenamiento.")
+        flash(gettext("No tienes acceso a este entrenamiento."))
         return redirect(url_for("index"))
 
     sets = db.session.scalars(workout.sets.select().order_by(SetEntry.id)).all()
@@ -1484,7 +1489,7 @@ def workout_detail(workout_id):
     prefetch_catalog_exercises(exercise_order)
     return render_template(
         "workout_detail.html",
-        title=workout.note or "Entrenamiento",
+        title=workout.note or gettext("Entrenamiento"),
         workout=workout,
         grouped_sets=grouped_sets,
         exercise_order=exercise_order,
@@ -1561,7 +1566,7 @@ def workout_summary(workout):
 def finish_workout(workout_id):
     workout = db.get_or_404(Workout, workout_id)
     if workout.author != current_user:
-        flash("No tienes acceso a este entrenamiento.")
+        flash(gettext("No tienes acceso a este entrenamiento."))
         return redirect(url_for("index"))
 
     form = FinishWorkoutForm()
@@ -1572,10 +1577,10 @@ def finish_workout(workout_id):
             .where(SetEntry.workout_id == workout.id, SetEntry.reps > 0)
         )
         if not non_empty_count:
-            flash(
+            flash(gettext(
                 "No puedes finalizar un entrenamiento sin ninguna serie con "
                 "repeticiones registradas."
-            )
+            ))
             return redirect(url_for("workout_detail", workout_id=workout.id))
 
         empty_sets = db.session.scalars(
@@ -1596,26 +1601,24 @@ def finish_workout(workout_id):
 
         if empty_sets:
             n = len(empty_sets)
-            if n == 1:
-                flash("Entrenamiento guardado. Se eliminó 1 serie vacía sin rellenar.")
-            else:
-                flash(f"Entrenamiento guardado. Se eliminaron {n} series vacías sin rellenar.")
+            flash(ngettext("Entrenamiento guardado. Se eliminó %(num)d serie vacía sin rellenar.",
+                           "Entrenamiento guardado. Se eliminaron %(num)d series vacías sin rellenar.", n))
         else:
-            flash("Entrenamiento guardado.")
+            flash(gettext("Entrenamiento guardado."))
         if first_finish:  # editar uno ya terminado no vuelve a "ganar" su XP
             preview = progression.workout_xp_preview(current_user.id, workout.id)
             if preview and preview["gain"] > 0:
                 x = preview["workout"]
                 parts = []
                 if x["workout"]:
-                    parts.append(["Entreno", x["workout"]])
+                    parts.append([gettext("Entreno"), x["workout"]])
                 if x["sets"]:
-                    parts.append([f"{x['sets_n']} serie{'' if x['sets_n'] == 1 else 's'}", x["sets"]])
+                    parts.append([ngettext("%(num)d serie", "%(num)d series", x["sets_n"]), x["sets"]])
                 if x["prs"]:
-                    parts.append([f"{x['prs_n']} récord{'' if x['prs_n'] == 1 else 's'}", x["prs"]])
+                    parts.append([ngettext("%(num)d récord", "%(num)d récords", x["prs_n"]), x["prs"]])
                 if preview["bonus"]:
-                    parts.append(["Semana cumplida", preview["bonus"]])
-                queue_xp_gain("Entreno terminado", preview["gain"], parts)
+                    parts.append([gettext("Semana cumplida"), preview["bonus"]])
+                queue_xp_gain(gettext("Entreno terminado"), preview["gain"], parts)
         check_achievements()
         return redirect(url_for("index", celebrate=1))
     duration_estimated_from = None
@@ -1647,7 +1650,7 @@ def finish_workout(workout_id):
 
     return render_template(
         "finish_workout.html",
-        title="Terminar entreno",
+        title=gettext("Terminar entreno"),
         form=form,
         workout=workout,
         summary=workout_summary(workout),
@@ -1666,14 +1669,14 @@ def finish_workout(workout_id):
 def delete_workout(workout_id):
     workout = db.get_or_404(Workout, workout_id)
     if workout.author != current_user:
-        flash("No tienes acceso a este entrenamiento.")
+        flash(gettext("No tienes acceso a este entrenamiento."))
         return redirect(url_for("index"))
     sets = db.session.scalars(workout.sets.select()).all()
     for s in sets:
         db.session.delete(s)
     db.session.delete(workout)
     db.session.commit()
-    flash("Entrenamiento eliminado.")
+    flash(gettext("Entrenamiento eliminado."))
     return redirect(url_for("index"))
 
 
@@ -1748,7 +1751,7 @@ def progress():
     prefetch_catalog_exercises(i["exercise"] for i in items)
     return render_template(
         "progress.html",
-        title="Progreso",
+        title=gettext("Progreso"),
         strength=strength,
         strength_labels=[wk.strftime("%d/%m") for wk, _ in strength["series"][-26:]] if strength else [],
         strength_values=[round(v, 1) for _, v in strength["series"][-26:]] if strength else [],
@@ -1769,7 +1772,7 @@ def rank_page():
     profile = cached_profile(current_user)
     return render_template(
         "rango.html",
-        title="Rango",
+        title=gettext("Rango"),
         profile=profile,
         personal_basics=personal_basics_data(current_user, profile),
         rankings=friends_rankings(current_user),
@@ -1859,7 +1862,7 @@ def friends_page():
     incoming, outgoing = social.requests_for(current_user.id)
     code = social.friend_code(current_user)
     return render_template(
-        "friends.html", title="Amigos", form=EmptyForm(), code=code,
+        "friends.html", title=gettext("Amigos"), form=EmptyForm(), code=code,
         invite_url=url_for("friend_invite", code=code, _external=True),
         incoming=incoming, outgoing=outgoing, friends=social.friends_with_links(current_user.id),
         max_friends=social.MAX_FRIENDS,
@@ -1882,9 +1885,9 @@ def friend_invite(code):
     puede haber llegado reenviado)."""
     other = social.user_by_code(code)
     if other is None or other.id == current_user.id:
-        flash("Ese enlace de invitación no es válido." if other is None else "Ese es tu propio enlace de invitación.")
+        flash(gettext("Ese enlace de invitación no es válido.") if other is None else gettext("Ese es tu propio enlace de invitación."))
         return redirect(url_for("friends_page"))
-    return render_template("friend_invite.html", title="Invitación", form=EmptyForm(), other=other,
+    return render_template("friend_invite.html", title=gettext("Invitación"), form=EmptyForm(), other=other,
                            already=social.are_friends(current_user.id, other.id), code=other.friend_code)
 
 
@@ -1909,7 +1912,7 @@ def friend_remove(friendship_id):
 def athlete_card(user_id):
     owner = db.session.get(User, user_id)
     if owner is None or (owner.id != current_user.id and not social.are_friends(current_user.id, owner.id)):
-        flash("Solo puedes ver la tarjeta de tus amigos.")
+        flash(gettext("Solo puedes ver la tarjeta de tus amigos."))
         return redirect(url_for("friends_page"))
     return render_template("athlete_card.html", title=owner.username, v=athlete_card_view(owner, current_user))
 
@@ -1934,13 +1937,13 @@ def athlete_card_edit():
         card.featured_lifts = json.dumps(lifts, ensure_ascii=False)
         card.featured_achievements = json.dumps(codes)
         db.session.commit()
-        flash("Tarjeta guardada.")
+        flash(gettext("Tarjeta guardada."))
         return redirect(url_for("athlete_card", user_id=current_user.id))
     card = social.card_for(current_user.id)
     lift_names, codes = social.featured(card)
     exercises = sorted(overview, key=lambda i: -i["best_1rm"])
     return render_template(
-        "athlete_card_edit.html", title="Tu tarjeta", form=form, card=card,
+        "athlete_card_edit.html", title=gettext("Tu tarjeta"), form=form, card=card,
         exercises=exercises, chosen_lifts=lift_names, chosen_codes=codes,
         unlocked=[achievements.BY_CODE[c] for c in unlocked if c in achievements.BY_CODE],
         max_lifts=social.MAX_FEATURED_LIFTS, max_achievements=social.MAX_FEATURED_ACHIEVEMENTS,
@@ -1999,7 +2002,7 @@ def personal_basics():
         allowed = set(available) | set(chosen)
         picked = [n for n in dict.fromkeys(x.strip().lower() for x in request.form.getlist("exercise")) if n in allowed]
         if len(picked) > MAX_PERSONAL_BASICS:
-            flash(f"Como mucho {MAX_PERSONAL_BASICS} básicos: se han guardado los {MAX_PERSONAL_BASICS} primeros.")
+            flash(gettext("Como mucho %(n)s básicos: se han guardado los %(n)s primeros.", n=MAX_PERSONAL_BASICS))
             picked = picked[:MAX_PERSONAL_BASICS]
         db.session.execute(sa.delete(PersonalBasic).where(PersonalBasic.user_id == current_user.id))
         for i, name in enumerate(picked):
@@ -2018,7 +2021,7 @@ def personal_basics():
             "exercise": n, "checked": n in chosen, "stats": stats.get(n),
             "counts_as": standards.LIFT_LABELS[lift] if lift else None,
         })
-    return render_template("personal_basics.html", title="Tus básicos", form=form, items=items,
+    return render_template("personal_basics.html", title=gettext("Tus básicos"), form=form, items=items,
                            max_basics=MAX_PERSONAL_BASICS)
 
 
@@ -2028,7 +2031,7 @@ def update_exercise_translation(name):
     name = name.strip().lower()
     catalog_exercise = find_catalog_exercise(name, use_alias=False)
     if not catalog_exercise:
-        flash("No se encontró este ejercicio en el catálogo.")
+        flash(gettext("No se encontró este ejercicio en el catálogo."))
         return redirect(url_for("exercise_progress", name=name))
     form = ExerciseTranslationForm()
     if form.validate_on_submit():
@@ -2036,13 +2039,13 @@ def update_exercise_translation(name):
         new_es = form.name_es.data.strip() or None
         new_key = (new_es or catalog_exercise.name).strip().lower()
         if len(new_key) > 64:
-            flash("Ese nombre es demasiado largo (máximo 64 caracteres).")
+            flash(gettext("Ese nombre es demasiado largo (máximo 64 caracteres)."))
             return redirect(url_for("exercise_progress", name=name))
         catalog_exercise.name_es = new_es
         moved = rename_exercise_everywhere(old_key, new_key) if new_key != old_key else 0
         db.session.commit()
         _clear_catalog_cache()
-        flash("Nombre en español guardado." + (f" Se actualizó en {moved} series para que sigan contando." if moved else ""))
+        flash(gettext("Nombre en español guardado.") + (" " + ngettext("Se actualizó en %(num)d serie para que siga contando.", "Se actualizó en %(num)d series para que sigan contando.", moved) if moved else ""))
         if name == old_key:
             name = new_key
     return redirect(url_for("exercise_progress", name=name))
@@ -2110,7 +2113,7 @@ def exercise_notes(name):
             form.rest_seconds.data or 0
         )
         db.session.commit()
-        flash("Notas guardadas.")
+        flash(gettext("Notas guardadas."))
         return redirect(url_for("exercise_progress", name=name))
     elif request.method == "GET" and note and note.default_rest_seconds is not None:
         form.notes.data = note.notes
@@ -2120,7 +2123,7 @@ def exercise_notes(name):
         form.notes.data = note.notes
     return render_template(
         "exercise_notes.html",
-        title=f"Notas de {name.title()}",
+        title=gettext("Notas de %(name)s", name=name.title()),
         form=form,
         exercise=name,
     )
@@ -2177,7 +2180,7 @@ def settings():
             )
 
         db.session.commit()
-        flash("Configuración guardada.")
+        flash(gettext("Configuración guardada."))
         return redirect(url_for("settings"))
     elif request.method == "GET":
         form.stagnation_threshold.data = current_user.stagnation_threshold
@@ -2190,7 +2193,7 @@ def settings():
         form.training_days.data = [int(c) for c in (current_user.training_days or "")]
         latest = _latest_weekly_goal_row(current_user.id)
         form.weekly_workout_goal.data = latest.goal if latest else None
-    return render_template("settings.html", title="Configuración", form=form, accents=perks.ACCENTS,
+    return render_template("settings.html", title=gettext("Configuración"), form=form, accents=perks.ACCENTS,
                            empty_lang_form=EmptyForm())
 
 
@@ -2201,7 +2204,7 @@ def weight():
     if form.validate_on_submit():
         db.session.add(BodyWeightEntry(weight=form.weight.data, user_id=current_user.id))
         db.session.commit()
-        flash("Peso registrado.")
+        flash(gettext("Peso registrado."))
         check_achievements()
         return redirect(url_for("weight"))
 
@@ -2213,7 +2216,7 @@ def weight():
 
     return render_template(
         "weight.html",
-        title="Peso corporal",
+        title=gettext("Peso corporal"),
         form=form,
         empty_form=EmptyForm(),
         pace=bodyweight_mod.summary([(e.timestamp, e.weight) for e in entries], current_user.body_phase,
@@ -2264,11 +2267,11 @@ def set_body_phase():
 def delete_weight_entry(entry_id):
     entry = db.get_or_404(BodyWeightEntry, entry_id)
     if entry.user_id != current_user.id:
-        flash("No tienes acceso a ese registro de peso.")
+        flash(gettext("No tienes acceso a ese registro de peso."))
         return redirect(url_for("weight"))
     db.session.delete(entry)
     db.session.commit()
-    flash("Registro de peso eliminado.")
+    flash(gettext("Registro de peso eliminado."))
     return redirect(url_for("weight"))
 
 
@@ -2302,10 +2305,10 @@ def ai_analysis():
             remaining = available_at - now
             if remaining < timedelta(days=1):
                 hours = max(1, math.ceil(remaining.total_seconds() / 3600))
-                wait_label = f"en {hours} h"
+                wait_label = gettext("en %(n)s h", n=hours)
             else:
                 days = math.ceil(remaining.total_seconds() / 86400)
-                wait_label = "mañana" if days == 1 else f"en {days} días"
+                wait_label = gettext("mañana") if days == 1 else gettext("en %(n)s días", n=days)
             cooldown_pct = round(100 * (1 - remaining / cooldown))
 
     try:
@@ -2323,7 +2326,7 @@ def ai_analysis():
 
     return render_template(
         "ai_analysis.html",
-        title="Análisis de IA",
+        title=gettext("Análisis de IA"),
         latest=latest,
         analysis=analysis,
         next_available=next_available,
@@ -2356,8 +2359,8 @@ def request_ai_analysis():
     checkin_form = AiCheckinForm()
     allowance = perks.ai_per_week(perks.level_of(current_user))
     if ai_analysis_blocking(current_user.id, allowance) is not None:
-        flash("Ya has usado tus análisis de esta semana. Vuelve a intentarlo más adelante."
-              if allowance > 1 else "Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante.")
+        flash(gettext("Ya has usado tus análisis de esta semana. Vuelve a intentarlo más adelante.")
+              if allowance > 1 else gettext("Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante."))
         return redirect(url_for("ai_analysis"))
 
     total_workouts = db.session.scalar(
@@ -2366,10 +2369,9 @@ def request_ai_analysis():
         .where(Workout.user_id == current_user.id)
     )
     if total_workouts < MIN_WORKOUTS_FOR_AI_ANALYSIS:
-        flash(
-            f"Necesitas al menos {MIN_WORKOUTS_FOR_AI_ANALYSIS} entrenamientos registrados "
-            f"para generar un análisis (llevas {total_workouts})."
-        )
+        flash(gettext(
+            "Necesitas al menos %(min)s entrenamientos registrados para generar un análisis (llevas %(n)s).",
+            min=MIN_WORKOUTS_FOR_AI_ANALYSIS, n=total_workouts))
         return redirect(url_for("ai_analysis"))
 
     try:
@@ -2381,13 +2383,13 @@ def request_ai_analysis():
         # usuario ve el mismo aviso de "vuelve a intentarlo" que un fallo de
         # la API, en vez de una tarjeta rota con JSON crudo sin renderizar.
     except Exception:
-        flash("No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos minutos.")
+        flash(gettext("No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos minutos."))
         return redirect(url_for("ai_analysis"))
 
     db.session.add(AiAnalysis(content=content, user_id=current_user.id))
     db.session.commit()
     check_achievements()
-    flash("¡Análisis generado!")
+    flash(gettext("¡Análisis generado!"))
     return redirect(url_for("ai_analysis"))
 
 
@@ -2399,8 +2401,7 @@ def routines():
     ).all()
 
     routines_info = []
-    dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-
+    
     for r in routine_list:
         exercises = db.session.scalars(
             sa.select(RoutineExercise)
@@ -2412,7 +2413,7 @@ def routines():
             .where(Workout.routine_id == r.id)
             .order_by(Workout.timestamp.desc())
         )
-        last_day = dias[to_local(last_workout.timestamp).weekday()] if last_workout else None
+        last_day = str(WEEKDAY_NAMES[to_local(last_workout.timestamp).weekday()]).capitalize() if last_workout else None
         routines_info.append(
             {
                 "routine": r,
@@ -2455,7 +2456,7 @@ def routines():
     empty_form = EmptyForm()
     return render_template(
         "routines.html",
-        title="Mis rutinas",
+        title=gettext("Mis rutinas"),
         routines_info=routines_info,
         pinned_info=pinned_info,
         block_sections=block_sections,
@@ -2573,7 +2574,7 @@ def set_default_routine_block(block_id):
 def routine_detail(routine_id):
     routine = db.get_or_404(Routine, routine_id)
     if routine.author != current_user:
-        flash("No tienes acceso a esta rutina.")
+        flash(gettext("No tienes acceso a esta rutina."))
         return redirect(url_for("routines"))
 
     form = RoutineExerciseForm()
@@ -2587,7 +2588,7 @@ def routine_detail(routine_id):
         if form.replace_ex_id.data:
             replace_ex = db.session.get(RoutineExercise, int(form.replace_ex_id.data))
             if not replace_ex or replace_ex.routine_id != routine.id:
-                flash("No se pudo actualizar ese ejercicio.")
+                flash(gettext("No se pudo actualizar ese ejercicio."))
                 return redirect(url_for("routine_detail", routine_id=routine.id))
 
         if replace_ex:
@@ -2597,7 +2598,7 @@ def routine_detail(routine_id):
             replace_ex.rir = rir
             replace_ex.rpe = rpe
             db.session.commit()
-            flash("Ejercicio actualizado.")
+            flash(gettext("Ejercicio actualizado."))
         else:
             count = db.session.scalar(
                 sa.select(sa.func.count())
@@ -2663,9 +2664,9 @@ def new_routine():
         db.session.add(routine)
         db.session.commit()
         check_achievements()
-        flash("Rutina creada. Añade ejercicios.")
+        flash(gettext("Rutina creada. Añade ejercicios."))
         return redirect(url_for("routine_detail", routine_id=routine.id))
-    return render_template("new_routine.html", title="Nueva rutina", form=form)
+    return render_template("new_routine.html", title=gettext("Nueva rutina"), form=form)
 
 
 @app.route("/routines/<int:routine_id>/exercise/<int:ex_id>/delete", methods=["POST"])
@@ -2673,17 +2674,17 @@ def new_routine():
 def delete_routine_exercise(routine_id, ex_id):
     routine = db.get_or_404(Routine, routine_id)
     if routine.author != current_user:
-        flash("No tienes acceso a esta rutina.")
+        flash(gettext("No tienes acceso a esta rutina."))
         return redirect(url_for("routines"))
     ex = db.get_or_404(RoutineExercise, ex_id)
     # El ejercicio tiene que ser de ESTA rutina: comprobar solo la rutina
     # dejaba borrar un ejercicio ajeno poniendo un ex_id de otra rutina.
     if ex.routine_id != routine.id:
-        flash("No tienes acceso a esta rutina.")
+        flash(gettext("No tienes acceso a esta rutina."))
         return redirect(url_for("routines"))
     db.session.delete(ex)
     db.session.commit()
-    flash("Ejercicio eliminado de la rutina.")
+    flash(gettext("Ejercicio eliminado de la rutina."))
     return redirect(url_for("routine_detail", routine_id=routine.id))
 
 
@@ -2717,7 +2718,7 @@ def update_routine_exercise(routine_id, ex_id):
         except (TypeError, ValueError):
             sets = 0
         if not 1 <= sets <= 15:
-            return jsonify({"ok": False, "error": "Las series van de 1 a 15."}), 400
+            return jsonify({"ok": False, "error": gettext("Las series van de 1 a 15.")}), 400
         ex.target_sets = sets
         if ex.target_sets_max is not None and ex.target_sets_max <= sets:
             ex.target_sets_max = None
@@ -2731,7 +2732,7 @@ def update_routine_exercise(routine_id, ex_id):
             except ValueError:
                 top = 0
             if not ex.target_sets <= top <= 15:
-                return jsonify({"ok": False, "error": f"El máximo de series va de {ex.target_sets} a 15."}), 400
+                return jsonify({"ok": False, "error": gettext("El máximo de series va de %(n)s a 15.", n=ex.target_sets)}), 400
             ex.target_sets_max = top if top > ex.target_sets else None
     if "reps_min" in data or "reps_max" in data:
         low, high = reps_range(ex.target_reps)
@@ -2742,19 +2743,19 @@ def update_routine_exercise(routine_id, ex_id):
                 raw = str(data["reps_max"] or "").strip()
                 high = int(raw) if raw else None
         except ValueError:
-            return jsonify({"ok": False, "error": "Las repeticiones tienen que ser números."}), 400
+            return jsonify({"ok": False, "error": gettext("Las repeticiones tienen que ser números.")}), 400
         if not low or not 1 <= low <= 100 or (high is not None and not low <= high <= 100):
-            return jsonify({"ok": False, "error": "Repeticiones de 1 a 100, y el máximo no puede ser menor que el mínimo."}), 400
+            return jsonify({"ok": False, "error": gettext("Repeticiones de 1 a 100, y el máximo no puede ser menor que el mínimo.")}), 400
         ex.target_reps = f"{low}-{high}" if high and high > low else str(low)
     if "target_reps" in data:  # compatibilidad: texto libre
         reps = " ".join(str(data["target_reps"] or "").split())
         if not reps or len(reps) > 16:
-            return jsonify({"ok": False, "error": "Escribe las reps (máx. 16 caracteres), p. ej. 8-10."}), 400
+            return jsonify({"ok": False, "error": gettext("Escribe las reps (máx. 16 caracteres), p. ej. 8-10.")}), 400
         ex.target_reps = reps
     if "effort" in data:
         effort = str(data["effort"] or "").replace(" ", "")
         if effort and not _EFFORT_RE.fullmatch(effort):
-            return jsonify({"ok": False, "error": "Usa un número (ej. 2) o un rango (ej. 2-3)."}), 400
+            return jsonify({"ok": False, "error": gettext("Usa un número (ej. 2) o un rango (ej. 2-3).")}), 400
         scale = current_user.effort_scale
         ex.rir = (effort or None) if scale == "rir" else None
         ex.rpe = (effort or None) if scale == "rpe" else None
@@ -2783,7 +2784,7 @@ def replace_routine_exercise(routine_id, ex_id):
     _, ex = found
     name = str((request.get_json(silent=True) or {}).get("exercise", "")).strip()
     if not name or len(name) > 64:
-        return jsonify({"ok": False, "error": "Elige un ejercicio."}), 400
+        return jsonify({"ok": False, "error": gettext("Elige un ejercicio.")}), 400
     ex.exercise = canonicalize_exercise_name(name)
     db.session.commit()
     return jsonify({"ok": True})
@@ -2794,7 +2795,7 @@ def replace_routine_exercise(routine_id, ex_id):
 def delete_routine(routine_id):
     routine = db.get_or_404(Routine, routine_id)
     if routine.author != current_user:
-        flash("No tienes acceso a esta rutina.")
+        flash(gettext("No tienes acceso a esta rutina."))
         return redirect(url_for("routines"))
     exercises = db.session.scalars(
         sa.select(RoutineExercise).where(RoutineExercise.routine_id == routine.id)
@@ -2809,7 +2810,7 @@ def delete_routine(routine_id):
     )
     db.session.delete(routine)
     db.session.commit()
-    flash("Rutina eliminada.")
+    flash(gettext("Rutina eliminada."))
     return redirect(url_for("routines"))
 
 
@@ -2847,12 +2848,12 @@ def _parse_single_int(value):
 def start_routine(routine_id):
     routine = db.get_or_404(Routine, routine_id)
     if routine.author != current_user:
-        flash("No tienes acceso a esta rutina.")
+        flash(gettext("No tienes acceso a esta rutina."))
         return redirect(url_for("routines"))
 
     existing = get_active_workout(current_user.id)
     if existing:
-        flash("Ya tienes un entreno en curso — termínalo antes de empezar otro.")
+        flash(gettext("Ya tienes un entreno en curso — termínalo antes de empezar otro."))
         return redirect(url_for("workout_detail", workout_id=existing.id))
 
     workout = Workout(note=routine.name, routine_id=routine.id, author=current_user)
@@ -2885,7 +2886,7 @@ def start_routine(routine_id):
             )
 
     db.session.commit()
-    flash(f"¡Entrenamiento '{routine.name}' iniciado!")
+    flash(gettext("¡Entrenamiento '%(name)s' iniciado!", name=routine.name))
     return redirect(url_for("workout_detail", workout_id=workout.id))
 
 
@@ -3021,7 +3022,7 @@ def api_search_exercises():
 @login_required
 def toggle_exercise_favorite(exercise_id):
     if not db.session.get(Exercise, exercise_id):
-        return jsonify({"ok": False, "error": "Ejercicio no encontrado."}), 404
+        return jsonify({"ok": False, "error": gettext("Ejercicio no encontrado.")}), 404
     existing = db.session.scalar(
         sa.select(ExerciseFavorite).where(
             ExerciseFavorite.user_id == current_user.id,
@@ -3062,9 +3063,9 @@ def api_create_exercise():
     equipment = (data.get("equipment") or "").strip() or None
 
     if not name:
-        return jsonify({"ok": False, "error": "El nombre es obligatorio."}), 400
+        return jsonify({"ok": False, "error": gettext("El nombre es obligatorio.")}), 400
     if not muscles:
-        return jsonify({"ok": False, "error": "Elige al menos un músculo primario."}), 400
+        return jsonify({"ok": False, "error": gettext("Elige al menos un músculo primario.")}), 400
 
     base_slug = _slugify_exercise_name(name)
     new_id = base_slug
@@ -3094,7 +3095,7 @@ def api_create_exercise():
 def save_as_routine(workout_id):
     workout = db.get_or_404(Workout, workout_id)
     if workout.author != current_user:
-        flash("No tienes acceso a este entrenamiento.")
+        flash(gettext("No tienes acceso a este entrenamiento."))
         return redirect(url_for("index"))
 
     sets = db.session.scalars(workout.sets.select().order_by(SetEntry.id)).all()
@@ -3107,10 +3108,10 @@ def save_as_routine(workout_id):
         exercise_counts[s.exercise] += 1
 
     if not exercise_order:
-        flash("Este entrenamiento no tiene series registradas.")
+        flash(gettext("Este entrenamiento no tiene series registradas."))
         return redirect(url_for("workout_detail", workout_id=workout.id))
 
-    routine = Routine(name=workout.note or "Nueva rutina", author=current_user)
+    routine = Routine(name=workout.note or gettext("Nueva rutina"), author=current_user)
     db.session.add(routine)
     db.session.flush()
 
@@ -3126,7 +3127,7 @@ def save_as_routine(workout_id):
         db.session.add(ex)
 
     db.session.commit()
-    flash(f"Rutina '{routine.name}' creada a partir de este entrenamiento.")
+    flash(gettext("Rutina '%(name)s' creada a partir de este entrenamiento.", name=routine.name))
     return redirect(url_for("routine_detail", routine_id=routine.id))
 
 
@@ -3255,7 +3256,7 @@ def compute_smart_streak(user_id, workouts):
     plan = planned_weekdays(db.session.get(User, user_id))
     week = [
         {
-            "letter": _WEEKDAY_SHORT[i],
+            "letter": str(_WEEKDAY_SHORT[i]),
             "trained": (current_week + timedelta(days=i)) in trained_days,
             "today": i == today.weekday(),
             "planned": i in plan,
@@ -3879,7 +3880,7 @@ def generate_ai_analysis(how_you_feel=None):
         model="gpt-5.6-luna",
         instructions=(
             "Eres un entrenador personal experto analizando el historial de entrenamientos "
-            "de un usuario de una app de gimnasio. Responde en español, con recomendaciones "
+            f"de un usuario de una app de gimnasio. Responde en {'inglés' if _english() else 'español'}, con recomendaciones "
             "concretas y accionables basadas ÚNICAMENTE en los datos proporcionados. No "
             "inventes datos que no se te han dado. Evita consejos genéricos ('sigue "
             "esforzándote'); sé específico sobre qué ejercicios necesitan atención y por qué. "
@@ -3934,6 +3935,12 @@ def to_local(dt):
     return dt.astimezone(LOCAL_TZ)
 
 
+def _english():
+    """¿Se está mostrando la app en inglés? (formato de números y fechas)."""
+    locale = get_locale()
+    return locale is not None and locale.language == "en"
+
+
 def fmt_num(value, decimals=1):
     """Número en formato español para mostrar: coma decimal, punto de miles
     y sin ceros sobrantes (82.5 -> "82,5", 100.0 -> "100", 1200 -> "1.200").
@@ -3944,11 +3951,12 @@ def fmt_num(value, decimals=1):
     sign = "-" if v < 0 else ""
     v = abs(v)
     whole = int(v)
-    text = f"{whole:,}".replace(",", ".")
+    thousands, point = (",", ".") if _english() else (".", ",")
+    text = f"{whole:,}".replace(",", thousands)
     if decimals:
         frac = f"{v - whole:.{decimals}f}"[2:].rstrip("0")
         if frac:
-            text += "," + frac
+            text += point + frac
     return sign + text
 
 
@@ -3960,14 +3968,14 @@ def relative_day(dt):
     local = to_local(dt).date()
     days = (to_local(datetime.now(timezone.utc)).date() - local).days
     if days <= 0:
-        return "hoy"
+        return gettext("hoy")
     if days == 1:
-        return "ayer"
+        return gettext("ayer")
     if days < 14:
-        return f"hace {days} días"
+        return gettext("hace %(n)s días", n=days)
     if days < 60:
-        return f"hace {days // 7} semanas"
-    return local.strftime("%d/%m/%Y")
+        return gettext("hace %(n)s semanas", n=days // 7)
+    return local.strftime("%m/%d/%Y" if _english() else "%d/%m/%Y")
 
 
 def format_rest(seconds):
