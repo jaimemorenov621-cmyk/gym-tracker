@@ -50,7 +50,7 @@
             <script>
                 (function () {
                     const values = {{ strength_values|tojson }};
-                    const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 1 });
+                    const fmt = v => v.toLocaleString(GYRE_NUM_LOCALE, { maximumFractionDigits: 1 });
                     applyChartTheme();
                     new Chart(document.getElementById('strengthChart'), {
                         type: 'line',

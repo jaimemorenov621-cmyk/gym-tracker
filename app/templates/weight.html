@@ -10,7 +10,7 @@
             <label class="field-label" for="{{ form.weight.id }}">{{ _("Registrar peso de hoy") }}</label>
             <div class="weight-form-row">
                 <span class="input-suffix">
-                    {{ form.weight(inputmode="decimal", autocomplete="off", placeholder="72,5") }}
+                    {{ form.weight(inputmode="decimal", autocomplete="off", placeholder=72.5|num) }}
                     <span>{{ _("kg") }}</span>
                 </span>
                 {{ form.submit(class="btn") }}

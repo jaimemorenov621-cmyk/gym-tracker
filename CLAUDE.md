@@ -46,6 +46,18 @@ Classic single-package Flask app, not an application factory — `app` and `db` 
 - `app/social.py` — friends (`Friendship`, accepted by the addressee; `User.friend_code` + invite link), `AthleteCard` (what friends see; body weight hidden by default) and friend rankings in the Rango tab (global/per-basic rank from the *credible* scores in `strength_profile()["ranking"]`, plus consistency). `app/bodyweight.py` — weekly weight-change rate vs the chosen `User.body_phase`, ranges by training level. `app/datacache.py` — per-user memo of heavy derived data keyed on `xp_seq` + weight/alias versions + day; emblems are pre-rendered to WebP by `tools/rasterize_rank_emblems.py` after `tools/make_rank_emblems.py`.
 - `app/usage.py` — privacy-respecting usage counter (`DailyActivity`: one row per user/day, 120-day retention) and the rest-day usage report in `/landing/stats`.
 
+### Languages (Flask-Babel)
+
+Spanish source strings, English catalog in `app/translations/en/LC_MESSAGES/` (the compiled `.mo` is committed: Render doesn't compile). Locale: `User.language` → `lang` cookie → `Accept-Language` → es (`app/i18n.py`; off with `I18N_ENABLED=0`). **Every new user-facing text must go through translation**: `{{ _('...') }}`/`ngettext` in templates (newstyle: `%(var)s` placeholders, literal `%` written `%%`, never name a Jinja variable `_`; in inline JS `{{ _('...')|tojson }}`, inside HTML attributes `|tojson|forceescape`), `gettext`/`ngettext` in `routes.py` (`_` is used as a throwaway variable there), `lazy_gettext as _l` for module-level constants (in Python, `%` is only applied when variables are passed). Static `.js` use `T('texto original')` and the text must be listed in `i18n.JS_STRINGS`. Results cached in `datacache` are keyed by locale. Numbers/dates: `fmt_num`/`relative_day` follow the locale. After adding texts:
+
+```
+pybabel extract -F babel.cfg -k _l -k N_ -k lazy_pgettext:1c,2 -k _lp:1c,2 -o messages.pot .
+pybabel update -i messages.pot -d app/translations   # then translate the new msgstr in the .po
+pybabel compile -d app/translations
+```
+
+`tests/test_i18n.py` fails if a string is untranslated, fuzzy, has mismatched placeholders or the `.mo` is stale. `PYTHONIOENCODING=utf-8 python tools/i18n_leftovers.py` lists Spanish text in templates not yet wrapped.
+
 ### Domain model
 
 - `User` has many `Workout`s and `Routine`s; also stores per-user preferences: `stagnation_threshold` (sessions without a PR before warning) and `effort_scale` (`"rir"`, `"rpe"`, or `"none"`).

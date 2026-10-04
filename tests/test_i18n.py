@@ -38,3 +38,68 @@ class LocaleTests(DbTestCase):
         app.config["I18N_ENABLED"] = False
         html = self.client.get("/login", headers={"Accept-Language": "en"}).get_data(as_text=True)
         self.assertEqual(self.lang_of(html), "es")
+
+    def test_english_pages_are_translated(self):
+        self.login(self.uid)
+        en = {"Accept-Language": "en-US,en;q=0.9"}
+        html = self.client.get("/index", headers=en).get_data(as_text=True)
+        self.assertIn("Home", html)
+        self.assertNotIn("Inicio", html)
+        html = self.client.get("/rango", headers=en).get_data(as_text=True)
+        self.assertIn("Iron", html)
+        self.assertNotIn("Hierro", html)
+        html = self.client.get("/settings", headers=en).get_data(as_text=True)
+        self.assertIn('window.GYRE_NUM_LOCALE = "en-US"', html)
+        self.assertIn('"Cerrar": "Close"', html)  # textos de los .js estáticos
+
+    def test_numbers_and_dates_follow_the_language(self):
+        from app.routes import fmt_num
+        with app.test_request_context(headers={"Accept-Language": "en"}):
+            self.assertEqual(fmt_num(1234.5), "1,234.5")
+        with app.test_request_context(headers={"Accept-Language": "es"}):
+            self.assertEqual(fmt_num(1234.5), "1.234,5")
+
+
+class CatalogTests(DbTestCase):
+    """El catálogo inglés está completo y compilado (pybabel compile)."""
+
+    PO = "app/translations/en/LC_MESSAGES/messages.po"
+
+    def catalog(self):
+        import io
+        from babel.messages.pofile import read_po
+        with io.open(self.PO, "rb") as f:
+            return read_po(f, locale="en")
+
+    def test_everything_translated_and_compiled(self):
+        from babel.support import Translations
+        mo = Translations.load("app/translations", ["en"])
+        for m in self.catalog():
+            if not m.id:
+                continue
+            self.assertNotIn("fuzzy", m.flags, m.id)
+            strings = m.string if isinstance(m.id, tuple) else (m.string,)
+            self.assertTrue(all(strings), f"sin traducir: {m.id!r}")
+            if isinstance(m.id, tuple):
+                got = mo.unpgettext(m.context, m.id[0], m.id[1], 2) if m.context else mo.ungettext(m.id[0], m.id[1], 2)
+                self.assertEqual(got, m.string[1], "messages.mo desactualizado: pybabel compile")
+            else:
+                got = mo.upgettext(m.context, m.id) if m.context else mo.ugettext(m.id)
+                self.assertEqual(got, m.string, "messages.mo desactualizado: pybabel compile")
+
+    def test_placeholders_match(self):
+        import re
+        ph = re.compile(r"%\(\w+\)[sd]|\{\w+\}")
+        for m in self.catalog():
+            if not m.id:
+                continue
+            pairs = zip(m.id, m.string) if isinstance(m.id, tuple) else [(m.id, m.string)]
+            for src, tr in pairs:
+                # el singular puede omitir el número ("Récord en esta sesión")
+                self.assertEqual(set(ph.findall(src)) - {"%(num)d"}, set(ph.findall(tr)) - {"%(num)d"}, src)
+
+    def test_js_strings_are_in_the_catalog(self):
+        from app.i18n import JS_STRINGS
+        ids = {m.id for m in self.catalog()}
+        for text in JS_STRINGS:
+            self.assertIn(text, ids, "falta en el catálogo: pybabel extract + update")

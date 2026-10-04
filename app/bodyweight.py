@@ -25,12 +25,9 @@ from datetime import timedelta
 from flask_babel import gettext, lazy_gettext as _l
 
 PHASES = {
-    "volumen": {"label": _l("Volumen"), "lo": 0.25, "hi": 0.5,
-                "range": _l("subir un 0,25-0,5 % de tu peso por semana")},
-    "definicion": {"label": _l("Definición"), "lo": -1.0, "hi": -0.5,
-                   "range": _l("bajar un 0,5-1 % de tu peso por semana")},
-    "recomposicion": {"label": _l("Recomposición"), "lo": -0.25, "hi": 0.25,
-                      "range": _l("mantener el peso (±0,25 % por semana)")},
+    "volumen": {"label": _l("Volumen"), "lo": 0.25, "hi": 0.5},
+    "definicion": {"label": _l("Definición"), "lo": -1.0, "hi": -0.5},
+    "recomposicion": {"label": _l("Recomposición"), "lo": -0.25, "hi": 0.25},
 }
 # (volumen lo-hi, definición lo-hi) por nivel; recomposición igual para todos.
 LEVELS = {

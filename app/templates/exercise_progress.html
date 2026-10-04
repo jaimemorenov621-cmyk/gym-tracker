@@ -53,7 +53,8 @@
         </div>
     {% endif %}
 
-    {% if catalog_exercise %}
+    {# Nombre en español del catálogo: solo tiene sentido con la app en español. #}
+    {% if catalog_exercise and get_locale().language == 'es' %}
         <div class="card card-elevated">
             <h3 style="margin-top:0;">{{ _("🌐 Nombre en español") }}</h3>
             <form action="{{ url_for('update_exercise_translation', name=exercise) }}" method="post" style="display:flex; gap:8px;">
@@ -98,7 +99,7 @@
     <script>
         (function () {
             const values = {{ chart_values|tojson }};
-            const fmt = v => v.toLocaleString('es-ES', { maximumFractionDigits: 1 });
+            const fmt = v => v.toLocaleString(GYRE_NUM_LOCALE, { maximumFractionDigits: 1 });
             applyChartTheme();
             new Chart(document.getElementById('progressChart'), {
                 type: 'line',

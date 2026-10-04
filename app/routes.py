@@ -3008,7 +3008,7 @@ def api_search_exercises():
         [
             {
                 "id": e.id,
-                "name": e.name_es or e.name,
+                "name": catalog_display_name(e),
                 "image": e.image_url,
                 "muscles": e.primary_muscles,
                 "is_favorite": e.id in favorite_ids,
@@ -4081,13 +4081,23 @@ def prefetch_catalog_exercises(names):
             aliases.setdefault(t, None)
 
 
+def catalog_display_name(exercise):
+    """Nombre del ejercicio del catálogo en el idioma de la app: en inglés el
+    original del dataset; en español el traducido si lo hay. Los dos casan
+    con find_catalog_exercise, así que músculos, imagen y rango funcionan
+    con cualquiera de ellos."""
+    if _english():
+        return exercise.name
+    return exercise.name_es or exercise.name
+
+
 def canonicalize_exercise_name(name):
     """Si `name` coincide (ignorando acentos/mayúsculas) con el catálogo, devuelve la
     forma canónica del catálogo en vez del texto tal cual lo escribió el usuario."""
     name = name.strip().lower()
     match = find_catalog_exercise(name, use_alias=False)
     if match:
-        return (match.name_es or match.name).strip().lower()
+        return catalog_display_name(match).strip().lower()
     return name
 
 

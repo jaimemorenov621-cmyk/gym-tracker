@@ -35,7 +35,7 @@
                     <li>
                         <span class="alias-name">
                             <strong>{{ alias.name|title }}</strong>
-                            <small>→ {{ (ex.name_es or ex.name)|title }}</small>
+                            <small>→ {{ catalog_display_name(ex)|title }}</small>
                         </span>
                         <button type="button" class="btn-outline alias-remove" onclick="removeAlias({{ alias.id }}, this)">{{ _("Quitar") }}</button>
                     </li>
