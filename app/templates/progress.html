@@ -6,8 +6,8 @@
     <div class="card card-elevated strength-card" id="fuerza">
         <div class="strength-head">
             <div>
-                <h2>Fuerza</h2>
-                <p>Índice de todos tus ejercicios · 100 = tu primera semana</p>
+                <h2>{{ _("Fuerza") }}</h2>
+                <p>{{ _("Índice de todos tus ejercicios · 100 = tu primera semana") }}</p>
             </div>
             {% if strength %}
                 <div class="strength-pct {{ 'up' if strength.pct >= 0.5 else ('down' if strength.pct <= -0.5 else '') }}">
@@ -24,7 +24,7 @@
                 <div class="strength-movers">
                     {% if ups %}
                         <div>
-                            <h3>Más suben</h3>
+                            <h3>{{ _("Más suben") }}</h3>
                             {% for m in ups[:3] %}
                                 <a href="{{ url_for('exercise_progress', name=m.exercise) }}"><span>{{ m.exercise|title }}</span><b class="up">+{{ m.pct|num }} %</b></a>
                             {% endfor %}
@@ -32,7 +32,7 @@
                     {% endif %}
                     {% if downs %}
                         <div>
-                            <h3>Bajan</h3>
+                            <h3>{{ _("Bajan") }}</h3>
                             {% for m in downs[:3] %}
                                 <a href="{{ url_for('exercise_progress', name=m.exercise) }}"><span>{{ m.exercise|title }}</span><b class="down">{{ m.pct|num }} %</b></a>
                             {% endfor %}
@@ -41,12 +41,9 @@
                 </div>
             {% endif %}
             <details class="strength-how">
-                <summary>¿Cómo se calcula?</summary>
+                <summary>{{ _("¿Cómo se calcula?") }}</summary>
                 <p>
-                    Cada semana comparamos el 1RM estimado de cada ejercicio que hiciste con la vez anterior que lo
-                    hiciste, y hacemos la media de esos cambios. Así un ejercicio nuevo no hunde ni infla el índice,
-                    y una sesión floja seguida de una normal se compensa. Los cambios de más de un 20-25 % de una
-                    vez se recortan, por si hay algún peso mal apuntado.
+                    {{ _("Cada semana comparamos el 1RM estimado de cada ejercicio que hiciste con la vez anterior que lo hiciste, y hacemos la media de esos cambios. Así un ejercicio nuevo no hunde ni infla el índice, y una sesión floja seguida de una normal se compensa. Los cambios de más de un 20-25 %% de una vez se recortan, por si hay algún peso mal apuntado.") }}
                 </p>
             </details>
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -85,14 +82,14 @@
                 })();
             </script>
         {% else %}
-            <p class="progress-footnote" style="margin:8px 0 0;">Con al menos 2 semanas de entrenos verás aquí cómo evoluciona tu fuerza.</p>
+            <p class="progress-footnote" style="margin:8px 0 0;">{{ _("Con al menos 2 semanas de entrenos verás aquí cómo evoluciona tu fuerza.") }}</p>
         {% endif %}
     </div>
 
     <div class="card card-elevated vol-card" id="volumen">
         <div class="strength-head">
             <div>
-                <h2>Volumen semanal por músculo</h2>
+                <h2>{{ _("Volumen semanal por músculo") }}</h2>
                 <p>Series duras de los últimos 7 días frente a tu rango (el respaldado de {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} hasta que la app aprenda el tuyo)</p>
             </div>
         </div>
@@ -109,10 +106,10 @@
                 </div>
             </div>
             <div class="vol-legend">
-                <span><i class="vol-dot low"></i>Por debajo</span>
-                <span><i class="vol-dot ok"></i>En tu rango</span>
-                <span><i class="vol-dot high"></i>Te pasas</span>
-                <span><i class="vol-dot none"></i>Sin series</span>
+                <span><i class="vol-dot low"></i>{{ _("Por debajo") }}</span>
+                <span><i class="vol-dot ok"></i>{{ _("En tu rango") }}</span>
+                <span><i class="vol-dot high"></i>{{ _("Te pasas") }}</span>
+                <span><i class="vol-dot none"></i>{{ _("Sin series") }}</span>
             </div>
             <ul class="vol-list">
                 {% for g in volume['items'] %}
@@ -135,17 +132,17 @@
             {% if volume.unmapped or volume.no_effort %}
                 <p class="progress-footnote">
                     {% if volume.unmapped %}{{ volume.unmapped }} serie{{ '' if volume.unmapped == 1 else 's' }} de ejercicios sin músculo en el catálogo no cuenta{{ '' if volume.unmapped == 1 else 'n' }}.
-                    <a class="btn-inline" href="{{ url_for('exercise_muscles') }}">Asignar músculos</a>{% endif %}
+                    <a class="btn-inline" href="{{ url_for('exercise_muscles') }}">{{ _("Asignar músculos") }}</a>{% endif %}
                     {% if volume.no_effort %}{{ volume.no_effort }} serie{{ '' if volume.no_effort == 1 else 's' }} sin RIR/RPE anotado cuenta{{ '' if volume.no_effort == 1 else 'n' }} como dura.{% endif %}
                 </p>
             {% endif %}
         {% else %}
-            <p class="progress-footnote" style="margin:8px 0 0;">Sin series duras en las últimas 4 semanas.</p>
+            <p class="progress-footnote" style="margin:8px 0 0;">{{ _("Sin series duras en las últimas 4 semanas.") }}</p>
         {% endif %}
         {% set personal = volume['items']|selectattr('personal')|list %}
         {% if personal %}
             <div class="vol-personal-box">
-                <strong>Tu punto dulce estimado</strong>
+                <strong>{{ _("Tu punto dulce estimado") }}</strong>
                 <ul>
                     {% for g in personal %}
                         {% set p = g.personal %}
@@ -160,20 +157,16 @@
                 </ul>
             </div>
         {% else %}
-            <p class="progress-footnote">Con unas semanas más de datos, la app estimará tu propio rango para cada músculo.</p>
+            <p class="progress-footnote">{{ _("Con unas semanas más de datos, la app estimará tu propio rango para cada músculo.") }}</p>
         {% endif %}
         <details class="strength-how">
-            <summary>¿Cómo aprende la app tu rango?</summary>
+            <summary>{{ _("¿Cómo aprende la app tu rango?") }}</summary>
             <p>
-                Cada persona tolera y aprovecha un volumen distinto. Cada vez que repites un ejercicio, la app mira cuánto
-                cambió tu 1RM estimado frente a la vez anterior y cuántas series duras hiciste de ese músculo los 7 días
-                previos. Agrupa esas mediciones por tramos de volumen (menos de 6, 6-10, 10-14, 14-18, 18-22 y más de 22
-                series) y tu punto dulce es el tramo en el que más progresaste, con el RIR medio con el que entrenaste ahí.
+                {{ _("Cada persona tolera y aprovecha un volumen distinto. Cada vez que repites un ejercicio, la app mira cuánto cambió tu 1RM estimado frente a la vez anterior y cuántas series duras hiciste de ese músculo los 7 días previos. Agrupa esas mediciones por tramos de volumen (menos de 6, 6-10, 10-14, 14-18, 18-22 y más de 22 series) y tu punto dulce es el tramo en el que más progresaste, con el RIR medio con el que entrenaste ahí.") }}
             </p>
             <p>
-                Necesita al menos 12 mediciones y 2 tramos con 4 o más; hasta entonces usa el rango de 10-20. Es una
-                <b>estimación</b>: el progreso también depende del sueño, la comida o las descargas, y el 1RM mide fuerza,
-                no tamaño muscular. Por eso se muestra la confianza y se recalcula con tus últimas 26 semanas.
+                {{ _("Necesita al menos 12 mediciones y 2 tramos con 4 o más; hasta entonces usa el rango de 10-20. Es una") }}
+                <b>{{ _("estimación") }}</b>{{ _(": el progreso también depende del sueño, la comida o las descargas, y el 1RM mide fuerza, no tamaño muscular. Por eso se muestra la confianza y se recalcula con tus últimas 26 semanas.") }}
             </p>
         </details>
         <details class="strength-how">
@@ -183,14 +176,10 @@
                 dan más hipertrofia, con 10 o más claramente por encima de menos de 5. Pelland y colaboradores (2024),
                 con 67 estudios, vieron que el beneficio sigue subiendo con más volumen, pero cada serie extra aporta
                 menos. Por eso {{ volume_mod.LOW }}-{{ volume_mod.HIGH }} series es el rango práctico más citado:
-                <b>pasar de {{ volume_mod.HIGH }} no es malo</b>, solo rinde menos por serie. Es una referencia para ganar
-                músculo; para fuerza máxima el volumen extra aporta todavía menos.
+                <b>pasar de {{ volume_mod.HIGH }} no es malo</b>{{ _(", solo rinde menos por serie. Es una referencia para ganar músculo; para fuerza máxima el volumen extra aporta todavía menos.") }}
             </p>
             <p>
-                <b>Cómo contamos.</b> Una serie dura es una serie hecha, con peso, que no es de calentamiento y con RIR 4
-                o menos (RPE 6 o más); si no anotaste el esfuerzo, cuenta. Cada ejercicio suma 1 serie a sus músculos
-                principales y media a los secundarios (como en Pelland y col.), según el catálogo de ejercicios.
-                No es una medida de recuperación ni de fatiga.
+                <b>{{ _("Cómo contamos.") }}</b> {{ _("Una serie dura es una serie hecha, con peso, que no es de calentamiento y con RIR 4 o menos (RPE 6 o más); si no anotaste el esfuerzo, cuenta. Cada ejercicio suma 1 serie a sus músculos principales y media a los secundarios (como en Pelland y col.), según el catálogo de ejercicios. No es una medida de recuperación ni de fatiga.") }}
             </p>
         </details>
     </div>
@@ -198,13 +187,13 @@
     <a class="card card-elevated progress-weight" href="{{ url_for('weight') }}">
         <span class="progress-weight-icon">{{ macros.icon('scale', 22) }}</span>
         <span class="progress-weight-text">
-            <small>Peso corporal</small>
+            <small>{{ _("Peso corporal") }}</small>
             {% if latest_weight %}
                 <strong>{{ latest_weight.weight|num }} kg</strong>
                 <span>Último registro: {{ latest_weight.timestamp|relative_day }}</span>
             {% else %}
-                <strong>Sin registrar</strong>
-                <span>Apunta tu peso para ver su evolución</span>
+                <strong>{{ _("Sin registrar") }}</strong>
+                <span>{{ _("Apunta tu peso para ver su evolución") }}</span>
             {% endif %}
         </span>
         {{ macros.icon('chevron-right', 20) }}
@@ -212,7 +201,7 @@
 
     {% if items %}
         <div class="progress-toolbar">
-            <h2>Tus ejercicios <span>{{ items|length }}</span></h2>
+            <h2>{{ _("Tus ejercicios") }} <span>{{ items|length }}</span></h2>
             <input type="search" class="progress-search" placeholder="Buscar ejercicio…" aria-label="Buscar ejercicio"
                    oninput="filterProgress(this.value)">
         </div>
@@ -236,7 +225,7 @@
                         <span class="progress-figures">
                             <strong>{{ it.last_1rm|num(0) }} kg</strong>
                             {% if it.stagnation %}
-                                <span class="trend trend-stuck" title="Sin récord en las últimas {{ threshold }} sesiones">Estancado</span>
+                                <span class="trend trend-stuck" title="Sin récord en las últimas {{ threshold }} sesiones">{{ _("Estancado") }}</span>
                             {% elif it.trend_pct is not none %}
                                 <span class="trend {{ 'trend-up' if it.trend_pct > 0 else ('trend-down' if it.trend_pct < 0 else '') }}">
                                     {% if it.trend_pct > 0 %}▲ {{ it.trend_pct }}%{% elif it.trend_pct < 0 %}▼ {{ -it.trend_pct }}%{% else %}= 0%{% endif %}
@@ -249,8 +238,8 @@
                 </li>
             {% endfor %}
         </ul>
-        <p class="progress-empty-search" id="progressNoResults" hidden>Ningún ejercicio coincide.</p>
-        <p class="progress-footnote">1RM estimado de tu última sesión. La tendencia compara con hace hasta 60 días.</p>
+        <p class="progress-empty-search" id="progressNoResults" hidden>{{ _("Ningún ejercicio coincide.") }}</p>
+        <p class="progress-footnote">{{ _("1RM estimado de tu última sesión. La tendencia compara con hace hasta 60 días.") }}</p>
         <script>
             function filterProgress(q) {
                 const needle = q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
@@ -267,9 +256,9 @@
     {% else %}
         <div class="card card-elevated progress-empty">
             {{ macros.exercise_icon_fallback(48, 10) }}
-            <p><strong>Aún no hay progreso que mostrar.</strong></p>
-            <p>Marca series como hechas en un entreno y aquí verás cada ejercicio con su 1RM, su tendencia y tus récords.</p>
-            <a class="btn" href="{{ url_for('index') }}">Ir a entrenar</a>
+            <p><strong>{{ _("Aún no hay progreso que mostrar.") }}</strong></p>
+            <p>{{ _("Marca series como hechas en un entreno y aquí verás cada ejercicio con su 1RM, su tendencia y tus récords.") }}</p>
+            <a class="btn" href="{{ url_for('index') }}">{{ _("Ir a entrenar") }}</a>
         </div>
     {% endif %}
 {% endblock %}

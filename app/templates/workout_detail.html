@@ -56,10 +56,10 @@
             {% if workout.ended_at %}
                 <span class="set-tag">{{ macros.icon('stopwatch', 17) }} {{ workout.duration_str() }}</span>
             {% else %}
-                <span class="set-tag">{{ macros.icon('stopwatch', 17) }} <span id="liveDuration">0min 00s</span></span>
+                <span class="set-tag">{{ macros.icon('stopwatch', 17) }} <span id="liveDuration">{{ _("0min 00s") }}</span></span>
             {% endif %}
             {% if workout.performance_rating %}<span class="set-tag">{{ macros.icon('note', 17) }} {{ workout.performance_rating }}/10</span>{% endif %}
-            <span class="set-tag">{% if effort_scale == 'none' %}Sin esfuerzo{% else %}{{ effort_scale|upper }}{% endif %}</span>
+            <span class="set-tag">{% if effort_scale == 'none' %}{{ _("Sin esfuerzo") }}{% else %}{{ effort_scale|upper }}{% endif %}</span>
         </div>
         {% if routine_plan %}
             <div class="progress-ring-wrap" role="img" aria-label="{{ ring_done }} de {{ ring_target }} series registradas">
@@ -99,7 +99,7 @@
 
     {% if routine_plan %}
         <div class="card card-elevated">
-            <h3 style="margin-top:0;">📋 Plan de la rutina</h3>
+            <h3 style="margin-top:0;">{{ _("📋 Plan de la rutina") }}</h3>
             {% for p in routine_plan %}
                 <div class="plan-row">
                     <span class="pill pill-label">{{ p.exercise|title }}</span>
@@ -158,9 +158,9 @@
             <table class="set-table" id="table-{{ exercise|replace(' ', '_') }}">
                 <thead>
                     <tr>
-                        <th>#</th><th>Anterior</th><th>Kg</th><th>Reps</th>
+                        <th>#</th><th>{{ _("Anterior") }}</th><th>{{ _("Kg") }}</th><th>{{ _("Reps") }}</th>
                         {% if effort_scale != 'none' %}<th>{{ effort_scale|upper }}</th>{% endif %}
-                        <th>Tipo</th><th>✓</th><th></th>
+                        <th>{{ _("Tipo") }}</th><th>✓</th><th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -194,7 +194,7 @@
             </table>
             <div class="swipe-delete-zone"><button type="button" aria-label="Eliminar serie">{{ macros.icon('trash') }}</button></div>
             </div>
-            <button type="button" class="btn-outline" onclick="addSet('{{ exercise }}')">+ Agregar serie</button>
+            <button type="button" class="btn-outline" onclick="addSet('{{ exercise }}')">{{ _("+ Agregar serie") }}</button>
         </div>
     {% endfor %}
     </div>
@@ -253,8 +253,8 @@
         <button type="button" class="add-exercise-tile" onclick="openExercisePicker()">
             <span class="add-exercise-tile-icon">{{ macros.icon('plus', 24) }}</span>
             <span class="add-exercise-tile-text">
-                <strong>Añadir ejercicio</strong>
-                <small>Busca o crea uno nuevo</small>
+                <strong>{{ _("Añadir ejercicio") }}</strong>
+                <small>{{ _("Busca o crea uno nuevo") }}</small>
             </span>
             <span class="add-exercise-tile-search">{{ macros.icon('search', 20) }}</span>
         </button>
@@ -269,7 +269,7 @@
     <div class="bottom-sheet set-type-sheet" id="setTypeSheet" role="dialog" aria-modal="true" aria-labelledby="setTypeTitle">
         <div class="bottom-sheet-grabber" aria-hidden="true"></div>
         <div class="bottom-sheet-header">
-            <h3 id="setTypeTitle" class="bottom-sheet-title">Tipo de serie</h3>
+            <h3 id="setTypeTitle" class="bottom-sheet-title">{{ _("Tipo de serie") }}</h3>
             <button type="button" class="sheet-close-btn" onclick="closeSetTypePicker()" aria-label="Cerrar">{{ macros.icon('close', 20) }}</button>
         </div>
         <div class="set-type-options" role="radiogroup" aria-labelledby="setTypeTitle">
@@ -302,7 +302,7 @@
             <div class="effort-picker-desc" id="effortPickerDesc"></div>
         </div>
         <div class="effort-picker-row" id="effortPickerRow"></div>
-        <button type="button" class="btn effort-picker-confirm" onclick="confirmEffort()">Ok ✓</button>
+        <button type="button" class="btn effort-picker-confirm" onclick="confirmEffort()">{{ _("Ok ✓") }}</button>
     </div>
     <script>
         let effortPickerSetId = null;
@@ -373,14 +373,14 @@
     </script>
     {% endif %}
 
-    <div class="workout-end-divider" role="separator"><span>Cuando acabes</span></div>
+    <div class="workout-end-divider" role="separator"><span>{{ _("Cuando acabes") }}</span></div>
 
     <div class="finish-bar">
         <a class="finish-workout-cta" href="{{ url_for('finish_workout', workout_id=workout.id) }}">
             <span class="finish-cta-icon">{{ macros.icon('flag', 22) }}</span>
             <span class="finish-cta-text">
                 <strong>{{ 'Editar valoración' if workout.ended_at else 'Terminar entreno' }}</strong>
-                <small id="finishProgress">Guardar y valorar la sesión</small>
+                <small id="finishProgress">{{ _("Guardar y valorar la sesión") }}</small>
             </span>
             <span class="finish-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
         </a>
@@ -392,7 +392,7 @@
                     {{ empty_form.hidden_tag() }}
                     <button type="submit" class="menu-item-save">
                         {{ macros.icon('save', 18) }}
-                        <span class="menu-item-text"><strong>Guardar como rutina</strong><small>Reutiliza estos ejercicios</small></span>
+                        <span class="menu-item-text"><strong>{{ _("Guardar como rutina") }}</strong><small>{{ _("Reutiliza estos ejercicios") }}</small></span>
                     </button>
                 </form>
                 <form action="{{ url_for('delete_workout', workout_id=workout.id) }}" method="post"
@@ -400,7 +400,7 @@
                     {{ empty_form.hidden_tag() }}
                     <button type="submit" class="danger menu-item-delete">
                         {{ macros.icon('trash', 18) }}
-                        <span class="menu-item-text"><strong>Eliminar entrenamiento</strong><small>Borra el entreno y sus series</small></span>
+                        <span class="menu-item-text"><strong>{{ _("Eliminar entrenamiento") }}</strong><small>{{ _("Borra el entreno y sus series") }}</small></span>
                     </button>
                 </form>
             </div>

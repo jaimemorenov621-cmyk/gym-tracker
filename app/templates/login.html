@@ -4,11 +4,11 @@
 {% block content %}
     <div class="auth-card">
         <img src="{{ url_for('static', filename='icons/logo-mark.png') }}" alt="" class="auth-logo">
-        <h1>Bienvenido de nuevo</h1>
-        <p class="auth-subtitle">Entra para seguir con tus entrenos.</p>
+        <h1>{{ _("Bienvenido de nuevo") }}</h1>
+        <p class="auth-subtitle">{{ _("Entra para seguir con tus entrenos.") }}</p>
 
         <a class="btn-google auth-google" href="{{ url_for('login_google') }}">{{ macros.icon('google', 18) }} Continuar con Google</a>
-        <div class="auth-divider"><span>o con tu usuario</span></div>
+        <div class="auth-divider"><span>{{ _("o con tu usuario") }}</span></div>
 
         <form action="" method="post" novalidate class="auth-form">
             {{ form.hidden_tag() }}
@@ -24,6 +24,6 @@
             {{ form.submit(class="auth-submit") }}
         </form>
 
-        <p class="auth-switch">¿Aún no tienes cuenta? <a href="{{ url_for('register') }}">Crea una gratis</a></p>
+        <p class="auth-switch">{{ _("¿Aún no tienes cuenta?") }} <a href="{{ url_for('register') }}">{{ _("Crea una gratis") }}</a></p>
     </div>
 {% endblock %}

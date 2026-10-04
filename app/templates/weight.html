@@ -1,17 +1,17 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <p class="page-back"><a href="{{ url_for('progress') }}">← Progreso</a></p>
-    <h1 class="page-title">Peso corporal</h1>
+    <p class="page-back"><a href="{{ url_for('progress') }}">{{ _("← Progreso") }}</a></p>
+    <h1 class="page-title">{{ _("Peso corporal") }}</h1>
 
     <form action="" method="post" class="form-ui card card-elevated weight-form">
         {{ form.hidden_tag() }}
         <div class="field">
-            <label class="field-label" for="{{ form.weight.id }}">Registrar peso de hoy</label>
+            <label class="field-label" for="{{ form.weight.id }}">{{ _("Registrar peso de hoy") }}</label>
             <div class="weight-form-row">
                 <span class="input-suffix">
                     {{ form.weight(inputmode="decimal", autocomplete="off", placeholder="72,5") }}
-                    <span>kg</span>
+                    <span>{{ _("kg") }}</span>
                 </span>
                 {{ form.submit(class="btn") }}
             </div>
@@ -21,7 +21,7 @@
 
     {# Ritmo de cambio frente a la fase (app/bodyweight.py) #}
     <div class="card card-elevated pace-card" id="ritmo">
-        <h2>Tu ritmo</h2>
+        <h2>{{ _("Tu ritmo") }}</h2>
         <form action="{{ url_for('set_body_phase') }}" method="post" class="pace-phases" aria-label="Fase">
             {{ empty_form.hidden_tag() }}
             {% for key, info in phases.items() %}
@@ -36,21 +36,12 @@
             </p>
         {% endif %}
         <p class="pace-verdict pace-{{ pace.status }}">{{ pace.text }}</p>
-        {% if pace.phase_info %}<p class="std-note">Para {{ pace.phase_info.label|lower }}{% if pace.phase != 'recomposicion' %}, a tu nivel ({{ pace.level_label }}{% if not pace.has_tier %}: aún sin rango de fuerza, se usa este{% endif %}),{% endif %} se recomienda {{ pace.target }}.</p>{% endif %}
+        {% if pace.phase_info %}<p class="std-note">Para {{ pace.phase_info.label|lower }}{% if pace.phase != 'recomposicion' %}, a tu nivel ({{ pace.level_label }}{% if not pace.has_tier %}{{ _(": aún sin rango de fuerza, se usa este") }}{% endif %}),{% endif %} se recomienda {{ pace.target }}.</p>{% endif %}
         <details class="strength-how">
-            <summary>¿De dónde salen estos ritmos?</summary>
+            <summary>{{ _("¿De dónde salen estos ritmos?") }}</summary>
             <p>
-                El ritmo sale de una recta ajustada a tus pesos de las últimas 4 semanas, para que un día de más agua o
-                más sal no lo distorsione. Pésate en condiciones parecidas (por ejemplo, al levantarte).
-                <b>Volumen</b>: +0,25 a +0,5 % de tu peso por semana (Iraki y cols., 2019; los principiantes toleran la
-                parte alta). <b>Definición</b>: −0,5 a −1 % por semana (Helms y cols., 2014; más rápido aumenta el riesgo
-                de perder músculo). <b>Recomposición</b>: peso estable (±0,25 % por semana, margen de la app).
-                Según tu nivel (lo sacamos de tu rango de fuerza): en volumen, los principiantes pueden subir más rápido
-                y los avanzados deben ir más despacio; en definición, cuanto más avanzado, más lento (Garthe y cols.,
-                2011: bajar un 0,7 % por semana conservó más músculo que un 1,4 %). <b>Qué tan sólido es cada número</b>: la definición tiene evidencia moderada (ensayos pequeños que apuntan en la
-                misma dirección); el volumen, débil (sobre todo opinión de expertos); los ajustes por nivel son lo más
-                flojo (consenso de expertos, y los cortes concretos son criterio de la app). Además, tu rango de fuerza es
-                solo una aproximación a tu experiencia. Tómalos como guía, no como una medida de tu grasa ni una norma.
+                {{ _("El ritmo sale de una recta ajustada a tus pesos de las últimas 4 semanas, para que un día de más agua o más sal no lo distorsione. Pésate en condiciones parecidas (por ejemplo, al levantarte).") }}
+                <b>{{ _("Volumen") }}</b>{{ _(": +0,25 a +0,5 %% de tu peso por semana (Iraki y cols., 2019; los principiantes toleran la parte alta).") }} <b>{{ _("Definición") }}</b>{{ _(": −0,5 a −1 %% por semana (Helms y cols., 2014; más rápido aumenta el riesgo de perder músculo).") }} <b>{{ _("Recomposición") }}</b>{{ _(": peso estable (±0,25 %% por semana, margen de la app). Según tu nivel (lo sacamos de tu rango de fuerza): en volumen, los principiantes pueden subir más rápido y los avanzados deben ir más despacio; en definición, cuanto más avanzado, más lento (Garthe y cols., 2011: bajar un 0,7 %% por semana conservó más músculo que un 1,4 %%).") }} <b>{{ _("Qué tan sólido es cada número") }}</b>{{ _(": la definición tiene evidencia moderada (ensayos pequeños que apuntan en la misma dirección); el volumen, débil (sobre todo opinión de expertos); los ajustes por nivel son lo más flojo (consenso de expertos, y los cortes concretos son criterio de la app). Además, tu rango de fuerza es solo una aproximación a tu experiencia. Tómalos como guía, no como una medida de tu grasa ni una norma.") }}
             </p>
         </details>
     </div>
@@ -79,7 +70,7 @@
             });
         </script>
     {% else %}
-        <p><em>Todavía no has registrado ningún peso.</em></p>
+        <p><em>{{ _("Todavía no has registrado ningún peso.") }}</em></p>
     {% endif %}
 
     {% if entries %}

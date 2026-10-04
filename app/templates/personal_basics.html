@@ -1,15 +1,12 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <p class="page-back"><a href="{{ url_for('rank_page') }}#basicos">← Rango</a></p>
-    <h1 class="page-title">Tus básicos</h1>
+    <p class="page-back"><a href="{{ url_for('rank_page') }}#basicos">{{ _("← Rango") }}</a></p>
+    <h1 class="page-title">{{ _("Tus básicos") }}</h1>
     <p class="alias-intro">
-        Marca hasta {{ max_basics }} ejercicios que quieras seguir de cerca en la pestaña Rango. <b>No cambia tu
-        rango global</b> (sale siempre de los básicos clásicos): solo añade su seguimiento. Los que cuentan para una
-        tabla de estándares muestran <b>su propio rango</b>; el resto, tu progresión.
+        Marca hasta {{ max_basics }} ejercicios que quieras seguir de cerca en la pestaña Rango. <b>{{ _("No cambia tu rango global") }}</b> {{ _("(sale siempre de los básicos clásicos): solo añade su seguimiento. Los que cuentan para una tabla de estándares muestran") }} <b>{{ _("su propio rango") }}</b>{{ _("; el resto, tu progresión.") }}
     </p>
-    <p class="alias-intro">Aparecen tal y como los escribiste. Si ves dos nombres para el mismo ejercicio, son
-        historiales distintos: elige el que uses ahora (verás cuántas sesiones tiene cada uno).</p>
+    <p class="alias-intro">{{ _("Aparecen tal y como los escribiste. Si ves dos nombres para el mismo ejercicio, son historiales distintos: elige el que uses ahora (verás cuántas sesiones tiene cada uno).") }}</p>
     {% if items %}
         <form method="post" class="card card-elevated pbasics-form">
             {{ form.hidden_tag() }}
@@ -30,7 +27,7 @@
                     </li>
                 {% endfor %}
             </ul>
-            <button type="submit" class="btn form-submit">Guardar</button>
+            <button type="submit" class="btn form-submit">{{ _("Guardar") }}</button>
         </form>
         <script>
             // Tope de {{ max_basics }}: se desactivan las casillas sin marcar al llegar.
@@ -45,6 +42,6 @@
             })();
         </script>
     {% else %}
-        <p class="alias-empty">Todavía no tienes ejercicios con series. Entrena y vuelve aquí.</p>
+        <p class="alias-empty">{{ _("Todavía no tienes ejercicios con series. Entrena y vuelve aquí.") }}</p>
     {% endif %}
 {% endblock %}

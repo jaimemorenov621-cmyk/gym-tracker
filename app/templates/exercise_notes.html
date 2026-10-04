@@ -5,18 +5,18 @@
     <form action="" method="post" class="form-ui card card-elevated">
         {{ form.hidden_tag() }}
         <div class="field">
-            <label class="field-label" for="{{ form.notes.id }}">Notas técnicas</label>
+            <label class="field-label" for="{{ form.notes.id }}">{{ _("Notas técnicas") }}</label>
             {{ form.notes(rows=8, placeholder="Ej: agarre un dedo más abierto\nbajar en 3 segundos") }}
-            <small class="field-help">Una idea por línea: cada línea se muestra como un punto.</small>
+            <small class="field-help">{{ _("Una idea por línea: cada línea se muestra como un punto.") }}</small>
         </div>
         <div class="field">
-            <span class="field-label">Descanso predeterminado</span>
+            <span class="field-label">{{ _("Descanso predeterminado") }}</span>
             <div class="inline-inputs">
-                <label>{{ form.rest_minutes(inputmode="numeric", class="input-short") }} <span>min</span></label>
-                <label>{{ form.rest_seconds(inputmode="numeric", class="input-short") }} <span>seg</span></label>
+                <label>{{ form.rest_minutes(inputmode="numeric", class="input-short") }} <span>{{ _("min") }}</span></label>
+                <label>{{ form.rest_seconds(inputmode="numeric", class="input-short") }} <span>{{ _("seg") }}</span></label>
             </div>
-            <small class="field-help">El temporizador arranca con este tiempo al marcar una serie de este ejercicio.</small>
+            <small class="field-help">{{ _("El temporizador arranca con este tiempo al marcar una serie de este ejercicio.") }}</small>
         </div>
-        <button type="submit" class="btn form-submit">Guardar</button>
+        <button type="submit" class="btn form-submit">{{ _("Guardar") }}</button>
     </form>
 {% endblock %}

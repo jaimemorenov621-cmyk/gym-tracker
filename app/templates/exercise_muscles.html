@@ -1,38 +1,35 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <p class="page-back"><a href="{{ url_for('progress') }}#volumen">← Progreso</a></p>
-    <h1 class="page-title">Músculos de tus ejercicios</h1>
+    <p class="page-back"><a href="{{ url_for('progress') }}#volumen">{{ _("← Progreso") }}</a></p>
+    <h1 class="page-title">{{ _("Músculos de tus ejercicios") }}</h1>
     <p class="alias-intro">
-        Estos nombres los escribiste a mano y no coinciden con el catálogo, así que la app no sabe qué
-        músculos trabajan: no cuentan en el mapa muscular, el volumen semanal ni el análisis de IA.
-        Asígnale a cada uno el ejercicio del catálogo que más se parezca. <b>Tu nombre y tu historial no
-        cambian</b>: solo se toman de ahí los músculos y la imagen.
+        {{ _("Estos nombres los escribiste a mano y no coinciden con el catálogo, así que la app no sabe qué músculos trabajan: no cuentan en el mapa muscular, el volumen semanal ni el análisis de IA. Asígnale a cada uno el ejercicio del catálogo que más se parezca.") }} <b>{{ _("Tu nombre y tu historial no cambian") }}</b>{{ _(": solo se toman de ahí los músculos y la imagen.") }}
     </p>
 
     <div class="card card-elevated alias-card">
-        <h2>Sin músculos <span>{{ missing|length }}</span></h2>
+        <h2>{{ _("Sin músculos") }} <span>{{ missing|length }}</span></h2>
         {% if missing %}
             <ul class="alias-list">
                 {% for m in missing %}
                     <li>
                         <span class="alias-name">
                             <strong>{{ m.name|title }}</strong>
-                            <small>{% if m.sets %}{{ m.sets }} serie{{ '' if m.sets == 1 else 's' }}{% else %}solo en rutinas{% endif %}</small>
+                            <small>{% if m.sets %}{{ m.sets }} serie{{ '' if m.sets == 1 else 's' }}{% else %}{{ _("solo en rutinas") }}{% endif %}</small>
                         </span>
                         <button type="button" class="btn-outline alias-assign"
-                                onclick='openExercisePicker("{{ url_for('api_set_exercise_alias') }}", {alias: {{ m.name|tojson }}})'>Asignar</button>
+                                onclick='openExercisePicker("{{ url_for('api_set_exercise_alias') }}", {alias: {{ m.name|tojson }}})'>{{ _("Asignar") }}</button>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="alias-empty">Todos tus ejercicios tienen músculos asignados. 👌</p>
+            <p class="alias-empty">{{ _("Todos tus ejercicios tienen músculos asignados. 👌") }}</p>
         {% endif %}
     </div>
 
     {% if aliases %}
         <div class="card card-elevated alias-card">
-            <h2>Ya asignados <span>{{ aliases|length }}</span></h2>
+            <h2>{{ _("Ya asignados") }} <span>{{ aliases|length }}</span></h2>
             <ul class="alias-list">
                 {% for alias, ex in aliases %}
                     <li>
@@ -40,7 +37,7 @@
                             <strong>{{ alias.name|title }}</strong>
                             <small>→ {{ (ex.name_es or ex.name)|title }}</small>
                         </span>
-                        <button type="button" class="btn-outline alias-remove" onclick="removeAlias({{ alias.id }}, this)">Quitar</button>
+                        <button type="button" class="btn-outline alias-remove" onclick="removeAlias({{ alias.id }}, this)">{{ _("Quitar") }}</button>
                     </li>
                 {% endfor %}
             </ul>

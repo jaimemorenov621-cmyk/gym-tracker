@@ -10,9 +10,9 @@
             <a class="home-cta-main home-cta-continue" href="{{ url_for('workout_detail', workout_id=w.id) }}">
                 <span class="home-cta-icon">{{ macros.icon('play', 22) }}</span>
                 <span class="home-cta-text">
-                    <small>Entreno en curso</small>
+                    <small>{{ _("Entreno en curso") }}</small>
                     <strong>Continuar {{ w.note or 'entreno' }}</strong>
-                    <span>{% if home_cta.total %}{{ home_cta.done }} de {{ home_cta.total }} series hechas{% else %}Aún sin series{% endif %}</span>
+                    <span>{% if home_cta.total %}{{ home_cta.done }} de {{ home_cta.total }} series hechas{% else %}{{ _("Aún sin series") }}{% endif %}</span>
                 </span>
                 <span class="home-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
             </a>
@@ -30,7 +30,7 @@
                     {% if r %}
                         <span class="calm-next">
                             {{ macros.icon('calendar', 13) }}
-                            {% if home_cta.kind == 'rest' and home_cta.next_day %}{{ home_cta.next_day|capitalize }}{% else %}Próximo{% endif %} · {{ r.name }}
+                            {% if home_cta.kind == 'rest' and home_cta.next_day %}{{ home_cta.next_day|capitalize }}{% else %}{{ _("Próximo") }}{% endif %} · {{ r.name }}
                         </span>
                     {% endif %}
                 </span>
@@ -44,7 +44,7 @@
                 {% endif %}
                 <form action="{{ url_for('new_workout') }}" method="post">
                     {{ empty_form.hidden_tag() }}
-                    <button type="submit">Entreno libre</button>
+                    <button type="submit">{{ _("Entreno libre") }}</button>
                 </form>
             </div>
         {% elif home_cta.kind == 'routine' %}
@@ -62,14 +62,14 @@
                 </button>
             </form>
             <div class="home-cta-secondary">
-                <a href="{{ url_for('routines') }}">Otra rutina</a>
+                <a href="{{ url_for('routines') }}">{{ _("Otra rutina") }}</a>
                 <form action="{{ url_for('new_workout') }}" method="post">
                     {{ empty_form.hidden_tag() }}
-                    <button type="submit">Entreno libre</button>
+                    <button type="submit">{{ _("Entreno libre") }}</button>
                 </form>
             </div>
             {% if not home_cta.is_training_day %}
-                <p class="home-cta-hint"><a class="btn-inline" href="{{ url_for('settings') }}">Marcar mis días de entreno</a> y te diré cuándo toca descanso.</p>
+                <p class="home-cta-hint"><a class="btn-inline" href="{{ url_for('settings') }}">{{ _("Marcar mis días de entreno") }}</a> {{ _("y te diré cuándo toca descanso.") }}</p>
             {% endif %}
         {% else %}
             <form action="{{ url_for('new_workout') }}" method="post">
@@ -77,9 +77,9 @@
                 <button type="submit" class="home-cta-main">
                     <span class="home-cta-icon">{{ macros.icon('play', 22) }}</span>
                     <span class="home-cta-text">
-                        <small>Sin preparar nada</small>
-                        <strong>Empezar entreno libre</strong>
-                        <span>Añade los ejercicios sobre la marcha</span>
+                        <small>{{ _("Sin preparar nada") }}</small>
+                        <strong>{{ _("Empezar entreno libre") }}</strong>
+                        <span>{{ _("Añade los ejercicios sobre la marcha") }}</span>
                     </span>
                     <span class="home-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
                 </button>
@@ -97,20 +97,20 @@
             <div class="today-facts">
                 <p class="today-week">
                     <b>{{ streak.this_week }}</b> día{{ '' if streak.this_week == 1 else 's' }} entrenado{{ '' if streak.this_week == 1 else 's' }} esta semana
-                    · mínimo {{ streak.minimum }}{% if streak.this_week >= streak.minimum %} <span class="ok">✓ cumplido</span>{% endif %}
+                    · mínimo {{ streak.minimum }}{% if streak.this_week >= streak.minimum %} <span class="ok">{{ _("✓ cumplido") }}</span>{% endif %}
                 </p>
                 {% if rest_facts['items'] %}
                     <p class="today-facts-title">
-                        {% if rest_facts.for_routine %}Último entreno de lo que trabaja {{ home_cta.routine.name }}{% else %}Último entreno por grupo muscular{% endif %}
+                        {% if rest_facts.for_routine %}Último entreno de lo que trabaja {{ home_cta.routine.name }}{% else %}{{ _("Último entreno por grupo muscular") }}{% endif %}
                     </p>
                     <ul class="today-groups">
                         {% for it in rest_facts['items'] %}
-                            <li><span>{{ it.label }}</span><b>{% if it.days is none %}hace más de 60 d{% elif it.days == 0 %}hoy{% elif it.days == 1 %}ayer{% else %}hace {{ it.days }} d{% endif %}</b></li>
+                            <li><span>{{ it.label }}</span><b>{% if it.days is none %}{{ _("hace más de 60 d") }}{% elif it.days == 0 %}{{ _("hoy") }}{% elif it.days == 1 %}{{ _("ayer") }}{% else %}hace {{ it.days }} d{% endif %}</b></li>
                         {% endfor %}
                     </ul>
                 {% endif %}
                 {% if rest_facts.unmapped %}
-                    <p class="today-note">{{ rest_facts.unmapped }} ejercicio{{ '' if rest_facts.unmapped == 1 else 's' }} sin músculo en el catálogo no cuenta{{ '' if rest_facts.unmapped == 1 else 'n' }} aquí. <a class="btn-inline" href="{{ url_for('exercise_muscles') }}">Asignar músculos</a></p>
+                    <p class="today-note">{{ rest_facts.unmapped }} ejercicio{{ '' if rest_facts.unmapped == 1 else 's' }} sin músculo en el catálogo no cuenta{{ '' if rest_facts.unmapped == 1 else 'n' }} aquí. <a class="btn-inline" href="{{ url_for('exercise_muscles') }}">{{ _("Asignar músculos") }}</a></p>
                 {% endif %}
             </div>
         {% endif %}
@@ -119,18 +119,18 @@
             <div class="checkin-done">
                 <span class="checkin-done-icon" aria-hidden="true">✓</span>
                 <span class="checkin-done-text">
-                    <small>Check-in de hoy</small>
+                    <small>{{ _("Check-in de hoy") }}</small>
                     <span>Sueño {{ checkin.sleep }}/5 · Energía {{ checkin.energy }}/5 · Agujetas {{ soreness_names[checkin.soreness] }}</span>
                 </span>
             </div>
             {% if checkin.sleep <= 2 and checkin.energy <= 2 %}
-                <p class="checkin-low">Has indicado que dormiste poco y tienes poca energía: si entrenas, puedes valorar RIR +1 o una serie menos. Es solo una sugerencia.</p>
+                <p class="checkin-low">{{ _("Has indicado que dormiste poco y tienes poca energía: si entrenas, puedes valorar RIR +1 o una serie menos. Es solo una sugerencia.") }}</p>
             {% endif %}
         {% endif %}
         <details class="checkin"{% if not checkin and home_cta.kind == 'rest' %} open{% endif %}>
             <summary>
-                {% if checkin %}Cambiar el check-in{% else %}¿Cómo llegas hoy?{% endif %}
-                {% if not checkin %}<small>3 toques · +10 XP</small>{% endif %}
+                {% if checkin %}{{ _("Cambiar el check-in") }}{% else %}{{ _("¿Cómo llegas hoy?") }}{% endif %}
+                {% if not checkin %}<small>{{ _("3 toques · +10 XP") }}</small>{% endif %}
             </summary>
             <form action="{{ url_for('recovery_checkin') }}" method="post" class="checkin-form">
                 {{ checkin_form.hidden_tag() }}
@@ -147,8 +147,8 @@
                         </div>
                     </fieldset>
                 {% endfor %}
-                <button type="submit" class="btn form-submit checkin-submit">Guardar check-in</button>
-                <p class="checkin-help">Es tu valoración: no se mide nada y no bloquea nada.</p>
+                <button type="submit" class="btn form-submit checkin-submit">{{ _("Guardar check-in") }}</button>
+                <p class="checkin-help">{{ _("Es tu valoración: no se mide nada y no bloquea nada.") }}</p>
             </form>
         </details>
     </section>
@@ -156,7 +156,7 @@
     {% if onboarding %}
         <div class="card card-elevated onboarding">
             <div class="onboarding-head">
-                <strong>Primeros pasos</strong>
+                <strong>{{ _("Primeros pasos") }}</strong>
                 <span>{{ onboarding.done }} de {{ onboarding.steps|length }}</span>
             </div>
             <div class="onboarding-bar" aria-hidden="true"><span style="width: {{ (100 * onboarding.done / onboarding.steps|length)|round|int }}%"></span></div>
@@ -179,14 +179,14 @@
             <span class="achv-toast-emoji">{{ new_achievements[0].emoji }}</span>
             <span class="achv-toast-text">
                 {% if new_achievements|length == 1 %}
-                    <small>¡Logro desbloqueado!</small>
+                    <small>{{ _("¡Logro desbloqueado!") }}</small>
                     <strong>{{ new_achievements[0].title }}</strong>
                 {% else %}
-                    <small>¡Logros desbloqueados!</small>
+                    <small>{{ _("¡Logros desbloqueados!") }}</small>
                     <strong>{{ new_achievements|length }} logros nuevos</strong>
                 {% endif %}
             </span>
-            <span class="achv-toast-cta">Ver</span>
+            <span class="achv-toast-cta">{{ _("Ver") }}</span>
         </a>
     {% endif %}
 
@@ -208,8 +208,8 @@
                 <strong id="rankCelebrationTitle">{{ r.label }}</strong>
                 <p>{{ 'Sigue así: cada kilo cuenta.' if rank_event == 'up' else 'Sale de tus 1RM estimados frente a estándares de referencia. Puede subir… y bajar.' }}</p>
                 <div class="rank-celebration-actions">
-                    <a class="btn" href="{{ url_for('rank_page') }}">Ver mi rango</a>
-                    <button type="button" class="btn-outline" onclick="closeRankCelebration()">Cerrar</button>
+                    <a class="btn" href="{{ url_for('rank_page') }}">{{ _("Ver mi rango") }}</a>
+                    <button type="button" class="btn-outline" onclick="closeRankCelebration()">{{ _("Cerrar") }}</button>
                 </div>
             </div>
         </div>
@@ -234,10 +234,10 @@
     {% endif %}
 
     <div class="dashboard-panel">
-        <span class="dash-eyebrow">Resumen de entrenamiento</span>
+        <span class="dash-eyebrow">{{ _("Resumen de entrenamiento") }}</span>
         <div class="dash-tiles">
             <div class="dash-tile dash-tile-streak">
-                <span class="dash-tile-head"><span class="dash-tile-icon" aria-hidden="true">🔥</span>Racha</span>
+                <span class="dash-tile-head"><span class="dash-tile-icon" aria-hidden="true">🔥</span>{{ _("Racha") }}</span>
                 <strong class="dash-tile-value">{{ streak.days }}<small> día{{ '' if streak.days == 1 else 's' }}</small></strong>
                 <span class="week-dots" aria-label="Días entrenados esta semana">
                     {% for d in streak.week %}
@@ -246,12 +246,12 @@
                     {% endfor %}
                 </span>
                 <span class="dash-tile-sub{% if streak.this_week >= streak.minimum %} ok{% endif %}">
-                    {% if streak.this_week >= streak.minimum %}✓ Mínimo semanal cumplido{% else %}{{ streak.this_week }} de {{ streak.minimum }} días mínimos esta semana{% endif %}
+                    {% if streak.this_week >= streak.minimum %}{{ _("✓ Mínimo semanal cumplido") }}{% else %}{{ streak.this_week }} de {{ streak.minimum }} días mínimos esta semana{% endif %}
                 </span>
             </div>
 
             <a class="dash-tile" href="{{ url_for('progress') }}#fuerza">
-                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('trending-up', 15) }}</span>Fuerza</span>
+                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('trending-up', 15) }}</span>{{ _("Fuerza") }}</span>
                 {% if strength %}
                     <strong class="dash-tile-value {{ 'up' if strength.pct >= 0.5 else ('down' if strength.pct <= -0.5 else '') }}">
                         {{ '+' if strength.pct >= 0.5 }}{{ strength.pct|num }}<small> %</small>
@@ -264,15 +264,15 @@
                     <span class="dash-tile-sub">{{ 'últimas 4 semanas' if strength.weeks == 4 else ('última semana' if strength.weeks == 1 else 'últimas ' ~ strength.weeks ~ ' semanas') }}</span>
                 {% else %}
                     <strong class="dash-tile-value is-empty">—</strong>
-                    <span class="dash-tile-sub">Con 2 semanas de entrenos verás tu evolución</span>
+                    <span class="dash-tile-sub">{{ _("Con 2 semanas de entrenos verás tu evolución") }}</span>
                 {% endif %}
             </a>
 
             {# Próximo objetivo de rango: el básico al que menos le falta. #}
             <a class="dash-tile" href="{{ url_for('rank_page') }}">
-                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('shield', 15) }}</span>Objetivo</span>
+                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('shield', 15) }}</span>{{ _("Objetivo") }}</span>
                 {% if rank_goal %}
-                    <strong class="dash-tile-value">+{{ rank_goal.missing_kg|num(1) }}<small> kg</small></strong>
+                    <strong class="dash-tile-value">+{{ rank_goal.missing_kg|num(1) }}<small> {{ _("kg") }}</small></strong>
                     <span class="goal-ranks" aria-label="De {{ rank_goal.rank.label }} a {{ rank_goal.next }}">
                         {{ macros.rank_emblem(rank_goal.rank.key, 26, rank_goal.rank.division, eager=True) }}
                         <span class="goal-arrow" aria-hidden="true">→</span>
@@ -284,21 +284,21 @@
                     <span class="dash-tile-sub">Indica tu {{ profile.missing|join(' y tu ') }} para ver tu próximo rango</span>
                 {% else %}
                     <strong class="dash-tile-value is-empty">—</strong>
-                    <span class="dash-tile-sub">Haz un básico (banca, sentadilla, remo…) para ver tu próximo rango</span>
+                    <span class="dash-tile-sub">{{ _("Haz un básico (banca, sentadilla, remo…) para ver tu próximo rango") }}</span>
                 {% endif %}
             </a>
 
             <a class="dash-tile" href="{{ url_for('weight') }}">
-                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('scale', 15) }}</span>Peso</span>
+                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('scale', 15) }}</span>{{ _("Peso") }}</span>
                 {% if latest_weight %}
-                    <strong class="dash-tile-value">{{ latest_weight.weight|num }}<small> kg</small></strong>
+                    <strong class="dash-tile-value">{{ latest_weight.weight|num }}<small> {{ _("kg") }}</small></strong>
                     <span class="dash-tile-sub">
                         {% if pace.rate %}{{ '+' if pace.rate.kg_week > 0 }}{{ pace.rate.kg_week|num(2) }} kg/sem{% if pace.phase_info %} · <span class="pace-{{ pace.status }}">{{ {'ok': 'buen ritmo', 'fast': 'muy rápido', 'slow': 'lento', 'wrong': 'al revés'}[pace.status] if pace.status in ('ok', 'fast', 'slow', 'wrong') else '' }}</span>{% endif %}
                         {% elif weight_change is not none %}{{ '▲ +' if weight_change > 0 else ('▼ ' if weight_change < 0 else '= ') }}{{ weight_change|num }} kg en 30 días{% else %}{{ latest_weight.timestamp|relative_day|capitalize }}{% endif %}
                     </span>
                 {% else %}
                     <strong class="dash-tile-value is-empty">—</strong>
-                    <span class="dash-tile-sub">Registrar peso →</span>
+                    <span class="dash-tile-sub">{{ _("Registrar peso →") }}</span>
                 {% endif %}
             </a>
         </div>
@@ -309,7 +309,7 @@
         {# Nivel: después de lo profesional (mosaicas), nunca en su lugar. #}
         <a class="dash-level-link" href="{{ url_for('rank_page') }}">
             <span class="dash-level-top">
-                <span><b>Nivel {{ xp.level }}</b> · {% if profile.global_rank %}<span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 22, profile.global_rank.division, eager=True) }}<span class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</span></span>{% else %}Rango: sin datos{% endif %}</span>
+                <span><b>Nivel {{ xp.level }}</b> · {% if profile.global_rank %}<span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 22, profile.global_rank.division, eager=True) }}<span class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</span></span>{% else %}{{ _("Rango: sin datos") }}{% endif %}</span>
                 <span class="dash-level-next">faltan {{ xp.to_next|num }} XP {{ macros.icon('chevron-right', 16) }}</span>
             </span>
             <span class="dash-level-bar" aria-hidden="true"><i style="width: {{ xp.pct }}%"></i></span>
@@ -339,8 +339,8 @@
                     <svg viewBox="724 0 724 1448" aria-hidden="true" class="mm-figure">{{ muscle_svg.back }}</svg>
                 </div>
                 <a class="dash-muscle-caption" href="{{ url_for('progress') }}#volumen">
-                    <span><i class="vol-dot low"></i>Corto</span><span><i class="vol-dot ok"></i>En tu rango</span><span><i class="vol-dot high"></i>Te pasas</span>
-                    <small>Series de los últimos 7 días frente a tu rango →</small>
+                    <span><i class="vol-dot low"></i>{{ _("Corto") }}</span><span><i class="vol-dot ok"></i>{{ _("En tu rango") }}</span><span><i class="vol-dot high"></i>{{ _("Te pasas") }}</span>
+                    <small>{{ _("Series de los últimos 7 días frente a tu rango →") }}</small>
                 </a>
             </div>
             <div class="dash-calendar" id="dashCalendar">
@@ -363,12 +363,12 @@
             <form action="{{ url_for('update_notes') }}" method="post">
                 {{ notes_form.hidden_tag() }}
                 {{ notes_form.notes(rows=3, placeholder="Notas rápidas para ti mismo...") }}
-                <button type="submit" class="btn-outline">Guardar nota</button>
+                <button type="submit" class="btn-outline">{{ _("Guardar nota") }}</button>
             </form>
         </div>
         <button type="button" class="dash-toggle" aria-expanded="false"
                 aria-controls="dashCalendar dashWeight" onclick="toggleDashExtra(this)">
-            <span class="dash-toggle-label">Ver calendario y peso</span>
+            <span class="dash-toggle-label">{{ _("Ver calendario y peso") }}</span>
             {{ macros.icon('chevron-down', 14) }}
         </button>
         <div class="dash-weight" id="dashWeight">
@@ -383,8 +383,8 @@
                 </script>
             {% else %}
                 <p class="dash-weight-empty">
-                    Todavía no has registrado ningún peso.
-                    <a href="{{ url_for('weight') }}">Registrar peso →</a>
+                    {{ _("Todavía no has registrado ningún peso.") }}
+                    <a href="{{ url_for('weight') }}">{{ _("Registrar peso →") }}</a>
                 </p>
             {% endif %}
         </div>

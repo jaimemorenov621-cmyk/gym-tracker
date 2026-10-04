@@ -23,8 +23,8 @@
                 <a class="routine-card-main" href="{{ url_for('routine_detail', routine_id=info.routine.id) }}">
                     <strong>{{ info.routine.name }}</strong>
                     <small>
-                        {% if n %}{{ n }} ejercicio{{ '' if n == 1 else 's' }}{% else %}Sin ejercicios{% endif %}
-                        · {% if info.last_trained %}{{ info.last_trained|relative_day }}{% else %}sin estrenar{% endif %}
+                        {% if n %}{{ n }} ejercicio{{ '' if n == 1 else 's' }}{% else %}{{ _("Sin ejercicios") }}{% endif %}
+                        · {% if info.last_trained %}{{ info.last_trained|relative_day }}{% else %}{{ _("sin estrenar") }}{% endif %}
                     </small>
                 </a>
                 <button type="button" class="btn-icon routine-pin-btn{% if info.routine.pinned %} active{% endif %}"
@@ -38,7 +38,7 @@
             </div>
             <div class="routine-card-sub">
                 <span class="routine-card-exercises">
-                    {% if n %}{{ info.exercise_names|join(' · ') }}{% else %}<a href="{{ url_for('routine_detail', routine_id=info.routine.id) }}">Añadir ejercicios →</a>{% endif %}
+                    {% if n %}{{ info.exercise_names|join(' · ') }}{% else %}<a href="{{ url_for('routine_detail', routine_id=info.routine.id) }}">{{ _("Añadir ejercicios →") }}</a>{% endif %}
                 </span>
                 <label class="routine-block-chip{% if not info.routine.block_id %} none{% endif %}"
                        {% if info.routine.block and info.routine.block.color %}style="--chip-color: {{ info.routine.block.color }};"{% endif %}
@@ -48,11 +48,11 @@
                     {{ macros.icon('chevron-down', 14) }}
                     <select id="block-select-{{ info.routine.id }}" class="routine-block-select" aria-label="Bloque de {{ info.routine.name }}"
                             onchange="onBlockSelectChange({{ info.routine.id }}, this)">
-                        <option value="" {% if not info.routine.block_id %}selected{% endif %}>Sin bloque</option>
+                        <option value="" {% if not info.routine.block_id %}selected{% endif %}>{{ _("Sin bloque") }}</option>
                         {% for b in blocks %}
                             <option value="{{ b.id }}" {% if info.routine.block_id == b.id %}selected{% endif %}>{{ b.name }}</option>
                         {% endfor %}
-                        <option value="__new__">+ Crear nuevo bloque...</option>
+                        <option value="__new__">{{ _("+ Crear nuevo bloque...") }}</option>
                     </select>
                 </label>
             </div>
@@ -83,14 +83,14 @@
             <div id="blockList{{ block.id }}" class="routine-section" data-reorder-section="1">
                 {% for info in infos %}{{ routine_card(info) }}{% endfor %}
                 {% if not infos %}
-                    <p class="routine-block-empty"><em>Sin rutinas en este bloque todavía.</em></p>
+                    <p class="routine-block-empty"><em>{{ _("Sin rutinas en este bloque todavía.") }}</em></p>
                 {% endif %}
             </div>
         </details>
     {% endfor %}
 
     {% if no_block_info %}
-        <h3 class="routine-section-title">Sin bloque</h3>
+        <h3 class="routine-section-title">{{ _("Sin bloque") }}</h3>
         <div id="noBlockList" class="routine-section" data-reorder-section="1">
             {% for info in no_block_info %}{{ routine_card(info) }}{% endfor %}
         </div>
@@ -99,7 +99,7 @@
     {% if not pinned_info and not block_sections and not no_block_info %}
     <div class="card card-elevated routine-empty-state">
         {{ macros.exercise_icon_fallback(48, 10) }}
-        <p>Todavía no tienes rutinas guardadas.</p>
+        <p>{{ _("Todavía no tienes rutinas guardadas.") }}</p>
     </div>
     {% endif %}
 

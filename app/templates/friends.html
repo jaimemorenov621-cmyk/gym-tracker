@@ -1,39 +1,39 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <p class="page-back"><a href="{{ url_for('rank_page') }}#amigos">← Rango</a></p>
-    <h1 class="page-title">Amigos</h1>
+    <p class="page-back"><a href="{{ url_for('rank_page') }}#amigos">{{ _("← Rango") }}</a></p>
+    <h1 class="page-title">{{ _("Amigos") }}</h1>
 
     <div class="card card-elevated friends-invite">
-        <h2>Invita a tus amigos</h2>
-        <p class="std-note">Comparte tu código o tu enlace. Cuando acepten, os veréis en los rankings de la pestaña Rango.</p>
+        <h2>{{ _("Invita a tus amigos") }}</h2>
+        <p class="std-note">{{ _("Comparte tu código o tu enlace. Cuando acepten, os veréis en los rankings de la pestaña Rango.") }}</p>
         <div class="friends-code">
-            <span>Tu código</span>
+            <span>{{ _("Tu código") }}</span>
             <strong id="friendCode">{{ code }}</strong>
         </div>
         <div class="friends-actions">
             <button type="button" class="btn" onclick="shareInvite()">{{ macros.icon('share', 18) }} Compartir enlace</button>
-            <button type="button" class="btn-outline" onclick="copyInvite(this)">Copiar enlace</button>
+            <button type="button" class="btn-outline" onclick="copyInvite(this)">{{ _("Copiar enlace") }}</button>
         </div>
         <form action="{{ url_for('friend_add') }}" method="post" class="friends-add">
             {{ form.hidden_tag() }}
-            <label class="field-label" for="friendCodeInput">¿Te han pasado un código?</label>
+            <label class="field-label" for="friendCodeInput">{{ _("¿Te han pasado un código?") }}</label>
             <div class="friends-add-row">
                 <input id="friendCodeInput" name="code" type="text" autocomplete="off" autocapitalize="characters" maxlength="12" placeholder="ABCD2345" required>
-                <button type="submit" class="btn">Añadir</button>
+                <button type="submit" class="btn">{{ _("Añadir") }}</button>
             </div>
         </form>
     </div>
 
     {% if incoming %}
         <div class="card card-elevated">
-            <h2 class="friends-h2">Solicitudes recibidas <span class="friends-count">{{ incoming|length }}</span></h2>
+            <h2 class="friends-h2">{{ _("Solicitudes recibidas") }} <span class="friends-count">{{ incoming|length }}</span></h2>
             <ul class="friends-list">
                 {% for f, u in incoming %}
                     <li>
                         <strong>{{ u.username }}</strong>
-                        <form action="{{ url_for('friend_accept', friendship_id=f.id) }}" method="post">{{ form.hidden_tag() }}<button type="submit" class="btn btn-small">Aceptar</button></form>
-                        <form action="{{ url_for('friend_remove', friendship_id=f.id) }}" method="post">{{ form.hidden_tag() }}<button type="submit" class="btn-outline btn-small">Rechazar</button></form>
+                        <form action="{{ url_for('friend_accept', friendship_id=f.id) }}" method="post">{{ form.hidden_tag() }}<button type="submit" class="btn btn-small">{{ _("Aceptar") }}</button></form>
+                        <form action="{{ url_for('friend_remove', friendship_id=f.id) }}" method="post">{{ form.hidden_tag() }}<button type="submit" class="btn-outline btn-small">{{ _("Rechazar") }}</button></form>
                     </li>
                 {% endfor %}
             </ul>
@@ -41,7 +41,7 @@
     {% endif %}
 
     <div class="card card-elevated">
-        <h2 class="friends-h2">Tus amigos <span class="friends-count">{{ friends|length }} / {{ max_friends }}</span></h2>
+        <h2 class="friends-h2">{{ _("Tus amigos") }} <span class="friends-count">{{ friends|length }} / {{ max_friends }}</span></h2>
         {% if friends %}
             <ul class="friends-list">
                 {% for f, u in friends %}
@@ -49,28 +49,28 @@
                         <a href="{{ url_for('athlete_card', user_id=u.id) }}"><strong>{{ u.username }}</strong></a>
                         <form action="{{ url_for('friend_remove', friendship_id=f.id) }}" method="post"
                               onsubmit="return confirm('¿Dejar de ser amigo de {{ u.username }}? Dejaréis de veros en los rankings.')">
-                            {{ form.hidden_tag() }}<button type="submit" class="btn-outline btn-small">Quitar</button>
+                            {{ form.hidden_tag() }}<button type="submit" class="btn-outline btn-small">{{ _("Quitar") }}</button>
                         </form>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p class="alias-empty">Todavía no tienes amigos en Gyre. ¡Invita a quien entrene contigo!</p>
+            <p class="alias-empty">{{ _("Todavía no tienes amigos en Gyre. ¡Invita a quien entrene contigo!") }}</p>
         {% endif %}
         {% if outgoing %}
-            <p class="friends-sub">Pendientes de aceptar</p>
+            <p class="friends-sub">{{ _("Pendientes de aceptar") }}</p>
             <ul class="friends-list">
                 {% for f, u in outgoing %}
                     <li>
                         <span>{{ u.username }}</span>
-                        <form action="{{ url_for('friend_remove', friendship_id=f.id) }}" method="post">{{ form.hidden_tag() }}<button type="submit" class="btn-outline btn-small">Cancelar</button></form>
+                        <form action="{{ url_for('friend_remove', friendship_id=f.id) }}" method="post">{{ form.hidden_tag() }}<button type="submit" class="btn-outline btn-small">{{ _("Cancelar") }}</button></form>
                     </li>
                 {% endfor %}
             </ul>
         {% endif %}
     </div>
 
-    <p class="std-note friends-privacy">Tus amigos solo ven lo que eliges en <a href="{{ url_for('athlete_card_edit') }}">tu tarjeta</a>. Tu peso corporal está oculto salvo que lo actives.</p>
+    <p class="std-note friends-privacy">{{ _("Tus amigos solo ven lo que eliges en") }} <a href="{{ url_for('athlete_card_edit') }}">{{ _("tu tarjeta") }}</a>{{ _(". Tu peso corporal está oculto salvo que lo actives.") }}</p>
 
     <script>
         const INVITE_URL = {{ invite_url|tojson }};

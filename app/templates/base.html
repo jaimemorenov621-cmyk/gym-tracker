@@ -61,7 +61,7 @@
     {% if title %}
         <title>{{ title }} - Gyre</title>
     {% else %}
-        <title>Gyre</title>
+        <title>{{ _("Gyre") }}</title>
     {% endif %}
     <link rel="stylesheet" id="gyre-css" href="{{ url_for('static', filename='style.css') }}">
     <script>
@@ -104,18 +104,18 @@
     {% set rank_endpoints = ('rank_page', 'level_page', 'achievements_page') %}
     {% block top_nav %}
     <nav class="top-nav{% if current_user.is_authenticated %} top-nav-app{% endif %}">
-        <strong class="top-nav-brand">Gyre</strong>
-        <a class="btn-nav{% if request.endpoint == 'index' %} active{% endif %}" href="{{ url_for('index') }}">{{ macros.icon('home', 18) }}<span>Inicio</span></a>
+        <strong class="top-nav-brand">{{ _("Gyre") }}</strong>
+        <a class="btn-nav{% if request.endpoint == 'index' %} active{% endif %}" href="{{ url_for('index') }}">{{ macros.icon('home', 18) }}<span>{{ _("Inicio") }}</span></a>
         {% if current_user.is_anonymous %}
-            <a class="btn-nav{% if request.endpoint == 'login' %} active{% endif %}" href="{{ url_for('login') }}">{{ macros.icon('log-in', 18) }}<span>Login</span></a>
+            <a class="btn-nav{% if request.endpoint == 'login' %} active{% endif %}" href="{{ url_for('login') }}">{{ macros.icon('log-in', 18) }}<span>{{ _("Login") }}</span></a>
         {% else %}
-            <a class="btn-nav{% if request.endpoint in routine_endpoints %} active{% endif %}" href="{{ url_for('routines') }}">{{ macros.icon('list', 18) }}<span>Rutinas</span></a>
-            <a class="btn-nav{% if request.endpoint == 'ai_analysis' %} active{% endif %}" href="{{ url_for('ai_analysis') }}">{{ macros.icon('sparkle', 18) }}<span>IA</span></a>
-            <a class="btn-nav{% if request.endpoint in progress_endpoints %} active{% endif %}" href="{{ url_for('progress') }}">{{ macros.icon('trending-up', 18) }}<span>Progreso</span></a>
-            <a class="btn-nav{% if request.endpoint in rank_endpoints %} active{% endif %}" href="{{ url_for('rank_page') }}">{{ macros.icon('shield', 18) }}<span>Rango</span></a>
-            <a class="btn-nav{% if request.endpoint == 'achievements_page' %} active{% endif %}" href="{{ url_for('achievements_page') }}">{{ macros.icon('trophy', 18) }}<span>Logros</span></a>
-            <a class="btn-nav{% if request.endpoint == 'settings' %} active{% endif %}" href="{{ url_for('settings') }}">{{ macros.icon('settings', 18) }}<span>Configuración</span></a>
-            <a class="btn-nav btn-nav-danger" href="{{ url_for('logout') }}">{{ macros.icon('log-out', 18) }}<span>Salir</span></a>
+            <a class="btn-nav{% if request.endpoint in routine_endpoints %} active{% endif %}" href="{{ url_for('routines') }}">{{ macros.icon('list', 18) }}<span>{{ _("Rutinas") }}</span></a>
+            <a class="btn-nav{% if request.endpoint == 'ai_analysis' %} active{% endif %}" href="{{ url_for('ai_analysis') }}">{{ macros.icon('sparkle', 18) }}<span>{{ _("IA") }}</span></a>
+            <a class="btn-nav{% if request.endpoint in progress_endpoints %} active{% endif %}" href="{{ url_for('progress') }}">{{ macros.icon('trending-up', 18) }}<span>{{ _("Progreso") }}</span></a>
+            <a class="btn-nav{% if request.endpoint in rank_endpoints %} active{% endif %}" href="{{ url_for('rank_page') }}">{{ macros.icon('shield', 18) }}<span>{{ _("Rango") }}</span></a>
+            <a class="btn-nav{% if request.endpoint == 'achievements_page' %} active{% endif %}" href="{{ url_for('achievements_page') }}">{{ macros.icon('trophy', 18) }}<span>{{ _("Logros") }}</span></a>
+            <a class="btn-nav{% if request.endpoint == 'settings' %} active{% endif %}" href="{{ url_for('settings') }}">{{ macros.icon('settings', 18) }}<span>{{ _("Configuración") }}</span></a>
+            <a class="btn-nav btn-nav-danger" href="{{ url_for('logout') }}">{{ macros.icon('log-out', 18) }}<span>{{ _("Salir") }}</span></a>
         {% endif %}
     </nav>
     {% endblock %}
@@ -124,23 +124,23 @@
         <nav class="bottom-nav">
             <a class="bottom-nav-item{% if request.endpoint == 'index' %} active{% endif %}" href="{{ url_for('index') }}">
                 <span class="nav-icon-wrap">{{ macros.icon('home', 22) }}</span>
-                <span>Inicio</span>
+                <span>{{ _("Inicio") }}</span>
             </a>
             <a class="bottom-nav-item{% if request.endpoint in routine_endpoints %} active{% endif %}" href="{{ url_for('routines') }}">
                 <span class="nav-icon-wrap">{{ macros.icon('list', 22) }}</span>
-                <span>Rutinas</span>
+                <span>{{ _("Rutinas") }}</span>
             </a>
             <a class="bottom-nav-item{% if request.endpoint == 'ai_analysis' %} active{% endif %}" href="{{ url_for('ai_analysis') }}">
                 <span class="nav-icon-wrap">{{ macros.icon('sparkle', 22) }}</span>
-                <span>IA</span>
+                <span>{{ _("IA") }}</span>
             </a>
             <a class="bottom-nav-item{% if request.endpoint in progress_endpoints %} active{% endif %}" href="{{ url_for('progress') }}">
                 <span class="nav-icon-wrap">{{ macros.icon('trending-up', 22) }}</span>
-                <span>Progreso</span>
+                <span>{{ _("Progreso") }}</span>
             </a>
             <a class="bottom-nav-item{% if request.endpoint in rank_endpoints %} active{% endif %}" href="{{ url_for('rank_page') }}">
                 <span class="nav-icon-wrap">{{ macros.icon('shield', 22) }}</span>
-                <span>Rango</span>
+                <span>{{ _("Rango") }}</span>
             </a>
         </nav>
     {% endif %}
@@ -179,10 +179,10 @@
             <span class="rt-time" id="timerDisplay">00:00</span>
         </div>
         <div class="rt-controls">
-            <div class="rt-label"><strong>⏱ Descanso</strong> <span id="restExerciseName"></span></div>
+            <div class="rt-label"><strong>{{ _("⏱ Descanso") }}</strong> <span id="restExerciseName"></span></div>
             <div class="rt-adjust">
-                <button type="button" class="btn-outline" onclick="adjustTimer(-15)">−15s</button>
-                <button type="button" class="btn-outline" onclick="adjustTimer(15)">+15s</button>
+                <button type="button" class="btn-outline" onclick="adjustTimer(-15)">{{ _("−15s") }}</button>
+                <button type="button" class="btn-outline" onclick="adjustTimer(15)">{{ _("+15s") }}</button>
                 <button type="button" class="btn-outline" onclick="stopRestTimer()" aria-label="Parar descanso">⏹</button>
             </div>
         </div>
@@ -190,7 +190,7 @@
 
     <div id="debugErrorBanner" class="debug-error-banner" style="display:none;">
         <div id="debugErrorText"></div>
-        <button type="button" onclick="document.getElementById('debugErrorBanner').style.display='none'">Cerrar aviso</button>
+        <button type="button" onclick="document.getElementById('debugErrorBanner').style.display='none'">{{ _("Cerrar aviso") }}</button>
     </div>
 
     <div id="restFinishedToast" class="rest-finished-toast" style="display:none;"></div>
@@ -199,8 +199,8 @@
         <div class="card card-elevated confirm-box">
             <p id="customConfirmMessage"></p>
             <div class="confirm-actions">
-                <button type="button" class="btn-outline" id="customConfirmCancel">Cancelar</button>
-                <button type="button" class="btn-danger-outline" id="customConfirmOk">Eliminar</button>
+                <button type="button" class="btn-outline" id="customConfirmCancel">{{ _("Cancelar") }}</button>
+                <button type="button" class="btn-danger-outline" id="customConfirmOk">{{ _("Eliminar") }}</button>
             </div>
         </div>
     </div>

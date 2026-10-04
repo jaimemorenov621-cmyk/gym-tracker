@@ -9,12 +9,12 @@
         </div>
         <div>
             <strong>{{ unlocked_count }} de {{ total }}</strong>
-            <span>logros desbloqueados</span>
+            <span>{{ _("logros desbloqueados") }}</span>
         </div>
     </div>
 
     {% if closest %}
-        <h2 class="section-title">Te falta poco</h2>
+        <h2 class="section-title">{{ _("Te falta poco") }}</h2>
         <div class="achv-closest">
             {% for it in closest %}
                 <div class="achv-mini">
@@ -30,7 +30,7 @@
     {% endif %}
 
     <nav class="achv-tabs" aria-label="Categorías">
-        <button type="button" class="achv-tab active" data-cat="all">Todos</button>
+        <button type="button" class="achv-tab active" data-cat="all">{{ _("Todos") }}</button>
         {% for key, name, emoji, items in categories %}
             <button type="button" class="achv-tab" data-cat="{{ key }}">{{ emoji }} {{ name }}
                 <small>{{ items|selectattr('unlocked')|list|length }}/{{ items|length }}</small></button>

@@ -2,38 +2,38 @@
 
 {% block content %}
 <div style="max-width:680px; margin:0 auto;">
-    <h1>Política de privacidad de Gyre</h1>
-    <p style="color:var(--color-text-muted);">Última actualización: 04/10/2026</p>
+    <h1>{{ _("Política de privacidad de Gyre") }}</h1>
+    <p style="color:var(--color-text-muted);">{{ _("Última actualización: 04/10/2026") }}</p>
 
-    <h3>Qué datos guardamos</h3>
-    <p>Al crear una cuenta (con usuario/contraseña o con Google) guardamos tu nombre de usuario y tu email. Si inicias sesión con Google, no vemos ni guardamos tu contraseña de Google en ningún momento — Google solo nos confirma tu email y nombre.</p>
-    <p>Además de eso, guardamos los datos que registras usando la app: tus entrenamientos, series, pesos, notas, peso corporal, y (si los rellenas) sexo, altura y objetivo de entrenamiento.</p>
-    <p>Si haces el check-in de recuperación, guardamos por cada día tu valoración de sueño, energía y agujetas. Es una valoración tuya, no una medición. Tu sexo y tu peso corporal se usan también para calcular tu nivel en los estándares de fuerza.</p>
-    <p>De las visitas a la página de inicio guardamos solo estadísticas anónimas: fecha, página desde la que llegaste, tipo de navegador y, si el enlace la llevaba, una etiqueta de canal (por ejemplo "mediavida"). No guardamos tu dirección IP. Al crear una cuenta guardamos también la fecha de alta y ese canal.</p>
-    <p>Para saber si la app resulta útil también los días que no entrenas, guardamos un registro mínimo de uso: por cada día, si abriste la app, si ese día era de descanso según los días de entreno que marcaste, y si una página tuvo que volver a cargar los estilos. No guardamos la hora, la dirección IP ni el navegador, y este registro se borra a los 120 días. Solo se consulta en conjunto, sin nombres.</p>
+    <h3>{{ _("Qué datos guardamos") }}</h3>
+    <p>{{ _("Al crear una cuenta (con usuario/contraseña o con Google) guardamos tu nombre de usuario y tu email. Si inicias sesión con Google, no vemos ni guardamos tu contraseña de Google en ningún momento — Google solo nos confirma tu email y nombre.") }}</p>
+    <p>{{ _("Además de eso, guardamos los datos que registras usando la app: tus entrenamientos, series, pesos, notas, peso corporal, y (si los rellenas) sexo, altura y objetivo de entrenamiento.") }}</p>
+    <p>{{ _("Si haces el check-in de recuperación, guardamos por cada día tu valoración de sueño, energía y agujetas. Es una valoración tuya, no una medición. Tu sexo y tu peso corporal se usan también para calcular tu nivel en los estándares de fuerza.") }}</p>
+    <p>{{ _('De las visitas a la página de inicio guardamos solo estadísticas anónimas: fecha, página desde la que llegaste, tipo de navegador y, si el enlace la llevaba, una etiqueta de canal (por ejemplo "mediavida"). No guardamos tu dirección IP. Al crear una cuenta guardamos también la fecha de alta y ese canal.') }}</p>
+    <p>{{ _("Para saber si la app resulta útil también los días que no entrenas, guardamos un registro mínimo de uso: por cada día, si abriste la app, si ese día era de descanso según los días de entreno que marcaste, y si una página tuvo que volver a cargar los estilos. No guardamos la hora, la dirección IP ni el navegador, y este registro se borra a los 120 días. Solo se consulta en conjunto, sin nombres.") }}</p>
 
-    <h3>Para qué se usan</h3>
-    <p>Únicamente para el funcionamiento de la propia app: mostrarte tu historial, calcular tus progresos/récords/racha, y generar el análisis semanal con IA (si lo usas). No usamos tus datos para publicidad, y no los vendemos ni se los cedemos a nadie para ese fin.</p>
+    <h3>{{ _("Para qué se usan") }}</h3>
+    <p>{{ _("Únicamente para el funcionamiento de la propia app: mostrarte tu historial, calcular tus progresos/récords/racha, y generar el análisis semanal con IA (si lo usas). No usamos tus datos para publicidad, y no los vendemos ni se los cedemos a nadie para ese fin.") }}</p>
 
-    <h3>Con quién se comparten</h3>
+    <h3>{{ _("Con quién se comparten") }}</h3>
     <ul>
-        <li><strong>OpenAI</strong>: si generas un análisis con IA, un resumen de tu entrenamiento reciente (y, si los has hecho, tus check-in de recuperación de los últimos 14 días, indicados como valoración subjetiva) se envía a la API de OpenAI para redactar ese análisis.</li>
-        <li><strong>Google</strong>: solo si eliges "Continuar con Google", para confirmar tu identidad.</li>
-        <li><strong>Proveedores de infraestructura</strong> (hosting y base de datos) que almacenan la aplicación y sus datos, sin acceso a ellos para ningún otro fin.</li>
-        <li><strong>Tus amigos en Gyre</strong>: solo si aceptas a alguien como amigo, esa persona ve tu nombre de usuario y lo que elijas en tu tarjeta de atleta (rango, nivel, racha, constancia, los récords y logros que destaques). Tu <strong>peso corporal</strong> está oculto salvo que lo actives tú. Puedes salir de los rankings, cambiar qué se ve o quitar a un amigo en cualquier momento. Nadie que no sea tu amigo ve nada de esto.</li>
+        <li><strong>{{ _("OpenAI") }}</strong>{{ _(": si generas un análisis con IA, un resumen de tu entrenamiento reciente (y, si los has hecho, tus check-in de recuperación de los últimos 14 días, indicados como valoración subjetiva) se envía a la API de OpenAI para redactar ese análisis.") }}</li>
+        <li><strong>{{ _("Google") }}</strong>{{ _(': solo si eliges "Continuar con Google", para confirmar tu identidad.') }}</li>
+        <li><strong>{{ _("Proveedores de infraestructura") }}</strong> {{ _("(hosting y base de datos) que almacenan la aplicación y sus datos, sin acceso a ellos para ningún otro fin.") }}</li>
+        <li><strong>{{ _("Tus amigos en Gyre") }}</strong>{{ _(": solo si aceptas a alguien como amigo, esa persona ve tu nombre de usuario y lo que elijas en tu tarjeta de atleta (rango, nivel, racha, constancia, los récords y logros que destaques). Tu") }} <strong>{{ _("peso corporal") }}</strong> {{ _("está oculto salvo que lo actives tú. Puedes salir de los rankings, cambiar qué se ve o quitar a un amigo en cualquier momento. Nadie que no sea tu amigo ve nada de esto.") }}</li>
     </ul>
-    <p>No compartimos tus datos con nadie más.</p>
+    <p>{{ _("No compartimos tus datos con nadie más.") }}</p>
 
-    <h3>Cookies</h3>
-    <p>Usamos una cookie para mantener tu sesión iniciada, y otra opcional (<code>no_contar</code>) para excluir tu propio dispositivo de las estadísticas de visitas de la página de inicio.</p>
-    <p>Si llegas desde un enlace con etiqueta de canal (<code>?ref=</code>), guardamos durante 30 días una cookie propia (<code>gyre_ref</code>) que contiene solo esa etiqueta, para saber qué enlace te trajo si luego creas una cuenta. No contiene datos personales ni se comparte con nadie.</p>
-    <p>No usamos cookies de publicidad ni de seguimiento de terceros.</p>
+    <h3>{{ _("Cookies") }}</h3>
+    <p>{{ _("Usamos una cookie para mantener tu sesión iniciada, y otra opcional (") }}<code>{{ _("no_contar") }}</code>{{ _(") para excluir tu propio dispositivo de las estadísticas de visitas de la página de inicio.") }}</p>
+    <p>{{ _("Si llegas desde un enlace con etiqueta de canal (") }}<code>{{ _("?ref=") }}</code>{{ _("), guardamos durante 30 días una cookie propia (") }}<code>{{ _("gyre_ref") }}</code>{{ _(") que contiene solo esa etiqueta, para saber qué enlace te trajo si luego creas una cuenta. No contiene datos personales ni se comparte con nadie.") }}</p>
+    <p>{{ _("No usamos cookies de publicidad ni de seguimiento de terceros.") }}</p>
 
-    <h3>Borrar tu cuenta y tus datos</h3>
-    <p>Escríbenos a <a href="mailto:jaimemorenov621@gmail.com">jaimemorenov621@gmail.com</a> pidiendo el borrado de tu cuenta y te eliminaremos todos los datos asociados: entrenamientos, rutinas, notas, peso, check-in, logros, amistades, tarjeta de atleta, registro de uso y análisis de IA.</p>
-    <p>También puedes pedirnos por el mismo email una copia de tus datos en un archivo (formato JSON).</p>
+    <h3>{{ _("Borrar tu cuenta y tus datos") }}</h3>
+    <p>{{ _("Escríbenos a") }} <a href="mailto:jaimemorenov621@gmail.com">{{ _("jaimemorenov621@gmail.com") }}</a> {{ _("pidiendo el borrado de tu cuenta y te eliminaremos todos los datos asociados: entrenamientos, rutinas, notas, peso, check-in, logros, amistades, tarjeta de atleta, registro de uso y análisis de IA.") }}</p>
+    <p>{{ _("También puedes pedirnos por el mismo email una copia de tus datos en un archivo (formato JSON).") }}</p>
 
-    <h3>Contacto</h3>
-    <p><a href="mailto:jaimemorenov621@gmail.com">jaimemorenov621@gmail.com</a></p>
+    <h3>{{ _("Contacto") }}</h3>
+    <p><a href="mailto:jaimemorenov621@gmail.com">{{ _("jaimemorenov621@gmail.com") }}</a></p>
 </div>
 {% endblock %}

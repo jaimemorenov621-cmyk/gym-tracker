@@ -5,18 +5,18 @@
 
     {# Apariencia: preferencia de este dispositivo (localStorage), no de la cuenta. #}
     <div class="form-ui card card-elevated">
-        <h3 class="form-section-title">Apariencia</h3>
+        <h3 class="form-section-title">{{ _("Apariencia") }}</h3>
         <div class="field">
-            <label class="field-label" for="themeSelect">Tema</label>
+            <label class="field-label" for="themeSelect">{{ _("Tema") }}</label>
             <select id="themeSelect" onchange="setGyreTheme(this.value)">
-                <option value="auto">Automático (como el móvil)</option>
-                <option value="light">Claro</option>
-                <option value="dark">Oscuro</option>
+                <option value="auto">{{ _("Automático (como el móvil)") }}</option>
+                <option value="light">{{ _("Claro") }}</option>
+                <option value="dark">{{ _("Oscuro") }}</option>
             </select>
-            <small class="field-help">Se guarda en este dispositivo y se aplica al momento.</small>
+            <small class="field-help">{{ _("Se guarda en este dispositivo y se aplica al momento.") }}</small>
         </div>
         <div class="field">
-            <span class="field-label">Color de acento</span>
+            <span class="field-label">{{ _("Color de acento") }}</span>
             {% set swatch = {'morado': '#7c4dff', 'azul': '#2563eb', 'verde': '#0b7a54', 'naranja': '#c2410c'} %}
             <div class="accent-swatches" role="radiogroup" aria-label="Color de acento">
                 {% for a in accents %}
@@ -27,8 +27,8 @@
                     </button>
                 {% endfor %}
             </div>
-            <small class="field-help">Se desbloquean subiendo de nivel y se guardan en este dispositivo.</small>
-            <a class="btn-inline" href="{{ url_for('level_page') }}">Ver ventajas por nivel</a>
+            <small class="field-help">{{ _("Se desbloquean subiendo de nivel y se guardan en este dispositivo.") }}</small>
+            <a class="btn-inline" href="{{ url_for('level_page') }}">{{ _("Ver ventajas por nivel") }}</a>
         </div>
     </div>
     <script>
@@ -55,14 +55,14 @@
         {{ form.hidden_tag() }}
 
         <div class="card card-elevated">
-            <h3 class="form-section-title">Entrenamiento</h3>
+            <h3 class="form-section-title">{{ _("Entrenamiento") }}</h3>
 
             <div class="field">
                 <label class="field-label" for="{{ form.effort_scale.id }}">{{ form.effort_scale.label.text }}</label>
                 {{ form.effort_scale() }}
                 <small class="field-help">
-                    <strong>RIR</strong> (repeticiones en reserva): cuántas más podrías haber hecho. 0 = al fallo, 3 = con bastante margen.
-                    <strong>RPE</strong> (esfuerzo percibido): de 0 a 10, donde 10 = esfuerzo máximo (equivale a RIR 0).
+                    <strong>{{ _("RIR") }}</strong> {{ _("(repeticiones en reserva): cuántas más podrías haber hecho. 0 = al fallo, 3 = con bastante margen.") }}
+                    <strong>{{ _("RPE") }}</strong> {{ _("(esfuerzo percibido): de 0 a 10, donde 10 = esfuerzo máximo (equivale a RIR 0).") }}
                 </small>
             </div>
 
@@ -83,8 +83,8 @@
         </div>
 
         <div class="card card-elevated">
-            <h3 class="form-section-title">Perfil</h3>
-            <p class="field-help">Ayuda a que el mapa muscular y el análisis de IA se ajusten a ti.</p>
+            <h3 class="form-section-title">{{ _("Perfil") }}</h3>
+            <p class="field-help">{{ _("Ayuda a que el mapa muscular y el análisis de IA se ajusten a ti.") }}</p>
             <div class="field">
                 <label class="field-label" for="{{ form.sex.id }}">{{ form.sex.label.text }}</label>
                 {{ form.sex() }}
@@ -101,7 +101,7 @@
         </div>
 
         <div class="card card-elevated">
-            <h3 class="form-section-title">Semana de entreno</h3>
+            <h3 class="form-section-title">{{ _("Semana de entreno") }}</h3>
             <div class="field">
                 <span class="field-label">{{ form.training_days.label.text }}</span>
                 <div class="day-chips">
@@ -110,8 +110,7 @@
                     {% endfor %}
                 </div>
                 <small class="field-help">
-                    Opcional. Inicio te dirá si hoy toca entrenar o descansar. No afecta a la racha:
-                    si cambias un día por otro, no pasa nada.
+                    {{ _("Opcional. Inicio te dirá si hoy toca entrenar o descansar. No afecta a la racha: si cambias un día por otro, no pasa nada.") }}
                 </small>
             </div>
 
@@ -119,10 +118,7 @@
                 <label class="field-label" for="{{ form.weekly_workout_goal.id }}">{{ form.weekly_workout_goal.label.text }}</label>
                 {{ form.weekly_workout_goal(inputmode="numeric", class="input-short", placeholder="1", min=1, max=7) }}
                 <small class="field-help">
-                    La racha cuenta los días que entrenas. Cada semana que llegas a este mínimo, sus días se suman;
-                    si una semana no llegas, la racha vuelve a empezar. Ponlo por debajo de lo que sueles entrenar
-                    (por ejemplo 2 si vas 4 días) para que una descarga o una semana complicada no la corte.
-                    Vacío = 1 día.
+                    {{ _("La racha cuenta los días que entrenas. Cada semana que llegas a este mínimo, sus días se suman; si una semana no llegas, la racha vuelve a empezar. Ponlo por debajo de lo que sueles entrenar (por ejemplo 2 si vas 4 días) para que una descarga o una semana complicada no la corte. Vacío = 1 día.") }}
                 </small>
                 {% for e in form.weekly_workout_goal.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
             </div>
@@ -147,8 +143,8 @@
     {% endif %}
 
     <nav class="card card-elevated settings-list" aria-label="Más opciones">
-        <a href="{{ url_for('achievements_page') }}"><span class="settings-list-icon">{{ macros.icon('trophy', 18) }}</span><span>Logros</span>{{ macros.icon('chevron-right', 18) }}</a>
-        <a href="{{ url_for('privacy') }}"><span class="settings-list-icon">{{ macros.icon('shield', 18) }}</span><span>Privacidad</span>{{ macros.icon('chevron-right', 18) }}</a>
-        <a href="{{ url_for('logout') }}" class="is-danger"><span class="settings-list-icon">{{ macros.icon('log-out', 18) }}</span><span>Cerrar sesión</span></a>
+        <a href="{{ url_for('achievements_page') }}"><span class="settings-list-icon">{{ macros.icon('trophy', 18) }}</span><span>{{ _("Logros") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
+        <a href="{{ url_for('privacy') }}"><span class="settings-list-icon">{{ macros.icon('shield', 18) }}</span><span>{{ _("Privacidad") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
+        <a href="{{ url_for('logout') }}" class="is-danger"><span class="settings-list-icon">{{ macros.icon('log-out', 18) }}</span><span>{{ _("Cerrar sesión") }}</span></a>
     </nav>
 {% endblock %}

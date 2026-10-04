@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <h1 class="page-title">Nivel</h1>
+    <h1 class="page-title">{{ _("Nivel") }}</h1>
 
     <div class="card card-elevated level-hero">
         <div class="level-hero-top">
@@ -13,7 +13,7 @@
         </div>
         <div class="dash-level-bar"><i style="width: {{ xp.pct }}%"></i></div>
         <a class="level-strength" href="{{ url_for('rank_page') }}">
-            <span>Rango de fuerza</span>
+            <span>{{ _("Rango de fuerza") }}</span>
             {% if profile.global_rank %}
                 <span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 30, profile.global_rank.division) }}<b class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</b></span>
             {% elif profile.missing %}
@@ -23,13 +23,12 @@
             {% endif %}
         </a>
         <p class="level-note">
-            El nivel mide la constancia con la que entrenas y registras; tu fuerza real está en Progreso
-            (índice de fuerza y 1RM estimados) y en Rango (estándares).
+            {{ _("El nivel mide la constancia con la que entrenas y registras; tu fuerza real está en Progreso (índice de fuerza y 1RM estimados) y en Rango (estándares).") }}
         </p>
     </div>
 
     <div class="card card-elevated level-section">
-        <h2>Ventajas por nivel</h2>
+        <h2>{{ _("Ventajas por nivel") }}</h2>
         <ul class="perk-list">
             {% for perk in perk_rows %}
                 <li class="{{ 'is-unlocked' if perk.unlocked }}">
@@ -39,50 +38,49 @@
             {% endfor %}
         </ul>
         <p class="level-note">
-            Son cosméticas o de comodidad a propósito: ningún dato, gráfico ni análisis depende de tu nivel.
-            Los colores se eligen en Configuración y los diseños, al compartir un récord.
-            <a class="btn-inline" href="{{ url_for('settings') }}">Elegir color</a>
+            {{ _("Son cosméticas o de comodidad a propósito: ningún dato, gráfico ni análisis depende de tu nivel. Los colores se eligen en Configuración y los diseños, al compartir un récord.") }}
+            <a class="btn-inline" href="{{ url_for('settings') }}">{{ _("Elegir color") }}</a>
         </p>
     </div>
 
     <div class="card card-elevated level-section">
-        <h2>Cómo se gana XP <span class="level-version">reglas v{{ p.XP_RULES_VERSION }}</span></h2>
+        <h2>{{ _("Cómo se gana XP") }} <span class="level-version">reglas v{{ p.XP_RULES_VERSION }}</span></h2>
         <table class="level-rules">
-            <thead><tr><th>Qué</th><th>XP</th><th>Tope</th></tr></thead>
+            <thead><tr><th>{{ _("Qué") }}</th><th>{{ _("XP") }}</th><th>{{ _("Tope") }}</th></tr></thead>
             <tbody>
                 <tr>
-                    <td><b>Entreno válido</b>: terminado, con al menos {{ p.MIN_SETS_FOR_WORKOUT }} series de XP y {{ p.MIN_REPS_FOR_WORKOUT }} repeticiones en ellas</td>
+                    <td><b>{{ _("Entreno válido") }}</b>: terminado, con al menos {{ p.MIN_SETS_FOR_WORKOUT }} series de XP y {{ p.MIN_REPS_FOR_WORKOUT }} repeticiones en ellas</td>
                     <td>+{{ p.XP_WORKOUT }}</td><td>1 al día · {{ p.MAX_WORKOUT_DAYS_PER_WEEK }} días por semana</td>
                 </tr>
                 <tr>
-                    <td><b>Serie de XP</b>: serie hecha con peso y repeticiones, que no sea de calentamiento y con al menos el {{ (p.MIN_LOAD_FRACTION * 100)|int }} % de tu mejor 1RM estimado anterior en ese ejercicio</td>
+                    <td><b>{{ _("Serie de XP") }}</b>: serie hecha con peso y repeticiones, que no sea de calentamiento y con al menos el {{ (p.MIN_LOAD_FRACTION * 100)|int }} % de tu mejor 1RM estimado anterior en ese ejercicio</td>
                     <td>+{{ p.XP_SET }}</td><td>{{ p.MAX_SETS_PER_DAY }} al día</td>
                 </tr>
                 <tr>
-                    <td><b>Récord real</b>: superas el mejor 1RM estimado de una sesión anterior del mismo ejercicio (la primera vez que lo haces no cuenta)</td>
+                    <td><b>{{ _("Récord real") }}</b>{{ _(": superas el mejor 1RM estimado de una sesión anterior del mismo ejercicio (la primera vez que lo haces no cuenta)") }}</td>
                     <td>+{{ p.XP_PR }}</td><td>{{ p.MAX_PRS_PER_DAY }} al día</td>
                 </tr>
                 <tr>
-                    <td><b>Semana cumplida</b>: entrenas al menos tu mínimo semanal (el de la racha)</td>
-                    <td>+{{ p.XP_WEEK_PER_MINIMUM }} × mínimo</td><td>1 por semana</td>
+                    <td><b>{{ _("Semana cumplida") }}</b>{{ _(": entrenas al menos tu mínimo semanal (el de la racha)") }}</td>
+                    <td>+{{ p.XP_WEEK_PER_MINIMUM }} × mínimo</td><td>{{ _("1 por semana") }}</td>
                 </tr>
                 <tr>
-                    <td><b>Check-in de recuperación</b></td>
-                    <td>+{{ p.XP_CHECKIN }}</td><td>1 al día</td>
+                    <td><b>{{ _("Check-in de recuperación") }}</b></td>
+                    <td>+{{ p.XP_CHECKIN }}</td><td>{{ _("1 al día") }}</td>
                 </tr>
             </tbody>
         </table>
         <ul class="level-notes">
-            <li><b>No dan XP</b>: los logros (ya tienen su sitio), los estándares de fuerza (dependen de tu peso corporal y el XP subiría o bajaría al pesarte), pesarte ni abrir la app.</li>
-            <li><b>Descansar no resta.</b> Un día sin entreno da como mucho el check-in.</li>
-            <li><b>Se limita el farmeo barato</b>: los topes evitan sumar XP con series sueltas o casi sin carga. Los pesos son los que apuntas tú, así que no se puede impedir del todo; el XP no da premios ni rankings.</li>
-            <li><b>El XP sale de tus datos</b>: si borras un entreno o corriges una serie, se recalcula (y puede bajar).</li>
-            <li>Los topes son decisiones de diseño, no evidencia científica: 25 series al día deja margen para una sesión exigente sin premiar el volumen basura.</li>
+            <li><b>{{ _("No dan XP") }}</b>{{ _(": los logros (ya tienen su sitio), los estándares de fuerza (dependen de tu peso corporal y el XP subiría o bajaría al pesarte), pesarte ni abrir la app.") }}</li>
+            <li><b>{{ _("Descansar no resta.") }}</b> {{ _("Un día sin entreno da como mucho el check-in.") }}</li>
+            <li><b>{{ _("Se limita el farmeo barato") }}</b>{{ _(": los topes evitan sumar XP con series sueltas o casi sin carga. Los pesos son los que apuntas tú, así que no se puede impedir del todo; el XP no da premios ni rankings.") }}</li>
+            <li><b>{{ _("El XP sale de tus datos") }}</b>{{ _(": si borras un entreno o corriges una serie, se recalcula (y puede bajar).") }}</li>
+            <li>{{ _("Los topes son decisiones de diseño, no evidencia científica: 25 series al día deja margen para una sesión exigente sin premiar el volumen basura.") }}</li>
         </ul>
     </div>
 
     <div class="card card-elevated level-section">
-        <h2>Tus últimas semanas</h2>
+        <h2>{{ _("Tus últimas semanas") }}</h2>
         {% if weeks %}
             <ul class="level-weeks">
                 {% for start, w in weeks %}
@@ -97,18 +95,18 @@
                     </li>
                 {% endfor %}
             </ul>
-            {% if weeks|selectattr('1.capped')|list %}<p class="level-note">* Semana en la que se aplicó algún tope.</p>{% endif %}
+            {% if weeks|selectattr('1.capped')|list %}<p class="level-note">{{ _("* Semana en la que se aplicó algún tope.") }}</p>{% endif %}
         {% else %}
-            <p class="level-note">Termina tu primer entreno o haz el check-in para empezar a sumar.</p>
+            <p class="level-note">{{ _("Termina tu primer entreno o haz el check-in para empezar a sumar.") }}</p>
         {% endif %}
     </div>
 
     <div class="card card-elevated level-section">
         <details class="strength-how">
-            <summary>Curva de niveles</summary>
-            <p>Pasar del nivel N al N+1 cuesta 500 + 100 × (N − 1) XP. Entrenando 4 días a la semana se suman unos 1.000 XP semanales.</p>
+            <summary>{{ _("Curva de niveles") }}</summary>
+            <p>{{ _("Pasar del nivel N al N+1 cuesta 500 + 100 × (N − 1) XP. Entrenando 4 días a la semana se suman unos 1.000 XP semanales.") }}</p>
             <table class="level-rules">
-                <thead><tr><th>Nivel</th><th>XP acumulado</th><th>Para el siguiente</th></tr></thead>
+                <thead><tr><th>{{ _("Nivel") }}</th><th>{{ _("XP acumulado") }}</th><th>{{ _("Para el siguiente") }}</th></tr></thead>
                 <tbody>
                     {% for lvl, at, cost in curve %}
                         <tr{% if lvl == xp.level %} class="is-current"{% endif %}><td>{{ lvl }}</td><td>{{ at|num }}</td><td>{{ cost|num }}</td></tr>

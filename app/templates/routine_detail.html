@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <p class="page-back"><a href="{{ url_for('routines') }}">← Rutinas</a></p>
+    <p class="page-back"><a href="{{ url_for('routines') }}">{{ _("← Rutinas") }}</a></p>
     <h1 class="page-title">{{ routine.name }}</h1>
     <p class="routine-detail-meta">
         {{ exercises|length }} ejercicio{{ '' if exercises|length == 1 else 's' }}
@@ -18,12 +18,12 @@
             {{ empty_form.hidden_tag() }}
             <button type="submit" class="delete-tile">
                 {{ macros.icon('trash', 18) }}
-                <span class="menu-item-text"><strong>Eliminar rutina</strong><small>Tus entrenos se conservan</small></span>
+                <span class="menu-item-text"><strong>{{ _("Eliminar rutina") }}</strong><small>{{ _("Tus entrenos se conservan") }}</small></span>
             </button>
         </form>
     </div>
 
-    <h2 class="section-title">Plan de ejercicios</h2>
+    <h2 class="section-title">{{ _("Plan de ejercicios") }}</h2>
     {% if exercises %}
         <p class="routine-detail-hint">Toca las cifras para cambiarlas; se guardan solas. Arrastra {{ macros.icon('grip', 14) }} para reordenar.</p>
     {% endif %}
@@ -56,7 +56,7 @@
                             <span aria-hidden="true">–</span>
                             <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="{{ ex.target_sets_max or '' }}" placeholder="máx" data-field="target_sets_max" aria-label="Series (máximo, opcional)">
                         </div>
-                        <span>series</span>
+                        <span>{{ _("series") }}</span>
                     </div>
                     <span class="plan-x" aria-hidden="true">×</span>
                     <div class="plan-range">
@@ -65,7 +65,7 @@
                             <span aria-hidden="true">–</span>
                             <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" value="{{ rmax or '' }}" placeholder="máx" data-field="reps_max" aria-label="Repeticiones (máximo, opcional)">
                         </div>
-                        <span>reps</span>
+                        <span>{{ _("reps") }}</span>
                     </div>
                     {% if effort_scale != 'none' %}
                         <label class="plan-field">
@@ -83,7 +83,7 @@
     </ul>
     {% if not exercises %}
         <div class="card card-elevated routine-detail-empty">
-            <strong>Esta rutina aún no tiene ejercicios.</strong>
+            <strong>{{ _("Esta rutina aún no tiene ejercicios.") }}</strong>
             <span>Añade el primero: después podrás ajustar series, reps y {{ effort_scale|upper if effort_scale != 'none' else 'esfuerzo' }} en la propia fila.</span>
         </div>
     {% endif %}
@@ -98,8 +98,8 @@
         <button type="button" class="add-exercise-tile" onclick="openExercisePicker()">
             <span class="add-exercise-tile-icon">{{ macros.icon('plus', 24) }}</span>
             <span class="add-exercise-tile-text">
-                <strong>Añadir ejercicio</strong>
-                <small>Busca o crea uno nuevo</small>
+                <strong>{{ _("Añadir ejercicio") }}</strong>
+                <small>{{ _("Busca o crea uno nuevo") }}</small>
             </span>
             <span class="add-exercise-tile-search">{{ macros.icon('search', 20) }}</span>
         </button>

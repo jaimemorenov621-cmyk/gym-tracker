@@ -12,35 +12,35 @@
             </div>
 
             <div class="card card-elevated analysis-section analysis-fortalezas">
-                <h3>💪 Fortalezas</h3>
+                <h3>{{ _("💪 Fortalezas") }}</h3>
                 {% if analysis.fortalezas %}
                     <ul>
                         {% for item in analysis.fortalezas %}<li>{{ item }}</li>{% endfor %}
                     </ul>
                 {% else %}
-                    <p class="analysis-placeholder">Todavía no hay suficiente historial para identificar fortalezas claras.</p>
+                    <p class="analysis-placeholder">{{ _("Todavía no hay suficiente historial para identificar fortalezas claras.") }}</p>
                 {% endif %}
             </div>
 
             <div class="card card-elevated analysis-section analysis-areas-mejora">
-                <h3>⚠️ Áreas de mejora</h3>
+                <h3>{{ _("⚠️ Áreas de mejora") }}</h3>
                 {% if analysis.areas_mejora %}
                     <ul>
                         {% for item in analysis.areas_mejora %}<li><strong>{{ item.ejercicio }}</strong>: {{ item.motivo }}</li>{% endfor %}
                     </ul>
                 {% else %}
-                    <p class="analysis-placeholder">Ningún ejercicio destaca por estancamiento ahora mismo.</p>
+                    <p class="analysis-placeholder">{{ _("Ningún ejercicio destaca por estancamiento ahora mismo.") }}</p>
                 {% endif %}
             </div>
 
             <div class="card card-elevated analysis-section analysis-proximos-pasos">
-                <h3>🎯 Próximos pasos</h3>
+                <h3>{{ _("🎯 Próximos pasos") }}</h3>
                 {% if analysis.proximos_pasos %}
                     <ol>
                         {% for item in analysis.proximos_pasos %}<li>{{ item }}</li>{% endfor %}
                     </ol>
                 {% else %}
-                    <p class="analysis-placeholder">Sin recomendaciones concretas por ahora.</p>
+                    <p class="analysis-placeholder">{{ _("Sin recomendaciones concretas por ahora.") }}</p>
                 {% endif %}
             </div>
         {% else %}
@@ -50,7 +50,7 @@
         {% endif %}
     {% else %}
         <div class="card card-elevated">
-            <p><em>Todavía no has generado ningún análisis.{% if total_workouts >= min_workouts and not next_available %} Pulsa el botón para que la IA revise tu progreso.{% endif %}</em></p>
+            <p><em>{{ _("Todavía no has generado ningún análisis.") }}{% if total_workouts >= min_workouts and not next_available %} {{ _("Pulsa el botón para que la IA revise tu progreso.") }}{% endif %}</em></p>
         </div>
     {% endif %}
 
@@ -58,7 +58,7 @@
         <div class="ai-cta ai-cta-locked">
             <span class="ai-cta-icon">{{ macros.icon('sparkle', 22) }}</span>
             <div class="ai-cta-body">
-                <small>Análisis de IA</small>
+                <small>{{ _("Análisis de IA") }}</small>
                 <strong>Te faltan {{ min_workouts - total_workouts }} entreno{{ 's' if min_workouts - total_workouts != 1 }}</strong>
                 <span class="ai-cta-detail">Llevas {{ total_workouts }} de {{ min_workouts }}: con menos no hay historial suficiente.</span>
                 <div class="ai-cta-progress" aria-hidden="true"><span style="width: {{ (100 * total_workouts / min_workouts)|round|int }}%"></span></div>
@@ -69,7 +69,7 @@
         <div class="ai-cta ai-cta-locked">
             <span class="ai-cta-icon">{{ macros.icon('clock', 22) }}</span>
             <div class="ai-cta-body">
-                <small>Próximo análisis</small>
+                <small>{{ _("Próximo análisis") }}</small>
                 <strong>Disponible {{ wait_label }}</strong>
                 <span class="ai-cta-detail">El {{ local_next.strftime('%d/%m') }} a las {{ local_next.strftime('%H:%M') }} · {{ 'dos análisis por semana (ventaja de nivel)' if allowance > 1 else 'un análisis por semana' }}</span>
                 <div class="ai-cta-progress" aria-hidden="true"><span style="width: {{ cooldown_pct }}%"></span></div>
@@ -87,8 +87,8 @@
                 <button type="submit" class="ai-cta ai-cta-ready">
                     <span class="ai-cta-icon">{{ macros.icon('sparkle', 22) }}</span>
                     <span class="ai-cta-body">
-                        <strong>Analizar mi progreso</strong>
-                        <small>La IA revisa tus entrenos y te da próximos pasos</small>
+                        <strong>{{ _("Analizar mi progreso") }}</strong>
+                        <small>{{ _("La IA revisa tus entrenos y te da próximos pasos") }}</small>
                     </span>
                     <span class="ai-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
                 </button>

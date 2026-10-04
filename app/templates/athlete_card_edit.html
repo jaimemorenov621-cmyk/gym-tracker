@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    <p class="page-back"><a href="{{ url_for('athlete_card', user_id=current_user.id) }}">← Tu tarjeta</a></p>
-    <h1 class="page-title">Qué ven tus amigos</h1>
+    <p class="page-back"><a href="{{ url_for('athlete_card', user_id=current_user.id) }}">{{ _("← Tu tarjeta") }}</a></p>
+    <h1 class="page-title">{{ _("Qué ven tus amigos") }}</h1>
     <form method="post" class="ac-form">
         {{ form.hidden_tag() }}
         <div class="card card-elevated">
-            <h2>Rankings y datos</h2>
+            <h2>{{ _("Rankings y datos") }}</h2>
             {% set toggles = [
                 ('in_rankings', 'Aparecer en los rankings de mis amigos', card.in_rankings),
                 ('show_rank', 'Mi rango (global y por levantamiento)', card.show_rank),
@@ -17,14 +17,14 @@
                 ('show_bodyweight', 'Mi peso corporal', card.show_bodyweight)] %}
             <ul class="ac-toggles">
                 {% for name, label, on in toggles %}
-                    <li><label><span>{{ label }}{% if name == 'show_bodyweight' %} <small class="ac-sensitive">dato sensible</small>{% endif %}</span>
+                    <li><label><span>{{ label }}{% if name == 'show_bodyweight' %} <small class="ac-sensitive">{{ _("dato sensible") }}</small>{% endif %}</span>
                         <input type="checkbox" name="{{ name }}"{% if on %} checked{% endif %}><i class="ac-switch" aria-hidden="true"></i></label></li>
                 {% endfor %}
             </ul>
         </div>
 
         <div class="card card-elevated">
-            <h2>Récords destacados <small class="ac-max">hasta {{ max_lifts }}</small></h2>
+            <h2>{{ _("Récords destacados") }} <small class="ac-max">hasta {{ max_lifts }}</small></h2>
             {% if exercises %}
                 <ul class="pbasics-pick" data-max="{{ max_lifts }}">
                     {% for e in exercises %}
@@ -35,12 +35,12 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="alias-empty">Aún no tienes récords.</p>
+                <p class="alias-empty">{{ _("Aún no tienes récords.") }}</p>
             {% endif %}
         </div>
 
         <div class="card card-elevated">
-            <h2>Logros destacados <small class="ac-max">hasta {{ max_achievements }}</small></h2>
+            <h2>{{ _("Logros destacados") }} <small class="ac-max">hasta {{ max_achievements }}</small></h2>
             {% if unlocked %}
                 <ul class="pbasics-pick" data-max="{{ max_achievements }}">
                     {% for a in unlocked %}
@@ -51,10 +51,10 @@
                     {% endfor %}
                 </ul>
             {% else %}
-                <p class="alias-empty">Aún no has desbloqueado logros.</p>
+                <p class="alias-empty">{{ _("Aún no has desbloqueado logros.") }}</p>
             {% endif %}
         </div>
-        <button type="submit" class="btn form-submit">Guardar</button>
+        <button type="submit" class="btn form-submit">{{ _("Guardar") }}</button>
     </form>
     <script>
         // Tope por lista: se desactivan las casillas sin marcar al llegar.
