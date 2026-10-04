@@ -3516,7 +3516,8 @@ a.dash-tile:active { transform: scale(0.98); }
 .strength-pct.up strong { color: var(--color-success-text); }
 .strength-pct.down strong { color: var(--color-danger); }
 .strength-chart { height: 180px; }
-.strength-movers { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.strength-movers { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+.strength-movers > div { min-width: 0; }
 .strength-movers h3 { margin: 0 0 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); }
 .strength-movers a { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border-subtle); color: var(--color-text); text-decoration: none; font-size: 0.85rem; }
 .strength-movers a span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3529,7 +3530,7 @@ a.dash-tile:active { transform: scale(0.98); }
 :root[data-theme="dark"] .strength-pct.up strong, :root[data-theme="dark"] .strength-movers b.up { color: #5cf0b4; }
 :root[data-theme="dark"] .strength-pct.down strong, :root[data-theme="dark"] .strength-movers b.down { color: #ff8a8a; }
 @media (max-width: 420px) {
-    .strength-movers { grid-template-columns: 1fr; }
+    .strength-movers { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* ===== Estándares de fuerza (progress.html) ===== */
