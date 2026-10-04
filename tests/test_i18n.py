@@ -103,3 +103,24 @@ class CatalogTests(DbTestCase):
         ids = {m.id for m in self.catalog()}
         for text in JS_STRINGS:
             self.assertIn(text, ids, "falta en el catálogo: pybabel extract + update")
+
+    def test_every_source_text_is_in_the_catalog(self):
+        """Falla si se añade un texto traducible sin pasar tools/i18n_update.py."""
+        import io
+        from babel.messages.extract import DEFAULT_KEYWORDS, extract_from_dir
+        from babel.messages.frontend import parse_keywords, parse_mapping_cfg
+        from app.i18n import EXTRACT_KEYWORDS
+
+        keywords = dict(DEFAULT_KEYWORDS)
+        keywords.update(parse_keywords(EXTRACT_KEYWORDS))
+        with io.open("babel.cfg", encoding="utf-8") as f:
+            method_map, options_map = parse_mapping_cfg(f)
+        known = {(m.id if isinstance(m.id, str) else m.id[0], m.context) for m in self.catalog()}
+        missing, seen = set(), 0
+        for _fn, _line, msg, _comments, ctx in extract_from_dir(".", method_map, options_map, keywords):
+            seen += 1
+            msgid = msg if isinstance(msg, str) else msg[0]
+            if msgid and (msgid, ctx) not in known:
+                missing.add(msgid)
+        self.assertGreater(seen, 1000)  # la extracción de verdad ha encontrado los textos
+        self.assertFalse(missing, f"textos sin catalogar (python tools/i18n_update.py): {sorted(missing)[:10]}")

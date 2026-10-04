@@ -1839,8 +1839,12 @@ def athlete_card_view(owner, viewer):
             if not sessions:
                 continue
             best = max(sessions, key=lambda s: s["best_1rm"])
-            lifts.append({"exercise": name, "e1rm": best["best_1rm"], "set": best["best_set"],
-                          "date": best["timestamp"], "rank": profile["exercise_ranks"].get(name)})
+            # En dominadas el 1RM incluye el peso corporal: con el peso oculto
+            # se enseña solo la serie (lastre × reps), no el 1RM.
+            hide_e1rm = is_bodyweight_exercise(name) and not (card.show_bodyweight or is_self)
+            lifts.append({"exercise": name, "e1rm": None if hide_e1rm else best["best_1rm"], "set": best["best_set"],
+                          "date": best["timestamp"],
+                          "rank": profile["exercise_ranks"].get(name) if (card.show_rank or is_self) else None})
     unlocked = set(social.unlocked_codes(owner.id))
     return {
         "owner": owner, "is_self": is_self, "card": card,

@@ -215,7 +215,7 @@
                         <span class="progress-main">
                             <strong>{{ it.exercise|title }}</strong>
                             <small>
-                                {{ it.last_trained|relative_day|capitalize }}
+                                {{ it.last_trained|relative_day|ucfirst }}
                                 {% if it.last_pr and it.sessions > 1 %} · 🏅 {{ _('récord %(when)s', when=it.last_pr|relative_day) }}{% endif %}
                             </small>
                         </span>

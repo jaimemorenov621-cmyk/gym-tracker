@@ -444,6 +444,7 @@ textarea {
     flex: 1;
     min-width: 0;
 }
+#restExerciseName { text-transform: capitalize; }
 .rt-label {
     white-space: nowrap;
     overflow: hidden;

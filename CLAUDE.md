@@ -48,15 +48,9 @@ Classic single-package Flask app, not an application factory — `app` and `db` 
 
 ### Languages (Flask-Babel)
 
-Spanish source strings, English catalog in `app/translations/en/LC_MESSAGES/` (the compiled `.mo` is committed: Render doesn't compile). Locale: `User.language` → `lang` cookie → `Accept-Language` → es (`app/i18n.py`; off with `I18N_ENABLED=0`). **Every new user-facing text must go through translation**: `{{ _('...') }}`/`ngettext` in templates (newstyle: `%(var)s` placeholders, literal `%` written `%%`, never name a Jinja variable `_`; in inline JS `{{ _('...')|tojson }}`, inside HTML attributes `|tojson|forceescape`), `gettext`/`ngettext` in `routes.py` (`_` is used as a throwaway variable there), `lazy_gettext as _l` for module-level constants (in Python, `%` is only applied when variables are passed). Static `.js` use `T('texto original')` and the text must be listed in `i18n.JS_STRINGS`. Results cached in `datacache` are keyed by locale. Numbers/dates: `fmt_num`/`relative_day` follow the locale. After adding texts:
+Spanish source strings, English catalog in `app/translations/en/LC_MESSAGES/` (the compiled `.mo` is committed: Render doesn't compile). Locale: `User.language` → `lang` cookie → `Accept-Language` → es (`app/i18n.py`; off with `I18N_ENABLED=0`). **Every new user-facing text must go through translation**: `{{ _('...') }}`/`ngettext` in templates (newstyle: `%(var)s` placeholders, literal `%` written `%%`, never name a Jinja variable `_`; in inline JS `{{ _('...')|tojson }}`, inside HTML attributes `|tojson|forceescape`), `gettext`/`ngettext` in `routes.py` (`_` is used as a throwaway variable there), `lazy_gettext as _l` for module-level constants (in Python, `%` is only applied when variables are passed). Static `.js` use `T('texto original')` and the text must be listed in `i18n.JS_STRINGS`. Results cached in `datacache` are keyed by locale. Numbers/dates: `fmt_num`/`relative_day` follow the locale. After adding texts run `python tools/i18n_update.py` (extract with `i18n.EXTRACT_KEYWORDS` + update + compile), translate what it lists in the `.po` and run it again.
 
-```
-pybabel extract -F babel.cfg -k _l -k N_ -k lazy_pgettext:1c,2 -k _lp:1c,2 -o messages.pot .
-pybabel update -i messages.pot -d app/translations   # then translate the new msgstr in the .po
-pybabel compile -d app/translations
-```
-
-`tests/test_i18n.py` fails if a string is untranslated, fuzzy, has mismatched placeholders or the `.mo` is stale. `PYTHONIOENCODING=utf-8 python tools/i18n_leftovers.py` lists Spanish text in templates not yet wrapped.
+`tests/test_i18n.py` fails if a source text isn't in the catalog, a string is untranslated, fuzzy, has mismatched placeholders or the `.mo` is stale. `PYTHONIOENCODING=utf-8 python tools/i18n_leftovers.py` lists Spanish text in templates not yet wrapped.
 
 ### Domain model
 

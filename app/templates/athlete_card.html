@@ -37,7 +37,7 @@
                             <small>{% if l.rank %}{{ l.rank.label }} · {% endif %}{{ l.date|relative_day }}</small>
                         </span>
                         {% if v.show_kg %}
-                            <span class="ac-lift-kg"><b>{{ l.set.weight|num }} × {{ l.set.reps }}</b><small>{{ _('1RM est. %(kg)s kg', kg=l.e1rm|num(0)) }}</small>{% if v.is_self and v.kg_hidden %}<small class="ac-hidden">{{ _("kilos ocultos") }}</small>{% endif %}</span>
+                            <span class="ac-lift-kg"><b>{{ l.set.weight|num }} × {{ l.set.reps }}</b>{% if l.e1rm is not none %}<small>{{ _('1RM est. %(kg)s kg', kg=l.e1rm|num(0)) }}</small>{% endif %}{% if v.is_self and v.kg_hidden %}<small class="ac-hidden">{{ _("kilos ocultos") }}</small>{% endif %}</span>
                         {% endif %}
                     </li>
                 {% endfor %}

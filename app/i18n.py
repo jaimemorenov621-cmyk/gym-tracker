@@ -4,15 +4,12 @@ Orden: 1) el que el usuario eligió en Ajustes (User.language); 2) sin
 sesión, la cookie "lang"; 3) el idioma del navegador/móvil
 (Accept-Language); 4) español.
 
-Mientras I18N_ENABLED no esté activo (config), todo va en español: la
-traducción se sube por partes y no debe verse a medias.
+I18N_ENABLED=0 (config) apaga el inglés y deja todo en español.
 
-Textos nuevos: envolverlos en _() / ngettext() (plantillas y Python) o
-lazy_gettext() si se definen al importar un módulo. Después:
-    pybabel extract -F babel.cfg -k _l -k N_ -k lazy_pgettext:1c,2 -k _lp:1c,2 -o messages.pot .
-    pybabel update -i messages.pot -d app/translations
-    (traducir en app/translations/en/LC_MESSAGES/messages.po)
-    pybabel compile -d app/translations
+Textos nuevos: envolverlos en _() / ngettext() (plantillas), gettext() /
+ngettext() (routes.py) o lazy_gettext() / _l() si se definen al importar un
+módulo. Después: python tools/i18n_update.py, traducir lo que liste en
+app/translations/en/LC_MESSAGES/messages.po y volver a ejecutarlo.
 """
 from flask import current_app, has_request_context, request
 from flask_babel import get_locale, gettext
@@ -20,6 +17,9 @@ from flask_login import current_user
 
 LANGUAGES = {"es": "Español", "en": "English"}
 DEFAULT = "es"
+# Palabras clave que marcan textos traducibles, además de las de Babel
+# (_, gettext, ngettext, pgettext...). tools/i18n_update.py y los tests las usan.
+EXTRACT_KEYWORDS = ["_l", "N_", "lazy_gettext", "lazy_pgettext:1c,2", "_lp:1c,2"]
 
 
 def enabled():

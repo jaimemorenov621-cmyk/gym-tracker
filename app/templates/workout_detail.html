@@ -138,9 +138,9 @@
                         {{ macros.icon('note') }} {{ _('notas') }}{% if n and n.default_rest_seconds %} · {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) }}{% endif %}
                     </a>
                     <button type="button" class="btn-icon" title="{{ _('Reemplazar ejercicio') }}" aria-label="{{ _('Reemplazar ejercicio') }}"
-                        onclick="openExercisePicker('{{ url_for('replace_workout_exercise', workout_id=workout.id) }}', {old_exercise: '{{ exercise }}'})">{{ macros.icon('repeat') }}</button>
+                        onclick="openExercisePicker('{{ url_for('replace_workout_exercise', workout_id=workout.id) }}', {old_exercise: {{ exercise|tojson|forceescape }}})">{{ macros.icon('repeat') }}</button>
                     <button type="button" class="btn-icon" title="{{ _('Eliminar ejercicio') }}" aria-label="{{ _('Eliminar ejercicio') }}"
-                        onclick="deleteWorkoutExercise('{{ exercise }}')">{{ macros.icon('trash') }}</button>
+                        onclick="deleteWorkoutExercise({{ exercise|tojson|forceescape }})">{{ macros.icon('trash') }}</button>
                 </span>
             </div>
             {% if n and n.notes %}
@@ -176,7 +176,7 @@
                         {% if effort_scale != 'none' %}
                         {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
                         {% set effort_ghost = (effort_val == '' and p and p.effort is not none and p.effort_scale == effort_scale) %}
-                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', '{{ exercise|title }} · {{ _('Serie %(n)s', n=loop.index) }}')">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
+                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', {{ (exercise|title ~ ' · ' ~ _('Serie %(n)s', n=loop.index))|tojson|forceescape }})">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
                         {% endif %}
                         {% set st = s.set_type if s.set_type in type_short else 'normal' %}
                         <td>
@@ -186,7 +186,7 @@
                                 <span class="set-type-long">{{ type_label[st] }}</span>
                             </button>
                         </td>
-                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" aria-label="{{ _('Marcar serie como hecha') }}" onclick="toggleSetComplete({{ s.id }}, this, '{{ exercise }}')">{{ macros.icon('check', 18) }}</button></td>
+                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" aria-label="{{ _('Marcar serie como hecha') }}" onclick="toggleSetComplete({{ s.id }}, this, {{ exercise|tojson|forceescape }})">{{ macros.icon('check', 18) }}</button></td>
                         <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})" aria-label="{{ _('Eliminar serie') }}">{{ macros.icon('trash') }}</button></td>
                     </tr>
                     {% endfor %}
@@ -194,7 +194,7 @@
             </table>
             <div class="swipe-delete-zone"><button type="button" aria-label="{{ _('Eliminar serie') }}">{{ macros.icon('trash') }}</button></div>
             </div>
-            <button type="button" class="btn-outline" onclick="addSet('{{ exercise }}')">{{ _("+ Agregar serie") }}</button>
+            <button type="button" class="btn-outline" onclick="addSet({{ exercise|tojson|forceescape }})">{{ _("+ Agregar serie") }}</button>
         </div>
     {% endfor %}
     </div>
@@ -598,7 +598,7 @@
                     && !lastEffortBtn.classList.contains('effort-chip-placeholder')
                     ? lastEffortBtn.textContent.trim() : '';
                 {% endif %}
-                lastType = last.querySelector('select').value;
+                lastType = last.dataset.setType || 'normal';
             }
 
             fetch("{{ url_for('api_create_set', workout_id=workout.id) }}", {

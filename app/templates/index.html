@@ -30,7 +30,7 @@
                     {% if r %}
                         <span class="calm-next">
                             {{ macros.icon('calendar', 13) }}
-                            {% if home_cta.kind == 'rest' and home_cta.next_day %}{{ home_cta.next_day|capitalize }}{% else %}{{ _("Próximo") }}{% endif %} · {{ r.name }}
+                            {% if home_cta.kind == 'rest' and home_cta.next_day %}{{ home_cta.next_day|ucfirst }}{% else %}{{ _("Próximo") }}{% endif %} · {{ r.name }}
                         </span>
                     {% endif %}
                 </span>
@@ -293,7 +293,7 @@
                     <strong class="dash-tile-value">{{ latest_weight.weight|num }}<small> {{ _("kg") }}</small></strong>
                     <span class="dash-tile-sub">
                         {% if pace.rate %}{{ _('%(kg)s kg/sem', kg=('+' if pace.rate.kg_week > 0 else '') ~ pace.rate.kg_week|num(2)) }}{% if pace.phase_info %} · <span class="pace-{{ pace.status }}">{{ {'ok': _('buen ritmo'), 'fast': _('muy rápido'), 'slow': _('lento'), 'wrong': _('al revés')}[pace.status] if pace.status in ('ok', 'fast', 'slow', 'wrong') else '' }}</span>{% endif %}
-                        {% elif weight_change is not none %}{{ '▲ +' if weight_change > 0 else ('▼ ' if weight_change < 0 else '= ') }}{{ _('%(kg)s kg en 30 días', kg=weight_change|num) }}{% else %}{{ latest_weight.timestamp|relative_day|capitalize }}{% endif %}
+                        {% elif weight_change is not none %}{{ '▲ +' if weight_change > 0 else ('▼ ' if weight_change < 0 else '= ') }}{{ _('%(kg)s kg en 30 días', kg=weight_change|num) }}{% else %}{{ latest_weight.timestamp|relative_day|ucfirst }}{% endif %}
                     </span>
                 {% else %}
                     <strong class="dash-tile-value is-empty">—</strong>

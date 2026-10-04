@@ -97,6 +97,23 @@ class SocialTests(DbTestCase):
         self.assertNotIn("Nivel</small>", seen)
         self.assertNotIn("oculto para tus amigos", seen)
 
+    def test_card_does_not_leak_bodyweight_or_hidden_rank(self):
+        """Con el peso oculto, el 1RM de dominadas (peso + lastre) no se
+        enseña; con el rango oculto, tampoco el de cada levantamiento."""
+        self.befriend(self.ana, self.bea)
+        self.lift(self.bea, "dominadas", 10, 3)
+        self.lift(self.bea, "press de banca", 100, 3)
+        self.login(self.bea)
+        self.client.post("/rango/tarjeta", data={"in_rankings": "on", "show_kg": "on",
+                                                 "lift": ["dominadas", "press de banca"]})
+        own = self.client.get(f"/atleta/{self.bea}").get_data(as_text=True)
+        self.assertEqual(own.count("1RM est."), 2)  # ella lo ve todo
+        self.login(self.ana)
+        seen = self.client.get(f"/atleta/{self.bea}").get_data(as_text=True)
+        self.assertIn("10 × 1", seen)
+        self.assertEqual(seen.count("1RM est."), 1)  # solo el de banca
+        self.assertNotIn("rank-emblem", seen)
+
     def test_rankings_only_friends_and_opt_out(self):
         self.befriend(self.ana, self.bea)
         for uid, kg in ((self.ana, 100), (self.bea, 120), (self.carl, 200)):

@@ -60,7 +60,7 @@
                 </span>
             </span>
             <span class="finish-xp-week">{{ ngettext('%(num)d día esta semana (mín. %(min)s)', '%(num)d días esta semana (mín. %(min)s)', xp_preview.week_days, min=xp_preview.minimum) }}</span>
-            {% if x.notes %}<small class="finish-xp-note">{{ x.notes|join(' · ')|capitalize }}.</small>{% endif %}
+            {% if x.notes %}<small class="finish-xp-note">{{ x.notes|join(' · ')|ucfirst }}.</small>{% endif %}
         </a>
     {% endif %}
 

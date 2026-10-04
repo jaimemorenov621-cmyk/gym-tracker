@@ -48,7 +48,7 @@
                         <strong>{{ '???' if hidden else it.a.title }}</strong>
                         <p>{{ _('Logro secreto. Sigue entrenando…') if hidden else it.a.desc }}</p>
                         {% if it.unlocked %}
-                            <small class="achv-date">✓ {{ it.unlocked_at|relative_day|capitalize }}</small>
+                            <small class="achv-date">✓ {{ it.unlocked_at|relative_day|ucfirst }}</small>
                         {% elif it.target and not hidden %}
                             <div class="achv-bar"><span style="width: {{ it.pct }}%"></span></div>
                             <small>{{ it.progress }}</small>

@@ -285,7 +285,7 @@
             return false;
         }
 
-        let currentTimerExercise = "{{ just_added or '' }}";
+        let currentTimerExercise = {{ (just_added or '')|tojson }};
         let restTotalSeconds = parseInt(localStorage.getItem('restTotalSeconds')) || 0;
         const hasActiveWorkout = {{ 'true' if active_workout else 'false' }};
         const restSoundEnabled = {{ current_user.rest_sound_enabled|tojson if current_user.is_authenticated else 'true' }};

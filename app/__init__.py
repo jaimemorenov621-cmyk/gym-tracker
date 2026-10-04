@@ -34,6 +34,9 @@ app.jinja_env.globals["get_exercise_image"] = get_exercise_image
 app.jinja_env.globals["to_local"] = to_local
 app.jinja_env.filters["num"] = fmt_num
 app.jinja_env.filters["relative_day"] = relative_day
+# Primera letra en mayúscula sin tocar el resto ("capitalize" de Jinja pone
+# el resto en minúscula: "XP" -> "xp", "on Monday" -> "On monday").
+app.jinja_env.filters["ucfirst"] = lambda s: (str(s)[:1].upper() + str(s)[1:]) if s else s
 app.jinja_env.globals["reps_range"] = routes.reps_range
 app.jinja_env.globals["LANGUAGES"] = i18n.LANGUAGES
 app.jinja_env.globals["i18n_enabled"] = i18n.enabled
