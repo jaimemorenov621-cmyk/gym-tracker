@@ -4,9 +4,12 @@
     <p class="page-back"><a href="{{ url_for('rank_page') }}#basicos">← Rango</a></p>
     <h1 class="page-title">Tus básicos</h1>
     <p class="alias-intro">
-        Marca hasta {{ max_basics }} ejercicios que quieras seguir de cerca. Los que tienen tabla de estándares
-        (<span class="pbasics-tag">rango</span>) muestran tu rango; el resto, tu progresión.
+        Marca hasta {{ max_basics }} ejercicios que quieras seguir de cerca en la pestaña Rango. <b>No cambia tu
+        rango global</b> (sale siempre de los básicos clásicos): solo añade su seguimiento. Los que cuentan para una
+        tabla de estándares muestran <b>su propio rango</b>; el resto, tu progresión.
     </p>
+    <p class="alias-intro">Aparecen tal y como los escribiste. Si ves dos nombres para el mismo ejercicio, son
+        historiales distintos: elige el que uses ahora (verás cuántas sesiones tiene cada uno).</p>
     {% if items %}
         <form method="post" class="card card-elevated pbasics-form">
             {{ form.hidden_tag() }}
@@ -15,8 +18,14 @@
                     <li>
                         <label>
                             <input type="checkbox" name="exercise" value="{{ it.exercise }}"{% if it.checked %} checked{% endif %}>
-                            <span>{{ it.exercise|title }}</span>
-                            {% if it.has_table %}<span class="pbasics-tag">rango</span>{% endif %}
+                            <span class="pbasics-pick-name">
+                                <strong>{{ it.exercise|title }}</strong>
+                                <small>
+                                    {% if it.stats %}{{ it.stats.sessions }} sesi{{ 'ón' if it.stats.sessions == 1 else 'ones' }} · {{ it.stats.last_trained|relative_day }}{% endif %}
+                                    {% if it.counts_as %} · cuenta como {{ it.counts_as|lower }}{% endif %}
+                                </small>
+                            </span>
+                            <span class="pbasics-tag{% if not it.counts_as %} is-progress{% endif %}">{{ 'rango' if it.counts_as else 'progresión' }}</span>
                         </label>
                     </li>
                 {% endfor %}

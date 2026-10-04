@@ -17,7 +17,7 @@
                 <div class="rank-hero-bar" aria-hidden="true"><i data-pct="{{ r.pct }}" data-label="{{ r.label }}" style="width: {{ r.pct }}%"></i></div>
                 <span class="rank-hero-next">{{ r.pct }} % hacia {{ next_label }}</span>
             {% else %}
-                <span class="rank-hero-next">Rango máximo: nivel de récord mundial.</span>
+                <span class="rank-hero-next">Rango máximo: nivel de competición.</span>
             {% endif %}
             <span class="rank-hero-sub">Media de {{ profile.basics_counted }} básico{{ '' if profile.basics_counted == 1 else 's' }} · últimos {{ standards.RANK_WINDOW_DAYS }} días</span>
         {% else %}

@@ -57,7 +57,21 @@ class PersonalBasicsTests(DbTestCase):
         self.assertIn("Tus básicos", html)
         self.assertIn("+10 %", html)        # prensa: sin tabla, su progresión (150 -> 165)
         self.assertIn("aprox.", html)       # remo en Smith: rango con tabla aproximada
-        self.assertIn("rank-oro", html)     # 90 kg con 80 kg de peso = Intermedio en remo
+        self.assertIn("rank-platino", html)  # 90 kg con 80 kg de peso = Intermedio en remo
+
+    def test_each_name_has_its_own_rank(self):
+        with app.app_context():
+            db.session.get(User, self.uid).sex = "hombre"
+            db.session.add(BodyWeightEntry(user_id=self.uid, weight=80, timestamp=self.NOW - timedelta(days=30)))
+            db.session.commit()
+        self.lift("press banca", 120, 5)
+        self.lift("press de banca con pausa", 60, 4)
+        self.lift("press de banca ligero técnico", 40, 3)
+        from app import strength_standards as std
+        with app.app_context():
+            ranks = std.strength_profile(db.session.get(User, self.uid))["exercise_ranks"]
+        self.assertNotEqual(ranks["press banca"]["key"], ranks["press de banca con pausa"]["key"])
+        self.assertNotIn("press de banca ligero técnico", ranks)  # serie técnica: no es "el" levantamiento
 
     def test_rename_and_delete_user_keep_it_consistent(self):
         from app.routes import rename_exercise_everywhere

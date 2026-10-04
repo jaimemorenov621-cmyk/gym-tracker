@@ -282,6 +282,11 @@ _COMMON_EXCLUDE = (
     "mancuerna", "dumbbell", "kettlebell", "pesa rusa", "smith", "multipower", "maquina", "machine",
     "banda", "band", "cadena", "chain", "landmine", "unilateral", "una pierna", "un brazo",
     "single", "one arm", "one-arm", "one leg",
+    # Series que por definición no van al máximo: no son "ese levantamiento"
+    # a efectos de nivel (p. ej. "press de banca ligero técnico").
+    "ligero", "ligera", "tecnic", "light", "technique", "tempo", "calentamiento", "warm",
+    "descarga", "deload", "activacion", "movilidad", "velocidad", "speed", "dinamic",
+    "isometric", "parcial", "partial", "larsen", "pies arriba", "feet up",
 )
 _LIFT_EXCLUDE = {
     "bench": ("inclinad", "incline", "declinad", "decline", "agarre cerrado", "agarre estrecho", "close",
@@ -296,8 +301,10 @@ _LIFT_EXCLUDE = {
     "press": ("sentado", "seated", "arnold", "push press", "tras nuca", "behind", "nuca"),
     "row": ("polea", "cable", "barra t", "en t", "t-bar", "t bar", "seal", "menton", "upright", "invertido",
             "inverted", "australian"),
-    "pullup": ("asistida", "assisted", "negativa", "negative", "invertida", "australian", "jalon"),
-    "pulldown": ("brazos rectos", "straight arm", "straight-arm", "tras nuca", "behind", "pullover"),
+    "pullup": ("asistida", "assisted", "negativa", "negative", "invertida", "australian", "jalon",
+               "supin", "chin up", "chin-up", "chinup"),  # las supinas tienen otra tabla
+    "pulldown": ("brazos rectos", "straight arm", "straight-arm", "tras nuca", "behind", "pullover",
+                 "estrech", "cerrad", "close", "supin", "neutr", "triangulo", "v-bar", "v bar"),
 }
 
 
@@ -403,35 +410,35 @@ def level_index(e1rm, ths):
 # dejas de entrenar un levantamiento, como en un juego por temporadas.
 # Puntuación: 0 = umbral de Principiante, 1 = Novato, 2 = Intermedio,
 # 3 = Avanzado, 4 = Élite; por encima, tramos de la anchura Avanzado->Élite.
-# Los rangos altos son más estrechos para que haya progresión visible donde
-# más cuesta subir:
+# Titán es el nivel de competición (Élite) y quien es Avanzado está a uno o
+# dos rangos de la cima (antes Avanzado quedaba en Diamante, con 3 rangos
+# por delante, y parecía que le faltaba mucho). Desde Novato, tramos de
+# medio nivel para que haya progresión visible:
 #   Hierro    < 0      por debajo de Principiante
 #   Bronce    0-1      Principiante
-#   Plata     1-2      Novato
-#   Oro       2-2,5    Intermedio
-#   Platino   2,5-3    Intermedio alto
-#   Diamante  3-3,5    Avanzado reciente
-#   Esmeralda 3,5-4    Avanzado consolidado
-#   Campeón   4-7      Élite (nivel de competición; cada división, un tramo más)
-#   Titán     7 o más  en torno al récord mundial de las tablas de ExRx
-#                      (comprobado para 82 kg: banca 253 kg frente a 252,
-#                      peso muerto 397 frente a 404). Casi inalcanzable a propósito.
+#   Plata     1-1,5    Novato
+#   Oro       1,5-2    Novato alto
+#   Platino   2-2,5    Intermedio
+#   Diamante  2,5-3    Intermedio alto
+#   Esmeralda 3-3,5    Avanzado
+#   Campeón   3,5-4    Avanzado alto (a las puertas de Élite)
+#   Titán     4 o más  Élite: nivel de competición
 # Cada rango (salvo Titán) tiene divisiones I < II < III, en tercios.
 RANK_WINDOW_DAYS = 90
 RANKS = ["Hierro", "Bronce", "Plata", "Oro", "Platino", "Diamante", "Esmeralda", "Campeón", "Titán"]
 RANK_KEYS = ["hierro", "bronce", "plata", "oro", "platino", "diamante", "esmeralda", "campeon", "titan"]
-RANK_BOUNDS = [0, 1, 2, 2.5, 3, 3.5, 4, 7]  # dónde empieza cada rango a partir de Bronce
+RANK_BOUNDS = [0, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # dónde empieza cada rango a partir de Bronce
 TOP_TIER = len(RANKS) - 1
 RANK_RANGES = [
     "por debajo de Principiante",
     "Principiante",
     "Novato",
+    "Novato alto",
     "Intermedio",
     "Intermedio alto",
-    "Avanzado (recién llegado)",
-    "Avanzado consolidado",
+    "Avanzado",
+    "Avanzado alto (a las puertas de Élite)",
     "Élite: nivel de competición",
-    "en torno al récord mundial",
 ]
 _ROMAN = {1: "I", 2: "II", 3: "III"}
 
@@ -607,6 +614,7 @@ def strength_profile(user, rows=None, weights=None, now=None):
     # Mejor e1RM válido por sesión (entreno) y levantamiento; y mejor carga
     # real levantada (para los hitos de discos, cualquier nº de reps).
     sessions = defaultdict(dict)  # lift -> {workout_id: (timestamp, e1rm, entry)}
+    by_name = defaultdict(list)    # nombre exacto del ejercicio -> [(timestamp, e1rm)]
     max_weight = defaultdict(float)
     from app.routes import is_real_set
 
@@ -625,6 +633,7 @@ def strength_profile(user, rows=None, weights=None, now=None):
             e1rm = _valid_e1rm(s)
         if e1rm is None:
             continue
+        by_name[s.exercise].append((w.timestamp, e1rm))
         prev = sessions[lift].get(w.id)
         if prev is None or e1rm > prev[1]:
             sessions[lift][w.id] = (w.timestamp, e1rm)
@@ -747,8 +756,20 @@ def strength_profile(user, rows=None, weights=None, now=None):
         if mean - counted[weakest] >= 1:
             lagging = BASIC_LABELS[weakest]
 
+    # Rango de cada NOMBRE de ejercicio por separado (básicos personales):
+    # "press banca" y "press de banca con pausa" pueden tener rangos distintos.
+    exercise_ranks = {}
+    if sex and latest_bw:
+        for name, items in by_name.items():
+            lift = lift_cache[name]
+            window = [e for ts, e in items if now - ts <= timedelta(days=RANK_WINDOW_DAYS)]
+            ths = thresholds(sex, lift, latest_bw)
+            if window and ths:
+                exercise_ranks[name] = rank_for(strength_score(_load(lift, max(window), latest_bw), ths))
+
     return {
         "global_rank": global_rank,
+        "exercise_ranks": exercise_ranks,
         "rank_missing": rank_missing,
         "basics_counted": len(counted),
         "lagging": lagging,

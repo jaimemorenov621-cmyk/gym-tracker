@@ -62,6 +62,8 @@ class LiftDetectionTests(unittest.TestCase):
             "goblet squat", "prensa", "peso muerto rumano con mancuernas", "romanian deadlift dumbbell",
             "sentadilla búlgara en smith", "peso muerto rumano a una pierna",
             "peso muerto piernas rígidas", "trap bar deadlift", "press militar sentado",
+            "press de banca ligero técnico", "sentadilla tempo", "press banca calentamiento",
+            "dominadas supinas", "jalón agarre estrecho", "jalón supino",
             "press militar con mancuernas", "push press", "press inclinado",
         ):
             self.assertIsNone(std.lift_of(name), name)
@@ -271,28 +273,29 @@ class RankMathTests(unittest.TestCase):
         self.assertEqual(label(-0.5), "Hierro II")
         self.assertEqual(label(0), "Bronce I")
         self.assertEqual(label(0.34), "Bronce II")
-        self.assertEqual(label(2.2), "Oro II")          # Intermedio
-        self.assertEqual(label(2.7), "Platino II")      # Intermedio alto
-        self.assertEqual(label(3.1), "Diamante I")      # Avanzado reciente
-        self.assertEqual(label(3.9), "Esmeralda III")   # Avanzado consolidado
-        self.assertEqual(label(4), "Campeón I")         # Élite
-        self.assertEqual(label(6.5), "Campeón III")
-        self.assertEqual(label(7), "Titán")
-        self.assertEqual(std.next_rank_label(std.rank_for(2.7)), "Platino III")
-        self.assertEqual(std.next_rank_label(std.rank_for(3.9)), "Campeón I")
-        self.assertEqual(std.next_rank_label(std.rank_for(6.9)), "Titán")
-        self.assertIsNone(std.next_rank_label(std.rank_for(8)))
+        self.assertEqual(label(1.2), "Plata II")        # Novato
+        self.assertEqual(label(1.9), "Oro III")         # Novato alto
+        self.assertEqual(label(2.2), "Platino II")      # Intermedio
+        self.assertEqual(label(2.7), "Diamante II")     # Intermedio alto
+        self.assertEqual(label(3.1), "Esmeralda I")     # Avanzado
+        self.assertEqual(label(3.9), "Campeón III")     # Avanzado alto
+        self.assertEqual(label(4), "Titán")             # Élite: competición
+        self.assertEqual(label(6.5), "Titán")
+        self.assertEqual(std.next_rank_label(std.rank_for(2.7)), "Diamante III")
+        self.assertEqual(std.next_rank_label(std.rank_for(3.4)), "Campeón I")
+        self.assertEqual(std.next_rank_label(std.rank_for(3.9)), "Titán")
+        self.assertIsNone(std.next_rank_label(std.rank_for(5)))
 
     def test_next_score_is_the_next_division(self):
-        for score in (-0.7, 0.2, 2.1, 2.6, 3.4, 3.6, 4.5):
+        for score in (-0.7, 0.2, 1.2, 2.1, 2.6, 3.4, 3.6, 3.95):
             r = std.rank_for(score)
             nxt = std.rank_for(r["next_score"] + 1e-9)
             self.assertEqual(nxt["label"], std.next_rank_label(r), score)
 
-    def test_titan_is_around_the_world_record(self):
-        # Banca, hombre de 82 kg: ExRx da un récord mundial de 556 lb (≈ 252 kg).
+    def test_titan_is_elite(self):
         ths = std.thresholds("hombre", "bench", 82)
-        self.assertAlmostEqual(std.kg_for_score(7, ths), 252, delta=6)
+        self.assertEqual(std.rank_for(std.strength_score(ths[4], ths))["name"], "Titán")
+        self.assertEqual(std.rank_for(std.strength_score(ths[3], ths))["name"], "Esmeralda")  # Avanzado
 
 
 class RankProfileTests(_LifterCase):
@@ -333,7 +336,7 @@ class RankProfileTests(_LifterCase):
         self.lift("press de banca", 100, self.T0)
         bench = self.profile()["lifts"]["bench"]
         ths = std.thresholds("hombre", "bench", 82)
-        self.assertEqual(bench["rank"]["name"], "Oro")
+        self.assertEqual(bench["rank"]["name"], "Platino")  # Intermedio
         self.assertAlmostEqual(bench["rank_missing_kg"], bench["rank_next_kg"] - 100)
         self.assertAlmostEqual(std.strength_score(bench["rank_next_kg"], ths), bench["rank"]["next_score"])
 
@@ -374,7 +377,7 @@ class PullupAndGlobalTests(_LifterCase):
         pull = self.profile()["lifts"]["pullup"]
         self.assertAlmostEqual(pull["rank_e1rm"], 80 / 0.739 - 80, places=3)
         self.assertEqual(pull["reached"], 1)
-        self.assertEqual(pull["rank"]["name"], "Plata")
+        self.assertEqual(pull["rank"]["name"], "Oro")  # Novato alto
         self.assertIsNone(pull["ratio"])
 
     def test_vertical_pull_is_the_best_of_pullups_and_pulldown(self):

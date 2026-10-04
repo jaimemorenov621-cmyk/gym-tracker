@@ -1757,12 +1757,11 @@ def personal_basics_data(user, profile):
     for name in names:
         sessions = sessions_from_rows(by_exercise.get(name, []))
         lift = standards.lift_of(name)
-        info = profile["lifts"].get(lift) if lift else None
         recent = [s["best_1rm"] for s in qualifying_sessions(sessions)][-12:]
         items.append({
             "exercise": name,
             "lift": lift,
-            "rank": info["rank"] if info else None,
+            "rank": profile["exercise_ranks"].get(name),
             "approx": lift in standards.APPROX_TABLE,
             "stats": exercise_stats(sessions, user.stagnation_threshold),
             "spark": sparkline_points(recent),
@@ -1793,8 +1792,17 @@ def personal_basics():
         db.session.commit()
         return redirect(url_for("rank_page") + "#basicos")
     # Primero los elegidos (en su orden), luego el resto por último entrenado.
+    # Con cuántas sesiones y cuándo, para distinguir nombres parecidos
+    # ("press banca" / "press de banca"), y a qué tabla cuenta cada uno.
+    stats = {item["exercise"]: item for item in overview}
     order = chosen + [n for n in available if n not in chosen]
-    items = [{"exercise": n, "checked": n in chosen, "has_table": bool(standards.lift_of(n))} for n in order]
+    items = []
+    for n in order:
+        lift = standards.lift_of(n)
+        items.append({
+            "exercise": n, "checked": n in chosen, "stats": stats.get(n),
+            "counts_as": standards.LIFT_LABELS[lift] if lift else None,
+        })
     return render_template("personal_basics.html", title="Tus básicos", form=form, items=items,
                            max_basics=MAX_PERSONAL_BASICS)
 
