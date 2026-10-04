@@ -1,0 +1,25 @@
+{# Tarjetas del historial por semana (Inicio y /historial). #}
+    {% for group in grouped %}
+        <h3 class="week-divider">Semana {{ group.label }}</h3>
+        {% for item in group.workouts %}
+            <a class="workout-card" href="{{ url_for('workout_detail', workout_id=item.workout.id) }}">
+                <span class="wc-date">{{ to_local(item.workout.timestamp).strftime('%d/%m/%Y · %H:%M') }}</span>
+                <span class="wc-title">{{ item.workout.note or "Entrenamiento" }}</span>
+                {% if item.exercise_names %}
+                    <div class="wc-exercises">
+                        {% for name in item.exercise_names[:4] %}
+                            <span class="pill">{{ name }}</span>
+                        {% endfor %}
+                        {% if item.exercise_names|length > 4 %}
+                            <span class="pill pill-muted">+{{ item.exercise_names|length - 4 }}</span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                <div class="wc-meta">
+                    {% if item.duration %}{{ macros.icon('stopwatch', 14) }} {{ item.duration }} · {% endif %}🏋️ {{ item.volume|num(0) }} kg volumen
+                </div>
+            </a>
+        {% endfor %}
+    {% else %}
+        <p><em>Todavía no has registrado ningún entrenamiento.</em></p>
+    {% endfor %}

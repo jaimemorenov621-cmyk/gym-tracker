@@ -139,7 +139,7 @@
 
         // Insignia de nivel (y rango con su emblema), ventaja a partir del nivel 10.
         if (d.badge) {
-            const emblem = d.rank_key ? await loadImage('/static/ranks/' + d.rank_key + '.svg') : null;
+            const emblem = d.rank_key ? await loadImage('/static/ranks/' + d.rank_key + '-512.webp') : null;
             const es_ = emblem ? 84 : 0;
             ctx.font = '800 38px ' + FONT;
             setSpacing(ctx, 4);

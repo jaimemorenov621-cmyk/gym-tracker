@@ -9,7 +9,7 @@
             {% set r = profile.global_rank %}
             <div class="rank-hero-emblem">
                 <span class="rank-hero-glow" aria-hidden="true"></span>
-                {{ macros.rank_emblem(r.key, 168, r.division) }}
+                {{ macros.rank_emblem(r.key, 168, r.division, eager=True) }}
             </div>
             <span class="rank-hero-kicker">Tu rango global</span>
             <strong class="rank-hero-name">{{ r.label }}</strong>
@@ -21,7 +21,7 @@
             {% endif %}
             <span class="rank-hero-sub">Media de {{ profile.basics_counted }} básico{{ '' if profile.basics_counted == 1 else 's' }} · últimos {{ standards.RANK_WINDOW_DAYS }} días</span>
         {% else %}
-            <div class="rank-hero-emblem is-locked">{{ macros.rank_emblem('hierro', 140, 1) }}</div>
+            <div class="rank-hero-emblem is-locked">{{ macros.rank_emblem('hierro', 140, 1, eager=True) }}</div>
             <strong class="rank-hero-name">Aún sin rango</strong>
             <span class="rank-hero-sub">Necesitas al menos {{ standards.MIN_BASICS_FOR_GLOBAL }} básicos con series de los últimos {{ standards.RANK_WINDOW_DAYS }} días{% if profile.missing %}, y tu {{ profile.missing|join(' y tu ') }}{% endif %}.</span>
         {% endif %}
@@ -33,7 +33,7 @@
         {% for key in standards.RANK_KEYS %}
             {% set tier = loop.index0 %}
             <div class="rank-showcase-item{% if tier > current_tier %} is-locked{% elif tier == current_tier %} is-current{% endif %}">
-                {{ macros.rank_emblem(key, 64, profile.global_rank.division if tier == current_tier else 3) }}
+                {{ macros.rank_emblem(key, 64, profile.global_rank.division if tier == current_tier else 3, eager=True) }}
                 {% if tier > current_tier %}<span class="rank-lock" aria-hidden="true">🔒</span>{% endif %}
                 <small>{{ standards.RANKS[tier] }}</small>
             </div>

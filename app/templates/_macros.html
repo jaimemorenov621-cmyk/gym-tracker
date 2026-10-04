@@ -6,7 +6,10 @@
 
 {# Emblema de rango: cada división (I, II, III) tiene su versión, más
 adornada cuanto más alta; Titán es uno solo. #}
-{% macro rank_emblem(key, size=28, division=3) %}<img class="rank-emblem" src="{{ url_for('static', filename='ranks/' ~ (key if key == 'titan' else key ~ '-' ~ (division or 3)) ~ '.svg') }}" width="{{ size }}" height="{{ size }}" alt="">{% endmacro %}
+{# Emblema de rango: WebP prerenderizado (tools/rasterize_rank_emblems.py) en
+   128/256/512 px; el navegador elige según el tamaño y la densidad de pantalla.
+   Pintar los SVG con filtros en cada pestaña era lento en el móvil. #}
+{% macro rank_emblem(key, size=28, division=3, eager=False) %}{% set base = 'ranks/' ~ (key if key == 'titan' else key ~ '-' ~ (division or 3)) %}<img class="rank-emblem" src="{{ url_for('static', filename=base ~ '-256.webp') }}" srcset="{{ url_for('static', filename=base ~ '-128.webp') }} 128w, {{ url_for('static', filename=base ~ '-256.webp') }} 256w, {{ url_for('static', filename=base ~ '-512.webp') }} 512w" sizes="{{ size }}px" width="{{ size }}" height="{{ size }}" decoding="async"{% if not eager %} loading="lazy"{% endif %} alt="">{% endmacro %}
 
 {# Título de pestaña: una línea compacta con el icono de la pestaña (el mismo
 de la barra inferior) en un cuadro de color, para que se lea como título. #}

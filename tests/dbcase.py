@@ -40,6 +40,9 @@ class DbTestCase(unittest.TestCase):
         app.config["WTF_CSRF_ENABLED"] = cls._csrf
 
     def setUp(self):
+        from app import datacache
+
+        datacache.clear()  # los ids se repiten entre tests
         self.client = app.test_client()
 
     def tearDown(self):

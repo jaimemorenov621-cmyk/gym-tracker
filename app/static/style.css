@@ -4121,3 +4121,9 @@ a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: upperca
 .pbasics-pick input:disabled + .pbasics-pick-name strong { color: var(--color-text-muted); }
 :root[data-theme="dark"] .pbasics-side b.up { color: #5cf0b4; }
 :root[data-theme="dark"] .pbasics-side b.down { color: #ff8a8a; }
+
+/* Historial: Inicio enseña los últimos entrenos; el resto en /historial */
+.history-more { display: flex; justify-content: center; margin: 4px 0 18px; text-decoration: none; }
+.history-count { font-size: 0.85rem; font-weight: 600; color: var(--color-text-muted); }
+.history-pager { display: flex; justify-content: space-between; gap: 10px; margin: 12px 0 20px; }
+.history-pager a { text-decoration: none; }

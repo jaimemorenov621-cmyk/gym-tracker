@@ -202,7 +202,7 @@
                 <div class="rank-celebration-emblem">
                     <span class="rank-celebration-rays" aria-hidden="true"></span>
                     {% for i in range(14) %}<i class="rank-spark" style="--a: {{ i * 360 / 14 }}deg; --d: {{ 0.15 + (i % 4) * 0.08 }}s"></i>{% endfor %}
-                    {{ macros.rank_emblem(r.key, 190, r.division) }}
+                    {{ macros.rank_emblem(r.key, 190, r.division, eager=True) }}
                 </div>
                 <small>{{ '¡Has subido de rango!' if rank_event == 'up' else 'Tu rango de fuerza' }}</small>
                 <strong id="rankCelebrationTitle">{{ r.label }}</strong>
@@ -294,7 +294,7 @@
         {# Nivel: después de lo profesional (mosaicas), nunca en su lugar. #}
         <a class="dash-level-link" href="{{ url_for('rank_page') }}">
             <span class="dash-level-top">
-                <span><b>Nivel {{ xp.level }}</b> · {% if profile.global_rank %}<span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 22, profile.global_rank.division) }}<span class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</span></span>{% else %}Rango: sin datos{% endif %}</span>
+                <span><b>Nivel {{ xp.level }}</b> · {% if profile.global_rank %}<span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 22, profile.global_rank.division, eager=True) }}<span class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</span></span>{% else %}Rango: sin datos{% endif %}</span>
                 <span class="dash-level-next">faltan {{ xp.to_next|num }} XP {{ macros.icon('chevron-right', 16) }}</span>
             </span>
             <span class="dash-level-bar" aria-hidden="true"><i style="width: {{ xp.pct }}%"></i></span>
@@ -375,30 +375,10 @@
         </div>
     </div>
 
-    {% for group in grouped %}
-        <h3 class="week-divider">Semana {{ group.label }}</h3>
-        {% for item in group.workouts %}
-            <a class="workout-card" href="{{ url_for('workout_detail', workout_id=item.workout.id) }}">
-                <span class="wc-date">{{ to_local(item.workout.timestamp).strftime('%d/%m/%Y · %H:%M') }}</span>
-                <span class="wc-title">{{ item.workout.note or "Entrenamiento" }}</span>
-                {% if item.exercise_names %}
-                    <div class="wc-exercises">
-                        {% for name in item.exercise_names[:4] %}
-                            <span class="pill">{{ name }}</span>
-                        {% endfor %}
-                        {% if item.exercise_names|length > 4 %}
-                            <span class="pill pill-muted">+{{ item.exercise_names|length - 4 }}</span>
-                        {% endif %}
-                    </div>
-                {% endif %}
-                <div class="wc-meta">
-                    {% if item.duration %}{{ macros.icon('stopwatch', 14) }} {{ item.duration }} · {% endif %}🏋️ {{ item.volume|num(0) }} kg volumen
-                </div>
-            </a>
-        {% endfor %}
-    {% else %}
-        <p><em>Todavía no has registrado ningún entrenamiento.</em></p>
-    {% endfor %}
+    {% include "_workout_history.html" %}
+    {% if total_workouts > grouped|map(attribute='workouts')|map('length')|sum %}
+        <a class="btn-outline history-more" href="{{ url_for('history') }}">Ver todo el historial ({{ total_workouts }} entrenos)</a>
+    {% endif %}
 
     {% if request.args.get('celebrate') %}
     <script>

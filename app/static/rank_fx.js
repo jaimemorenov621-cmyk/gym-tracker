@@ -8,7 +8,7 @@
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function emblemSrc(rank) {
-        return '/static/ranks/' + rank.file + '.svg';
+        return '/static/ranks/' + rank.file + '-512.webp';
     }
 
     window.showRankCelebration = function (rank) {

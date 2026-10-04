@@ -499,6 +499,31 @@ def sparkles(m, points):
     return "".join(out)
 
 
+CROWN_GLINT = (128, 18, 7)
+# Destellos: puntos donde el metal brilla, por orden de importancia. Cada
+# emblema enciende los primeros N (más cuanto más alto el rango y la división).
+GLINTS = [(100, 90, 7.5), (186, 52, 6.5), CROWN_GLINT, (70, 56, 5.5), (152, 150, 5.5), (44, 64, 6),
+          (212, 64, 6), (58, 170, 5), (198, 168, 5), (128, 196, 6), (24, 40, 4.5), (232, 40, 4.5)]
+
+
+def glints(m, count, crown=True):
+    """Destellos de cuatro puntas con halo suave (color especular del
+    material). Sin corona no hay brillo en la punta de arriba."""
+    spec = m["specular"]
+    points = [g for g in GLINTS if crown or g != CROWN_GLINT]
+    out = []
+    for x, y, r in points[:count]:
+        r *= 1.4
+        star = (f"M{x} {n(y - r)}Q{n(x + r * 0.12)} {n(y - r * 0.12)} {n(x + r)} {y}Q{n(x + r * 0.12)} {n(y + r * 0.12)} {x} {n(y + r)}"
+                f"Q{n(x - r * 0.12)} {n(y + r * 0.12)} {n(x - r)} {y}Q{n(x - r * 0.12)} {n(y - r * 0.12)} {x} {n(y - r)}Z")
+        small = r * 0.45
+        diag = (f"M{n(x - small)} {n(y - small)}L{n(x + small)} {n(y + small)}M{n(x + small)} {n(y - small)}L{n(x - small)} {n(y + small)}")
+        out.append(f'<circle cx="{x}" cy="{y}" r="{n(r * 0.75)}" fill="{spec}" opacity=".35" filter="url(#blur3)"/>'
+                   f'<path d="{star}" fill="{spec}"/>'
+                   f'<path d="{diag}" stroke="{spec}" stroke-width=".7" stroke-linecap="round" opacity=".8"/>')
+    return "".join(out)
+
+
 def numeral_glyphs(x, y, h=12):
     w, sw = 3.2, 7.4
     return (f'<rect x="{n(x - w / 2)}" y="{n(y)}" width="{w}" height="{h}"/>'
@@ -602,8 +627,9 @@ def build(key, division):
         inner.append(crown(doc, m, 46, sc, pts))
         if cfg.get("crystal"):
             inner.append(crystal(doc, m, 128, 46 - 30 * sc, 16))
-    if division == 3 and cfg["tier"] >= 6:
-        inner.append(sparkles(m, [(56, 70, 6), (200, 82, 4.5), (50, 170, 4.5), (206, 176, 6)]))
+    # Destellos: 1 en Hierro I ... hasta 12 en Titán.
+    count = 1 + cfg["tier"] + (3 if key == "titan" else division - 1)
+    inner.append(glints(m, count, crown=bool(cfg["crown"])))
     body = f'<g transform="{inset(scale)}">{"".join(inner)}</g>'
     div = None if key == "titan" else division
     return doc.svg("".join(back) + body + ribbon(doc, m, div, y=CY + (202 - CY) * scale - 8))

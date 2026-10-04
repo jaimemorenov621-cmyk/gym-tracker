@@ -10,6 +10,7 @@ import os
 import math
 import re
 import unicodedata
+from typing import NamedTuple, Optional
 import sqlalchemy as sa
 from openai import OpenAI
 from app import app, db, oauth
@@ -50,7 +51,7 @@ from app.models import (
     PersonalBasic,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
-from app import achievements, usage
+from app import achievements, usage, datacache
 from app import strength_standards as standards
 from app import progression
 from app import volume as volume_mod
@@ -198,7 +199,7 @@ def level_page():
         xp=xp,
         perk_rows=perks.perk_list(xp["level"]),
         weeks=weeks,
-        profile=standards.strength_profile(current_user),
+        profile=cached_profile(current_user),
         p=progression,
         curve=[(lvl, progression.xp_to_reach(lvl), progression.xp_to_reach(lvl + 1) - progression.xp_to_reach(lvl))
                for lvl in range(1, 31)],
@@ -737,15 +738,13 @@ def onboarding_status(user_id):
     return {"steps": steps, "done": done, "current": current}
 
 
-@app.route("/index")
-@login_required
-def index():
-    workouts = db.session.scalars(
-        current_user.workouts.select().order_by(Workout.timestamp.desc())
-    ).all()
+RECENT_WORKOUTS = 8      # entrenos que se ven en Inicio; el resto, en /historial
+HISTORY_PAGE = 30
 
-    # Todas las series de todos los entrenos en UNA consulta (antes era una
-    # por entreno: con 22 entrenos, 22 viajes a la base de datos).
+
+def group_workouts_by_week(workouts):
+    """Tarjetas del historial agrupadas por semana, con las series de esos
+    entrenos en UNA consulta (solo de los que se pintan)."""
     sets_by_workout = defaultdict(list)
     if workouts:
         for s in db.session.scalars(
@@ -786,6 +785,35 @@ def index():
                 "duration": w.duration_str(),
             }
         )
+    return grouped
+
+
+@app.route("/historial")
+@login_required
+def history():
+    """Historial completo de entrenos, por páginas (Inicio solo enseña los
+    últimos: pintar cientos de tarjetas hacía lenta la pestaña)."""
+    page = max(1, request.args.get("page", 1, type=int))
+    total = db.session.scalar(
+        sa.select(sa.func.count()).select_from(Workout).where(Workout.user_id == current_user.id)
+    )
+    workouts = db.session.scalars(
+        current_user.workouts.select().order_by(Workout.timestamp.desc())
+        .offset((page - 1) * HISTORY_PAGE).limit(HISTORY_PAGE)
+    ).all()
+    return render_template(
+        "history.html", title="Historial", grouped=group_workouts_by_week(workouts),
+        page=page, has_next=page * HISTORY_PAGE < total, total=total,
+    )
+
+
+@app.route("/index")
+@login_required
+def index():
+    workouts = db.session.scalars(
+        current_user.workouts.select().order_by(Workout.timestamp.desc())
+    ).all()
+    grouped = group_workouts_by_week(workouts[:RECENT_WORKOUTS])
 
     total_workouts = db.session.scalar(
         sa.select(sa.func.count())
@@ -852,7 +880,7 @@ def index():
     month_start = to_local(datetime.now(timezone.utc)).date().replace(day=1)
     workouts_this_month = sum(1 for w in workouts if to_local(w.timestamp).date() >= month_start)
 
-    strength = strength_progress(current_user.id)
+    strength = cached_strength(current_user.id)
 
     notes_form = NotesForm()
     notes_form.notes.data = current_user.notes or ""
@@ -864,12 +892,8 @@ def index():
     ) is None and workouts:
         check_achievements()
 
-    # Nivel de fuerza global: reutiliza las series y pesos ya cargados.
-    profile = standards.strength_profile(
-        current_user,
-        rows=[(w, s) for w in reversed(workouts) for s in sets_by_workout.get(w.id, [])],
-        weights=weight_entries,
-    )
+    # Nivel y rango de fuerza: de la caché si tus datos no han cambiado.
+    profile = cached_profile(current_user)
     # XP: de la caché si está al día (normalmente no recalcula nada).
     xp_total = progression.current_xp(current_user.id)
     cta = home_cta(current_user)
@@ -893,7 +917,7 @@ def index():
         weight_chart_values=[e.weight for e in weight_entries],
         # Mapa: series duras de 7 días frente a TU rango (personal si hay
         # datos, si no el respaldado de 10-20), no frente a tu músculo más entrenado.
-        muscle_colors=volume_mod.map_colors(volume_mod.weekly_volume(current_user.id)),
+        muscle_colors=volume_mod.map_colors(cached_volume(current_user.id)),
         muscle_svg=muscle_svg_markup(current_user.sex),
         notes_form=notes_form,
         home_cta=cta,
@@ -1315,7 +1339,7 @@ def api_share_set(set_id):
     level = perks.level_of(current_user)
     badge = rank_key = None
     if level >= perks.BADGE_LEVEL:
-        rank = standards.strength_profile(current_user)["global_rank"]
+        rank = cached_profile(current_user)["global_rank"]
         badge = f"NIVEL {level}" + (f" · {rank['label'].upper()}" if rank else "")
         rank_key = (rank["key"] if rank["key"] == "titan" else f"{rank['key']}-{rank['division']}") if rank else None
     return jsonify(
@@ -1693,8 +1717,8 @@ def progress():
         .order_by(BodyWeightEntry.timestamp.desc())
         .limit(1)
     )
-    strength = strength_progress(current_user.id)
-    items = progress_overview(current_user.id, current_user.stagnation_threshold)
+    strength = cached_strength(current_user.id)
+    items = cached_overview(current_user.id, current_user.stagnation_threshold)
     prefetch_catalog_exercises(i["exercise"] for i in items)
     return render_template(
         "progress.html",
@@ -1705,7 +1729,7 @@ def progress():
         items=items,
         threshold=current_user.stagnation_threshold,
         latest_weight=latest_weight,
-        volume=volume_mod.weekly_volume(current_user.id),
+        volume=cached_volume(current_user.id),
         volume_mod=volume_mod,
         muscle_svg=muscle_svg_markup(current_user.sex),
     )
@@ -1716,7 +1740,7 @@ def progress():
 def rank_page():
     """Pestaña Rango: tu emblema, el rango de cada básico (estándares), tu
     nivel y tus logros."""
-    profile = standards.strength_profile(current_user)
+    profile = cached_profile(current_user)
     return render_template(
         "rango.html",
         title="Rango",
@@ -1774,7 +1798,7 @@ def personal_basics_data(user, profile):
 def personal_basics():
     """Elegir tus básicos personales entre los ejercicios que has hecho."""
     form = EmptyForm()
-    overview = progress_overview(current_user.id, current_user.stagnation_threshold)
+    overview = cached_overview(current_user.id, current_user.stagnation_threshold)
     available = [item["exercise"] for item in overview]
     chosen = list(db.session.scalars(
         sa.select(PersonalBasic.exercise).where(PersonalBasic.user_id == current_user.id)
@@ -3122,15 +3146,11 @@ def exercise_stats(session_list, threshold):
     }
 
 
-def progress_overview(user_id, threshold):
+def progress_overview(user_id, threshold, rows=None):
     """Todos los ejercicios del usuario con sus cifras, en UNA consulta (no
     una por ejercicio). Ordenados por el último entrenado primero."""
-    rows = db.session.execute(
-        sa.select(Workout, SetEntry)
-        .join(SetEntry, SetEntry.workout_id == Workout.id)
-        .where(Workout.user_id == user_id)
-        .order_by(Workout.timestamp.asc())
-    ).all()
+    if rows is None:
+        rows = history_rows(user_id)
     by_exercise = defaultdict(list)
     for workout, entry in rows:
         by_exercise[entry.exercise].append((workout, entry))
@@ -3247,7 +3267,7 @@ def _week_start_local(dt):
     return d - timedelta(days=d.weekday())
 
 
-def strength_progress(user_id):
+def strength_progress(user_id, rows=None):
     """Índice de fuerza semanal encadenado + resumen de las últimas 4 semanas.
 
     Cada semana, cada ejercicio entrenado se compara con su valor anterior
@@ -3265,12 +3285,8 @@ def strength_progress(user_id):
       series: [(lunes, índice)] de todas las semanas,
       movers: [{exercise, pct}] ejercicios con dato antes y dentro de la
               ventana, de más subida a más bajada."""
-    rows = db.session.execute(
-        sa.select(Workout, SetEntry)
-        .join(SetEntry, SetEntry.workout_id == Workout.id)
-        .where(Workout.user_id == user_id)
-        .order_by(Workout.timestamp.asc())
-    ).all()
+    if rows is None:
+        rows = history_rows(user_id)
     by_exercise = defaultdict(list)
     for workout, entry in rows:
         by_exercise[entry.exercise].append((workout, entry))
@@ -3327,6 +3343,68 @@ def strength_progress(user_id):
                 movers.append({"exercise": exercise, "pct": 100 * (latest / ref_value - 1)})
     movers.sort(key=lambda m: m["pct"], reverse=True)
     return {"pct": pct, "weeks": span, "series": series, "movers": movers}
+
+
+# Cálculos sobre TODO el historial, memorizados mientras tus datos no cambien
+# (app/datacache.py). Solo en vistas de lectura: tras escribir, la siguiente
+# petición ya ve otra versión y recalcula.
+class LightWorkout(NamedTuple):
+    id: int
+    timestamp: datetime
+    user_id: int
+
+
+class LightSet(NamedTuple):
+    id: int
+    workout_id: int
+    exercise: str
+    weight: float
+    reps: int
+    rir: Optional[int]
+    rpe: Optional[int]
+    set_type: Optional[str]
+    completed: bool
+    is_pr: bool
+
+
+def history_rows(user_id):
+    """[(entreno, serie)] de TODO el historial en orden cronológico, en filas
+    ligeras de solo lectura (sin objetos del ORM, que era lo que más costaba)
+    y leídas UNA vez para el perfil de fuerza, el índice y Progreso."""
+    def load():
+        result = db.session.execute(
+            sa.select(Workout.id, Workout.timestamp, Workout.user_id, SetEntry.id.label("set_id"),
+                      SetEntry.exercise, SetEntry.weight, SetEntry.reps, SetEntry.rir, SetEntry.rpe,
+                      SetEntry.set_type, SetEntry.completed, SetEntry.is_pr)
+            .join(SetEntry, SetEntry.workout_id == Workout.id)
+            .where(Workout.user_id == user_id)
+            .order_by(Workout.timestamp.asc(), SetEntry.id.asc())
+        ).all()
+        workouts, out = {}, []
+        for r in result:
+            w = workouts.get(r.id)
+            if w is None:
+                w = workouts[r.id] = LightWorkout(r.id, r.timestamp, r.user_id)
+            out.append((w, LightSet(r.set_id, r.id, r.exercise, r.weight, r.reps, r.rir, r.rpe,
+                                    r.set_type, r.completed, r.is_pr)))
+        return out
+    return datacache.cached("rows", user_id, load)
+
+
+def cached_profile(user):
+    return datacache.cached("profile", user.id, lambda: standards.strength_profile(user, rows=history_rows(user.id)))
+
+
+def cached_strength(user_id):
+    return datacache.cached("strength", user_id, lambda: strength_progress(user_id))
+
+
+def cached_overview(user_id, threshold):
+    return datacache.cached("overview", user_id, lambda: progress_overview(user_id, threshold), threshold)
+
+
+def cached_volume(user_id):
+    return datacache.cached("volume", user_id, lambda: volume_mod.weekly_volume(user_id))
 
 
 def sparkline_points(values, width=100, height=28, pad=2):
