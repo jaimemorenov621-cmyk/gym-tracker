@@ -40,26 +40,28 @@ from datetime import datetime, timedelta, timezone
 
 import sqlalchemy as sa
 
+from flask_babel import gettext as _, lazy_gettext as _l
+
 from app import db
 from app.models import BodyWeightEntry, SetEntry, Workout
 
-SOURCE_NAME = "Lon Kilgore, «Weightlifting Performance Standards» (ExRx.net), adultos de 18 a 39 años"
+SOURCE_NAME = _l("Lon Kilgore, «Weightlifting Performance Standards» (ExRx.net), adultos de 18 a 39 años")
 SOURCE_URL = "https://exrx.net/Testing/WeightLifting/StrengthStandards"
 
 LEVELS = ["principiante", "novato", "intermedio", "avanzado", "elite"]
 LEVEL_LABELS = {
-    "principiante": "Principiante",
-    "novato": "Novato",
-    "intermedio": "Intermedio",
-    "avanzado": "Avanzado",
-    "elite": "Élite",
+    "principiante": _l("Principiante"),
+    "novato": _l("Novato"),
+    "intermedio": _l("Intermedio"),
+    "avanzado": _l("Avanzado"),
+    "elite": _l("Élite"),
 }
 LEVEL_DESCRIPTIONS = {
-    "principiante": "No ha entrenado el ejercicio, pero lo ejecuta bien.",
-    "novato": "Entrena con regularidad desde hace unos meses.",
-    "intermedio": "Entrena con regularidad desde hace hasta un par de años.",
-    "avanzado": "Lleva varios años entrenando.",
-    "elite": "Compite en deportes de fuerza.",
+    "principiante": _l("No ha entrenado el ejercicio, pero lo ejecuta bien."),
+    "novato": _l("Entrena con regularidad desde hace unos meses."),
+    "intermedio": _l("Entrena con regularidad desde hace hasta un par de años."),
+    "avanzado": _l("Lleva varios años entrenando."),
+    "elite": _l("Compite en deportes de fuerza."),
 }
 
 LIFTS = ["bench", "squat", "smith_squat", "deadlift", "rdl", "press", "row", "smith_row", "pullup", "pulldown"]
@@ -75,44 +77,44 @@ BASIC_SOURCES = {
     "press": ("press",), "row": ("row", "smith_row"), "vertical": VERTICAL,
 }
 BASIC_LABELS = {
-    "bench": "Press de banca", "squat": "Sentadilla (libre o en Smith)", "deadlift": "Peso muerto (convencional o rumano)",
-    "press": "Press militar", "row": "Remo (con barra o en Smith)", "vertical": "Dominadas / jalón al pecho",
+    "bench": _l("Press de banca"), "squat": _l("Sentadilla (libre o en Smith)"), "deadlift": _l("Peso muerto (convencional o rumano)"),
+    "press": _l("Press militar"), "row": _l("Remo (con barra o en Smith)"), "vertical": _l("Dominadas / jalón al pecho"),
 }
 # Nota en la pestaña Rango para los levantamientos que comparten básico.
 SHARED_NOTE = {
-    "squat": "cuenta la mejor de sentadilla libre y en Smith",
-    "smith_squat": "cuenta la mejor de sentadilla libre y en Smith",
-    "deadlift": "cuenta el mejor de peso muerto y rumano",
-    "rdl": "cuenta el mejor de peso muerto y rumano",
-    "row": "cuenta el mejor de remo con barra y en Smith",
-    "smith_row": "cuenta el mejor de remo con barra y en Smith",
-    "pullup": "cuenta el mejor de dominadas y jalón",
-    "pulldown": "cuenta el mejor de dominadas y jalón",
+    "squat": _l("cuenta la mejor de sentadilla libre y en Smith"),
+    "smith_squat": _l("cuenta la mejor de sentadilla libre y en Smith"),
+    "deadlift": _l("cuenta el mejor de peso muerto y rumano"),
+    "rdl": _l("cuenta el mejor de peso muerto y rumano"),
+    "row": _l("cuenta el mejor de remo con barra y en Smith"),
+    "smith_row": _l("cuenta el mejor de remo con barra y en Smith"),
+    "pullup": _l("cuenta el mejor de dominadas y jalón"),
+    "pulldown": _l("cuenta el mejor de dominadas y jalón"),
 }
 MIN_BASICS_FOR_GLOBAL = 3
 LIFT_LABELS = {
-    "bench": "Press de banca",
-    "squat": "Sentadilla",
-    "smith_squat": "Sentadilla en Smith",
-    "deadlift": "Peso muerto",
-    "rdl": "Peso muerto rumano",
-    "press": "Press militar",
-    "row": "Remo con barra",
-    "smith_row": "Remo en Smith",
-    "pullup": "Dominadas",
-    "pulldown": "Jalón al pecho",
+    "bench": _l("Press de banca"),
+    "squat": _l("Sentadilla"),
+    "smith_squat": _l("Sentadilla en Smith"),
+    "deadlift": _l("Peso muerto"),
+    "rdl": _l("Peso muerto rumano"),
+    "press": _l("Press militar"),
+    "row": _l("Remo con barra"),
+    "smith_row": _l("Remo en Smith"),
+    "pullup": _l("Dominadas"),
+    "pulldown": _l("Jalón al pecho"),
 }
 LIFT_RULES = {  # condición de la fuente para que el estándar aplique
-    "bench": "La barra toca el pecho con una pausa breve y se extienden los codos del todo.",
-    "squat": "Los muslos bajan por debajo de la paralela.",
-    "smith_squat": "Sentadilla en máquina Smith (multipower).",
-    "deadlift": "Rodillas, cadera y espalda alta se extienden del todo.",
-    "rdl": "Peso muerto rumano con barra (piernas casi rectas, bisagra de cadera).",
-    "press": "De pie, piernas rectas, sin echar el tronco atrás y extendiendo los codos.",
-    "row": "Remo con barra inclinado hacia delante (bent over row).",
-    "smith_row": "Remo inclinado en Smith. Tabla APROXIMADA: no hay una propia medida, se usa la del remo con barra.",
-    "pullup": "Dominada completa; el peso que apuntes es el lastre (0 = solo tu peso).",
-    "pulldown": "Jalón al pecho en polea; el peso es el de la máquina.",
+    "bench": _l("La barra toca el pecho con una pausa breve y se extienden los codos del todo."),
+    "squat": _l("Los muslos bajan por debajo de la paralela."),
+    "smith_squat": _l("Sentadilla en máquina Smith (multipower)."),
+    "deadlift": _l("Rodillas, cadera y espalda alta se extienden del todo."),
+    "rdl": _l("Peso muerto rumano con barra (piernas casi rectas, bisagra de cadera)."),
+    "press": _l("De pie, piernas rectas, sin echar el tronco atrás y extendiendo los codos."),
+    "row": _l("Remo con barra inclinado hacia delante (bent over row)."),
+    "smith_row": _l("Remo inclinado en Smith. Tabla APROXIMADA: no hay una propia medida, se usa la del remo con barra."),
+    "pullup": _l("Dominada completa; el peso que apuntes es el lastre (0 = solo tu peso)."),
+    "pulldown": _l("Jalón al pecho en polea; el peso es el de la máquina."),
 }
 # De qué tabla sale cada levantamiento.
 KILGORE_LIFTS = ("bench", "squat", "deadlift", "press")
@@ -122,7 +124,7 @@ SL_LIFTS = ("smith_squat", "rdl", "row", "smith_row", "pullup", "pulldown")
 # de FitnessVolt está modelada (no medida) y sale más baja que la del remo
 # con barra, lo que no cuadra; se usa la del remo con barra.
 APPROX_TABLE = {"smith_row": "row"}
-SL_SOURCE_NAME = "StrengthLevel (strengthlevel.com), percentiles de sus usuarios"
+SL_SOURCE_NAME = _l("StrengthLevel (strengthlevel.com), percentiles de sus usuarios")
 SL_SOURCE_URL = "https://strengthlevel.com/strength-standards"
 
 # Tablas ORIGINALES en libras, tal cual la fuente (ExRx publica también una
@@ -432,20 +434,21 @@ RANK_WINDOW_DAYS = 90
 # perfil cuentan todas; aquí solo cambia lo que se compara con otros.
 CREDIBLE_JUMP = 1.2
 CREDIBLE_CONFIRM = 0.9
-RANKS = ["Hierro", "Bronce", "Plata", "Oro", "Platino", "Diamante", "Esmeralda", "Campeón", "Titán"]
+RANKS = [_l("Hierro"), _l("Bronce"), _l("Plata"), _l("Oro"), _l("Platino"), _l("Diamante"), _l("Esmeralda"),
+         _l("Campeón"), _l("Titán")]
 RANK_KEYS = ["hierro", "bronce", "plata", "oro", "platino", "diamante", "esmeralda", "campeon", "titan"]
 RANK_BOUNDS = [0, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # dónde empieza cada rango a partir de Bronce
 TOP_TIER = len(RANKS) - 1
 RANK_RANGES = [
-    "por debajo de Principiante",
-    "Principiante",
-    "Novato",
-    "Novato alto",
-    "Intermedio",
-    "Intermedio alto",
-    "Avanzado",
-    "Avanzado alto (a las puertas de Élite)",
-    "Élite: nivel de competición",
+    _l("por debajo de Principiante"),
+    _l("Principiante"),
+    _l("Novato"),
+    _l("Novato alto"),
+    _l("Intermedio"),
+    _l("Intermedio alto"),
+    _l("Avanzado"),
+    _l("Avanzado alto (a las puertas de Élite)"),
+    _l("Élite: nivel de competición"),
 ]
 _ROMAN = {1: "I", 2: "II", 3: "III"}
 
@@ -517,7 +520,7 @@ def next_rank_label(rank):
 def level_label(idx):
     if idx is None:
         return None
-    return "Por debajo de Principiante" if idx < 0 else LEVEL_LABELS[LEVELS[idx]]
+    return _("Por debajo de Principiante") if idx < 0 else str(LEVEL_LABELS[LEVELS[idx]])
 
 
 # ------------------------------------------------------------ DOTS
@@ -729,11 +732,12 @@ def strength_profile(user, rows=None, weights=None, now=None):
         lifts[lift] = info
 
     # Qué falta para poder dar niveles.
-    missing = []
+    missing_keys = []
     if not sex:
-        missing.append("sexo")
+        missing_keys.append("sex")
     if not bw_points:
-        missing.append("peso corporal")
+        missing_keys.append("bodyweight")
+    missing = [_("sexo") if k == "sex" else _("peso corporal") for k in missing_keys]
     missing_lifts = [LIFT_LABELS[l] for l in BIG_THREE if not lifts[l]["has_data"]]
 
     global_level = None
@@ -796,6 +800,7 @@ def strength_profile(user, rows=None, weights=None, now=None):
         "latest_bw": latest_bw,
         "lifts": lifts,
         "missing": missing,
+        "missing_keys": missing_keys,
         "missing_lifts": missing_lifts,
         "global": global_level,
         "global_label": level_label(global_level),

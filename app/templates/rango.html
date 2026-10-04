@@ -154,8 +154,8 @@
             <p class="std-missing">
                 {{ _('Para darte un rango falta: %(what)s. Las tablas son distintas para hombres y mujeres y dependen del peso.', what=profile.missing|join(_(' y '))) }}
                 <span class="std-actions">
-                    {% if 'sexo' in profile.missing %}<a class="btn-inline" href="{{ url_for('settings') }}">{{ _("Indicar mi sexo") }}</a>{% endif %}
-                    {% if 'peso corporal' in profile.missing %}<a class="btn-inline" href="{{ url_for('weight') }}">{{ _("Registrar mi peso") }}</a>{% endif %}
+                    {% if 'sex' in profile.missing_keys %}<a class="btn-inline" href="{{ url_for('settings') }}">{{ _("Indicar mi sexo") }}</a>{% endif %}
+                    {% if 'bodyweight' in profile.missing_keys %}<a class="btn-inline" href="{{ url_for('weight') }}">{{ _("Registrar mi peso") }}</a>{% endif %}
                 </span>
             </p>
         {% elif not profile.global_rank %}

@@ -12,6 +12,8 @@ proceso junto con una "versión" del usuario:
   - peso corporal y alias de ejercicios (nº de filas y último id): no suben
     xp_seq pero cambian el perfil y el volumen;
   - el día local (ventanas de 7 y 90 días, semana actual).
+La clave lleva además el idioma de la petición: los resultados incluyen
+textos ya traducidos (nombres de rango, etiquetas).
 Lo que cambie por una vía que no deja rastro (SQL a mano en la consola) lo
 corrige el TTL. Los valores se devuelven tal cual: quien los use NO debe
 modificarlos.
@@ -22,6 +24,7 @@ from collections import OrderedDict
 
 import sqlalchemy as sa
 from flask import g, has_request_context
+from flask_babel import get_locale
 
 from app import db
 
@@ -68,7 +71,7 @@ def invalidate(user_id):
 def cached(name, user_id, compute, *extra):
     """compute() memorizado por (name, user_id, *extra) mientras la versión
     de los datos del usuario no cambie."""
-    key = (name, user_id, extra)
+    key = (name, user_id, str(get_locale()) if has_request_context() else None, extra)
     version = data_version(user_id)
     now = time.monotonic()
     with _lock:
