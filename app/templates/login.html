@@ -7,7 +7,7 @@
         <h1>{{ _("Bienvenido de nuevo") }}</h1>
         <p class="auth-subtitle">{{ _("Entra para seguir con tus entrenos.") }}</p>
 
-        <a class="btn-google auth-google" href="{{ url_for('login_google') }}">{{ macros.icon('google', 18) }} Continuar con Google</a>
+        <a class="btn-google auth-google" href="{{ url_for('login_google') }}">{{ macros.icon('google', 18) }} {{ _('Continuar con Google') }}</a>
         <div class="auth-divider"><span>{{ _("o con tu usuario") }}</span></div>
 
         <form action="" method="post" novalidate class="auth-form">

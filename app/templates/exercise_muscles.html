@@ -15,7 +15,7 @@
                     <li>
                         <span class="alias-name">
                             <strong>{{ m.name|title }}</strong>
-                            <small>{% if m.sets %}{{ m.sets }} serie{{ '' if m.sets == 1 else 's' }}{% else %}{{ _("solo en rutinas") }}{% endif %}</small>
+                            <small>{% if m.sets %}{{ ngettext('%(num)d serie', '%(num)d series', m.sets) }}{% else %}{{ _("solo en rutinas") }}{% endif %}</small>
                         </span>
                         <button type="button" class="btn-outline alias-assign"
                                 onclick='openExercisePicker("{{ url_for('api_set_exercise_alias') }}", {alias: {{ m.name|tojson }}})'>{{ _("Asignar") }}</button>

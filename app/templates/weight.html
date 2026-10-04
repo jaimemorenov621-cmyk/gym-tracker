@@ -31,12 +31,12 @@
         </form>
         {% if pace.rate %}
             <p class="pace-rate">
-                <strong>{{ '+' if pace.rate.kg_week > 0 }}{{ pace.rate.kg_week|num(2) }} kg/semana</strong>
-                <span>{{ '+' if pace.rate.pct_week > 0 }}{{ pace.rate.pct_week|num(2) }} % de tu peso · {{ pace.rate.entries }} pesos en {{ pace.rate.days }} días</span>
+                <strong>{{ _('%(kg)s kg/semana', kg=('+' if pace.rate.kg_week > 0 else '') ~ pace.rate.kg_week|num(2)) }}</strong>
+                <span>{{ _('%(pct)s %% de tu peso · %(n)s pesos en %(days)s días', pct=('+' if pace.rate.pct_week > 0 else '') ~ pace.rate.pct_week|num(2), n=pace.rate.entries, days=pace.rate.days) }}</span>
             </p>
         {% endif %}
         <p class="pace-verdict pace-{{ pace.status }}">{{ pace.text }}</p>
-        {% if pace.phase_info %}<p class="std-note">Para {{ pace.phase_info.label|lower }}{% if pace.phase != 'recomposicion' %}, a tu nivel ({{ pace.level_label }}{% if not pace.has_tier %}{{ _(": aún sin rango de fuerza, se usa este") }}{% endif %}),{% endif %} se recomienda {{ pace.target }}.</p>{% endif %}
+        {% if pace.phase_info %}<p class="std-note">{% if pace.phase == 'recomposicion' %}{{ _('Para %(phase)s se recomienda %(target)s.', phase=pace.phase_info.label|lower, target=pace.target) }}{% elif pace.has_tier %}{{ _('Para %(phase)s, a tu nivel (%(level)s), se recomienda %(target)s.', phase=pace.phase_info.label|lower, level=pace.level_label, target=pace.target) }}{% else %}{{ _('Para %(phase)s, a tu nivel (%(level)s: aún sin rango de fuerza, se usa este), se recomienda %(target)s.', phase=pace.phase_info.label|lower, level=pace.level_label, target=pace.target) }}{% endif %}</p>{% endif %}
         <details class="strength-how">
             <summary>{{ _("¿De dónde salen estos ritmos?") }}</summary>
             <p>
@@ -59,7 +59,7 @@
                 data: {
                     labels: {{ chart_labels|tojson }},
                     datasets: [{
-                        label: 'Peso (kg)',
+                        label: {{ _('Peso (kg)')|tojson }},
                         data: {{ chart_values|tojson }},
                         borderColor: '#7c4dff',
                         pointBackgroundColor: '#7c4dff',

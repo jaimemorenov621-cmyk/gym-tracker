@@ -4,7 +4,7 @@
     <p class="page-back"><a href="{{ url_for('rank_page') }}#basicos">{{ _("← Rango") }}</a></p>
     <h1 class="page-title">{{ _("Tus básicos") }}</h1>
     <p class="alias-intro">
-        Marca hasta {{ max_basics }} ejercicios que quieras seguir de cerca en la pestaña Rango. <b>{{ _("No cambia tu rango global") }}</b> {{ _("(sale siempre de los básicos clásicos): solo añade su seguimiento. Los que cuentan para una tabla de estándares muestran") }} <b>{{ _("su propio rango") }}</b>{{ _("; el resto, tu progresión.") }}
+        {{ _('Marca hasta %(n)s ejercicios que quieras seguir de cerca en la pestaña Rango.', n=max_basics) }} <b>{{ _("No cambia tu rango global") }}</b> {{ _("(sale siempre de los básicos clásicos): solo añade su seguimiento. Los que cuentan para una tabla de estándares muestran") }} <b>{{ _("su propio rango") }}</b>{{ _("; el resto, tu progresión.") }}
     </p>
     <p class="alias-intro">{{ _("Aparecen tal y como los escribiste. Si ves dos nombres para el mismo ejercicio, son historiales distintos: elige el que uses ahora (verás cuántas sesiones tiene cada uno).") }}</p>
     {% if items %}
@@ -18,8 +18,8 @@
                             <span class="pbasics-pick-name">
                                 <strong>{{ it.exercise|title }}</strong>
                                 <small>
-                                    {% if it.stats %}{{ it.stats.sessions }} sesi{{ 'ón' if it.stats.sessions == 1 else 'ones' }} · {{ it.stats.last_trained|relative_day }}{% endif %}
-                                    {% if it.counts_as %} · cuenta como {{ it.counts_as|lower }}{% endif %}
+                                    {% if it.stats %}{{ ngettext('%(num)d sesión', '%(num)d sesiones', it.stats.sessions) }} · {{ it.stats.last_trained|relative_day }}{% endif %}
+                                    {% if it.counts_as %} · {{ _('cuenta como %(lift)s', lift=it.counts_as|lower) }}{% endif %}
                                 </small>
                             </span>
                             <span class="pbasics-tag{% if not it.counts_as %} is-progress{% endif %}">{{ 'rango' if it.counts_as else 'progresión' }}</span>

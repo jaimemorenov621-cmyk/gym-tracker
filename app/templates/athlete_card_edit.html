@@ -8,13 +8,13 @@
         <div class="card card-elevated">
             <h2>{{ _("Rankings y datos") }}</h2>
             {% set toggles = [
-                ('in_rankings', 'Aparecer en los rankings de mis amigos', card.in_rankings),
-                ('show_rank', 'Mi rango (global y por levantamiento)', card.show_rank),
-                ('show_level', 'Mi nivel', card.show_level),
-                ('show_streak', 'Mi racha', card.show_streak),
-                ('show_consistency', 'Mi constancia (días entrenados)', card.show_consistency),
-                ('show_kg', 'Los kilos de mis récords destacados', card.show_kg),
-                ('show_bodyweight', 'Mi peso corporal', card.show_bodyweight)] %}
+                ('in_rankings', _('Aparecer en los rankings de mis amigos'), card.in_rankings),
+                ('show_rank', _('Mi rango (global y por levantamiento)'), card.show_rank),
+                ('show_level', _('Mi nivel'), card.show_level),
+                ('show_streak', _('Mi racha'), card.show_streak),
+                ('show_consistency', _('Mi constancia (días entrenados)'), card.show_consistency),
+                ('show_kg', _('Los kilos de mis récords destacados'), card.show_kg),
+                ('show_bodyweight', _('Mi peso corporal'), card.show_bodyweight)] %}
             <ul class="ac-toggles">
                 {% for name, label, on in toggles %}
                     <li><label><span>{{ label }}{% if name == 'show_bodyweight' %} <small class="ac-sensitive">{{ _("dato sensible") }}</small>{% endif %}</span>
@@ -24,13 +24,13 @@
         </div>
 
         <div class="card card-elevated">
-            <h2>{{ _("Récords destacados") }} <small class="ac-max">hasta {{ max_lifts }}</small></h2>
+            <h2>{{ _("Récords destacados") }} <small class="ac-max">{{ _("hasta %(n)s", n=max_lifts) }}</small></h2>
             {% if exercises %}
                 <ul class="pbasics-pick" data-max="{{ max_lifts }}">
                     {% for e in exercises %}
                         <li><label>
                             <input type="checkbox" name="lift" value="{{ e.exercise }}"{% if e.exercise in chosen_lifts %} checked{% endif %}>
-                            <span class="pbasics-pick-name"><strong>{{ e.exercise|title }}</strong><small>1RM est. {{ e.best_1rm|num(0) }} kg · {{ e.last_trained|relative_day }}</small></span>
+                            <span class="pbasics-pick-name"><strong>{{ e.exercise|title }}</strong><small>{{ _("1RM est. %(kg)s kg", kg=e.best_1rm|num(0)) }} · {{ e.last_trained|relative_day }}</small></span>
                         </label></li>
                     {% endfor %}
                 </ul>
@@ -40,7 +40,7 @@
         </div>
 
         <div class="card card-elevated">
-            <h2>{{ _("Logros destacados") }} <small class="ac-max">hasta {{ max_achievements }}</small></h2>
+            <h2>{{ _("Logros destacados") }} <small class="ac-max">{{ _("hasta %(n)s", n=max_achievements) }}</small></h2>
             {% if unlocked %}
                 <ul class="pbasics-pick" data-max="{{ max_achievements }}">
                     {% for a in unlocked %}

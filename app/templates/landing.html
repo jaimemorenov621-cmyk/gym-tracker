@@ -37,23 +37,23 @@
     <div class="lp-hero-glow lp-hero-glow-b" aria-hidden="true"></div>
     <div class="lp-container lp-hero-grid">
         <div class="lp-hero-copy">
-            <span class="lp-eyebrow">{{ macros.icon('sparkle', 14) }} Gratis · Sin descargas · Pensada para el móvil</span>
+            <span class="lp-eyebrow">{{ macros.icon('sparkle', 14) }} {{ _('Gratis · Sin descargas · Pensada para el móvil') }}</span>
             <h1 class="lp-hero-title">{{ _("Deja de entrenar a ciegas.") }}<br><span class="lp-grad-text">{{ _("Mira cómo progresas.") }}</span></h1>
             <p class="lp-lead">
                 {{ _("Gyre apunta tus series en segundos, detecta tus récords solo y te dice qué músculos estás dejando atrás. Tu libreta del gimnasio, pero con cerebro.") }}
             </p>
             <div class="lp-cta-row">
                 <a class="lp-btn lp-btn-primary lp-btn-lg" href="{{ url_for('landing_cta') }}">
-                    Crear cuenta gratis {{ macros.icon('chevron-right', 18) }}
+                    {{ _('Crear cuenta gratis') }} {{ macros.icon('chevron-right', 18) }}
                 </a>
                 <a class="lp-btn lp-btn-google lp-btn-lg" href="{{ url_for('landing_google') }}">
-                    {{ macros.icon('google', 18) }} Continuar con Google
+                    {{ macros.icon('google', 18) }} {{ _('Continuar con Google') }}
                 </a>
             </div>
             <ul class="lp-microcopy">
-                <li>{{ macros.icon('check', 14) }} Sin tarjeta</li>
-                <li>{{ macros.icon('check', 14) }} Lista en 20 segundos</li>
-                <li>{{ macros.icon('check', 14) }} Se instala como una app</li>
+                <li>{{ macros.icon('check', 14) }} {{ _('Sin tarjeta') }}</li>
+                <li>{{ macros.icon('check', 14) }} {{ _('Lista en 20 segundos') }}</li>
+                <li>{{ macros.icon('check', 14) }} {{ _('Se instala como una app') }}</li>
             </ul>
         </div>
 
@@ -90,7 +90,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="lp-mock-finish">{{ macros.icon('flag', 14) }} Terminar entreno</div>
+                    <div class="lp-mock-finish">{{ macros.icon('flag', 14) }} {{ _('Terminar entreno') }}</div>
                 </div>
             </div>
 
@@ -167,12 +167,12 @@
                 <span></span><span>{{ _("Notas") }}</span><span class="lp-compare-us">{{ _("Gyre") }}</span>
             </div>
             {% for item in [
-                'Recuerda lo que levantaste la última vez',
-                'Detecta tus récords y tu 1RM',
-                'Te avisa cuando te estancas',
-                'Temporizador de descanso automático',
-                'Qué músculos entrenas y cuáles no',
-                'Análisis semanal con IA',
+                _('Recuerda lo que levantaste la última vez'),
+                _('Detecta tus récords y tu 1RM'),
+                _('Te avisa cuando te estancas'),
+                _('Temporizador de descanso automático'),
+                _('Qué músculos entrenas y cuáles no'),
+                _('Análisis semanal con IA'),
             ] %}
             <div class="lp-compare-row">
                 <span>{{ item }}</span>
@@ -219,10 +219,10 @@
         <p>{{ _("Pruébala en tu próximo entreno. Es gratis y funciona en cualquier móvil.") }}</p>
         <div class="lp-cta-row lp-cta-center">
             <a class="lp-btn lp-btn-white lp-btn-lg" href="{{ url_for('landing_cta') }}">
-                Crear cuenta gratis {{ macros.icon('chevron-right', 18) }}
+                {{ _('Crear cuenta gratis') }} {{ macros.icon('chevron-right', 18) }}
             </a>
             <a class="lp-btn lp-btn-ghost lp-btn-lg" href="{{ url_for('landing_google') }}">
-                {{ macros.icon('google', 18) }} Continuar con Google
+                {{ macros.icon('google', 18) }} {{ _('Continuar con Google') }}
             </a>
         </div>
     </div>

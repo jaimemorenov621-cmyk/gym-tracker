@@ -1,6 +1,6 @@
 {# Tarjetas del historial por semana (Inicio y /historial). #}
     {% for group in grouped %}
-        <h3 class="week-divider">Semana {{ group.label }}</h3>
+        <h3 class="week-divider">{{ _("Semana %(label)s", label=group.label) }}</h3>
         {% for item in group.workouts %}
             <a class="workout-card" href="{{ url_for('workout_detail', workout_id=item.workout.id) }}">
                 <span class="wc-date">{{ to_local(item.workout.timestamp).strftime('%d/%m/%Y · %H:%M') }}</span>
@@ -16,7 +16,7 @@
                     </div>
                 {% endif %}
                 <div class="wc-meta">
-                    {% if item.duration %}{{ macros.icon('stopwatch', 14) }} {{ item.duration }} · {% endif %}🏋️ {{ item.volume|num(0) }} kg volumen
+                    {% if item.duration %}{{ macros.icon('stopwatch', 14) }} {{ item.duration }} · {% endif %}🏋️ {{ _('%(kg)s kg volumen', kg=item.volume|num(0)) }}
                 </div>
             </a>
         {% endfor %}

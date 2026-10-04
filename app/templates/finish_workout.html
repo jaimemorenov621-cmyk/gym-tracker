@@ -5,8 +5,8 @@
 
     <div class="finish-hero">
         <span class="finish-hero-icon">{{ macros.icon('flag', 26) }}</span>
-        <h1>{{ 'Editar valoración' if editing else '¡Buen entreno!' }}</h1>
-        <p>{{ workout.note or "Entrenamiento" }} · {{ to_local(workout.timestamp).strftime('%d/%m/%Y') }}</p>
+        <h1>{{ _('Editar valoración') if editing else _('¡Buen entreno!') }}</h1>
+        <p>{{ workout.note or _("Entrenamiento") }} · {{ to_local(workout.timestamp).strftime('%d/%m/%Y') }}</p>
         <div class="finish-stats">
             <div><strong id="summaryDuration">{{ form.duration_hours.data or 0 }}h {{ '%02d' % (form.duration_minutes.data or 0) }}m</strong><span>{{ _("Duración") }}</span></div>
             <div><strong>{{ '{:,}'.format(summary.volume).replace(',', '.') }}<small> {{ _("kg") }}</small></strong><span>{{ _("Volumen") }}</span></div>
@@ -15,8 +15,8 @@
         </div>
         {% if summary.volume_change_pct is not none %}
             <p class="finish-compare {{ 'up' if summary.volume_change_pct > 0 else ('down' if summary.volume_change_pct < 0 else '') }}">
-                {% if summary.volume_change_pct > 0 %}▲ {{ summary.volume_change_pct }}% más volumen que la última vez
-                {% elif summary.volume_change_pct < 0 %}▼ {{ -summary.volume_change_pct }}% menos volumen que la última vez
+                {% if summary.volume_change_pct > 0 %}▲ {{ _('%(pct)s%% más volumen que la última vez', pct=summary.volume_change_pct) }}
+                {% elif summary.volume_change_pct < 0 %}▼ {{ _('%(pct)s%% menos volumen que la última vez', pct=-summary.volume_change_pct) }}
                 {% else %}{{ _("Mismo volumen que la última vez") }}{% endif %}
             </p>
         {% endif %}
@@ -31,7 +31,7 @@
 
     {% if summary.prs %}
         <div class="card card-elevated finish-prs">
-            <h3>🏅 {{ 'Récord' if summary.prs|length == 1 else summary.prs|length ~ ' récords' }} en esta sesión</h3>
+            <h3>🏅 {{ ngettext('Récord en esta sesión', '%(num)d récords en esta sesión', summary.prs|length) }}</h3>
             {% for s in summary.prs %}
                 <div class="finish-pr-row">
                     <div>
@@ -52,14 +52,14 @@
                 <b>{{ '+' if xp_preview.gain >= 0 }}{{ xp_preview.gain }} XP</b>
                 <span>
                     {%- set bits = [] -%}
-                    {%- if x.workout %}{% set _unused = bits.append('entreno +' ~ x.workout) %}{% endif -%}
-                    {%- if x.sets_n %}{% set _unused = bits.append(x.sets_n ~ ' serie' ~ ('' if x.sets_n == 1 else 's') ~ ' +' ~ x.sets) %}{% endif -%}
-                    {%- if x.prs_n %}{% set _unused = bits.append(x.prs_n ~ ' récord' ~ ('' if x.prs_n == 1 else 's') ~ ' +' ~ x.prs) %}{% endif -%}
-                    {%- if xp_preview.bonus %}{% set _unused = bits.append('semana cumplida +' ~ xp_preview.bonus) %}{% endif -%}
-                    {{ bits|join(' · ') if bits else 'Sin XP en este entreno' }}
+                    {%- if x.workout %}{% set _unused = bits.append(_('entreno +%(xp)s', xp=x.workout)) %}{% endif -%}
+                    {%- if x.sets_n %}{% set _unused = bits.append(ngettext('%(num)d serie +%(xp)s', '%(num)d series +%(xp)s', x.sets_n, xp=x.sets)) %}{% endif -%}
+                    {%- if x.prs_n %}{% set _unused = bits.append(ngettext('%(num)d récord +%(xp)s', '%(num)d récords +%(xp)s', x.prs_n, xp=x.prs)) %}{% endif -%}
+                    {%- if xp_preview.bonus %}{% set _unused = bits.append(_('semana cumplida +%(xp)s', xp=xp_preview.bonus)) %}{% endif -%}
+                    {{ bits|join(' · ') if bits else _('Sin XP en este entreno') }}
                 </span>
             </span>
-            <span class="finish-xp-week">{{ xp_preview.week_days }} día{{ '' if xp_preview.week_days == 1 else 's' }} esta semana (mín. {{ xp_preview.minimum }})</span>
+            <span class="finish-xp-week">{{ ngettext('%(num)d día esta semana (mín. %(min)s)', '%(num)d días esta semana (mín. %(min)s)', xp_preview.week_days, min=xp_preview.minimum) }}</span>
             {% if x.notes %}<small class="finish-xp-note">{{ x.notes|join(' · ')|capitalize }}.</small>{% endif %}
         </a>
     {% endif %}
@@ -69,7 +69,7 @@
 
         <div class="finish-field">
             <span class="finish-label">{{ _("¿Cómo te ha ido hoy?") }}</span>
-            <div class="rating-scale" role="radiogroup" aria-label="Valoración del 1 al 10">
+            <div class="rating-scale" role="radiogroup" aria-label="{{ _('Valoración del 1 al 10') }}">
                 {% for value, short, desc in rating_choices %}
                     <button type="button" class="rating-chip rating-{{ value }}{% if form.performance_rating.data == value %} selected{% endif %}"
                             role="radio" aria-checked="{{ 'true' if form.performance_rating.data == value else 'false' }}"
@@ -89,7 +89,7 @@
 
         <label class="finish-field">
             <span class="finish-label">{{ _("Comentario") }} <small>{{ _("(opcional)") }}</small></span>
-            {{ form.performance_comment(rows=3, placeholder="Ej: buena sensación en sentadilla, me costó el press") }}
+            {{ form.performance_comment(rows=3, placeholder=_("Ej: buena sensación en sentadilla, me costó el press")) }}
         </label>
 
         <div class="finish-field">
@@ -100,8 +100,7 @@
             </div>
             {% if duration_estimated_from %}
                 <p class="finish-hint">
-                    Parece que el entreno se quedó abierto: calculada hasta tu última serie
-                    ({{ duration_estimated_from.strftime('%H:%M') }}). Ajústala si no es correcta.
+                    {{ _('Parece que el entreno se quedó abierto: calculada hasta tu última serie (%(time)s). Ajústala si no es correcta.', time=duration_estimated_from.strftime('%H:%M')) }}
                 </p>
             {% elif duration_suspicious %}
                 <p class="finish-hint">{{ _("Este entreno lleva abierto muchas horas: revisa la duración antes de guardar.") }}</p>
@@ -111,7 +110,7 @@
 
         <button type="submit" class="finish-workout-cta finish-submit">
             <span class="finish-cta-icon">{{ macros.icon('check', 22) }}</span>
-            <span class="finish-cta-text"><strong>{{ 'Guardar cambios' if editing else 'Guardar entreno' }}</strong></span>
+            <span class="finish-cta-text"><strong>{{ _('Guardar cambios') if editing else _('Guardar entreno') }}</strong></span>
         </button>
     </form>
 
@@ -144,7 +143,7 @@
         function validateFinish(form) {
             if (!document.querySelector('.rating-chip.selected')) {
                 const desc = document.getElementById('ratingDesc');
-                desc.textContent = 'Elige cómo te ha ido antes de guardar.';
+                desc.textContent = {{ _('Elige cómo te ha ido antes de guardar.')|tojson }};
                 desc.classList.add('rating-desc-missing');
                 desc.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 return false;
@@ -152,7 +151,7 @@
             const hours = parseInt(form.duration_hours.value) || 0;
             const minutes = parseInt(form.duration_minutes.value) || 0;
             if (hours * 60 + minutes < 180) return true;
-            confirmFormSubmit(form, '¿Seguro que el entreno duró ' + hours + 'h ' + minutes + 'min?', 'Sí, guardar');
+            confirmFormSubmit(form, {{ _('¿Seguro que el entreno duró {h}h {m}min?')|tojson }}.replace('{h}', hours).replace('{m}', minutes), {{ _('Sí, guardar')|tojson }});
             return false;
         }
     </script>

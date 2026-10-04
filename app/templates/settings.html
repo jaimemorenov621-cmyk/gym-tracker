@@ -18,12 +18,12 @@
         <div class="field">
             <span class="field-label">{{ _("Color de acento") }}</span>
             {% set swatch = {'morado': '#7c4dff', 'azul': '#2563eb', 'verde': '#0b7a54', 'naranja': '#c2410c'} %}
-            <div class="accent-swatches" role="radiogroup" aria-label="Color de acento">
+            <div class="accent-swatches" role="radiogroup" aria-label="{{ _('Color de acento') }}">
                 {% for a in accents %}
                     {% set open = user_level >= a.level %}
                     <button type="button" class="accent-swatch" data-accent="{{ a.key }}" role="radio" aria-checked="false"
                             {% if not open %}disabled{% endif %} onclick="pickAccent('{{ a.key }}')">
-                        <i style="background: {{ swatch[a.key] }}"></i>{{ a.name }}{% if not open %} <small>Nivel {{ a.level }}</small>{% endif %}
+                        <i style="background: {{ swatch[a.key] }}"></i>{{ a.name }}{% if not open %} <small>{{ _('Nivel %(n)s', n=a.level) }}</small>{% endif %}
                     </button>
                 {% endfor %}
             </div>
@@ -142,7 +142,7 @@
         </form>
     {% endif %}
 
-    <nav class="card card-elevated settings-list" aria-label="Más opciones">
+    <nav class="card card-elevated settings-list" aria-label="{{ _('Más opciones') }}">
         <a href="{{ url_for('achievements_page') }}"><span class="settings-list-icon">{{ macros.icon('trophy', 18) }}</span><span>{{ _("Logros") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
         <a href="{{ url_for('privacy') }}"><span class="settings-list-icon">{{ macros.icon('shield', 18) }}</span><span>{{ _("Privacidad") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
         <a href="{{ url_for('logout') }}" class="is-danger"><span class="settings-list-icon">{{ macros.icon('log-out', 18) }}</span><span>{{ _("Cerrar sesión") }}</span></a>

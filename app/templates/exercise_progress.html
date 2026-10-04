@@ -38,13 +38,13 @@
             </div>
         </div>
         <p class="exercise-stats-foot">
-            Último entreno {{ stats.last_trained|relative_day }}{% if stats.last_pr and stats.sessions > 1 %} · último récord {{ stats.last_pr|relative_day }}{% endif %}
+            {{ _("Último entreno %(when)s", when=stats.last_trained|relative_day) }}{% if stats.last_pr and stats.sessions > 1 %} · {{ _("último récord %(when)s", when=stats.last_pr|relative_day) }}{% endif %}
         </p>
     {% endif %}
 
     {% if stagnation %}
         <div class="card card-elevated" style="border-left:4px solid #c62828;">
-            ⚠️ <strong>{{ _("Posible estancamiento:") }}</strong> no has batido tu récord en las últimas {{ threshold }} sesiones de {{ exercise|title }}.
+            ⚠️ <strong>{{ _("Posible estancamiento:") }}</strong> {{ _("no has batido tu récord en las últimas %(n)s sesiones de %(exercise)s.", n=threshold, exercise=exercise|title) }}
         </div>
     {% endif %}
     {% if improvement %}
@@ -58,7 +58,7 @@
             <h3 style="margin-top:0;">{{ _("🌐 Nombre en español") }}</h3>
             <form action="{{ url_for('update_exercise_translation', name=exercise) }}" method="post" style="display:flex; gap:8px;">
                 {{ translation_form.hidden_tag() }}
-                {{ translation_form.name_es(placeholder="Ej: Press de banca", style="flex:1; box-sizing:border-box;") }}
+                {{ translation_form.name_es(placeholder=_("Ej: Press de banca"), style="flex:1; box-sizing:border-box;") }}
                 <input type="submit" value="Guardar" class="btn-outline">
             </form>
         </div>
@@ -76,7 +76,7 @@
             <p><em>{{ _("Sin notas todavía.") }}</em></p>
         {% endif %}
         <a class="btn-outline" href="{{ url_for('exercise_notes', name=exercise) }}">
-            {{ macros.icon('note') }} Editar notas y descanso{% if exercise_note and exercise_note.default_rest_seconds %} ({{ macros.icon('stopwatch') }} {{ format_rest(exercise_note.default_rest_seconds) }}){% endif %}
+            {{ macros.icon('note') }} {{ _('Editar notas y descanso') }}{% if exercise_note and exercise_note.default_rest_seconds %} ({{ macros.icon('stopwatch') }} {{ format_rest(exercise_note.default_rest_seconds) }}){% endif %}
         </a>
     </div>
 

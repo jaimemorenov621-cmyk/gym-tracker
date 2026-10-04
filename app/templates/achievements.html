@@ -8,7 +8,7 @@
             <span>{{ (100 * unlocked_count / total)|round|int }}%</span>
         </div>
         <div>
-            <strong>{{ unlocked_count }} de {{ total }}</strong>
+            <strong>{{ _('%(n)s de %(total)s', n=unlocked_count, total=total) }}</strong>
             <span>{{ _("logros desbloqueados") }}</span>
         </div>
     </div>
@@ -29,7 +29,7 @@
         </div>
     {% endif %}
 
-    <nav class="achv-tabs" aria-label="Categorías">
+    <nav class="achv-tabs" aria-label="{{ _('Categorías') }}">
         <button type="button" class="achv-tab active" data-cat="all">{{ _("Todos") }}</button>
         {% for key, name, emoji, items in categories %}
             <button type="button" class="achv-tab" data-cat="{{ key }}">{{ emoji }} {{ name }}

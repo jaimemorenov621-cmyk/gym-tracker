@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
 {% block content %}
-    {{ macros.tab_title('Análisis de IA', 'sparkle') }}
+    {{ macros.tab_title(_('Análisis de IA'), 'sparkle') }}
 
     {% if latest %}
         <p class="pill">📅 {{ to_local(latest.created_at).strftime('%d/%m/%Y %H:%M') }}</p>
@@ -59,8 +59,8 @@
             <span class="ai-cta-icon">{{ macros.icon('sparkle', 22) }}</span>
             <div class="ai-cta-body">
                 <small>{{ _("Análisis de IA") }}</small>
-                <strong>Te faltan {{ min_workouts - total_workouts }} entreno{{ 's' if min_workouts - total_workouts != 1 }}</strong>
-                <span class="ai-cta-detail">Llevas {{ total_workouts }} de {{ min_workouts }}: con menos no hay historial suficiente.</span>
+                <strong>{{ ngettext('Te falta %(num)d entreno', 'Te faltan %(num)d entrenos', min_workouts - total_workouts) }}</strong>
+                <span class="ai-cta-detail">{{ _("Llevas %(n)s de %(min)s: con menos no hay historial suficiente.", n=total_workouts, min=min_workouts) }}</span>
                 <div class="ai-cta-progress" aria-hidden="true"><span style="width: {{ (100 * total_workouts / min_workouts)|round|int }}%"></span></div>
             </div>
         </div>
@@ -70,8 +70,8 @@
             <span class="ai-cta-icon">{{ macros.icon('clock', 22) }}</span>
             <div class="ai-cta-body">
                 <small>{{ _("Próximo análisis") }}</small>
-                <strong>Disponible {{ wait_label }}</strong>
-                <span class="ai-cta-detail">El {{ local_next.strftime('%d/%m') }} a las {{ local_next.strftime('%H:%M') }} · {{ 'dos análisis por semana (ventaja de nivel)' if allowance > 1 else 'un análisis por semana' }}</span>
+                <strong>{{ _('Disponible %(when)s', when=wait_label) }}</strong>
+                <span class="ai-cta-detail">{{ _("El %(day)s a las %(time)s", day=local_next.strftime('%d/%m'), time=local_next.strftime('%H:%M')) }} · {{ _('dos análisis por semana (ventaja de nivel)') if allowance > 1 else _('un análisis por semana') }}</span>
                 <div class="ai-cta-progress" aria-hidden="true"><span style="width: {{ cooldown_pct }}%"></span></div>
             </div>
         </div>
@@ -82,7 +82,7 @@
                 {{ checkin_form.hidden_tag() }}
                 <p>
                     {{ checkin_form.how_you_feel.label }}<br>
-                    {{ checkin_form.how_you_feel(rows=3, style="width:100%; box-sizing:border-box;", placeholder="Opcional. Ej: esta semana he dormido poco y tengo agujetas fuertes en piernas.") }}
+                    {{ checkin_form.how_you_feel(rows=3, style="width:100%; box-sizing:border-box;", placeholder=_("Opcional. Ej: esta semana he dormido poco y tengo agujetas fuertes en piernas.")) }}
                 </p>
                 <button type="submit" class="ai-cta ai-cta-ready">
                     <span class="ai-cta-icon">{{ macros.icon('sparkle', 22) }}</span>

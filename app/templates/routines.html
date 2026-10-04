@@ -5,9 +5,9 @@
     <p style="display:flex; gap:10px; flex-wrap:wrap;">
         <form action="{{ url_for('new_workout') }}" method="post" style="display:inline; margin:0;">
             {{ empty_form.hidden_tag() }}
-            <button type="submit" class="btn">{{ macros.icon('plus-circle', 16) }} Entreno libre</button>
+            <button type="submit" class="btn">{{ macros.icon('plus-circle', 16) }} {{ _('Entreno libre') }}</button>
         </form>
-        <a class="btn-outline" href="{{ url_for('new_routine') }}">{{ macros.icon('plus-circle', 16) }} Nueva rutina</a>
+        <a class="btn-outline" href="{{ url_for('new_routine') }}">{{ macros.icon('plus-circle', 16) }} {{ _('Nueva rutina') }}</a>
     </p>
 
     {% macro routine_card(info) %}
@@ -19,11 +19,11 @@
         <div class="card card-elevated routine-card routine-card-compact" data-id="{{ info.routine.id }}"
             {% if color %}style="--block-color: {{ color }};"{% endif %}>
             <div class="routine-card-row">
-                <span class="drag-handle" title="Mantén pulsado y arrastra para ordenar">{{ macros.icon('grip', 18) }}</span>
+                <span class="drag-handle" title="{{ _('Mantén pulsado y arrastra para ordenar') }}">{{ macros.icon('grip', 18) }}</span>
                 <a class="routine-card-main" href="{{ url_for('routine_detail', routine_id=info.routine.id) }}">
                     <strong>{{ info.routine.name }}</strong>
                     <small>
-                        {% if n %}{{ n }} ejercicio{{ '' if n == 1 else 's' }}{% else %}{{ _("Sin ejercicios") }}{% endif %}
+                        {% if n %}{{ ngettext('%(num)d ejercicio', '%(num)d ejercicios', n) }}{% else %}{{ _("Sin ejercicios") }}{% endif %}
                         · {% if info.last_trained %}{{ info.last_trained|relative_day }}{% else %}{{ _("sin estrenar") }}{% endif %}
                     </small>
                 </a>
@@ -32,8 +32,8 @@
                     onclick="toggleRoutinePin({{ info.routine.id }}, this)">{{ macros.icon('star', 18) }}</button>
                 <form action="{{ url_for('start_routine', routine_id=info.routine.id) }}" method="post" class="routine-start-form">
                     {{ empty_form.hidden_tag() }}
-                    <button type="submit" class="routine-start-btn"{% if not n %} disabled title="Añade ejercicios a la rutina para empezarla"{% endif %}
-                        aria-label="Empezar {{ info.routine.name }}">{{ macros.icon('play', 18) }}</button>
+                    <button type="submit" class="routine-start-btn"{% if not n %} disabled title="{{ _('Añade ejercicios a la rutina para empezarla') }}"{% endif %}
+                        aria-label="{{ _('Empezar %(name)s', name=info.routine.name) }}">{{ macros.icon('play', 18) }}</button>
                 </form>
             </div>
             <div class="routine-card-sub">
@@ -42,11 +42,11 @@
                 </span>
                 <label class="routine-block-chip{% if not info.routine.block_id %} none{% endif %}"
                        {% if info.routine.block and info.routine.block.color %}style="--chip-color: {{ info.routine.block.color }};"{% endif %}
-                       title="Cambiar bloque">
+                       title="{{ _('Cambiar bloque') }}">
                     <i aria-hidden="true"></i>
-                    <span>{{ info.routine.block.name if info.routine.block else 'Sin bloque' }}</span>
+                    <span>{{ info.routine.block.name if info.routine.block else _('Sin bloque') }}</span>
                     {{ macros.icon('chevron-down', 14) }}
-                    <select id="block-select-{{ info.routine.id }}" class="routine-block-select" aria-label="Bloque de {{ info.routine.name }}"
+                    <select id="block-select-{{ info.routine.id }}" class="routine-block-select" aria-label="{{ _('Bloque de %(name)s', name=info.routine.name) }}"
                             onchange="onBlockSelectChange({{ info.routine.id }}, this)">
                         <option value="" {% if not info.routine.block_id %}selected{% endif %}>{{ _("Sin bloque") }}</option>
                         {% for b in blocks %}
@@ -60,7 +60,7 @@
     {% endmacro %}
 
     {% if pinned_info %}
-        <h3 class="routine-section-title">{{ macros.icon('star', 16) }} Fijadas</h3>
+        <h3 class="routine-section-title">{{ macros.icon('star', 16) }} {{ _('Fijadas') }}</h3>
         <div id="pinnedList" class="routine-section">
             {% for info in pinned_info %}{{ routine_card(info) }}{% endfor %}
         </div>
@@ -164,7 +164,7 @@
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.className = 'cell-input routine-block-input';
-                input.placeholder = 'Nombre del bloque...';
+                input.placeholder = {{ _('Nombre del bloque...')|tojson }};
                 input.maxLength = 64;
                 chip.after(input);
                 chip.style.display = 'none';

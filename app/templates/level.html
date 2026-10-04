@@ -7,8 +7,8 @@
         <div class="level-hero-top">
             <span class="level-badge">{{ xp.level }}</span>
             <div>
-                <strong>Nivel {{ xp.level }}</strong>
-                <span>{{ xp.total|num }} XP en total · faltan {{ xp.to_next|num }} para el nivel {{ xp.level + 1 }}</span>
+                <strong>{{ _('Nivel %(n)s', n=xp.level) }}</strong>
+                <span>{{ _('%(total)s XP en total · faltan %(left)s para el nivel %(next)s', total=xp.total|num, left=xp.to_next|num, next=xp.level + 1) }}</span>
             </div>
         </div>
         <div class="dash-level-bar"><i style="width: {{ xp.pct }}%"></i></div>
@@ -17,9 +17,9 @@
             {% if profile.global_rank %}
                 <span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 30, profile.global_rank.division) }}<b class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</b></span>
             {% elif profile.missing %}
-                <b>Falta: {{ profile.missing|join(' y ') }}</b>
+                <b>{{ _('Falta: %(what)s', what=profile.missing|join(_(' y '))) }}</b>
             {% else %}
-                <b>Falta un 1RM reciente de {{ profile.rank_missing|join(', ')|lower }}</b>
+                <b>{{ _('Falta un 1RM reciente de %(lifts)s', lifts=profile.rank_missing|join(', ')|lower) }}</b>
             {% endif %}
         </a>
         <p class="level-note">
@@ -44,25 +44,25 @@
     </div>
 
     <div class="card card-elevated level-section">
-        <h2>{{ _("Cómo se gana XP") }} <span class="level-version">reglas v{{ p.XP_RULES_VERSION }}</span></h2>
+        <h2>{{ _("Cómo se gana XP") }} <span class="level-version">{{ _("reglas v%(n)s", n=p.XP_RULES_VERSION) }}</span></h2>
         <table class="level-rules">
             <thead><tr><th>{{ _("Qué") }}</th><th>{{ _("XP") }}</th><th>{{ _("Tope") }}</th></tr></thead>
             <tbody>
                 <tr>
-                    <td><b>{{ _("Entreno válido") }}</b>: terminado, con al menos {{ p.MIN_SETS_FOR_WORKOUT }} series de XP y {{ p.MIN_REPS_FOR_WORKOUT }} repeticiones en ellas</td>
-                    <td>+{{ p.XP_WORKOUT }}</td><td>1 al día · {{ p.MAX_WORKOUT_DAYS_PER_WEEK }} días por semana</td>
+                    <td><b>{{ _("Entreno válido") }}</b>{{ _(": terminado, con al menos %(sets)s series de XP y %(reps)s repeticiones en ellas", sets=p.MIN_SETS_FOR_WORKOUT, reps=p.MIN_REPS_FOR_WORKOUT) }}</td>
+                    <td>+{{ p.XP_WORKOUT }}</td><td>{{ _('1 al día · %(n)s días por semana', n=p.MAX_WORKOUT_DAYS_PER_WEEK) }}</td>
                 </tr>
                 <tr>
-                    <td><b>{{ _("Serie de XP") }}</b>: serie hecha con peso y repeticiones, que no sea de calentamiento y con al menos el {{ (p.MIN_LOAD_FRACTION * 100)|int }} % de tu mejor 1RM estimado anterior en ese ejercicio</td>
-                    <td>+{{ p.XP_SET }}</td><td>{{ p.MAX_SETS_PER_DAY }} al día</td>
+                    <td><b>{{ _("Serie de XP") }}</b>{{ _(": serie hecha con peso y repeticiones, que no sea de calentamiento y con al menos el %(pct)s %% de tu mejor 1RM estimado anterior en ese ejercicio", pct=(p.MIN_LOAD_FRACTION * 100)|int) }}</td>
+                    <td>+{{ p.XP_SET }}</td><td>{{ _('%(n)s al día', n=p.MAX_SETS_PER_DAY) }}</td>
                 </tr>
                 <tr>
                     <td><b>{{ _("Récord real") }}</b>{{ _(": superas el mejor 1RM estimado de una sesión anterior del mismo ejercicio (la primera vez que lo haces no cuenta)") }}</td>
-                    <td>+{{ p.XP_PR }}</td><td>{{ p.MAX_PRS_PER_DAY }} al día</td>
+                    <td>+{{ p.XP_PR }}</td><td>{{ _('%(n)s al día', n=p.MAX_PRS_PER_DAY) }}</td>
                 </tr>
                 <tr>
                     <td><b>{{ _("Semana cumplida") }}</b>{{ _(": entrenas al menos tu mínimo semanal (el de la racha)") }}</td>
-                    <td>+{{ p.XP_WEEK_PER_MINIMUM }} × mínimo</td><td>{{ _("1 por semana") }}</td>
+                    <td>{{ _('+%(n)s × mínimo', n=p.XP_WEEK_PER_MINIMUM) }}</td><td>{{ _("1 por semana") }}</td>
                 </tr>
                 <tr>
                     <td><b>{{ _("Check-in de recuperación") }}</b></td>
@@ -86,11 +86,11 @@
                 {% for start, w in weeks %}
                     <li>
                         <div class="level-week-top">
-                            <span>Semana del {{ start.strftime('%d/%m') }} · {{ w.days|length }} día{{ '' if w.days|length == 1 else 's' }} (mínimo {{ w.minimum }})</span>
-                            <b>{{ w.total|num }} XP{% if w.capped %}<span class="level-capped" title="Topes aplicados: {{ w.capped|join(', ') }}">*</span>{% endif %}</b>
+                            <span>{{ ngettext('Semana del %(date)s · %(num)d día (mínimo %(min)s)', 'Semana del %(date)s · %(num)d días (mínimo %(min)s)', w.days|length, date=start.strftime('%d/%m'), min=w.minimum) }}</span>
+                            <b>{{ w.total|num }} XP{% if w.capped %}<span class="level-capped" title="{{ _('Topes aplicados: %(caps)s', caps=w.capped|join(', ')) }}">*</span>{% endif %}</b>
                         </div>
                         <div class="level-week-parts">
-                            Entrenos {{ w.workout }} · Series {{ w.sets }} · Récords {{ w.prs }} · Semana cumplida {{ w.bonus }} · Check-in {{ w.checkins }}
+                            {{ _('Entrenos %(w)s · Series %(s)s · Récords %(p)s · Semana cumplida %(b)s · Check-in %(c)s', w=w.workout, s=w.sets, p=w.prs, b=w.bonus, c=w.checkins) }}
                         </div>
                     </li>
                 {% endfor %}

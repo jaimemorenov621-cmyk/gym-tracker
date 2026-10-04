@@ -2,7 +2,7 @@
 {% import "_macros.html" as macros %}
 {% block content %}
     <p class="page-back"><a href="{{ url_for('index') }}">{{ _("← Inicio") }}</a></p>
-    <h1 class="page-title">{{ _("Historial") }} <small class="history-count">{{ total }} entrenos</small></h1>
+    <h1 class="page-title">{{ _("Historial") }} <small class="history-count">{{ ngettext("%(num)d entreno", "%(num)d entrenos", total) }}</small></h1>
     {% include "_workout_history.html" %}
     <nav class="history-pager">
         {% if page > 1 %}<a class="btn-outline" href="{{ url_for('history', page=page - 1) }}">{{ _("← Más recientes") }}</a>{% endif %}

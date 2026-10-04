@@ -14,7 +14,7 @@
             <div class="ac-name">
                 <h1>{{ v.owner.username }}</h1>
                 {% if v.rank %}
-                    <span class="rank-badge rank-{{ r.key if r else 'none' }}">{{ r.label if r else 'Sin rango' }}</span>{{ hidden_tag(v.rank) }}
+                    <span class="rank-badge rank-{{ r.key if r else 'none' }}">{{ r.label if r else _('Sin rango') }}</span>{{ hidden_tag(v.rank) }}
                 {% endif %}
             </div>
         </div>
@@ -37,7 +37,7 @@
                             <small>{% if l.rank %}{{ l.rank.label }} · {% endif %}{{ l.date|relative_day }}</small>
                         </span>
                         {% if v.show_kg %}
-                            <span class="ac-lift-kg"><b>{{ l.set.weight|num }} × {{ l.set.reps }}</b><small>1RM est. {{ l.e1rm|num(0) }} kg</small>{% if v.is_self and v.kg_hidden %}<small class="ac-hidden">{{ _("kilos ocultos") }}</small>{% endif %}</span>
+                            <span class="ac-lift-kg"><b>{{ l.set.weight|num }} × {{ l.set.reps }}</b><small>{{ _('1RM est. %(kg)s kg', kg=l.e1rm|num(0)) }}</small>{% if v.is_self and v.kg_hidden %}<small class="ac-hidden">{{ _("kilos ocultos") }}</small>{% endif %}</span>
                         {% endif %}
                     </li>
                 {% endfor %}

@@ -16,7 +16,7 @@ adornada cuanto más alta; Titán es uno solo. #}
 de la barra inferior) en un cuadro de color, para que se lea como título. #}
 {# Título de pestaña con la rueda de ajustes en la esquina (sustituye a la
    pestaña "Más"); en Configuración no se pinta. #}
-{% macro tab_title(text, icon_name, gear=True) %}<div class="tab-title-row"><h1 class="tab-title"><span class="tab-title-icon" aria-hidden="true">{{ icon(icon_name, 18) }}</span><span>{{ text }}</span></h1>{% if gear %}<a class="tab-gear" href="{{ url_for('settings') }}" aria-label="Configuración" title="Configuración">{{ icon('settings', 21) }}</a>{% endif %}</div>{% endmacro %}
+{% macro tab_title(text, icon_name, gear=True) %}<div class="tab-title-row"><h1 class="tab-title"><span class="tab-title-icon" aria-hidden="true">{{ icon(icon_name, 18) }}</span><span>{{ text }}</span></h1>{% if gear %}<a class="tab-gear" href="{{ url_for('settings') }}" aria-label="{{ _('Configuración') }}" title="{{ _('Configuración') }}">{{ icon('settings', 21) }}</a>{% endif %}</div>{% endmacro %}
 
 {% macro icon(name, size=16) %}
 {% if name == 'calendar' %}
@@ -101,7 +101,7 @@ de la barra inferior) en un cuadro de color, para que se lea como título. #}
     <div class="bottom-sheet-search-wrap">
         {{ icon('search', 18) }}
         <input type="text" id="exercisePickerSearchInput" class="bottom-sheet-search-input"
-               placeholder="Buscar en el catálogo..." autocomplete="off" oninput="searchExercises(this.value)">
+               placeholder="{{ _('Buscar en el catálogo...') }}" autocomplete="off" oninput="searchExercises(this.value)">
     </div>
     <div class="bottom-sheet-body" id="exercisePickerResults"></div>
 </div>

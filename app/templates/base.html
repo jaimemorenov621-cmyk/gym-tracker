@@ -147,7 +147,7 @@
 
     {% if active_workout and request.endpoint not in ("new_workout", "workout_detail", "index") %}
     <a href="{{ url_for('workout_detail', workout_id=active_workout.id) }}" class="active-toast">
-        {{ active_workout.note or "Entrenamiento" }} en curso
+        {{ _("%(name)s en curso", name=active_workout.note or _("Entrenamiento")) }}
     </a>
     {% endif %}
 
@@ -211,7 +211,7 @@
         // notificaciones concedido.
         function showRestFinishedToast(exercise) {
             const toast = document.getElementById('restFinishedToast');
-            toast.textContent = '⏱ ¡Descanso terminado!' + (exercise ? ' — ' + exercise : '');
+            toast.textContent = {{ _('⏱ ¡Descanso terminado!')|tojson }} + (exercise ? ' — ' + exercise : '');
             toast.style.display = 'block';
             toast.classList.remove('visible');
             void toast.offsetWidth;
@@ -230,14 +230,14 @@
             document.getElementById('debugErrorBanner').style.display = 'block';
         }
         window.addEventListener('error', function (e) {
-            showDebugError('Error de JS: ' + e.message + ' (' + (e.filename || '').split('/').pop() + ':' + e.lineno + ')');
+            showDebugError({{ _('Error de JS:')|tojson }} + ' ' + e.message + ' (' + (e.filename || '').split('/').pop() + ':' + e.lineno + ')');
         });
         window.addEventListener('unhandledrejection', function (e) {
             const reason = e.reason && e.reason.message ? e.reason.message : String(e.reason);
             // La transición entre páginas (@view-transition) rechaza su promesa
             // interna si se navega antes de que termine: es normal, no un fallo.
             if (e.reason && (e.reason.name === 'AbortError' || /transition/i.test(reason))) return;
-            showDebugError('Promesa sin capturar: ' + reason);
+            showDebugError({{ _('Promesa sin capturar:')|tojson }} + ' ' + reason);
         });
 
         // window.confirm() no muestra nada y devuelve false al instante en
@@ -332,8 +332,8 @@
             if (!('serviceWorker' in navigator) || !window.Notification || Notification.permission !== 'granted') return;
             navigator.serviceWorker.ready.then(function (reg) {
                 const done = remaining <= 0;
-                const body = (done ? '¡Descanso terminado!' : 'Quedan ' + formatMMSS(remaining)) + (exercise ? ' — ' + exercise : '');
-                reg.showNotification(done ? '⏱ Descanso terminado' : '⏱ Descanso en curso', {
+                const body = (done ? {{ _('¡Descanso terminado!')|tojson }} : {{ _('Quedan')|tojson }} + ' ' + formatMMSS(remaining)) + (exercise ? ' — ' + exercise : '');
+                reg.showNotification(done ? {{ _('⏱ Descanso terminado')|tojson }} : {{ _('⏱ Descanso en curso')|tojson }}, {
                     body: body,
                     tag: 'rest-timer',
                     renotify: done,

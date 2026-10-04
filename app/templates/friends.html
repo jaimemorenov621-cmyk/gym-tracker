@@ -12,7 +12,7 @@
             <strong id="friendCode">{{ code }}</strong>
         </div>
         <div class="friends-actions">
-            <button type="button" class="btn" onclick="shareInvite()">{{ macros.icon('share', 18) }} Compartir enlace</button>
+            <button type="button" class="btn" onclick="shareInvite()">{{ macros.icon('share', 18) }} {{ _('Compartir enlace') }}</button>
             <button type="button" class="btn-outline" onclick="copyInvite(this)">{{ _("Copiar enlace") }}</button>
         </div>
         <form action="{{ url_for('friend_add') }}" method="post" class="friends-add">
@@ -48,7 +48,7 @@
                     <li>
                         <a href="{{ url_for('athlete_card', user_id=u.id) }}"><strong>{{ u.username }}</strong></a>
                         <form action="{{ url_for('friend_remove', friendship_id=f.id) }}" method="post"
-                              onsubmit="return confirm('¿Dejar de ser amigo de {{ u.username }}? Dejaréis de veros en los rankings.')">
+                              onsubmit="return confirm({{ _('¿Dejar de ser amigo de %(name)s? Dejaréis de veros en los rankings.', name=u.username)|tojson|forceescape }})">
                             {{ form.hidden_tag() }}<button type="submit" class="btn-outline btn-small">{{ _("Quitar") }}</button>
                         </form>
                     </li>
@@ -75,7 +75,7 @@
     <script>
         const INVITE_URL = {{ invite_url|tojson }};
         function shareInvite() {
-            const text = '¡Entrena conmigo en Gyre! Añádeme como amigo con mi código {{ code }}';
+            const text = {{ _('¡Entrena conmigo en Gyre! Añádeme como amigo con mi código %(code)s', code=code)|tojson }};
             if (navigator.share) {
                 navigator.share({ title: 'Gyre', text: text, url: INVITE_URL }).catch(function () {});
             } else {
@@ -84,8 +84,8 @@
         }
         function copyInvite(btn) {
             (navigator.clipboard ? navigator.clipboard.writeText(INVITE_URL) : Promise.reject()).then(function () {
-                if (btn) { btn.textContent = 'Copiado ✓'; setTimeout(function () { btn.textContent = 'Copiar enlace'; }, 1500); }
-            }).catch(function () { prompt('Copia tu enlace:', INVITE_URL); });
+                if (btn) { btn.textContent = {{ _('Copiado ✓')|tojson }}; setTimeout(function () { btn.textContent = {{ _('Copiar enlace')|tojson }}; }, 1500); }
+            }).catch(function () { prompt({{ _('Copia tu enlace:')|tojson }}, INVITE_URL); });
         }
     </script>
 {% endblock %}

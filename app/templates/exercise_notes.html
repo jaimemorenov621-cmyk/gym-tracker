@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
     <p class="page-back"><a href="{{ url_for('exercise_progress', name=exercise) }}">← {{ exercise|title }}</a></p>
-    <h1 class="page-title">Notas de {{ exercise|title }}</h1>
+    <h1 class="page-title">{{ _("Notas de %(exercise)s", exercise=exercise|title) }}</h1>
     <form action="" method="post" class="form-ui card card-elevated">
         {{ form.hidden_tag() }}
         <div class="field">
             <label class="field-label" for="{{ form.notes.id }}">{{ _("Notas técnicas") }}</label>
-            {{ form.notes(rows=8, placeholder="Ej: agarre un dedo más abierto\nbajar en 3 segundos") }}
+            {{ form.notes(rows=8, placeholder=_("Ej: agarre un dedo más abierto\nbajar en 3 segundos")) }}
             <small class="field-help">{{ _("Una idea por línea: cada línea se muestra como un punto.") }}</small>
         </div>
         <div class="field">
