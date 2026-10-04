@@ -10,8 +10,9 @@ Presupuesto de adornos por rango (se acumulan; ver RANK_CFG):
   Hierro / Bronce      remaches + laurel corto
   Plata / Oro          + laurel completo, alas de 1-2 filas, corona pequeña
   Platino / Diamante   + alas de 3 filas, rosetas, gema (diamante: cristal)
-  Esmeralda / Campeón  + filigrana floral en el marco (campeón: corona alta)
-  Titán                todo + corona radiada, rayos y halo
+  Esmeralda / Campeón  + alas grandes levantadas de 4 filas con puntas de color y
+                       resplandor, filigrana floral en el marco (campeón: corona alta)
+  Titán                todo, con alas de fuego, + corona radiada, rayos y halo
 Divisiones: el numeral; II y III añaden gemas en la cinta; III, en los
 rangos altos, halo y destellos.
 
@@ -323,6 +324,53 @@ def wings(doc, m, rows=2, size=44):
     return f'<g filter="url(#ds)">{one}<g transform="translate(256 0) scale(-1 1)">{one}</g></g>'
 
 
+def grand_wings(doc, m, size=56, tip=None, flame=False):
+    """Alas de los tres rangos más altos: levantadas, de 4 filas, con las
+    remeras más largas, puntas del color de la gema y un resplandor propio.
+    Titán: plumas de punta afilada que acaban en fuego."""
+    lc, mc, sc = m["leaf"]
+    light, dark = m["bevel"]
+    tip = tip or m["gem"][1]
+    glow = m.get("glow", tip)
+    rng = doc.rng
+    arm = [(176, 76), (194, 54), (208, 32), (220, 14)]   # hombro -> punta, hacia arriba
+    rows_cfg = [  # (escala, relleno, nº plumas, recorte del brazo, apertura)
+        (1.0, doc.lin([(0, sc), (0.45, mc), (0.8, tip), (1, tip)], 0, 0, 1, 0), 9, 0.0, 0),
+        (0.78, doc.lin([(0, mc), (0.55, lc), (1, tip)], 0, 0, 1, 0), 8, 0.06, 4),
+        (0.56, doc.lin([(0, mc), (1, lc)], 0, 0, 1, 0), 7, 0.12, 8),
+        (0.36, doc.lin([(0, lc), (1, m["specular"])], 0, 0, 1, 0), 6, 0.18, 12),
+    ]
+    side = []
+    for k, fill, count, lift, spread in rows_cfg:
+        for i in range(count):
+            t = i / (count - 1)
+            x, y = _cubic(*arm, t * (0.95 - lift))
+            a = 78 - 92 * t + spread + rng.uniform(-3, 3)          # de colgar a apuntar arriba-fuera
+            L = size * k * (0.55 + 0.6 * t) * (1 + rng.uniform(-0.06, 0.06))
+            W = L * (0.2 if flame else 0.24)
+            if flame:   # punta afilada y ligeramente ondulada, como una llama
+                path = (f"M0 {n(-W * 0.45)}C{n(L * 0.3)} {n(-W * 1.3)} {n(L * 0.7)} {n(-W * 0.9)} {n(L)} {n(-W * 0.6)}"
+                        f"Q{n(L * 0.86)} {n(W * 0.1)} {n(L * 0.7)} {n(W * 0.55)}C{n(L * 0.4)} {n(W)} {n(L * 0.1)} {n(W * 0.6)} 0 {n(W * 0.45)}Z")
+            else:
+                path = FEATHER.format(a=n(-W * 0.45), b=n(L * 0.3), c=n(-W * 1.25), d=n(L * 0.8), e=n(-W * 1.1),
+                                      L=n(L), t=n(-W * 0.2), L2=n(L * 1.03), u=n(W * 0.45), f=n(W * 0.75),
+                                      g=n(W * 0.95), b0=n(L * 0.1), h=n(W * 0.45))
+            side.append(f'<g transform="translate({n(x)} {n(y)}) rotate({n(a)})">'
+                        f'<path d="{path}" fill="{fill}" stroke="{dark}" stroke-width=".7"/>'
+                        f'<path d="M1 0L{n(L * 0.9)} 0" stroke="{light}" stroke-opacity=".7" stroke-width=".7"/>'
+                        f'<path d="M{n(L * 0.62)} {n(-W * 0.7)}Q{n(L * 0.85)} {n(-W * 0.55)} {n(L * 0.97)} {n(-W * 0.25)}" fill="none" stroke="{m["specular"]}" stroke-opacity=".55" stroke-width=".6"/></g>')
+    armd = "M" + " L".join(f"{n(x)} {n(y)}" for x, y in (_cubic(*arm, i / 20) for i in range(20)))
+    side.append(f'<path d="{armd}" fill="none" stroke="{dark}" stroke-width="5" stroke-linecap="round"/>'
+                f'<path d="{armd}" fill="none" stroke="{metal(doc, m, 0, 1)}" stroke-width="3.4" stroke-linecap="round"/>')
+    for gx, gy in (_cubic(*arm, 0.35), _cubic(*arm, 0.7)):   # gemas engastadas en el brazo
+        side.append(f'<circle cx="{n(gx)}" cy="{n(gy)}" r="2.4" fill="{tip}" stroke="{dark}" stroke-width=".5"/>'
+                    f'<circle cx="{n(gx - .6)}" cy="{n(gy - .6)}" r=".6" fill="#fff"/>')
+    one = "".join(side)
+    both = f'{one}<g transform="translate(256 0) scale(-1 1)">{one}</g>'
+    aura = f'<g opacity=".55" filter="url(#blur3)"><g fill="{glow}" stroke="{glow}" stroke-width="3">{both}</g></g>'
+    return f'{aura}<g filter="url(#ds)">{both}</g>'
+
+
 def crown(doc, m, top=46, scale=1.0, points=5):
     """Corona con bisel y gema; `scale` y `points` crecen con el rango."""
     light, dark = m["bevel"]
@@ -518,9 +566,9 @@ RANK_CFG = {
     "oro":       dict(tier=3, plates=2, scale=0.9, wings=(2, 44), laurel=1.0, crown=(1.0, 5), frame="beads"),
     "platino":   dict(tier=4, plates=3, scale=0.88, wings=(3, 44), laurel=1.0, crown=(1.0, 5), frame="beads", rosettes=True),
     "diamante":  dict(tier=5, plates=3, scale=0.87, wings=(3, 47), laurel=1.0, crown=(1.0, 5), frame="beads", rosettes=True, crystal=True),
-    "esmeralda": dict(tier=6, plates=4, scale=0.86, wings=(3, 50), laurel=1.0, crown=(1.05, 5), frame="beads", rosettes=True, floral=True),
-    "campeon":   dict(tier=7, plates=4, scale=0.85, wings=(3, 52), laurel=1.0, crown=(1.25, 7), frame="beads", rosettes=True, floral=True),
-    "titan":     dict(tier=8, plates=5, scale=0.84, wings=(3, 54), laurel=1.0, crown=(1.25, 7), frame="beads", rosettes=True, floral=True, rays=True),
+    "esmeralda": dict(tier=6, plates=4, scale=0.84, wings=None, grand=dict(size=50), laurel=1.0, crown=(1.05, 5), frame="beads", rosettes=True, floral=True),
+    "campeon":   dict(tier=7, plates=4, scale=0.83, wings=None, grand=dict(size=54), laurel=1.0, crown=(1.25, 7), frame="beads", rosettes=True, floral=True),
+    "titan":     dict(tier=8, plates=5, scale=0.82, wings=None, grand=dict(size=58, flame=True), laurel=1.0, crown=(1.25, 7), frame="beads", rosettes=True, floral=True, rays=True),
 }
 
 
@@ -535,7 +583,9 @@ def build(key, division):
     elif division == 3 and cfg["tier"] >= 5:
         back.append(halo(doc, m, 0.45))
     inner = []
-    if cfg["wings"]:
+    if cfg.get("grand"):
+        inner.append(grand_wings(doc, m, **cfg["grand"]))
+    elif cfg["wings"]:
         rows, size = cfg["wings"]
         inner.append(wings(doc, m, rows=rows, size=size))
     inner.append(laurel(doc, m, cfg["laurel"]))
