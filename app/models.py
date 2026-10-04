@@ -48,6 +48,8 @@ class User(UserMixin, db.Model):
     body_phase: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
     # Código para añadir amigos (app/social.py); se crea la primera vez.
     friend_code: so.Mapped[Optional[str]] = so.mapped_column(sa.String(12), unique=True, index=True)
+    # Idioma elegido en Ajustes ("es"/"en"; NULL = el del navegador). app/i18n.py
+    language: so.Mapped[Optional[str]] = so.mapped_column(sa.String(5))
     # XP y nivel (app/progression.py). xp_total es una caché de
     # compute_xp(): vale si xp_cached_seq == xp_seq, xp_rules es la versión
     # de reglas vigente y xp_cached_at tiene menos de 24 h. xp_seq sube (con

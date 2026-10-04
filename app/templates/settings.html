@@ -132,6 +132,20 @@
     </form>
 
     {# Lo que antes estaba en la pestaña "Más" #}
+    {% if i18n_enabled() %}
+        {# Idioma (app/i18n.py): "Automático" sigue al del móvil o el navegador. #}
+        <form action="{{ url_for('set_language') }}" method="post" class="card card-elevated lang-card">
+            {{ empty_lang_form.hidden_tag() }}
+            <h3 class="form-section-title">{{ _('Idioma') }}</h3>
+            <div class="pace-phases">
+                <button type="submit" name="language" value="" class="pace-phase{% if not current_user.language %} is-active{% endif %}">{{ _('Automático') }}</button>
+                {% for code, name in LANGUAGES.items() %}
+                    <button type="submit" name="language" value="{{ code }}" class="pace-phase{% if current_user.language == code %} is-active{% endif %}" lang="{{ code }}">{{ name }}</button>
+                {% endfor %}
+            </div>
+        </form>
+    {% endif %}
+
     <nav class="card card-elevated settings-list" aria-label="Más opciones">
         <a href="{{ url_for('achievements_page') }}"><span class="settings-list-icon">{{ macros.icon('trophy', 18) }}</span><span>Logros</span>{{ macros.icon('chevron-right', 18) }}</a>
         <a href="{{ url_for('privacy') }}"><span class="settings-list-icon">{{ macros.icon('shield', 18) }}</span><span>Privacidad</span>{{ macros.icon('chevron-right', 18) }}</a>

@@ -2190,7 +2190,8 @@ def settings():
         form.training_days.data = [int(c) for c in (current_user.training_days or "")]
         latest = _latest_weekly_goal_row(current_user.id)
         form.weekly_workout_goal.data = latest.goal if latest else None
-    return render_template("settings.html", title="Configuración", form=form, accents=perks.ACCENTS)
+    return render_template("settings.html", title="Configuración", form=form, accents=perks.ACCENTS,
+                           empty_lang_form=EmptyForm())
 
 
 @app.route("/weight", methods=["GET", "POST"])
@@ -2222,6 +2223,27 @@ def weight():
         chart_labels=[to_local(e.timestamp).strftime("%d/%m/%Y") for e in entries],
         chart_values=[e.weight for e in entries],
     )
+
+
+@app.route("/idioma", methods=["POST"])
+def set_language():
+    """Elegir idioma ("" = automático, el del navegador). Con sesión se
+    guarda en el usuario; siempre en una cookie, para el login y la landing."""
+    from app import i18n
+
+    form = EmptyForm()
+    code = request.form.get("language") or ""
+    if not form.validate_on_submit() or (code and code not in i18n.LANGUAGES):
+        return redirect(request.referrer or url_for("index"))
+    if current_user.is_authenticated:
+        current_user.language = code or None
+        db.session.commit()
+    response = make_response(redirect(request.referrer or url_for("index")))
+    if code:
+        response.set_cookie("lang", code, max_age=365 * 24 * 3600, samesite="Lax", secure=request.is_secure)
+    else:
+        response.delete_cookie("lang")
+    return response
 
 
 @app.route("/weight/fase", methods=["POST"])
