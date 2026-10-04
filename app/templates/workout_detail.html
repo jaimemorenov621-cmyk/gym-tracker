@@ -2,8 +2,8 @@
 {% import "_macros.html" as macros %}
 {% block content %}
     <div class="workout-title">
-        <h1 id="workoutTitle">{{ workout.note or "Entrenamiento" }}</h1>
-        <button type="button" class="workout-rename-btn" onclick="startRenameWorkout()" title="Cambiar nombre" aria-label="Cambiar nombre del entreno">{{ macros.icon('note', 18) }}</button>
+        <h1 id="workoutTitle">{{ workout.note or _("Entrenamiento") }}</h1>
+        <button type="button" class="workout-rename-btn" onclick="startRenameWorkout()" title="{{ _('Cambiar nombre') }}" aria-label="{{ _('Cambiar nombre del entreno') }}">{{ macros.icon('note', 18) }}</button>
     </div>
     <script>
         // Renombrar en el sitio: el entreno libre empieza como "Entreno del
@@ -18,7 +18,7 @@
             input.maxLength = 64;
             input.value = original;
             input.className = 'workout-title-input';
-            input.setAttribute('aria-label', 'Nombre del entreno');
+            input.setAttribute('aria-label', {{ _('Nombre del entreno')|tojson }});
             h1.replaceChildren(input);
             input.focus();
             input.select();
@@ -39,7 +39,7 @@
                     h1.textContent = data.name;
                 }).catch(err => {
                     h1.textContent = original;
-                    showPickerErrorToast((err && err.message) || 'No se pudo cambiar el nombre.');
+                    showPickerErrorToast((err && err.message) || {{ _('No se pudo cambiar el nombre.')|tojson }});
                 });
             }
             input.addEventListener('keydown', function (e) {
@@ -62,7 +62,7 @@
             <span class="set-tag">{% if effort_scale == 'none' %}{{ _("Sin esfuerzo") }}{% else %}{{ effort_scale|upper }}{% endif %}</span>
         </div>
         {% if routine_plan %}
-            <div class="progress-ring-wrap" role="img" aria-label="{{ ring_done }} de {{ ring_target }} series registradas">
+            <div class="progress-ring-wrap" role="img" aria-label="{{ _('%(n)s de %(total)s series registradas', n=ring_done, total=ring_target) }}">
                 <svg width="64" height="64" viewBox="0 0 64 64">
                     <circle class="progress-ring-track" cx="32" cy="32" r="28" fill="none" stroke-width="6"/>
                     <circle class="progress-ring-fill" cx="32" cy="32" r="28" fill="none" stroke-width="6"
@@ -113,8 +113,8 @@
         </div>
     {% endif %}
 
-    {% set type_short = {'normal': 'N', 'calentamiento': 'C', 'fallo': 'F', 'dropset': 'D'} %}
-    {% set type_label = {'normal': 'Normal', 'calentamiento': 'Calentamiento', 'fallo': 'Fallo', 'dropset': 'Dropset'} %}
+    {% set type_short = {'normal': pgettext('letra de serie normal', 'N'), 'calentamiento': pgettext('letra de serie de calentamiento', 'C'), 'fallo': pgettext('letra de serie al fallo', 'F'), 'dropset': pgettext('letra de dropset', 'D')} %}
+    {% set type_label = {'normal': _('Normal'), 'calentamiento': _('Calentamiento'), 'fallo': _('Fallo'), 'dropset': _('Dropset')} %}
 
 
     <div id="workoutExercisesList">
@@ -124,7 +124,7 @@
         <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}" data-exercise="{{ exercise }}" id="ex-{{ exercise|replace(' ', '-') }}">
             <div class="exercise-header">
                 <h3>
-                    <span class="drag-handle" title="Mantén pulsado y arrastra para ordenar" aria-label="Arrastrar para ordenar">{{ macros.icon('grip', 20) }}</span>
+                    <span class="drag-handle" title="{{ _('Mantén pulsado y arrastra para ordenar') }}" aria-label="{{ _('Arrastrar para ordenar') }}">{{ macros.icon('grip', 20) }}</span>
                     {% set img = get_exercise_image(exercise) %}
                     {% if img %}
                         <img src="{{ img }}" style="width:56px; height:56px; object-fit:cover; border-radius:8px;">
@@ -135,11 +135,11 @@
                 </h3>
                 <span style="display:flex; align-items:center; gap:6px;">
                     <a class="rest-badge" href="{{ url_for('exercise_notes', name=exercise) }}">
-                        {{ macros.icon('note') }} notas{% if n and n.default_rest_seconds %} · {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) }}{% endif %}
+                        {{ macros.icon('note') }} {{ _('notas') }}{% if n and n.default_rest_seconds %} · {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) }}{% endif %}
                     </a>
-                    <button type="button" class="btn-icon" title="Reemplazar ejercicio" aria-label="Reemplazar ejercicio"
+                    <button type="button" class="btn-icon" title="{{ _('Reemplazar ejercicio') }}" aria-label="{{ _('Reemplazar ejercicio') }}"
                         onclick="openExercisePicker('{{ url_for('replace_workout_exercise', workout_id=workout.id) }}', {old_exercise: '{{ exercise }}'})">{{ macros.icon('repeat') }}</button>
-                    <button type="button" class="btn-icon" title="Eliminar ejercicio" aria-label="Eliminar ejercicio"
+                    <button type="button" class="btn-icon" title="{{ _('Eliminar ejercicio') }}" aria-label="{{ _('Eliminar ejercicio') }}"
                         onclick="deleteWorkoutExercise('{{ exercise }}')">{{ macros.icon('trash') }}</button>
                 </span>
             </div>
@@ -169,30 +169,30 @@
                     {% set untouched = (not s.completed and s.weight == 0 and s.reps == 0) %}
                     {% set ghost = untouched and p %}
                     <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}" data-set-type="{{ s.set_type if s.set_type in type_short else 'normal' }}"{% if s.completed %} class="set-row-done"{% endif %}>
-                        <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" role="button" tabindex="0" title="Récord personal · toca para compartir" aria-label="Récord personal, compartir">🏅</span>{% endif %}</td>
+                        <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" role="button" tabindex="0" title="{{ _('Récord personal · toca para compartir') }}" aria-label="{{ _('Récord personal, compartir') }}">🏅</span>{% endif %}</td>
                         <td class="set-previous">{{ p.label if p else "—" }}</td>
-                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="Peso en kg, serie {{ loop.index }}" value="{{ '' if ghost else ('%g' % s.weight).replace('.', ',') }}"{% if ghost %} placeholder="{{ ('%g' % p.weight).replace('.', ',') }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
-                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="Repeticiones, serie {{ loop.index }}" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
+                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="{{ _('Peso en kg, serie %(n)s', n=loop.index) }}" value="{{ '' if ghost else ('%g' % s.weight).replace('.', ',') }}"{% if ghost %} placeholder="{{ ('%g' % p.weight).replace('.', ',') }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
+                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="{{ _('Repeticiones, serie %(n)s', n=loop.index) }}" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
                         {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
                         {% set effort_ghost = (effort_val == '' and p and p.effort is not none and p.effort_scale == effort_scale) %}
-                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', '{{ exercise|title }} · Serie {{ loop.index }}')">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
+                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', '{{ exercise|title }} · {{ _('Serie %(n)s', n=loop.index) }}')">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
                         {% endif %}
                         {% set st = s.set_type if s.set_type in type_short else 'normal' %}
                         <td>
-                            <button type="button" class="set-type-pill set-type-{{ st }}" data-type="{{ st }}" aria-label="Tipo de serie: {{ type_label[st] }}"
+                            <button type="button" class="set-type-pill set-type-{{ st }}" data-type="{{ st }}" aria-label="{{ _('Tipo de serie: %(type)s', type=type_label[st]) }}"
                                     onclick="openSetTypePicker({{ s.id }}, this)">
                                 <span class="set-type-short">{{ type_short[st] }}</span>
                                 <span class="set-type-long">{{ type_label[st] }}</span>
                             </button>
                         </td>
-                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" aria-label="Marcar serie como hecha" onclick="toggleSetComplete({{ s.id }}, this, '{{ exercise }}')">{{ macros.icon('check', 18) }}</button></td>
-                        <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})" aria-label="Eliminar serie">{{ macros.icon('trash') }}</button></td>
+                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" aria-label="{{ _('Marcar serie como hecha') }}" onclick="toggleSetComplete({{ s.id }}, this, '{{ exercise }}')">{{ macros.icon('check', 18) }}</button></td>
+                        <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})" aria-label="{{ _('Eliminar serie') }}">{{ macros.icon('trash') }}</button></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
-            <div class="swipe-delete-zone"><button type="button" aria-label="Eliminar serie">{{ macros.icon('trash') }}</button></div>
+            <div class="swipe-delete-zone"><button type="button" aria-label="{{ _('Eliminar serie') }}">{{ macros.icon('trash') }}</button></div>
             </div>
             <button type="button" class="btn-outline" onclick="addSet('{{ exercise }}')">{{ _("+ Agregar serie") }}</button>
         </div>
@@ -274,10 +274,10 @@
         </div>
         <div class="set-type-options" role="radiogroup" aria-labelledby="setTypeTitle">
             {% set type_desc = {
-                'normal': 'Serie de trabajo de siempre.',
-                'calentamiento': 'Para entrar en calor: no cuenta para volumen, XP ni rango.',
-                'fallo': 'Llegaste al fallo muscular: no podías hacer otra repetición.',
-                'dropset': 'Bajas el peso sin descansar y sigues hasta el fallo.'} %}
+                'normal': _('Serie de trabajo de siempre.'),
+                'calentamiento': _('Para entrar en calor: no cuenta para volumen, XP ni rango.'),
+                'fallo': _('Llegaste al fallo muscular: no podías hacer otra repetición.'),
+                'dropset': _('Bajas el peso sin descansar y sigues hasta el fallo.')} %}
             {% for val, label in type_label.items() %}
                 <button type="button" class="set-type-option" role="radio" data-type="{{ val }}" onclick="chooseSetType('{{ val }}')">
                     <span class="set-type-pill set-type-{{ val }}" aria-hidden="true"><span class="set-type-letter">{{ type_short[val] }}</span></span>
@@ -293,7 +293,7 @@
     <div class="bottom-sheet effort-picker-sheet" id="effortPickerSheet" role="dialog" aria-modal="true" aria-labelledby="effortPickerTitle">
         <div class="bottom-sheet-grabber" aria-hidden="true"></div>
         <div class="bottom-sheet-header">
-            <h3 id="effortPickerTitle" class="bottom-sheet-title">Registro {{ effort_scale|upper }}</h3>
+            <h3 id="effortPickerTitle" class="bottom-sheet-title">{{ _('Registro %(scale)s', scale=effort_scale|upper) }}</h3>
             <button type="button" class="sheet-close-btn" onclick="closeEffortPicker()" aria-label="Cerrar">{{ macros.icon('close', 20) }}</button>
         </div>
         <p class="effort-picker-subtitle" id="effortPickerSubtitle"></p>
@@ -308,18 +308,18 @@
         let effortPickerSetId = null;
         let effortPickerPending = '';
         const EFFORT_DESCRIPTIONS = {{ 'true' if effort_scale|upper == 'RIR' else 'false' }} ? {
-            0: 'Fallo muscular', 1: '1 repetición en reserva', 2: '2 repeticiones en reserva',
-            3: '3 repeticiones en reserva', 4: '4 repeticiones en reserva'
+            0: {{ _('Fallo muscular')|tojson }}, 1: {{ _('1 repetición en reserva')|tojson }}, 2: {{ _('2 repeticiones en reserva')|tojson }},
+            3: {{ _('3 repeticiones en reserva')|tojson }}, 4: {{ _('4 repeticiones en reserva')|tojson }}
         } : {
-            10: 'Fallo muscular', 9: 'Podrías haber hecho 1 repetición más',
-            8: 'Podrías haber hecho 2 repeticiones más', 7: 'Podrías haber hecho 3 repeticiones más',
-            6: 'Podrías haber hecho 4 o más repeticiones más'
+            10: {{ _('Fallo muscular')|tojson }}, 9: {{ _('Podrías haber hecho 1 repetición más')|tojson }},
+            8: {{ _('Podrías haber hecho 2 repeticiones más')|tojson }}, 7: {{ _('Podrías haber hecho 3 repeticiones más')|tojson }},
+            6: {{ _('Podrías haber hecho 4 o más repeticiones más')|tojson }}
         };
 
         function effortDescription(value) {
-            if (value === '') return 'Sin registrar';
+            if (value === '') return {{ _('Sin registrar')|tojson }};
             if (value in EFFORT_DESCRIPTIONS) return EFFORT_DESCRIPTIONS[value];
-            return '{{ "Esfuerzo ligero / calentamiento" if effort_scale|upper == "RIR" else "Esfuerzo ligero" }}';
+            return {{ (_("Esfuerzo ligero / calentamiento") if effort_scale|upper == "RIR" else _("Esfuerzo ligero"))|tojson }};
         }
 
         function renderEffortPreview(value) {
@@ -379,14 +379,14 @@
         <a class="finish-workout-cta" href="{{ url_for('finish_workout', workout_id=workout.id) }}">
             <span class="finish-cta-icon">{{ macros.icon('flag', 22) }}</span>
             <span class="finish-cta-text">
-                <strong>{{ 'Editar valoración' if workout.ended_at else 'Terminar entreno' }}</strong>
+                <strong>{{ _('Editar valoración') if workout.ended_at else _('Terminar entreno') }}</strong>
                 <small id="finishProgress">{{ _("Guardar y valorar la sesión") }}</small>
             </span>
             <span class="finish-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
         </a>
 
         <div class="action-menu">
-            <button type="button" class="action-menu-btn" onclick="toggleActionMenu()" aria-label="Más acciones">{{ macros.icon('menu-dots', 18) }}</button>
+            <button type="button" class="action-menu-btn" onclick="toggleActionMenu()" aria-label="{{ _('Más acciones') }}">{{ macros.icon('menu-dots', 18) }}</button>
             <div class="action-menu-content workout-actions-menu" id="actionMenuContent">
                 <form action="{{ url_for('save_as_routine', workout_id=workout.id) }}" method="post">
                     {{ empty_form.hidden_tag() }}
@@ -423,12 +423,18 @@
         const previousSetsMap = {{ previous_sets_map|tojson }};
         const restSecondsMap = {{ rest_seconds_map|tojson }};
         const CHECK_ICON_HTML = {{ macros.icon('check', 18)|tojson }};
+        const T_WEIGHT_N = {{ _('Peso en kg, serie {n}')|tojson }};
+        const T_REPS_N = {{ _('Repeticiones, serie {n}')|tojson }};
+        const T_SET_N = {{ _('Serie {n}')|tojson }};
+        const T_MARK_DONE = {{ _('Marcar serie como hecha')|tojson }};
+        const T_DELETE_SET = {{ _('Eliminar serie')|tojson }};
         const SET_TYPE_SHORT = {{ type_short|tojson }};
         const SET_TYPE_LABEL = {{ type_label|tojson }};
+        const T_SET_TYPE = {{ _('Tipo de serie: {type}')|tojson }};
 
         function setTypeCellHtml(id, type) {
             return '<td><button type="button" class="set-type-pill set-type-' + type + '" data-type="' + type + '"' +
-                ' aria-label="Tipo de serie: ' + SET_TYPE_LABEL[type] + '" onclick="openSetTypePicker(' + id + ', this)">' +
+                ' aria-label="' + T_SET_TYPE.replace('{type}', SET_TYPE_LABEL[type]) + '" onclick="openSetTypePicker(' + id + ', this)">' +
                 '<span class="set-type-short">' + SET_TYPE_SHORT[type] + '</span>' +
                 '<span class="set-type-long">' + SET_TYPE_LABEL[type] + '</span></button></td>';
         }
@@ -463,7 +469,7 @@
             if (!pill || !SET_TYPE_LABEL[type] || pill.dataset.type === type) return;
             pill.className = 'set-type-pill set-type-' + type;
             pill.dataset.type = type;
-            pill.setAttribute('aria-label', 'Tipo de serie: ' + SET_TYPE_LABEL[type]);
+            pill.setAttribute('aria-label', T_SET_TYPE.replace('{type}', SET_TYPE_LABEL[type]));
             pill.closest('tr').dataset.setType = type;  // franja y número de la fila
             pill.querySelector('.set-type-short').textContent = SET_TYPE_SHORT[type];
             pill.querySelector('.set-type-long').textContent = SET_TYPE_LABEL[type];
@@ -486,10 +492,10 @@
                 if (!numCell.querySelector('.pr-badge')) {
                     const badge = document.createElement('span');
                     badge.className = 'pr-badge';
-                    badge.title = 'Récord personal · toca para compartir';
+                    badge.title = {{ _('Récord personal · toca para compartir')|tojson }};
                     badge.setAttribute('role', 'button');
                     badge.setAttribute('tabindex', '0');
-                    badge.setAttribute('aria-label', 'Récord personal, compartir');
+                    badge.setAttribute('aria-label', {{ _('Récord personal, compartir')|tojson }});
                     badge.textContent = '🏅';
                     numCell.appendChild(badge);
                 }
@@ -541,22 +547,22 @@
                             };
                             setTimeout(finish, Math.max(0, 200 - (Date.now() - started)));
                         } else {
-                            restore('No se pudo borrar la serie.');
+                            restore({{ _('No se pudo borrar la serie.')|tojson }});
                         }
                     })
-                    .catch(() => restore('No se pudo borrar la serie. Revisa la conexión.'));
+                    .catch(() => restore({{ _('No se pudo borrar la serie. Revisa la conexión.')|tojson }}));
             };
             if (skipConfirm) {
                 doDelete();
             } else {
-                customConfirm('¿Eliminar esta serie?').then(function (confirmed) {
+                customConfirm({{ _('¿Eliminar esta serie?')|tojson }}).then(function (confirmed) {
                     if (confirmed) doDelete();
                 });
             }
         }
 
         function deleteWorkoutExercise(exercise) {
-            customConfirm('¿Eliminar todo "' + exercise + '" de este entrenamiento? Se borrarán todas sus series.')
+            customConfirm({{ _('¿Eliminar todo "{name}" de este entrenamiento? Se borrarán todas sus series.')|tojson }}.replace('{name}', exercise))
                 .then(function (confirmed) {
                     if (!confirmed) return;
                     fetch("{{ url_for('delete_workout_exercise', workout_id=workout.id) }}", {
@@ -569,10 +575,10 @@
                         if (data.ok) {
                             location.reload();
                         } else {
-                            showPickerErrorToast('No se pudo eliminar el ejercicio.');
+                            showPickerErrorToast({{ _('No se pudo eliminar el ejercicio.')|tojson }});
                         }
                     })
-                    .catch(() => showPickerErrorToast('No se pudo eliminar el ejercicio.'));
+                    .catch(() => showPickerErrorToast({{ _('No se pudo eliminar el ejercicio.')|tojson }}));
                 });
         }
 
@@ -629,14 +635,14 @@
                 tr.innerHTML =
                     '<td class="set-num">' + (rows.length + 1) + '</td>' +
                     '<td class="set-previous">' + previousLabel + '</td>' +
-                    '<td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="Peso en kg, serie ' + (rows.length + 1) + '" value="' + weightValue + '" placeholder="' + weightPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'weight\', this.value.replace(\',\', \'.\'))"></td>' +
-                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="Repeticiones, serie ' + (rows.length + 1) + '" value="' + repsValue + '" placeholder="' + repsPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
+                    '<td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="' + T_WEIGHT_N.replace('{n}', rows.length + 1) + '" value="' + weightValue + '" placeholder="' + weightPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'weight\', this.value.replace(\',\', \'.\'))"></td>' +
+                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="' + T_REPS_N.replace('{n}', rows.length + 1) + '" value="' + repsValue + '" placeholder="' + repsPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
                     '{% if effort_scale != "none" %}' +
-                    '<td><button type="button" class="pill effort-chip' + effortClass + '" data-set-id="' + data.id + '" onclick="openEffortPicker(' + data.id + ', \'' + effortCurrentValue + '\', \'' + exercise.replace(/\b\w/g, c => c.toUpperCase()).replace(/'/g, "\\'") + ' · Serie ' + (rows.length + 1) + '\')">' + effortDisplay + '</button></td>' +
+                    '<td><button type="button" class="pill effort-chip' + effortClass + '" data-set-id="' + data.id + '" onclick="openEffortPicker(' + data.id + ', \'' + effortCurrentValue + '\', \'' + exercise.replace(/\b\w/g, c => c.toUpperCase()).replace(/'/g, "\\'") + ' · ' + T_SET_N.replace('{n}', rows.length + 1) + '\')">' + effortDisplay + '</button></td>' +
                     '{% endif %}' +
                     setTypeCellHtml(data.id, SET_TYPE_LABEL[lastType] ? lastType : 'normal') +
-                    '<td><button type="button" class="set-check-btn" aria-label="Marcar serie como hecha" onclick="toggleSetComplete(' + data.id + ', this, \'' + exercise.replace(/'/g, "\\'") + '\')">' + CHECK_ICON_HTML + '</button></td>' +
-                    '<td><button type="button" class="delete-set-btn" onclick="deleteSet(' + data.id + ')" aria-label="Eliminar serie"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6h12z"/></svg></button></td>';
+                    '<td><button type="button" class="set-check-btn" aria-label="' + T_MARK_DONE + '" onclick="toggleSetComplete(' + data.id + ', this, \'' + exercise.replace(/'/g, "\\'") + '\')">' + CHECK_ICON_HTML + '</button></td>' +
+                    '<td><button type="button" class="delete-set-btn" onclick="deleteSet(' + data.id + ')" aria-label="' + T_DELETE_SET + '"><svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m2 0v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6h12z"/></svg></button></td>';
                 tr.classList.add('set-row-entering');
                 tbody.appendChild(tr);
                 setTimeout(() => tr.classList.remove('set-row-entering'), 300);
@@ -699,7 +705,7 @@
             const rollback = function (msg) {
                 applyState(!willComplete);
                 if (willComplete) stopRestTimer();
-                showPickerErrorToast(msg || 'No se pudo guardar la serie. Revisa la conexión.');
+                showPickerErrorToast(msg || {{ _('No se pudo guardar la serie. Revisa la conexión.')|tojson }});
             };
 
             btn.dataset.pending = '1';
@@ -753,7 +759,7 @@
                 const pct = Math.min(1, totalDone / totalTarget);
                 ringFill.setAttribute('stroke-dashoffset', (175.9 * (1 - pct)).toFixed(1));
                 ringValue.textContent = totalDone + '/' + totalTarget;
-                ringWrap.setAttribute('aria-label', totalDone + ' de ' + totalTarget + ' series registradas');
+                ringWrap.setAttribute('aria-label', {{ _('{n} de {total} series registradas')|tojson }}.replace('{n}', totalDone).replace('{total}', totalTarget));
             }
         }
 
@@ -771,7 +777,7 @@
             if (!el) return;
             const total = document.querySelectorAll('.set-table tbody tr:not(.set-row-removing)').length;
             const done = document.querySelectorAll('.set-table tbody tr.set-row-done:not(.set-row-removing)').length;
-            el.textContent = total ? done + ' de ' + total + ' series hechas' : 'Guardar y valorar la sesión';
+            el.textContent = total ? {{ _('{n} de {total} series hechas')|tojson }}.replace('{n}', done).replace('{total}', total) : {{ _('Guardar y valorar la sesión')|tojson }};
             const cta = el.closest('.finish-workout-cta');
             if (cta) cta.classList.toggle('all-done', total > 0 && done === total);
         }

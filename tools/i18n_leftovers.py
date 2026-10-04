@@ -19,7 +19,7 @@ LITERAL = re.compile(r"""(?<![\w.])(?<!_\()(?<!gettext\()(['"])((?:(?!\1).)*?)\1
 ATTR = re.compile(r'\b(placeholder|aria-label|title|alt|data-label)="([^"]*)"')
 CODEISH = re.compile(r"^[\w\-./#:%?=&]*$")
 # Textos que no se traducen (unidades, siglas, la marca, símbolos).
-NEUTRAL = re.compile(r"^[\s\d.,:;·×+\-–—()%/*✓▲▼←→]*(kg|XP|RIR|RPE|1RM|h|min|s|m|Gyre|N|C|F|D|I|II|III|e1RM|DOTS)?[\s\d.,:;·×+\-–—()%/*✓▲▼←→]*$")
+NEUTRAL = re.compile(r"^[\s\d.,:;·×+\-–—()%/*✓▲▼←→]*(kg|XP|@?RIR|@?RPE|1RM|h|min|s|m|x|Gyre|N|C|F|D|I|II|III|e1RM|DOTS)?[\s\d.,:;·×+\-–—()%/*✓▲▼←→]*$")
 
 
 def line_of(text, pos):
@@ -52,6 +52,8 @@ def scan(path):
                 before = part[:m.start()]
                 if before.rstrip().endswith(("_(", "gettext(", "ngettext(")) or re.search(r"_\(\s*$", before):
                     continue
+                if re.search(r"ngettext\(\s*(['\"])(?:(?!\1).)*\1\s*,\s*$", before, re.S):
+                    continue  # plural de ngettext
                 if s and not CODEISH.match(s) and LETTER.search(s) and SPANISHY.search(s):
                     found.append((line_of(src, start + m.start()), "jinja", s[:90]))
             continue
