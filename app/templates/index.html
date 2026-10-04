@@ -268,11 +268,20 @@
                 {% endif %}
             </a>
 
-            <div class="dash-tile">
-                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('calendar', 15) }}</span>Entrenos</span>
-                <strong class="dash-tile-value">{{ total_workouts }}</strong>
-                <span class="dash-tile-sub">{{ workouts_this_month }} este mes</span>
-            </div>
+            {# Próximo objetivo de rango: el básico al que menos le falta. #}
+            <a class="dash-tile" href="{{ url_for('rank_page') }}">
+                <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('shield', 15) }}</span>Objetivo</span>
+                {% if rank_goal %}
+                    <strong class="dash-tile-value">+{{ rank_goal.missing_kg|num(1) }}<small> kg</small></strong>
+                    <span class="dash-tile-sub">{{ rank_goal.label }} para <b>{{ rank_goal.next }}</b></span>
+                {% elif profile.missing %}
+                    <strong class="dash-tile-value is-empty">—</strong>
+                    <span class="dash-tile-sub">Indica tu {{ profile.missing|join(' y tu ') }} para ver tu próximo rango</span>
+                {% else %}
+                    <strong class="dash-tile-value is-empty">—</strong>
+                    <span class="dash-tile-sub">Haz un básico (banca, sentadilla, remo…) para ver tu próximo rango</span>
+                {% endif %}
+            </a>
 
             <a class="dash-tile" href="{{ url_for('weight') }}">
                 <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('scale', 15) }}</span>Peso</span>

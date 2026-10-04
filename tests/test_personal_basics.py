@@ -86,3 +86,24 @@ class PersonalBasicsTests(DbTestCase):
         with app.app_context():
             progression.delete_user_data(self.uid)
             self.assertEqual(db.session.scalar(sa.select(sa.func.count()).select_from(PersonalBasic)), 0)
+
+    def test_home_shows_the_closest_rank_goal(self):
+        from app import strength_standards as std
+        from app.routes import next_rank_goal
+
+        with app.app_context():
+            db.session.get(User, self.uid).sex = "hombre"
+            db.session.add(BodyWeightEntry(user_id=self.uid, weight=80, timestamp=self.NOW - timedelta(days=30)))
+            db.session.commit()
+        self.lift("press de banca", 100, 5)
+        self.lift("sentadilla", 100, 4)
+        with app.app_context():
+            profile = std.strength_profile(db.session.get(User, self.uid))
+            goal = next_rank_goal(profile)
+        lifts = profile["lifts"]
+        effort = {l: lifts[l]["rank_missing_kg"] / lifts[l]["rank_e1rm"] for l in ("bench", "squat")}
+        self.assertEqual(goal["lift"], min(effort, key=effort.get))  # el que menos le falta en proporción
+        self.login(self.uid)
+        html = self.client.get("/index").get_data(as_text=True)
+        self.assertIn("Objetivo", html)
+        self.assertIn(f"para <b>{goal['next']}</b>", html)

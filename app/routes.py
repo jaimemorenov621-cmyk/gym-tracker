@@ -739,6 +739,24 @@ def onboarding_status(user_id):
     return {"steps": steps, "done": done, "current": current}
 
 
+def next_rank_goal(profile):
+    """El objetivo de rango más cercano para Inicio: entre los levantamientos
+    que cuentan para un básico y tienen rango ahora, el que menos kilos
+    necesita (en proporción a su 1RM) para la siguiente división.
+    None si no hay ninguno (sin sexo/peso, o sin básicos en 90 días)."""
+    counted = {lift for sources in standards.BASIC_SOURCES.values() for lift in sources}
+    best = None
+    for lift, info in profile["lifts"].items():
+        if lift not in counted or not info["rank"] or info["rank_next"] is None:
+            continue
+        base = info["rank_e1rm"] + (profile["latest_bw"] or 0) if lift == "pullup" else info["rank_e1rm"]
+        effort = info["rank_missing_kg"] / base if base else float("inf")
+        if best is None or effort < best[0]:
+            best = (effort, {"lift": lift, "label": info["label"], "missing_kg": info["rank_missing_kg"],
+                             "next": info["rank_next"], "rank": info["rank"]})
+    return best[1] if best else None
+
+
 RECENT_WORKOUTS = 8      # entrenos que se ven en Inicio; el resto, en /historial
 HISTORY_PAGE = 30
 
@@ -913,6 +931,7 @@ def index():
         calendar_weeks=calendar_weeks,
         weight_change=weight_change,
         workouts_this_month=workouts_this_month,
+        rank_goal=next_rank_goal(profile),
         strength=strength,
         strength_spark=sparkline_points([v for _, v in strength["series"][-12:]]) if strength else "",
         latest_weight=latest_weight,
