@@ -22,19 +22,21 @@ intermedio son criterio de la app.
 """
 from datetime import timedelta
 
+from flask_babel import gettext, lazy_gettext as _l
+
 PHASES = {
-    "volumen": {"label": "Volumen", "lo": 0.25, "hi": 0.5,
-                "range": "subir un 0,25-0,5 % de tu peso por semana"},
-    "definicion": {"label": "Definición", "lo": -1.0, "hi": -0.5,
-                   "range": "bajar un 0,5-1 % de tu peso por semana"},
-    "recomposicion": {"label": "Recomposición", "lo": -0.25, "hi": 0.25,
-                      "range": "mantener el peso (±0,25 % por semana)"},
+    "volumen": {"label": _l("Volumen"), "lo": 0.25, "hi": 0.5,
+                "range": _l("subir un 0,25-0,5 % de tu peso por semana")},
+    "definicion": {"label": _l("Definición"), "lo": -1.0, "hi": -0.5,
+                   "range": _l("bajar un 0,5-1 % de tu peso por semana")},
+    "recomposicion": {"label": _l("Recomposición"), "lo": -0.25, "hi": 0.25,
+                      "range": _l("mantener el peso (±0,25 % por semana)")},
 }
 # (volumen lo-hi, definición lo-hi) por nivel; recomposición igual para todos.
 LEVELS = {
-    "principiante": {"label": "principiante o novato", "volumen": (0.25, 0.5), "definicion": (-1.0, -0.5)},
-    "intermedio": {"label": "intermedio", "volumen": (0.2, 0.35), "definicion": (-0.9, -0.5)},
-    "avanzado": {"label": "avanzado", "volumen": (0.1, 0.25), "definicion": (-0.75, -0.5)},
+    "principiante": {"label": _l("principiante o novato"), "volumen": (0.25, 0.5), "definicion": (-1.0, -0.5)},
+    "intermedio": {"label": _l("intermedio"), "volumen": (0.2, 0.35), "definicion": (-0.9, -0.5)},
+    "avanzado": {"label": _l("avanzado"), "volumen": (0.1, 0.25), "definicion": (-0.75, -0.5)},
 }
 
 
@@ -80,33 +82,33 @@ def assessment(rate, phase, level="principiante"):
     """Cómo va el ritmo para la fase y el nivel: status ok | fast | slow |
     wrong | none y un mensaje corto."""
     if rate is None:
-        return {"status": "none", "text": f"Registra al menos {MIN_ENTRIES} pesos en {MIN_SPAN_DAYS} días para ver tu ritmo."}
+        return {"status": "none", "text": gettext("Registra al menos %(n)s pesos en %(days)s días para ver tu ritmo.", n=MIN_ENTRIES, days=MIN_SPAN_DAYS)}
     info = PHASES.get(phase)
     if info is None:
-        return {"status": "none", "text": "Elige tu fase para saber si vas al ritmo adecuado."}
+        return {"status": "none", "text": gettext("Elige tu fase para saber si vas al ritmo adecuado.")}
     pct = rate["pct_week"]
     lo, hi = phase_range(phase, level)
     info = dict(info, lo=lo, hi=hi)
     if phase == "volumen":
         if pct <= 0:
-            return {"status": "wrong", "text": "No estás subiendo de peso: para ganar músculo en volumen hace falta algo de superávit."}
+            return {"status": "wrong", "text": gettext("No estás subiendo de peso: para ganar músculo en volumen hace falta algo de superávit.")}
         if pct < info["lo"]:
-            return {"status": "slow", "text": "Subes más despacio de lo recomendado: puedes comer algo más."}
+            return {"status": "slow", "text": gettext("Subes más despacio de lo recomendado: puedes comer algo más.")}
         if pct > info["hi"]:
-            return {"status": "fast", "text": "Subes demasiado rápido: probablemente estés ganando más grasa de la necesaria."}
+            return {"status": "fast", "text": gettext("Subes demasiado rápido: probablemente estés ganando más grasa de la necesaria.")}
     elif phase == "definicion":
         if pct >= 0:
-            return {"status": "wrong", "text": "No estás bajando de peso: en definición hace falta un déficit."}
+            return {"status": "wrong", "text": gettext("No estás bajando de peso: en definición hace falta un déficit.")}
         if pct > info["hi"]:
-            return {"status": "slow", "text": "Bajas más despacio de lo recomendado: puedes ajustar un poco el déficit."}
+            return {"status": "slow", "text": gettext("Bajas más despacio de lo recomendado: puedes ajustar un poco el déficit.")}
         if pct < info["lo"]:
-            return {"status": "fast", "text": "Bajas demasiado rápido: aumenta el riesgo de perder músculo."}
+            return {"status": "fast", "text": gettext("Bajas demasiado rápido: aumenta el riesgo de perder músculo.")}
     else:  # recomposición
         if pct > info["hi"]:
-            return {"status": "fast", "text": "Estás subiendo de peso: eso ya se parece más a un volumen."}
+            return {"status": "fast", "text": gettext("Estás subiendo de peso: eso ya se parece más a un volumen.")}
         if pct < info["lo"]:
-            return {"status": "fast", "text": "Estás bajando de peso: eso ya se parece más a una definición."}
-    return {"status": "ok", "text": "Vas al ritmo recomendado para tu fase."}
+            return {"status": "fast", "text": gettext("Estás bajando de peso: eso ya se parece más a una definición.")}
+    return {"status": "ok", "text": gettext("Vas al ritmo recomendado para tu fase.")}
 
 
 def _pct(x):
@@ -122,7 +124,11 @@ def summary(entries, phase, now, tier=None):
            "level_label": LEVELS[level]["label"], "has_tier": tier is not None, **assessment(rate, phase, level)}
     if phase in PHASES:
         lo, hi = phase_range(phase, level)
-        verb = "subir" if phase == "volumen" else ("bajar" if phase == "definicion" else "")
-        out["target"] = (f"{verb} un {_pct(min(abs(lo), abs(hi)))}-{_pct(max(abs(lo), abs(hi)))} % de tu peso por semana"
-                         if verb else "mantener el peso (±0,25 % por semana)")
+        a, b = _pct(min(abs(lo), abs(hi))), _pct(max(abs(lo), abs(hi)))
+        if phase == "volumen":
+            out["target"] = gettext("subir un %(a)s-%(b)s %% de tu peso por semana", a=a, b=b)
+        elif phase == "definicion":
+            out["target"] = gettext("bajar un %(a)s-%(b)s %% de tu peso por semana", a=a, b=b)
+        else:
+            out["target"] = gettext("mantener el peso (±0,25 % por semana)")
     return out

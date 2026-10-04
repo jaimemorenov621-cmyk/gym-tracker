@@ -36,6 +36,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import click
 import sqlalchemy as sa
+from flask_babel import lazy_gettext as _l
 import sqlalchemy.orm as so
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
@@ -216,29 +217,30 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
         # Entreno válido: 1 al día y 6 días por semana como mucho.
         if len(work) >= MIN_SETS_FOR_WORKOUT and sum(s.reps for s in work) >= MIN_REPS_FOR_WORKOUT:
             if day["workout"]:
-                info["notes"].append("ya contó un entreno ese día")
+                info["notes"].append(_l("ya contó un entreno ese día"))
             elif week["workout_days"] >= MAX_WORKOUT_DAYS_PER_WEEK:
-                info["notes"].append("tope de 6 días con entreno por semana")
-                week["capped"].append("días")
+                info["notes"].append(_l("tope de %(n)s días con entreno por semana", n=MAX_WORKOUT_DAYS_PER_WEEK))
+                week["capped"].append(_l("días"))
             else:
                 day["workout"] = True
                 week["workout_days"] += 1
                 info["workout"] = XP_WORKOUT
         else:
-            info["notes"].append("menos de 3 series de XP o de 10 repeticiones")
+            info["notes"].append(_l("menos de %(sets)s series de XP o de %(reps)s repeticiones",
+                                     sets=MIN_SETS_FOR_WORKOUT, reps=MIN_REPS_FOR_WORKOUT))
 
         n = min(len(work), max(0, MAX_SETS_PER_DAY - day["sets"]))
         if n < len(work):
-            info["notes"].append("tope de 25 series al día")
-            week["capped"].append("series")
+            info["notes"].append(_l("tope de %(n)s series al día", n=MAX_SETS_PER_DAY))
+            week["capped"].append(_l("series"))
         day["sets"] += n
         info["sets_n"], info["sets"] = n, n * XP_SET
 
         prs = [ex for ex, e in session_best.items() if ex in best and e > best[ex]]
         n = min(len(prs), max(0, MAX_PRS_PER_DAY - day["prs"]))
         if n < len(prs):
-            info["notes"].append("tope de 3 récords al día")
-            week["capped"].append("récords")
+            info["notes"].append(_l("tope de %(n)s récords al día", n=MAX_PRS_PER_DAY))
+            week["capped"].append(_l("récords"))
         day["prs"] += n
         info["prs_n"], info["prs"] = n, n * XP_PR
         for ex, e in session_best.items():
@@ -374,11 +376,11 @@ def recent_checkins(user_id, days=14):
 
 
 MUSCLE_GROUP_LABELS = {
-    "trapecios": "Trapecios", "hombros": "Hombros", "pecho": "Pecho", "biceps": "Bíceps",
-    "triceps": "Tríceps", "antebrazos": "Antebrazos", "cuello": "Cuello", "abdomen": "Abdomen",
-    "dorsales": "Dorsales", "espalda_baja": "Lumbares", "cuadriceps": "Cuádriceps",
-    "aductores": "Aductores", "isquiotibiales": "Isquiotibiales", "gluteos": "Glúteos",
-    "pantorrillas": "Gemelos",
+    "trapecios": _l("Trapecios"), "hombros": _l("Hombros"), "pecho": _l("Pecho"), "biceps": _l("Bíceps"),
+    "triceps": _l("Tríceps"), "antebrazos": _l("Antebrazos"), "cuello": _l("Cuello"), "abdomen": _l("Abdomen"),
+    "dorsales": _l("Dorsales"), "espalda_baja": _l("Lumbares"), "cuadriceps": _l("Cuádriceps"),
+    "aductores": _l("Aductores"), "isquiotibiales": _l("Isquiotibiales"), "gluteos": _l("Glúteos"),
+    "pantorrillas": _l("Gemelos"),
 }
 DAYS_SINCE_WINDOW = 60
 

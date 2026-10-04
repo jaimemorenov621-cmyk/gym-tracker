@@ -91,7 +91,7 @@
     </div>
 
     {# Hoy: datos de descanso (solo hechos, nunca "recuperado") y check-in. #}
-    {% set soreness_names = ['nada', 'leves', 'moderadas', 'fuertes'] %}
+    {% set soreness_names = [_('nada'), _('leves'), _('moderadas'), _('fuertes')] %}
     <section class="today-panel{% if home_cta.kind == 'rest' %} is-rest{% endif %}" id="hoy">
         {% if rest_facts %}
             <div class="today-facts">

@@ -29,6 +29,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 import sqlalchemy as sa
+from flask_babel import gettext
 
 from app import db
 from app.models import SetEntry, Workout
@@ -188,7 +189,7 @@ def personal_ranges(user_id, today=None):
             "low": sweet[0],
             "high": sweet[1],               # None = "o más" (aún sin techo visto)
             "n": n,
-            "confidence": "alta" if n >= 40 else ("media" if n >= 20 else "baja"),
+            "confidence": gettext("alta") if n >= 40 else (gettext("media") if n >= 20 else gettext("baja")),
             "gain_pct": (math.exp(usable[sweet]["mean"]) - 1) * 100,
             "rir": usable[sweet]["rir"],
             "over_from": min((b[0] for b in worse_above), default=None),

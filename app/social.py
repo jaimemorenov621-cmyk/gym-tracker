@@ -14,6 +14,7 @@ import secrets
 from datetime import datetime, timedelta, timezone
 
 import sqlalchemy as sa
+from flask_babel import gettext
 
 from app import db
 from app.models import AthleteCard, Friendship, SetEntry, User, UserAchievement, Workout
@@ -65,34 +66,34 @@ def are_friends(a_id, b_id):
 def send_request(user, other):
     """Pide amistad a `other`. Devuelve el mensaje para el usuario."""
     if other is None:
-        return "No hay nadie con ese código."
+        return gettext("No hay nadie con ese código.")
     if other.id == user.id:
-        return "Ese es tu propio código."
+        return gettext("Ese es tu propio código.")
     existing = _pair(user.id, other.id)
     if existing is not None:
         if existing.status == "accepted":
-            return f"{other.username} ya es tu amigo."
+            return gettext("%(name)s ya es tu amigo.", name=other.username)
         if existing.requester_id == user.id:
-            return f"Ya le enviaste una solicitud a {other.username}."
+            return gettext("Ya le enviaste una solicitud a %(name)s.", name=other.username)
         return accept(user, existing.id)  # él ya te la había pedido: queda aceptada
     if len(friend_ids(user.id)) >= MAX_FRIENDS:
-        return f"Has llegado al máximo de {MAX_FRIENDS} amigos."
+        return gettext("Has llegado al máximo de %(n)s amigos.", n=MAX_FRIENDS)
     db.session.add(Friendship(requester_id=user.id, addressee_id=other.id))
     db.session.commit()
-    return f"Solicitud enviada a {other.username}. Cuando la acepte, os veréis en los rankings."
+    return gettext("Solicitud enviada a %(name)s. Cuando la acepte, os veréis en los rankings.", name=other.username)
 
 
 def accept(user, friendship_id):
     f = db.session.get(Friendship, friendship_id)
     if f is None or f.addressee_id != user.id or f.status != "pending":
-        return "Esa solicitud ya no existe."
+        return gettext("Esa solicitud ya no existe.")
     if len(friend_ids(user.id)) >= MAX_FRIENDS:
-        return f"Has llegado al máximo de {MAX_FRIENDS} amigos."
+        return gettext("Has llegado al máximo de %(n)s amigos.", n=MAX_FRIENDS)
     f.status = "accepted"
     f.accepted_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.session.commit()
     other = db.session.get(User, f.requester_id)
-    return f"Ahora tú y {other.username} sois amigos."
+    return gettext("Ahora tú y %(name)s sois amigos.", name=other.username)
 
 
 def remove(user, friendship_id):
