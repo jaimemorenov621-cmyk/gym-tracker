@@ -4174,3 +4174,82 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 /* Casilla Objetivo de Inicio: de qué emblema a cuál pasas */
 .goal-ranks { display: flex; align-items: center; gap: 4px; margin: 2px 0 2px; }
 .goal-arrow { font-weight: 800; color: var(--color-text-muted); font-size: 0.85rem; }
+
+/* Amigos, rankings y tarjeta de atleta */
+.ranking-card { margin-top: 14px; }
+.ranking-card h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1.05rem; font-weight: 800; }
+.ranking-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin: 10px 0 8px; padding: 4px; border-radius: 12px; background: var(--color-surface-active); }
+.ranking-tabs button { min-height: 36px; border: 0; border-radius: 9px; background: transparent; color: var(--color-text-soft); font-weight: 700; font-size: 0.82rem; font-family: inherit; cursor: pointer; }
+.ranking-tabs button.is-active { background: var(--surface); color: var(--color-text); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12); }
+.ranking-basic { width: 100%; min-height: 40px; margin: 0 0 8px; padding: 0 10px; border-radius: 10px; border: 1.5px solid var(--border-subtle); background: var(--surface); color: var(--color-text); font-family: inherit; font-size: 16px; }
+.ranking-list { list-style: none; margin: 0; padding: 0; }
+.ranking-list li { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 4px 6px; border-radius: 10px; }
+.ranking-list li + li { border-top: 1px solid var(--border-subtle); }
+.ranking-list li.is-me { background: rgba(var(--accent-rgb), 0.1); border-top-color: transparent; }
+.ranking-pos { width: 22px; text-align: center; font-weight: 900; color: var(--color-text-muted); flex-shrink: 0; }
+.ranking-list li:nth-child(1) .ranking-pos { color: #e0a92e; }
+.ranking-list li:nth-child(2) .ranking-pos { color: #9aa3ad; }
+.ranking-list li:nth-child(3) .ranking-pos { color: #c07a3e; }
+.ranking-name { flex: 1; min-width: 0; color: var(--color-text); font-weight: 700; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ranking-name small { color: var(--color-text-muted); font-weight: 600; }
+.ranking-value { font-size: 0.82rem; font-weight: 700; color: var(--color-text-soft); flex-shrink: 0; }
+.ranking-empty { color: var(--color-text-muted); font-size: 0.86rem; }
+.ranking-mycard { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-subtle); color: var(--accent); font-weight: 700; text-decoration: none; }
+.friends-invite h2, .friends-h2 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+.friends-count { font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: var(--color-surface-active); color: var(--color-text-soft); }
+.friends-code { display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 10px 0; padding: 12px; border-radius: 14px; background: var(--color-surface-active); }
+.friends-code span { font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+.friends-code strong { font-size: 1.6rem; font-weight: 900; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
+.friends-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.friends-actions .btn, .friends-actions .btn-outline { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; margin: 0; }
+.friends-add { margin-top: 14px; }
+.friends-add-row { display: flex; gap: 8px; }
+.friends-add-row input { flex: 1; min-width: 0; min-height: 44px; padding: 0 12px; border-radius: 12px; border: 1.5px solid var(--border-subtle); background: var(--surface); color: var(--color-text); font-size: 16px; text-transform: uppercase; letter-spacing: 0.08em; }
+.friends-list { list-style: none; margin: 0; padding: 0; }
+.friends-list li { display: flex; align-items: center; gap: 8px; min-height: 52px; }
+.friends-list li + li { border-top: 1px solid var(--border-subtle); }
+.friends-list li > :first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--color-text); text-decoration: none; }
+.friends-list form { margin: 0; }
+.btn-small { min-height: 36px !important; padding: 0 12px !important; font-size: 0.82rem !important; margin: 0 !important; }
+.friends-sub { margin: 12px 0 2px; font-size: 0.75rem; font-weight: 700; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.friends-privacy a { color: var(--accent); }
+.friend-invite-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; margin-top: 30px; }
+.friend-invite-card h1 { margin: 0; font-size: 1.3rem; }
+.friend-invite-card p { margin: 0; color: var(--color-text-soft); }
+.friend-invite-card form { width: 100%; }
+.friend-invite-card .btn, .friend-invite-card .btn-outline { width: 100%; display: flex; justify-content: center; text-decoration: none; }
+.friend-invite-icon { font-size: 2.6rem; }
+.athlete-card { position: relative; overflow: hidden; margin-top: 10px; }
+.athlete-card h2 { margin: 16px 0 6px; font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--color-text-muted); }
+.ac-head { display: flex; align-items: center; gap: 14px; }
+.ac-avatar { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 2rem; font-weight: 900; flex-shrink: 0; }
+.ac-name { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; min-width: 0; }
+.ac-name h1 { margin: 0; font-size: 1.5rem; font-weight: 900; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.ac-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; margin-top: 14px; }
+.ac-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 12px; background: var(--color-surface-active); }
+.ac-stats strong { font-size: 1.15rem; font-weight: 900; }
+.ac-stats small { font-size: 0.72rem; color: var(--color-text-muted); }
+.ac-hidden { display: inline-block; font-size: 0.68rem !important; font-weight: 700; color: var(--color-text-muted); font-style: italic; }
+.ac-lifts, .ac-badges { list-style: none; margin: 0; padding: 0; }
+.ac-lifts li { display: flex; align-items: center; gap: 10px; min-height: 52px; }
+.ac-lifts li + li { border-top: 1px solid var(--border-subtle); }
+.ac-lift-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ac-lift-main strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-lift-main small, .ac-lift-kg small { font-size: 0.72rem; color: var(--color-text-muted); }
+.ac-lift-kg { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; }
+.ac-badges { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.ac-badges li { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: var(--color-surface-active); font-size: 0.82rem; font-weight: 700; }
+.ac-badge-emoji { font-size: 1.3rem; }
+.ac-edit { display: flex; justify-content: center; margin: 12px 0 6px; text-decoration: none; }
+.ac-form h2 { margin: 0 0 8px; font-size: 1.05rem; font-weight: 800; }
+.ac-max { font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); }
+.ac-toggles { list-style: none; margin: 0; padding: 0; }
+.ac-toggles li + li { border-top: 1px solid var(--border-subtle); }
+.ac-toggles label { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 50px; cursor: pointer; font-weight: 600; font-size: 0.9rem; }
+.ac-toggles input { position: absolute; opacity: 0; pointer-events: none; }
+.ac-switch { position: relative; width: 44px; height: 26px; border-radius: 999px; background: var(--border-strong, #c9c3e6); flex-shrink: 0; transition: background 0.15s ease; }
+.ac-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); transition: transform 0.15s ease; }
+.ac-toggles input:checked + .ac-switch { background: var(--accent); }
+.ac-toggles input:checked + .ac-switch::after { transform: translateX(18px); }
+.ac-toggles input:focus-visible + .ac-switch { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ac-sensitive { font-size: 0.68rem; font-weight: 700; color: #b26a00; }

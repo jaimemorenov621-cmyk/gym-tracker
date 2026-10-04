@@ -49,10 +49,12 @@ from app.models import (
     DailyCheckin,
     ExerciseAlias,
     PersonalBasic,
+    AthleteCard,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from app import achievements, usage, datacache
 from app import bodyweight as bodyweight_mod
+from app import social
 from app import strength_standards as standards
 from app import progression
 from app import volume as volume_mod
@@ -1770,6 +1772,7 @@ def rank_page():
         title="Rango",
         profile=profile,
         personal_basics=personal_basics_data(current_user, profile),
+        rankings=friends_rankings(current_user),
         standards=standards,
         next_label=standards.next_rank_label(profile["global_rank"]),
         xp=progression.level_for(progression.current_xp(current_user.id)),
@@ -1777,6 +1780,170 @@ def rank_page():
             sa.select(sa.func.count()).select_from(UserAchievement).where(UserAchievement.user_id == current_user.id)
         ),
         achievements_total=len(achievements.ACHIEVEMENTS),
+    )
+
+
+# ------------------------------------------------------------ amigos
+def friends_rankings(user):
+    """Rankings con tus amigos (tú siempre incluido): rango global, cada
+    básico y constancia. Solo amigos aceptados que no se hayan salido de los
+    rankings, y solo lo que cada uno deja ver en su tarjeta."""
+    ids = social.friend_ids(user.id)
+    people = [user] + [u for u in (db.session.get(User, i) for i in ids) if u is not None]
+    boards = {"global": [], "constancia": [], **{b: [] for b in standards.BASICS}}
+    for person in people:
+        me = person.id == user.id
+        card = social.card_for(person.id)
+        if not me and not card.in_rankings:
+            continue
+        if me or card.show_rank:
+            ranking = cached_profile(person)["ranking"]
+            if ranking["global"] is not None:
+                boards["global"].append({"user": person, "me": me, "score": ranking["global"],
+                                         "rank": standards.rank_for(ranking["global"])})
+            for basic, score in ranking["basics"].items():
+                boards[basic].append({"user": person, "me": me, "score": score, "rank": standards.rank_for(score)})
+        if me or card.show_consistency:
+            days = datacache.cached("consistency", person.id, lambda p=person: social.training_days(p.id))
+            boards["constancia"].append({"user": person, "me": me, "score": days, "rank": None})
+    for rows in boards.values():
+        rows.sort(key=lambda r: (-r["score"], r["user"].username.lower()))
+        for i, row in enumerate(rows, 1):
+            row["pos"] = i
+    return {"friends": len(ids), "boards": boards, "basic_labels": standards.BASIC_LABELS}
+
+
+def athlete_card_view(owner, viewer):
+    """Lo que se ve de `owner` en su tarjeta. El dueño lo ve todo, con lo que
+    oculta marcado; un amigo solo lo que el dueño enseña."""
+    is_self = owner.id == viewer.id
+    card = social.card_for(owner.id)
+    lift_names, achievement_codes = social.featured(card)
+    profile = cached_profile(owner)
+
+    def item(shown, value):
+        return {"value": value, "hidden": not shown} if (shown or is_self) else None
+
+    workouts = db.session.scalars(owner.workouts.select().order_by(Workout.timestamp.desc())).all()
+    lifts = []
+    if lift_names:
+        by_exercise = defaultdict(list)
+        for w, s in history_rows(owner.id):
+            if s.exercise in lift_names:
+                by_exercise[s.exercise].append((w, s))
+        for name in lift_names:
+            sessions = qualifying_sessions(sessions_from_rows(by_exercise.get(name, [])))
+            if not sessions:
+                continue
+            best = max(sessions, key=lambda s: s["best_1rm"])
+            lifts.append({"exercise": name, "e1rm": best["best_1rm"], "set": best["best_set"],
+                          "date": best["timestamp"], "rank": profile["exercise_ranks"].get(name)})
+    unlocked = set(social.unlocked_codes(owner.id))
+    return {
+        "owner": owner, "is_self": is_self, "card": card,
+        "rank": item(card.show_rank, profile["global_rank"]),
+        "level": item(card.show_level, progression.level_for(progression.current_xp(owner.id))["level"]),
+        "streak": item(card.show_streak, compute_smart_streak(owner.id, workouts)["days"]),
+        "consistency": item(card.show_consistency, social.training_days(owner.id)),
+        "bodyweight": item(card.show_bodyweight, profile["latest_bw"]),
+        "show_kg": card.show_kg or is_self,
+        "kg_hidden": not card.show_kg,
+        "lifts": lifts,
+        "achievements": [achievements.BY_CODE[c] for c in achievement_codes if c in unlocked and c in achievements.BY_CODE],
+    }
+
+
+@app.route("/amigos")
+@login_required
+def friends_page():
+    incoming, outgoing = social.requests_for(current_user.id)
+    code = social.friend_code(current_user)
+    return render_template(
+        "friends.html", title="Amigos", form=EmptyForm(), code=code,
+        invite_url=url_for("friend_invite", code=code, _external=True),
+        incoming=incoming, outgoing=outgoing, friends=social.friends_with_links(current_user.id),
+        max_friends=social.MAX_FRIENDS,
+    )
+
+
+@app.route("/amigos/anadir", methods=["POST"])
+@login_required
+def friend_add():
+    form = EmptyForm()
+    if form.validate_on_submit():
+        flash(social.send_request(current_user, social.user_by_code(request.form.get("code"))))
+    return redirect(url_for("friends_page"))
+
+
+@app.route("/amigos/invitar/<code>")
+@login_required
+def friend_invite(code):
+    """Enlace de invitación: confirma antes de pedir la amistad (el enlace
+    puede haber llegado reenviado)."""
+    other = social.user_by_code(code)
+    if other is None or other.id == current_user.id:
+        flash("Ese enlace de invitación no es válido." if other is None else "Ese es tu propio enlace de invitación.")
+        return redirect(url_for("friends_page"))
+    return render_template("friend_invite.html", title="Invitación", form=EmptyForm(), other=other,
+                           already=social.are_friends(current_user.id, other.id), code=other.friend_code)
+
+
+@app.route("/amigos/<int:friendship_id>/aceptar", methods=["POST"])
+@login_required
+def friend_accept(friendship_id):
+    if EmptyForm().validate_on_submit():
+        flash(social.accept(current_user, friendship_id))
+    return redirect(url_for("friends_page"))
+
+
+@app.route("/amigos/<int:friendship_id>/quitar", methods=["POST"])
+@login_required
+def friend_remove(friendship_id):
+    if EmptyForm().validate_on_submit():
+        social.remove(current_user, friendship_id)
+    return redirect(url_for("friends_page"))
+
+
+@app.route("/atleta/<int:user_id>")
+@login_required
+def athlete_card(user_id):
+    owner = db.session.get(User, user_id)
+    if owner is None or (owner.id != current_user.id and not social.are_friends(current_user.id, owner.id)):
+        flash("Solo puedes ver la tarjeta de tus amigos.")
+        return redirect(url_for("friends_page"))
+    return render_template("athlete_card.html", title=owner.username, v=athlete_card_view(owner, current_user))
+
+
+@app.route("/rango/tarjeta", methods=["GET", "POST"])
+@login_required
+def athlete_card_edit():
+    """Qué ven tus amigos de ti: interruptores y récords/logros destacados."""
+    form = EmptyForm()
+    overview = cached_overview(current_user.id, current_user.stagnation_threshold)
+    unlocked = social.unlocked_codes(current_user.id)
+    if form.validate_on_submit():
+        card = db.session.get(AthleteCard, current_user.id)
+        if card is None:
+            card = social.card_for(current_user.id)
+            db.session.add(card)
+        for flag in ("in_rankings", "show_rank", "show_level", "show_streak", "show_consistency", "show_kg", "show_bodyweight"):
+            setattr(card, flag, request.form.get(flag) == "on")
+        valid_lifts = {i["exercise"] for i in overview}
+        lifts = [n for n in dict.fromkeys(request.form.getlist("lift")) if n in valid_lifts][:social.MAX_FEATURED_LIFTS]
+        codes = [c for c in dict.fromkeys(request.form.getlist("achievement")) if c in unlocked][:social.MAX_FEATURED_ACHIEVEMENTS]
+        card.featured_lifts = json.dumps(lifts, ensure_ascii=False)
+        card.featured_achievements = json.dumps(codes)
+        db.session.commit()
+        flash("Tarjeta guardada.")
+        return redirect(url_for("athlete_card", user_id=current_user.id))
+    card = social.card_for(current_user.id)
+    lift_names, codes = social.featured(card)
+    exercises = sorted(overview, key=lambda i: -i["best_1rm"])
+    return render_template(
+        "athlete_card_edit.html", title="Tu tarjeta", form=form, card=card,
+        exercises=exercises, chosen_lifts=lift_names, chosen_codes=codes,
+        unlocked=[achievements.BY_CODE[c] for c in unlocked if c in achievements.BY_CODE],
+        max_lifts=social.MAX_FEATURED_LIFTS, max_achievements=social.MAX_FEATURED_ACHIEVEMENTS,
     )
 
 

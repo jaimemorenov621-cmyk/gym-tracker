@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% macro hidden_tag(x) %}{% if x and x.hidden %}<small class="ac-hidden">oculto para tus amigos</small>{% endif %}{% endmacro %}
+{% block content %}
+    <p class="page-back"><a href="{{ url_for('rank_page') }}#amigos">← Rango</a></p>
+    {% set r = v.rank.value if v.rank else none %}
+    <div class="card card-elevated athlete-card{% if r %} tier-{{ r.key }}{% endif %}">
+        <div class="ac-head">
+            {% if r %}
+                {{ macros.rank_emblem(r.key, 96, r.division, eager=True) }}
+            {% else %}
+                <span class="ac-avatar" aria-hidden="true">{{ v.owner.username[:1]|upper }}</span>
+            {% endif %}
+            <div class="ac-name">
+                <h1>{{ v.owner.username }}</h1>
+                {% if v.rank %}
+                    <span class="rank-badge rank-{{ r.key if r else 'none' }}">{{ r.label if r else 'Sin rango' }}</span>{{ hidden_tag(v.rank) }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="ac-stats">
+            {% if v.level %}<div><strong>{{ v.level.value }}</strong><small>Nivel</small>{{ hidden_tag(v.level) }}</div>{% endif %}
+            {% if v.streak %}<div><strong>🔥 {{ v.streak.value }}</strong><small>días de racha</small>{{ hidden_tag(v.streak) }}</div>{% endif %}
+            {% if v.consistency %}<div><strong>{{ v.consistency.value }}</strong><small>días entrenados en 4 semanas</small>{{ hidden_tag(v.consistency) }}</div>{% endif %}
+            {% if v.bodyweight and v.bodyweight.value %}<div><strong>{{ v.bodyweight.value|num }} kg</strong><small>peso corporal</small>{{ hidden_tag(v.bodyweight) }}</div>{% endif %}
+        </div>
+
+        {% if v.lifts %}
+            <h2>Récords destacados</h2>
+            <ul class="ac-lifts">
+                {% for l in v.lifts %}
+                    <li>
+                        {% if l.rank %}{{ macros.rank_emblem(l.rank.key, 34, l.rank.division) }}{% endif %}
+                        <span class="ac-lift-main">
+                            <strong>{{ l.exercise|title }}</strong>
+                            <small>{% if l.rank %}{{ l.rank.label }} · {% endif %}{{ l.date|relative_day }}</small>
+                        </span>
+                        {% if v.show_kg %}
+                            <span class="ac-lift-kg"><b>{{ l.set.weight|num }} × {{ l.set.reps }}</b><small>1RM est. {{ l.e1rm|num(0) }} kg</small>{% if v.is_self and v.kg_hidden %}<small class="ac-hidden">kilos ocultos</small>{% endif %}</span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if v.achievements %}
+            <h2>Logros destacados</h2>
+            <ul class="ac-badges">
+                {% for a in v.achievements %}
+                    <li><span class="ac-badge-emoji" aria-hidden="true">{{ a.emoji }}</span><span>{{ a.title }}</span></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        {% if v.is_self and not v.lifts and not v.achievements %}
+            <p class="std-note">Elige tus récords y logros destacados para que tus amigos los vean.</p>
+        {% endif %}
+    </div>
+
+    {% if v.is_self %}
+        <a class="btn ac-edit" href="{{ url_for('athlete_card_edit') }}">Editar qué ven mis amigos</a>
+        <p class="std-note">Así te ven tus amigos. Lo marcado como «oculto» solo lo ves tú.</p>
+    {% endif %}
+    <p class="std-note">Los récords salen de las series registradas en Gyre; cada uno apunta las suyas.</p>
+{% endblock %}

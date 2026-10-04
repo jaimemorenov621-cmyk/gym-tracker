@@ -46,6 +46,8 @@ class User(UserMixin, db.Model):
     # "definicion", "recomposicion"; NULL = sin elegir): app/bodyweight.py
     # compara con ella el ritmo al que cambia su peso.
     body_phase: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
+    # Código para añadir amigos (app/social.py); se crea la primera vez.
+    friend_code: so.Mapped[Optional[str]] = so.mapped_column(sa.String(12), unique=True, index=True)
     # XP y nivel (app/progression.py). xp_total es una caché de
     # compute_xp(): vale si xp_cached_seq == xp_seq, xp_rules es la versión
     # de reglas vigente y xp_cached_at tiene menos de 24 h. xp_seq sube (con
@@ -433,3 +435,39 @@ class PersonalBasic(db.Model):
     __table_args__ = (
         sa.UniqueConstraint("user_id", "exercise", name="uq_personal_basic_user_exercise"),
     )
+
+
+
+class Friendship(db.Model):
+    """Amistad entre dos usuarios (app/social.py). La pide `requester` y
+    solo cuenta cuando `addressee` la acepta (status "accepted")."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    requester_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    addressee_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    status: so.Mapped[str] = so.mapped_column(sa.String(10), default="pending", server_default="pending")
+    created_at: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
+    accepted_at: so.Mapped[Optional[datetime]] = so.mapped_column()
+
+    __table_args__ = (
+        sa.UniqueConstraint("requester_id", "addressee_id", name="uq_friendship_pair"),
+    )
+
+
+class AthleteCard(db.Model):
+    """Qué ven tus amigos de ti (tarjeta de atleta y rankings). Todo sale de
+    los datos de la app; lo sensible (peso corporal) va oculto por defecto.
+    featured_*: listas JSON de nombres de ejercicio / códigos de logro."""
+
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), primary_key=True)
+    in_rankings: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    show_rank: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    show_level: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    show_streak: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    show_consistency: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    show_kg: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    show_bodyweight: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
+    featured_lifts: so.Mapped[str] = so.mapped_column(sa.Text, default="[]", server_default="[]")
+    featured_achievements: so.Mapped[str] = so.mapped_column(sa.Text, default="[]", server_default="[]")

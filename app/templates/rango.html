@@ -91,6 +91,57 @@
         </a>
     </div>
 
+    {# Rankings con tus amigos (app/social.py). #}
+    <div class="card card-elevated ranking-card" id="amigos">
+        <div class="pbasics-head">
+            <h2>{{ macros.icon('users', 18) }} Con tus amigos</h2>
+            <a class="btn-outline btn-inline" href="{{ url_for('friends_page') }}">{{ 'Amigos' if rankings.friends else 'Invitar' }}</a>
+        </div>
+        {% if not rankings.friends %}
+            <p class="std-note">Invita a quien entrene contigo y comparad rangos, levantamientos y constancia. Solo veis lo que cada uno elige enseñar.</p>
+        {% else %}
+            <div class="ranking-tabs" role="tablist">
+                <button type="button" role="tab" class="is-active" data-board="global">Rango</button>
+                <button type="button" role="tab" data-board="basico">Por básico</button>
+                <button type="button" role="tab" data-board="constancia">Constancia</button>
+            </div>
+            <select class="ranking-basic" aria-label="Básico" hidden>
+                {% for b in standards.BASICS %}<option value="{{ b }}">{{ rankings.basic_labels[b] }}</option>{% endfor %}
+            </select>
+            {% for key, rows in rankings.boards.items() %}
+                <ol class="ranking-list" data-board-key="{{ key }}"{% if key != 'global' %} hidden{% endif %}>
+                    {% for row in rows %}
+                        <li class="{{ 'is-me' if row.me }}">
+                            <span class="ranking-pos">{{ row.pos }}</span>
+                            {% if row.rank %}{{ macros.rank_emblem(row.rank.key, 30, row.rank.division) }}{% endif %}
+                            <a class="ranking-name" href="{{ url_for('athlete_card', user_id=row.user.id) }}">{{ row.user.username }}{% if row.me %} <small>(tú)</small>{% endif %}</a>
+                            <span class="ranking-value">{% if row.rank %}{{ row.rank.label }}{% else %}{{ row.score }} día{{ '' if row.score == 1 else 's' }}{% endif %}</span>
+                        </li>
+                    {% else %}
+                        <li class="ranking-empty">Nadie tiene datos aquí todavía.</li>
+                    {% endfor %}
+                </ol>
+            {% endfor %}
+            <p class="std-note">Rango con tus marcas de los últimos 90 días, ajustadas a peso y sexo; un récord que salta mucho de golpe no cuenta aquí hasta que lo repites. Constancia: días entrenados en las últimas 4 semanas.</p>
+        {% endif %}
+        <a class="ranking-mycard" href="{{ url_for('athlete_card', user_id=current_user.id) }}">Mi tarjeta de atleta {{ macros.icon('chevron-right', 16) }}</a>
+    </div>
+    <script>
+        (function () {
+            const card = document.getElementById('amigos');
+            if (!card) return;
+            const select = card.querySelector('.ranking-basic');
+            function show(board) {
+                card.querySelectorAll('.ranking-tabs button').forEach(b => b.classList.toggle('is-active', b.dataset.board === board));
+                if (select) select.hidden = board !== 'basico';
+                const key = board === 'basico' ? select.value : board;
+                card.querySelectorAll('.ranking-list').forEach(l => { l.hidden = l.dataset.boardKey !== key; });
+            }
+            card.querySelectorAll('.ranking-tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.board)));
+            if (select) select.addEventListener('change', () => show('basico'));
+        })();
+    </script>
+
     <div class="card card-elevated std-card" id="estandares">
         <div class="strength-head">
             <div>

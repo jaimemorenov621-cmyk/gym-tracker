@@ -425,6 +425,13 @@ def level_index(e1rm, ths):
 #   Titán     4 o más  Élite: nivel de competición
 # Cada rango (salvo Titán) tiene divisiones I < II < III, en tercios.
 RANK_WINDOW_DAYS = 90
+# Ranking entre amigos: todo lo apunta cada uno, así que una marca solo
+# cuenta si es creíble: no salta más de un 20 % sobre tu mejor marca
+# anterior (ni es de Élite en tu primera sesión de ese ejercicio), salvo que
+# otra sesión posterior la confirme con al menos el 90 % de ese peso. En tu
+# perfil cuentan todas; aquí solo cambia lo que se compara con otros.
+CREDIBLE_JUMP = 1.2
+CREDIBLE_CONFIRM = 0.9
 RANKS = ["Hierro", "Bronce", "Plata", "Oro", "Platino", "Diamante", "Esmeralda", "Campeón", "Titán"]
 RANK_KEYS = ["hierro", "bronce", "plata", "oro", "platino", "diamante", "esmeralda", "campeon", "titan"]
 RANK_BOUNDS = [0, 1, 1.5, 2, 2.5, 3, 3.5, 4]  # dónde empieza cada rango a partir de Bronce
@@ -692,7 +699,7 @@ def strength_profile(user, rows=None, weights=None, now=None):
         # Rango actual (últimos 90 días, peso actual) y mejor rango histórico
         # (cada sesión con el peso de entonces, como el nivel alcanzado).
         info.update(rank=None, score=None, rank_peak=None, rank_next=None, rank_next_kg=None,
-                    rank_missing_kg=None, rank_e1rm=None, rank_stale=False)
+                    rank_missing_kg=None, rank_e1rm=None, rank_stale=False, ranking_score=None)
         if sex and bw_points:
             peak = None
             for ts, e1rm in sessions[lift].values():
@@ -710,6 +717,7 @@ def strength_profile(user, rows=None, weights=None, now=None):
                 info["score"] = strength_score(load, ths_now)
                 info["rank"] = rank_for(info["score"])
                 info["rank_e1rm"] = best  # en dominadas: lastre equivalente
+                info["ranking_score"] = _credible_score(lift, sessions[lift].values(), now, latest_bw, ths_now)
                 if info["rank"]["next_score"] is not None:
                     info["rank_next"] = next_rank_label(info["rank"])
                     target = kg_for_score(info["rank"]["next_score"], ths_now)
@@ -747,6 +755,14 @@ def strength_profile(user, rows=None, weights=None, now=None):
 
     scores = {b: basic_score(b) for b in BASICS}
     counted = {b: sc for b, sc in scores.items() if sc is not None}
+    # Lo mismo con las marcas creíbles, para el ranking entre amigos.
+    ranking_basics = {}
+    for basic in BASICS:
+        vals = [lifts[l]["ranking_score"] for l in BASIC_SOURCES[basic] if lifts[l]["ranking_score"] is not None]
+        if vals:
+            ranking_basics[basic] = max(vals)
+    ranking_global = (sum(ranking_basics.values()) / len(ranking_basics)
+                      if not missing and len(ranking_basics) >= MIN_BASICS_FOR_GLOBAL else None)
     rank_missing = [BASIC_LABELS[b] for b in BASICS if scores[b] is None]
     global_rank = lagging = None
     if not missing and len(counted) >= MIN_BASICS_FOR_GLOBAL:
@@ -769,6 +785,9 @@ def strength_profile(user, rows=None, weights=None, now=None):
 
     return {
         "global_rank": global_rank,
+        "global_score": (sum(counted.values()) / len(counted)) if global_rank else None,
+        "basic_scores": counted,
+        "ranking": {"global": ranking_global, "basics": ranking_basics},
         "exercise_ranks": exercise_ranks,
         "rank_missing": rank_missing,
         "basics_counted": len(counted),
@@ -782,6 +801,28 @@ def strength_profile(user, rows=None, weights=None, now=None):
         "global_label": level_label(global_level),
         "dots": dots_score,
     }
+
+
+def _credible_score(lift, sessions, now, latest_bw, ths_now):
+    """Puntuación del ranking: la mejor marca CREÍBLE de los últimos 90 días
+    (ver CREDIBLE_JUMP). sessions: [(timestamp, e1rm)]."""
+    ordered = sorted(sessions)
+    later_max = [0.0] * len(ordered)
+    best_after = 0.0
+    for i in range(len(ordered) - 1, -1, -1):
+        later_max[i] = best_after
+        best_after = max(best_after, ordered[i][1])
+    best, prev_best = None, None
+    for i, (ts, e1rm) in enumerate(ordered):
+        confirmed = later_max[i] >= CREDIBLE_CONFIRM * e1rm
+        if prev_best is None:
+            plausible = strength_score(_load(lift, e1rm, latest_bw), ths_now) <= 4
+        else:
+            plausible = e1rm <= CREDIBLE_JUMP * prev_best
+        if (confirmed or plausible) and now - ts <= timedelta(days=RANK_WINDOW_DAYS):
+            best = e1rm if best is None else max(best, e1rm)
+        prev_best = e1rm if prev_best is None else max(prev_best, e1rm)
+    return None if best is None else strength_score(_load(lift, best, latest_bw), ths_now)
 
 
 def rank_key(rank):

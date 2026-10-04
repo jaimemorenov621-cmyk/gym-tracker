@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <p class="page-back"><a href="{{ url_for('athlete_card', user_id=current_user.id) }}">← Tu tarjeta</a></p>
+    <h1 class="page-title">Qué ven tus amigos</h1>
+    <form method="post" class="ac-form">
+        {{ form.hidden_tag() }}
+        <div class="card card-elevated">
+            <h2>Rankings y datos</h2>
+            {% set toggles = [
+                ('in_rankings', 'Aparecer en los rankings de mis amigos', card.in_rankings),
+                ('show_rank', 'Mi rango (global y por levantamiento)', card.show_rank),
+                ('show_level', 'Mi nivel', card.show_level),
+                ('show_streak', 'Mi racha', card.show_streak),
+                ('show_consistency', 'Mi constancia (días entrenados)', card.show_consistency),
+                ('show_kg', 'Los kilos de mis récords destacados', card.show_kg),
+                ('show_bodyweight', 'Mi peso corporal', card.show_bodyweight)] %}
+            <ul class="ac-toggles">
+                {% for name, label, on in toggles %}
+                    <li><label><span>{{ label }}{% if name == 'show_bodyweight' %} <small class="ac-sensitive">dato sensible</small>{% endif %}</span>
+                        <input type="checkbox" name="{{ name }}"{% if on %} checked{% endif %}><i class="ac-switch" aria-hidden="true"></i></label></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="card card-elevated">
+            <h2>Récords destacados <small class="ac-max">hasta {{ max_lifts }}</small></h2>
+            {% if exercises %}
+                <ul class="pbasics-pick" data-max="{{ max_lifts }}">
+                    {% for e in exercises %}
+                        <li><label>
+                            <input type="checkbox" name="lift" value="{{ e.exercise }}"{% if e.exercise in chosen_lifts %} checked{% endif %}>
+                            <span class="pbasics-pick-name"><strong>{{ e.exercise|title }}</strong><small>1RM est. {{ e.best_1rm|num(0) }} kg · {{ e.last_trained|relative_day }}</small></span>
+                        </label></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="alias-empty">Aún no tienes récords.</p>
+            {% endif %}
+        </div>
+
+        <div class="card card-elevated">
+            <h2>Logros destacados <small class="ac-max">hasta {{ max_achievements }}</small></h2>
+            {% if unlocked %}
+                <ul class="pbasics-pick" data-max="{{ max_achievements }}">
+                    {% for a in unlocked %}
+                        <li><label>
+                            <input type="checkbox" name="achievement" value="{{ a.code }}"{% if a.code in chosen_codes %} checked{% endif %}>
+                            <span class="pbasics-pick-name"><strong>{{ a.emoji }} {{ a.title }}</strong></span>
+                        </label></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="alias-empty">Aún no has desbloqueado logros.</p>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn form-submit">Guardar</button>
+    </form>
+    <script>
+        // Tope por lista: se desactivan las casillas sin marcar al llegar.
+        document.querySelectorAll('.pbasics-pick[data-max]').forEach(function (list) {
+            const max = parseInt(list.dataset.max, 10);
+            const boxes = Array.from(list.querySelectorAll('input'));
+            function sync() {
+                const full = boxes.filter(b => b.checked).length >= max;
+                boxes.forEach(b => { if (!b.checked) b.disabled = full; });
+            }
+            boxes.forEach(b => b.addEventListener('change', sync));
+            sync();
+        });
+    </script>
+{% endblock %}

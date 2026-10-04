@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <div class="card card-elevated friend-invite-card">
+        <span class="friend-invite-icon" aria-hidden="true">🤝</span>
+        {% if already %}
+            <h1>Ya eres amigo de {{ other.username }}</h1>
+            <a class="btn" href="{{ url_for('rank_page') }}#amigos">Ver el ranking</a>
+        {% else %}
+            <h1>{{ other.username }} te invita a Gyre</h1>
+            <p>Si aceptas, os veréis en los rankings de amigos y podréis ver vuestras tarjetas de atleta. Cada uno elige qué enseña.</p>
+            <form action="{{ url_for('friend_add') }}" method="post">
+                {{ form.hidden_tag() }}
+                <input type="hidden" name="code" value="{{ code }}">
+                <button type="submit" class="btn">Añadir a {{ other.username }}</button>
+            </form>
+            <a class="btn-outline" href="{{ url_for('index') }}">Ahora no</a>
+        {% endif %}
+    </div>
+{% endblock %}
