@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <p class="page-back"><a href="{{ url_for('rank_page') }}#basicos">← Rango</a></p>
+    <h1 class="page-title">Tus básicos</h1>
+    <p class="alias-intro">
+        Marca hasta {{ max_basics }} ejercicios que quieras seguir de cerca. Los que tienen tabla de estándares
+        (<span class="pbasics-tag">rango</span>) muestran tu rango; el resto, tu progresión.
+    </p>
+    {% if items %}
+        <form method="post" class="card card-elevated pbasics-form">
+            {{ form.hidden_tag() }}
+            <ul class="pbasics-pick">
+                {% for it in items %}
+                    <li>
+                        <label>
+                            <input type="checkbox" name="exercise" value="{{ it.exercise }}"{% if it.checked %} checked{% endif %}>
+                            <span>{{ it.exercise|title }}</span>
+                            {% if it.has_table %}<span class="pbasics-tag">rango</span>{% endif %}
+                        </label>
+                    </li>
+                {% endfor %}
+            </ul>
+            <button type="submit" class="btn form-submit">Guardar</button>
+        </form>
+        <script>
+            // Tope de {{ max_basics }}: se desactivan las casillas sin marcar al llegar.
+            (function () {
+                const boxes = Array.from(document.querySelectorAll('.pbasics-pick input'));
+                function sync() {
+                    const full = boxes.filter(b => b.checked).length >= {{ max_basics }};
+                    boxes.forEach(b => { if (!b.checked) b.disabled = full; });
+                }
+                boxes.forEach(b => b.addEventListener('change', sync));
+                sync();
+            })();
+        </script>
+    {% else %}
+        <p class="alias-empty">Todavía no tienes ejercicios con series. Entrena y vuelve aquí.</p>
+    {% endif %}
+{% endblock %}

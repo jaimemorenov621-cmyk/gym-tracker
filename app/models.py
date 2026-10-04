@@ -413,3 +413,19 @@ class ExerciseAlias(db.Model):
     __table_args__ = (
         sa.UniqueConstraint("user_id", "name", name="uq_exercise_alias_user_name"),
     )
+
+
+class PersonalBasic(db.Model):
+    """Ejercicio que el usuario marca como uno de SUS básicos (pestaña
+    Rango): si tiene tabla de estándares se ve su rango; si no (máquinas,
+    accesorios), su progresión. `exercise` va normalizado como
+    SetEntry.exercise (strip().lower())."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    exercise: so.Mapped[str] = so.mapped_column(sa.String(64))
+    position: so.Mapped[int] = so.mapped_column(default=0, server_default="0")
+
+    __table_args__ = (
+        sa.UniqueConstraint("user_id", "exercise", name="uq_personal_basic_user_exercise"),
+    )

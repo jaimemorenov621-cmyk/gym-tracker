@@ -40,6 +40,44 @@
         {% endfor %}
     </div>
 
+    {# Básicos personales: los ejercicios que el usuario elige seguir. #}
+    <div class="card card-elevated pbasics" id="basicos">
+        <div class="pbasics-head">
+            <h2>Tus básicos</h2>
+            <a class="btn-outline btn-inline" href="{{ url_for('personal_basics') }}">{{ 'Editar' if personal_basics else 'Elegir' }}</a>
+        </div>
+        {% if personal_basics %}
+            <ul class="pbasics-list">
+                {% for b in personal_basics %}
+                    <li>
+                        <a href="{{ url_for('exercise_progress', name=b.exercise) }}">
+                            <span class="pbasics-main">
+                                <strong>{{ b.exercise|title }}</strong>
+                                <small>
+                                    {% if b.stats %}Mejor 1RM {{ b.stats.best_1rm|num }} kg{% if b.stats.last_pr %} · último récord {{ b.stats.last_pr|relative_day }}{% endif %}{% else %}Sin series válidas todavía{% endif %}
+                                </small>
+                            </span>
+                            {% if b.spark %}<svg class="pbasics-spark" viewBox="0 0 100 28" aria-hidden="true"><polyline points="{{ b.spark }}"/></svg>{% endif %}
+                            <span class="pbasics-side">
+                                {% if b.rank %}
+                                    <span class="rank-chip">{{ macros.rank_emblem(b.rank.key, 26, b.rank.division) }}<span class="rank-badge rank-{{ b.rank.key }}">{{ b.rank.label }}</span></span>
+                                    {% if b.approx %}<small class="pbasics-note">aprox.</small>{% endif %}
+                                {% elif b.stats and b.stats.trend_pct is not none %}
+                                    <b class="{{ 'up' if b.stats.trend_pct > 0 else ('down' if b.stats.trend_pct < 0 else '') }}">{{ '+' if b.stats.trend_pct > 0 }}{{ b.stats.trend_pct }} %</b>
+                                    <small class="pbasics-note">60 días</small>
+                                {% endif %}
+                                {% if b.stats and b.stats.stagnation %}<small class="pbasics-stuck">Estancado</small>{% endif %}
+                            </span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+            <p class="std-note">Con tabla de estándares ves su rango; sin tabla (máquinas y accesorios), tu progresión: en máquinas el peso no se puede comparar entre gimnasios. No cambian tu rango global.</p>
+        {% else %}
+            <p class="std-note">Elige los ejercicios que usas para medir tu progreso, aunque no sean los básicos clásicos (prensa, hip thrust, press inclinado...). Si tienen tabla verás su rango; si no, su progresión.</p>
+        {% endif %}
+    </div>
+
     <div class="rank-links">
         <a class="rank-link" href="{{ url_for('level_page') }}">
             <span class="rank-link-badge">{{ xp.level }}</span>
@@ -110,7 +148,7 @@
                         {% if l.rank and l.rank_next %}
                             <div class="std-bar"><span style="width: {{ l.rank.pct }}%"></span></div>
                             <p class="std-next">{{ l.rank_next }}: {% if lift == 'pullup' %}tu peso {{ '+' if l.rank_next_kg >= 0 else '−' }}{{ (l.rank_next_kg|abs)|num }} kg{% else %}{{ l.rank_next_kg|num }} kg con tu peso actual{% endif %} · te faltan {{ l.rank_missing_kg|num }} kg</p>
-                            <p class="std-source">Tabla: {{ 'StrengthLevel' if lift in standards.SL_LIFTS else 'Kilgore (ExRx)' }}</p>
+                            <p class="std-source">Tabla: {% if lift in standards.APPROX_TABLE %}StrengthLevel, la de {{ standards.LIFT_LABELS[standards.APPROX_TABLE[lift]]|lower }} (aproximada: no hay una propia){% else %}{{ 'StrengthLevel' if lift in standards.SL_LIFTS else 'Kilgore (ExRx)' }}{% endif %}</p>
                         {% elif l.rank and not l.rank_next %}
                             <p class="std-next">Rango máximo.</p>
                         {% endif %}
@@ -174,6 +212,7 @@
                 (más allá la estimación es poco fiable), solo del levantamiento con barra: las variantes
                 (inclinado, mancuernas, búlgara, frontal...) no cuentan porque tienen otras cargas. La sentadilla en Smith
                 y el peso muerto rumano sí cuentan, cada uno con su propia tabla (StrengthLevel), en el básico de su patrón.
+                El remo en Smith también, pero con la tabla del remo con barra porque no hay una propia (aproximado).
                 Las tablas van por categorías de peso corporal y entre dos categorías interpolamos.
                 El <b>nivel alcanzado</b> es el mejor de todas tus sesiones, cada una con el peso que tenías entonces,
                 así que pesarte hoy no te quita un nivel. El <b>nivel global</b> es el menor de banca, sentadilla

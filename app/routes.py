@@ -47,6 +47,7 @@ from app.models import (
     UserAchievement,
     DailyCheckin,
     ExerciseAlias,
+    PersonalBasic,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from app import achievements, usage
@@ -1720,6 +1721,7 @@ def rank_page():
         "rango.html",
         title="Rango",
         profile=profile,
+        personal_basics=personal_basics_data(current_user, profile),
         standards=standards,
         next_label=standards.next_rank_label(profile["global_rank"]),
         xp=progression.level_for(progression.current_xp(current_user.id)),
@@ -1728,6 +1730,73 @@ def rank_page():
         ),
         achievements_total=len(achievements.ACHIEVEMENTS),
     )
+
+
+MAX_PERSONAL_BASICS = 8
+
+
+def personal_basics_data(user, profile):
+    """Básicos personales de `user`, en su orden: con el rango del
+    levantamiento si tiene tabla de estándares (y datos para darlo) y, si
+    no, su progresión (mismas cifras que Progreso). Una sola consulta."""
+    names = list(db.session.scalars(
+        sa.select(PersonalBasic.exercise).where(PersonalBasic.user_id == user.id)
+        .order_by(PersonalBasic.position, PersonalBasic.id)
+    ))
+    if not names:
+        return []
+    rows = db.session.execute(
+        sa.select(Workout, SetEntry).join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == user.id, SetEntry.exercise.in_(names))
+        .order_by(Workout.timestamp.asc())
+    ).all()
+    by_exercise = defaultdict(list)
+    for workout, entry in rows:
+        by_exercise[entry.exercise].append((workout, entry))
+    items = []
+    for name in names:
+        sessions = sessions_from_rows(by_exercise.get(name, []))
+        lift = standards.lift_of(name)
+        info = profile["lifts"].get(lift) if lift else None
+        recent = [s["best_1rm"] for s in qualifying_sessions(sessions)][-12:]
+        items.append({
+            "exercise": name,
+            "lift": lift,
+            "rank": info["rank"] if info else None,
+            "approx": lift in standards.APPROX_TABLE,
+            "stats": exercise_stats(sessions, user.stagnation_threshold),
+            "spark": sparkline_points(recent),
+        })
+    return items
+
+
+@app.route("/rango/basicos", methods=["GET", "POST"])
+@login_required
+def personal_basics():
+    """Elegir tus básicos personales entre los ejercicios que has hecho."""
+    form = EmptyForm()
+    overview = progress_overview(current_user.id, current_user.stagnation_threshold)
+    available = [item["exercise"] for item in overview]
+    chosen = list(db.session.scalars(
+        sa.select(PersonalBasic.exercise).where(PersonalBasic.user_id == current_user.id)
+        .order_by(PersonalBasic.position, PersonalBasic.id)
+    ))
+    if form.validate_on_submit():
+        allowed = set(available) | set(chosen)
+        picked = [n for n in dict.fromkeys(x.strip().lower() for x in request.form.getlist("exercise")) if n in allowed]
+        if len(picked) > MAX_PERSONAL_BASICS:
+            flash(f"Como mucho {MAX_PERSONAL_BASICS} básicos: se han guardado los {MAX_PERSONAL_BASICS} primeros.")
+            picked = picked[:MAX_PERSONAL_BASICS]
+        db.session.execute(sa.delete(PersonalBasic).where(PersonalBasic.user_id == current_user.id))
+        for i, name in enumerate(picked):
+            db.session.add(PersonalBasic(user_id=current_user.id, exercise=name, position=i))
+        db.session.commit()
+        return redirect(url_for("rank_page") + "#basicos")
+    # Primero los elegidos (en su orden), luego el resto por último entrenado.
+    order = chosen + [n for n in available if n not in chosen]
+    items = [{"exercise": n, "checked": n in chosen, "has_table": bool(standards.lift_of(n))} for n in order]
+    return render_template("personal_basics.html", title="Tus básicos", form=form, items=items,
+                           max_basics=MAX_PERSONAL_BASICS)
 
 
 @app.route("/exercise/<name>/translate", methods=["POST"])
@@ -1776,6 +1845,13 @@ def rename_exercise_everywhere(old, new):
         sa.update(RoutineExercise).where(RoutineExercise.exercise == old).values(exercise=new)
         .execution_options(synchronize_session=False)
     )
+    # Básicos personales: si el usuario ya tenía el nombre nuevo, sobra el viejo.
+    for basic in db.session.scalars(sa.select(PersonalBasic).where(PersonalBasic.exercise == old)).all():
+        if db.session.scalar(sa.select(PersonalBasic.id).where(
+                PersonalBasic.user_id == basic.user_id, PersonalBasic.exercise == new)) is None:
+            basic.exercise = new
+        else:
+            db.session.delete(basic)
     # Notas: única por (usuario, ejercicio). Si ya hay una con el nombre
     # nuevo, se fusionan los textos en vez de perder ninguno.
     for note in db.session.scalars(sa.select(ExerciseNote).where(ExerciseNote.exercise == old)).all():

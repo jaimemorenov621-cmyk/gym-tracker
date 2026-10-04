@@ -4090,3 +4090,31 @@ a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: upperca
 :root[data-theme="dark"] .analysis-fortalezas { border-left-color: #2fd99a; }
 :root[data-theme="dark"] .analysis-areas-mejora { border-left-color: #ff7a7a; }
 :root[data-theme="dark"] .analysis-proximos-pasos { border-left-color: var(--accent); }
+
+/* Básicos personales (pestaña Rango y /rango/basicos) */
+.pbasics { margin-top: 14px; }
+.pbasics-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.pbasics-head h2 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+.pbasics-list { list-style: none; margin: 0; padding: 0; }
+.pbasics-list li + li { border-top: 1px solid var(--border-subtle); }
+.pbasics-list a { display: flex; align-items: center; gap: 10px; padding: 10px 0; color: var(--color-text); text-decoration: none; }
+.pbasics-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pbasics-main strong { font-size: 0.92rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pbasics-main small { font-size: 0.75rem; color: var(--color-text-muted); }
+.pbasics-spark { width: 54px; height: 22px; flex-shrink: 0; }
+.pbasics-spark polyline { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.pbasics-side { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; flex-shrink: 0; }
+.pbasics-side b { font-size: 0.9rem; font-weight: 800; }
+.pbasics-side b.up { color: var(--color-success-text); }
+.pbasics-side b.down { color: var(--color-danger); }
+.pbasics-note { font-size: 0.68rem; color: var(--color-text-muted); }
+.pbasics-stuck { font-size: 0.68rem; font-weight: 700; color: var(--color-warning-text, #b26a00); }
+.pbasics-tag { display: inline-block; padding: 1px 7px; border-radius: 999px; background: var(--color-surface-active); color: var(--accent); font-size: 0.7rem; font-weight: 700; }
+.pbasics-pick { list-style: none; margin: 0 0 12px; padding: 0; }
+.pbasics-pick li + li { border-top: 1px solid var(--border-subtle); }
+.pbasics-pick label { display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer; }
+.pbasics-pick label span:first-of-type { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pbasics-pick input { width: 20px; height: 20px; accent-color: var(--accent); flex-shrink: 0; }
+.pbasics-pick input:disabled + span { color: var(--color-text-muted); }
+:root[data-theme="dark"] .pbasics-side b.up { color: #5cf0b4; }
+:root[data-theme="dark"] .pbasics-side b.down { color: #ff8a8a; }

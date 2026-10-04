@@ -62,7 +62,7 @@ LEVEL_DESCRIPTIONS = {
     "elite": "Compite en deportes de fuerza.",
 }
 
-LIFTS = ["bench", "squat", "smith_squat", "deadlift", "rdl", "press", "row", "pullup", "pulldown"]
+LIFTS = ["bench", "squat", "smith_squat", "deadlift", "rdl", "press", "row", "smith_row", "pullup", "pulldown"]
 BIG_THREE = ["bench", "squat", "deadlift"]
 # Básicos del rango global. Cada uno vale lo que la MEJOR de sus variantes
 # (mismo patrón de movimiento, cada una comparada con su propia tabla): el
@@ -72,11 +72,11 @@ BASICS = ["bench", "squat", "deadlift", "press", "row", "vertical"]
 VERTICAL = ("pullup", "pulldown")
 BASIC_SOURCES = {
     "bench": ("bench",), "squat": ("squat", "smith_squat"), "deadlift": ("deadlift", "rdl"),
-    "press": ("press",), "row": ("row",), "vertical": VERTICAL,
+    "press": ("press",), "row": ("row", "smith_row"), "vertical": VERTICAL,
 }
 BASIC_LABELS = {
     "bench": "Press de banca", "squat": "Sentadilla (libre o en Smith)", "deadlift": "Peso muerto (convencional o rumano)",
-    "press": "Press militar", "row": "Remo con barra", "vertical": "Dominadas / jalón al pecho",
+    "press": "Press militar", "row": "Remo (con barra o en Smith)", "vertical": "Dominadas / jalón al pecho",
 }
 # Nota en la pestaña Rango para los levantamientos que comparten básico.
 SHARED_NOTE = {
@@ -84,6 +84,8 @@ SHARED_NOTE = {
     "smith_squat": "cuenta la mejor de sentadilla libre y en Smith",
     "deadlift": "cuenta el mejor de peso muerto y rumano",
     "rdl": "cuenta el mejor de peso muerto y rumano",
+    "row": "cuenta el mejor de remo con barra y en Smith",
+    "smith_row": "cuenta el mejor de remo con barra y en Smith",
     "pullup": "cuenta el mejor de dominadas y jalón",
     "pulldown": "cuenta el mejor de dominadas y jalón",
 }
@@ -96,6 +98,7 @@ LIFT_LABELS = {
     "rdl": "Peso muerto rumano",
     "press": "Press militar",
     "row": "Remo con barra",
+    "smith_row": "Remo en Smith",
     "pullup": "Dominadas",
     "pulldown": "Jalón al pecho",
 }
@@ -107,12 +110,18 @@ LIFT_RULES = {  # condición de la fuente para que el estándar aplique
     "rdl": "Peso muerto rumano con barra (piernas casi rectas, bisagra de cadera).",
     "press": "De pie, piernas rectas, sin echar el tronco atrás y extendiendo los codos.",
     "row": "Remo con barra inclinado hacia delante (bent over row).",
+    "smith_row": "Remo inclinado en Smith. Tabla APROXIMADA: no hay una propia medida, se usa la del remo con barra.",
     "pullup": "Dominada completa; el peso que apuntes es el lastre (0 = solo tu peso).",
     "pulldown": "Jalón al pecho en polea; el peso es el de la máquina.",
 }
 # De qué tabla sale cada levantamiento.
 KILGORE_LIFTS = ("bench", "squat", "deadlift", "press")
-SL_LIFTS = ("smith_squat", "rdl", "row", "pullup", "pulldown")
+SL_LIFTS = ("smith_squat", "rdl", "row", "smith_row", "pullup", "pulldown")
+# Sin tabla propia medida: se compara con la de otro levantamiento y la app
+# lo marca como aproximado. Remo en Smith: StrengthLevel no tiene tabla y la
+# de FitnessVolt está modelada (no medida) y sale más baja que la del remo
+# con barra, lo que no cuadra; se usa la del remo con barra.
+APPROX_TABLE = {"smith_row": "row"}
 SL_SOURCE_NAME = "StrengthLevel (strengthlevel.com), percentiles de sus usuarios"
 SL_SOURCE_URL = "https://strengthlevel.com/strength-standards"
 
@@ -302,15 +311,20 @@ def _strip(s):
 # las excluye): sentadilla en Smith y peso muerto rumano con barra.
 _SMITH_WORDS = ("smith", "multipower")
 _RDL_WORDS = ("peso muerto rumano", "rumano", "romanian", "rdl")
+_ROW_WORDS = ("remo", "row")
 
 
 def _variant_of(name):
-    """"smith_squat"/"rdl" si es esa variante, None si es una variante de
+    """"smith_squat"/"rdl"/"smith_row" si es esa variante, None si es una variante de
     ella que no vale (con mancuernas, a una pierna...), "" si no es ninguna."""
     if any(w in name for w in _LIFT_WORDS["squat"]) and any(w in name for w in _SMITH_WORDS):
         allowed = _SMITH_WORDS + ("maquina", "machine")
         excl = tuple(w for w in _COMMON_EXCLUDE if w not in allowed) + _LIFT_EXCLUDE["squat"]
         return None if any(w in name for w in excl) else "smith_squat"
+    if any(w in name for w in _ROW_WORDS) and any(w in name for w in _SMITH_WORDS):
+        allowed = _SMITH_WORDS + ("maquina", "machine")
+        excl = tuple(w for w in _COMMON_EXCLUDE if w not in allowed) + _LIFT_EXCLUDE["row"] + ("alto", "high", "una mano")
+        return None if any(w in name for w in excl) else "smith_row"
     if any(w in name for w in _RDL_WORDS):
         excl = _COMMON_EXCLUDE + ("deficit", "bloque", "block", "trap", "hexagonal", "parcial", "partial", "sumo")
         return None if any(w in name for w in excl) else "rdl"
@@ -338,7 +352,7 @@ def lift_of(exercise_name):
 
 # ------------------------------------------------------------ umbrales
 def _sl_thresholds(sex, lift, body_weight):
-    rows = SL_TABLES.get((sex, lift))
+    rows = SL_TABLES.get((sex, APPROX_TABLE.get(lift, lift)))
     if rows is None or not body_weight:
         return None
     bws = _SL_MEN_BW if sex == "hombre" else _SL_WOMEN_BW

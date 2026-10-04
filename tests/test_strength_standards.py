@@ -79,6 +79,15 @@ class LiftDetectionTests(unittest.TestCase):
         self.assertEqual(std.thresholds("hombre", "smith_squat", 80), [57, 84, 118, 158, 202])
         self.assertEqual(std.thresholds("mujer", "rdl", 60), [31, 47, 67, 90, 116])
 
+    def test_smith_row_uses_the_barbell_row_table_as_approximation(self):
+        for name in ("remo en smith", "Remo en máquina Smith", "smith machine row", "remo multipower"):
+            self.assertEqual(std.lift_of(name), "smith_row", name)
+        for name in ("remo al mentón en smith", "remo invertido en smith", "remo en smith a una mano"):
+            self.assertIsNone(std.lift_of(name), name)
+        self.assertEqual(std.thresholds("hombre", "smith_row", 80), std.thresholds("hombre", "row", 80))
+        self.assertIn("smith_row", std.APPROX_TABLE)
+        self.assertIn("smith_row", std.BASIC_SOURCES["row"])
+
 
 class ThresholdTests(unittest.TestCase):
     def kg(self, *lb):
