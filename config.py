@@ -16,3 +16,12 @@ class Config:
     I18N_ENABLED = os.environ.get("I18N_ENABLED", "1") == "1"
     BABEL_DEFAULT_LOCALE = "es"
     BABEL_DEFAULT_TIMEZONE = "Europe/Madrid"
+
+    # Cookies de sesión: SameSite=Lax explícito (sin él, Chrome deja pasar un
+    # POST de otra web en los 2 primeros minutos; las rutas JSON no llevan token
+    # CSRF) y solo por HTTPS en Render (en local se usa http).
+    SESSION_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = REMEMBER_COOKIE_SECURE = bool(os.environ.get("RENDER"))
+    SESSION_COOKIE_HTTPONLY = REMEMBER_COOKIE_HTTPONLY = True
+

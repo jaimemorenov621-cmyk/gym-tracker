@@ -994,11 +994,17 @@ def login():
             flash(gettext("Usuario o contraseña incorrectos."))
             return redirect(url_for("login"))
         login_user(user, remember=form.remember_me.data)
-        next_page = request.args.get("next")
-        if not next_page or urlsplit(next_page).netloc != "":
-            next_page = url_for("index")
-        return redirect(next_page)
+        return redirect(safe_next(request.args.get("next")))
     return render_template("login.html", title=gettext("Iniciar sesión"), form=form)
+
+
+def safe_next(target):
+    """Destino tras iniciar sesión, solo dentro de esta web: "//otra.com" o
+    "/\\otra.com" los navegadores los tratan como otro dominio."""
+    if (not target or not target.startswith("/") or target.startswith("//")
+            or "\\" in target or urlsplit(target).netloc):
+        return url_for("index")
+    return target
 
 
 @app.route("/logout")
@@ -1042,6 +1048,10 @@ def login_google_callback():
         # (registrada antes con usuario/contraseña) -- Google ya verificó
         # la propiedad del email, así que es seguro enlazarla sin pedir nada más.
         user = db.session.scalar(sa.select(User).where(User.email == email))
+        if user is not None and not userinfo.get("email_verified"):
+            # Sin email verificado no se puede asegurar que sea su cuenta.
+            flash(gettext("Ya hay una cuenta con ese email. Inicia sesión con tu usuario y contraseña."))
+            return redirect(url_for("login"))
         if user is not None:
             user.google_sub = google_sub
         else:
@@ -1056,10 +1066,7 @@ def login_google_callback():
         db.session.commit()
 
     login_user(user, remember=True)
-    next_page = request.args.get("next")
-    if not next_page or urlsplit(next_page).netloc != "":
-        next_page = url_for("index")
-    return redirect(next_page)
+    return redirect(safe_next(request.args.get("next")))
 
 
 @app.route("/register", methods=["GET", "POST"])

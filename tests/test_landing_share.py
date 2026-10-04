@@ -190,3 +190,14 @@ class LanguageTests(DbTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SafeNextTests(unittest.TestCase):
+    def test_only_local_paths(self):
+        from app import app
+        from app.routes import safe_next
+        with app.test_request_context():
+            home = safe_next(None)
+            self.assertEqual(safe_next("/progress?x=1"), "/progress?x=1")
+            for bad in ("//evil.com", "/\evil.com", "https://evil.com", "evil.com", "/\\evil.com"):
+                self.assertEqual(safe_next(bad), home, bad)

@@ -24,13 +24,19 @@ const MUSCLE_OPTIONS = [
     ['calves', T('Pantorrillas')],
 ];
 
+// Músculos del catálogo (en inglés, separados por comas) en el idioma de la app.
+const MUSCLE_LABEL = Object.fromEntries(MUSCLE_OPTIONS);
+function muscleLabels(text) {
+    return String(text).split(',').map(m => MUSCLE_LABEL[m.trim()] || m.trim()).filter(Boolean).join(', ');
+}
+
 const STAR_ICON_SVG = '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
 
 function resultRowHTML(ex) {
     return '<div class="exercise-result-row" onclick="selectExercise(\'' + ex.name.replace(/'/g, "\\'") + '\')">' +
         (ex.image ? '<img class="exercise-result-thumb" src="' + ex.image + '">' : '<div class="exercise-result-thumb-fallback"><img src="/static/icons/logo-mark.png" alt="" style="max-width:26px; max-height:26px; object-fit:contain;"></div>') +
         '<div><div class="exercise-result-name">' + ex.name + '</div>' +
-        (ex.muscles ? '<div class="exercise-result-muscles">' + ex.muscles + '</div>' : '') +
+        (ex.muscles ? '<div class="exercise-result-muscles">' + muscleLabels(ex.muscles) + '</div>' : '') +
         '</div>' +
         (ex.id ? '<button type="button" class="exercise-favorite-star' + (ex.is_favorite ? ' is-favorite' : '') +
             '" onclick="toggleFavorite(event, \'' + ex.id + '\')" aria-label="' + T('Marcar como favorito') + '">' + STAR_ICON_SVG + '</button>' : '') +

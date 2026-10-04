@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from config import Config
 from flask_sqlalchemy import SQLAlchemy
@@ -8,6 +10,9 @@ from flask_babel import Babel, get_locale
 
 app = Flask(__name__)
 app.config.from_object(Config)
+if os.environ.get("RENDER") and not os.environ.get("SECRET_KEY"):
+    # Con la clave por defecto cualquiera podría falsificar una sesión.
+    app.logger.error("SECRET_KEY no está definida en producción: usa la de config.py por defecto")
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login = LoginManager(app)
