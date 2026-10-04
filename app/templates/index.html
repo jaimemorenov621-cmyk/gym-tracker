@@ -11,8 +11,8 @@
                 <span class="home-cta-icon">{{ macros.icon('play', 22) }}</span>
                 <span class="home-cta-text">
                     <small>{{ _("Entreno en curso") }}</small>
-                    <strong>Continuar {{ w.note or 'entreno' }}</strong>
-                    <span>{% if home_cta.total %}{{ home_cta.done }} de {{ home_cta.total }} series hechas{% else %}{{ _("Aún sin series") }}{% endif %}</span>
+                    <strong>{{ _('Continuar %(name)s', name=w.note or _('entreno')) }}</strong>
+                    <span>{% if home_cta.total %}{{ _('%(done)s de %(total)s series hechas', done=home_cta.done, total=home_cta.total) }}{% else %}{{ _("Aún sin series") }}{% endif %}</span>
                 </span>
                 <span class="home-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
             </a>
@@ -24,8 +24,8 @@
                 {% if home_cta.kind == 'rest' %}<span class="calm-sky" aria-hidden="true"></span>{% endif %}
                 <span class="home-cta-icon calm-icon">{% if home_cta.kind == 'done' %}{{ macros.icon('check', 24) }}{% else %}<span aria-hidden="true">🌙</span>{% endif %}</span>
                 <span class="home-cta-text">
-                    <small>{{ 'Objetivo de hoy cumplido' if home_cta.kind == 'done' else 'Día de recuperación' }}</small>
-                    <strong>{{ 'Entreno de hoy hecho' if home_cta.kind == 'done' else 'Hoy toca descanso' }}</strong>
+                    <small>{{ _('Objetivo de hoy cumplido') if home_cta.kind == 'done' else _('Día de recuperación') }}</small>
+                    <strong>{{ _('Entreno de hoy hecho') if home_cta.kind == 'done' else _('Hoy toca descanso') }}</strong>
                     <span>{{ home_cta.tip }}</span>
                     {% if r %}
                         <span class="calm-next">
@@ -54,9 +54,9 @@
                 <button type="submit" class="home-cta-main">
                     <span class="home-cta-icon">{{ macros.icon('play', 22) }}</span>
                     <span class="home-cta-text">
-                        <small>{% if r.block %}<i class="home-cta-dot" style="--dot: {{ r.block.color }};"></i>{{ r.block.name }} · {% endif %}{{ 'Hoy toca' if home_cta.is_training_day else 'Siguiente entreno' }}</small>
-                        <strong>Empezar {{ r.name }}</strong>
-                        <span>{{ home_cta.exercise_count }} ejercicio{{ '' if home_cta.exercise_count == 1 else 's' }}</span>
+                        <small>{% if r.block %}<i class="home-cta-dot" style="--dot: {{ r.block.color }};"></i>{{ r.block.name }} · {% endif %}{{ _('Hoy toca') if home_cta.is_training_day else _('Siguiente entreno') }}</small>
+                        <strong>{{ _('Empezar %(name)s', name=r.name) }}</strong>
+                        <span>{{ ngettext('%(num)d ejercicio', '%(num)d ejercicios', home_cta.exercise_count) }}</span>
                     </span>
                     <span class="home-cta-arrow">{{ macros.icon('chevron-right', 22) }}</span>
                 </button>
@@ -85,7 +85,7 @@
                 </button>
             </form>
             <div class="home-cta-secondary">
-                <a href="{{ url_for('new_routine') }}">{{ macros.icon('plus', 15) }} Crear una rutina</a>
+                <a href="{{ url_for('new_routine') }}">{{ macros.icon('plus', 15) }} {{ _('Crear una rutina') }}</a>
             </div>
         {% endif %}
     </div>
@@ -96,21 +96,20 @@
         {% if rest_facts %}
             <div class="today-facts">
                 <p class="today-week">
-                    <b>{{ streak.this_week }}</b> día{{ '' if streak.this_week == 1 else 's' }} entrenado{{ '' if streak.this_week == 1 else 's' }} esta semana
-                    · mínimo {{ streak.minimum }}{% if streak.this_week >= streak.minimum %} <span class="ok">{{ _("✓ cumplido") }}</span>{% endif %}
+                    {{ ngettext('<b>%(num)d</b> día entrenado esta semana · mínimo %(min)s', '<b>%(num)d</b> días entrenados esta semana · mínimo %(min)s', streak.this_week, min=streak.minimum) }}{% if streak.this_week >= streak.minimum %} <span class="ok">{{ _("✓ cumplido") }}</span>{% endif %}
                 </p>
                 {% if rest_facts['items'] %}
                     <p class="today-facts-title">
-                        {% if rest_facts.for_routine %}Último entreno de lo que trabaja {{ home_cta.routine.name }}{% else %}{{ _("Último entreno por grupo muscular") }}{% endif %}
+                        {% if rest_facts.for_routine %}{{ _('Último entreno de lo que trabaja %(name)s', name=home_cta.routine.name) }}{% else %}{{ _("Último entreno por grupo muscular") }}{% endif %}
                     </p>
                     <ul class="today-groups">
                         {% for it in rest_facts['items'] %}
-                            <li><span>{{ it.label }}</span><b>{% if it.days is none %}{{ _("hace más de 60 d") }}{% elif it.days == 0 %}{{ _("hoy") }}{% elif it.days == 1 %}{{ _("ayer") }}{% else %}hace {{ it.days }} d{% endif %}</b></li>
+                            <li><span>{{ it.label }}</span><b>{% if it.days is none %}{{ _("hace más de 60 d") }}{% elif it.days == 0 %}{{ _("hoy") }}{% elif it.days == 1 %}{{ _("ayer") }}{% else %}{{ _('hace %(n)s d', n=it.days) }}{% endif %}</b></li>
                         {% endfor %}
                     </ul>
                 {% endif %}
                 {% if rest_facts.unmapped %}
-                    <p class="today-note">{{ rest_facts.unmapped }} ejercicio{{ '' if rest_facts.unmapped == 1 else 's' }} sin músculo en el catálogo no cuenta{{ '' if rest_facts.unmapped == 1 else 'n' }} aquí. <a class="btn-inline" href="{{ url_for('exercise_muscles') }}">{{ _("Asignar músculos") }}</a></p>
+                    <p class="today-note">{{ ngettext('%(num)d ejercicio sin músculo en el catálogo no cuenta aquí.', '%(num)d ejercicios sin músculo en el catálogo no cuentan aquí.', rest_facts.unmapped) }} <a class="btn-inline" href="{{ url_for('exercise_muscles') }}">{{ _("Asignar músculos") }}</a></p>
                 {% endif %}
             </div>
         {% endif %}
@@ -120,7 +119,7 @@
                 <span class="checkin-done-icon" aria-hidden="true">✓</span>
                 <span class="checkin-done-text">
                     <small>{{ _("Check-in de hoy") }}</small>
-                    <span>Sueño {{ checkin.sleep }}/5 · Energía {{ checkin.energy }}/5 · Agujetas {{ soreness_names[checkin.soreness] }}</span>
+                    <span>{{ _('Sueño %(s)s/5 · Energía %(e)s/5 · Agujetas %(d)s', s=checkin.sleep, e=checkin.energy, d=soreness_names[checkin.soreness]) }}</span>
                 </span>
             </div>
             {% if checkin.sleep <= 2 and checkin.energy <= 2 %}
@@ -157,7 +156,7 @@
         <div class="card card-elevated onboarding">
             <div class="onboarding-head">
                 <strong>{{ _("Primeros pasos") }}</strong>
-                <span>{{ onboarding.done }} de {{ onboarding.steps|length }}</span>
+                <span>{{ _('%(n)s de %(total)s', n=onboarding.done, total=onboarding.steps|length) }}</span>
             </div>
             <div class="onboarding-bar" aria-hidden="true"><span style="width: {{ (100 * onboarding.done / onboarding.steps|length)|round|int }}%"></span></div>
             <ol class="onboarding-steps">
@@ -183,7 +182,7 @@
                     <strong>{{ new_achievements[0].title }}</strong>
                 {% else %}
                     <small>{{ _("¡Logros desbloqueados!") }}</small>
-                    <strong>{{ new_achievements|length }} logros nuevos</strong>
+                    <strong>{{ ngettext('%(num)d logro nuevo', '%(num)d logros nuevos', new_achievements|length) }}</strong>
                 {% endif %}
             </span>
             <span class="achv-toast-cta">{{ _("Ver") }}</span>
@@ -204,9 +203,9 @@
                     {% for i in range(14) %}<i class="rank-spark" style="--a: {{ i * 360 / 14 }}deg; --d: {{ 0.15 + (i % 4) * 0.08 }}s"></i>{% endfor %}
                     {{ macros.rank_emblem(r.key, 190, r.division, eager=True) }}
                 </div>
-                <small>{{ '¡Has subido de rango!' if rank_event == 'up' else 'Tu rango de fuerza' }}</small>
+                <small>{{ _('¡Has subido de rango!') if rank_event == 'up' else _('Tu rango de fuerza') }}</small>
                 <strong id="rankCelebrationTitle">{{ r.label }}</strong>
-                <p>{{ 'Sigue así: cada kilo cuenta.' if rank_event == 'up' else 'Sale de tus 1RM estimados frente a estándares de referencia. Puede subir… y bajar.' }}</p>
+                <p>{{ _('Sigue así: cada kilo cuenta.') if rank_event == 'up' else _('Sale de tus 1RM estimados frente a estándares de referencia. Puede subir… y bajar.') }}</p>
                 <div class="rank-celebration-actions">
                     <a class="btn" href="{{ url_for('rank_page') }}">{{ _("Ver mi rango") }}</a>
                     <button type="button" class="btn-outline" onclick="closeRankCelebration()">{{ _("Cerrar") }}</button>
@@ -238,15 +237,15 @@
         <div class="dash-tiles">
             <div class="dash-tile dash-tile-streak">
                 <span class="dash-tile-head"><span class="dash-tile-icon" aria-hidden="true">🔥</span>{{ _("Racha") }}</span>
-                <strong class="dash-tile-value">{{ streak.days }}<small> día{{ '' if streak.days == 1 else 's' }}</small></strong>
-                <span class="week-dots" aria-label="Días entrenados esta semana">
+                <strong class="dash-tile-value">{{ streak.days }}<small> {{ ngettext('día', 'días', streak.days) }}</small></strong>
+                <span class="week-dots" aria-label="{{ _('Días entrenados esta semana') }}">
                     {% for d in streak.week %}
                         <span class="week-dot{% if d.trained %} on{% endif %}{% if d.today %} today{% endif %}{% if d.planned %} planned{% endif %}"
-                              title="{{ d.letter }}{% if d.trained %} · entrenado{% elif d.planned %} · día de entreno{% endif %}">{{ d.letter }}</span>
+                              title="{{ d.letter }}{% if d.trained %} · {{ _('entrenado') }}{% elif d.planned %} · {{ _('día de entreno') }}{% endif %}">{{ d.letter }}</span>
                     {% endfor %}
                 </span>
                 <span class="dash-tile-sub{% if streak.this_week >= streak.minimum %} ok{% endif %}">
-                    {% if streak.this_week >= streak.minimum %}{{ _("✓ Mínimo semanal cumplido") }}{% else %}{{ streak.this_week }} de {{ streak.minimum }} días mínimos esta semana{% endif %}
+                    {% if streak.this_week >= streak.minimum %}{{ _("✓ Mínimo semanal cumplido") }}{% else %}{{ _('%(n)s de %(min)s días mínimos esta semana', n=streak.this_week, min=streak.minimum) }}{% endif %}
                 </span>
             </div>
 
@@ -261,7 +260,7 @@
                             <polyline points="{{ strength_spark }}" fill="none" vector-effect="non-scaling-stroke"/>
                         </svg>
                     {% endif %}
-                    <span class="dash-tile-sub">{{ 'últimas 4 semanas' if strength.weeks == 4 else ('última semana' if strength.weeks == 1 else 'últimas ' ~ strength.weeks ~ ' semanas') }}</span>
+                    <span class="dash-tile-sub">{{ ngettext('última semana', 'últimas %(num)d semanas', strength.weeks) }}</span>
                 {% else %}
                     <strong class="dash-tile-value is-empty">—</strong>
                     <span class="dash-tile-sub">{{ _("Con 2 semanas de entrenos verás tu evolución") }}</span>
@@ -273,15 +272,15 @@
                 <span class="dash-tile-head"><span class="dash-tile-icon is-brand">{{ macros.icon('shield', 15) }}</span>{{ _("Objetivo") }}</span>
                 {% if rank_goal %}
                     <strong class="dash-tile-value">+{{ rank_goal.missing_kg|num(1) }}<small> {{ _("kg") }}</small></strong>
-                    <span class="goal-ranks" aria-label="De {{ rank_goal.rank.label }} a {{ rank_goal.next }}">
+                    <span class="goal-ranks" aria-label="{{ _('De %(a)s a %(b)s', a=rank_goal.rank.label, b=rank_goal.next) }}">
                         {{ macros.rank_emblem(rank_goal.rank.key, 26, rank_goal.rank.division, eager=True) }}
                         <span class="goal-arrow" aria-hidden="true">→</span>
                         {{ macros.rank_emblem(rank_goal.next_rank.key, 26, rank_goal.next_rank.division, eager=True) }}
                     </span>
-                    <span class="dash-tile-sub">{{ rank_goal.label }} para <b>{{ rank_goal.next }}</b></span>
+                    <span class="dash-tile-sub">{{ _('%(lift)s para <b>%(next)s</b>', lift=rank_goal.label, next=rank_goal.next) }}</span>
                 {% elif profile.missing %}
                     <strong class="dash-tile-value is-empty">—</strong>
-                    <span class="dash-tile-sub">Indica tu {{ profile.missing|join(' y tu ') }} para ver tu próximo rango</span>
+                    <span class="dash-tile-sub">{{ _('Indica tu %(what)s para ver tu próximo rango', what=profile.missing|join(_(' y tu '))) }}</span>
                 {% else %}
                     <strong class="dash-tile-value is-empty">—</strong>
                     <span class="dash-tile-sub">{{ _("Haz un básico (banca, sentadilla, remo…) para ver tu próximo rango") }}</span>
@@ -293,8 +292,8 @@
                 {% if latest_weight %}
                     <strong class="dash-tile-value">{{ latest_weight.weight|num }}<small> {{ _("kg") }}</small></strong>
                     <span class="dash-tile-sub">
-                        {% if pace.rate %}{{ '+' if pace.rate.kg_week > 0 }}{{ pace.rate.kg_week|num(2) }} kg/sem{% if pace.phase_info %} · <span class="pace-{{ pace.status }}">{{ {'ok': 'buen ritmo', 'fast': 'muy rápido', 'slow': 'lento', 'wrong': 'al revés'}[pace.status] if pace.status in ('ok', 'fast', 'slow', 'wrong') else '' }}</span>{% endif %}
-                        {% elif weight_change is not none %}{{ '▲ +' if weight_change > 0 else ('▼ ' if weight_change < 0 else '= ') }}{{ weight_change|num }} kg en 30 días{% else %}{{ latest_weight.timestamp|relative_day|capitalize }}{% endif %}
+                        {% if pace.rate %}{{ _('%(kg)s kg/sem', kg=('+' if pace.rate.kg_week > 0 else '') ~ pace.rate.kg_week|num(2)) }}{% if pace.phase_info %} · <span class="pace-{{ pace.status }}">{{ {'ok': _('buen ritmo'), 'fast': _('muy rápido'), 'slow': _('lento'), 'wrong': _('al revés')}[pace.status] if pace.status in ('ok', 'fast', 'slow', 'wrong') else '' }}</span>{% endif %}
+                        {% elif weight_change is not none %}{{ '▲ +' if weight_change > 0 else ('▼ ' if weight_change < 0 else '= ') }}{{ _('%(kg)s kg en 30 días', kg=weight_change|num) }}{% else %}{{ latest_weight.timestamp|relative_day|capitalize }}{% endif %}
                     </span>
                 {% else %}
                     <strong class="dash-tile-value is-empty">—</strong>
@@ -303,14 +302,14 @@
             </a>
         </div>
         <a class="dash-achv-link" href="{{ url_for('achievements_page') }}">
-            <span>{{ macros.icon('trophy', 16) }} Logros</span>
-            <span><b>{{ achievements_unlocked }}</b> de {{ achievements_total }} {{ macros.icon('chevron-right', 16) }}</span>
+            <span>{{ macros.icon('trophy', 16) }} {{ _('Logros') }}</span>
+            <span>{{ _('<b>%(n)s</b> de %(total)s', n=achievements_unlocked, total=achievements_total) }} {{ macros.icon('chevron-right', 16) }}</span>
         </a>
         {# Nivel: después de lo profesional (mosaicas), nunca en su lugar. #}
         <a class="dash-level-link" href="{{ url_for('rank_page') }}">
             <span class="dash-level-top">
-                <span><b>Nivel {{ xp.level }}</b> · {% if profile.global_rank %}<span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 22, profile.global_rank.division, eager=True) }}<span class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</span></span>{% else %}{{ _("Rango: sin datos") }}{% endif %}</span>
-                <span class="dash-level-next">faltan {{ xp.to_next|num }} XP {{ macros.icon('chevron-right', 16) }}</span>
+                <span><b>{{ _('Nivel %(n)s', n=xp.level) }}</b> · {% if profile.global_rank %}<span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 22, profile.global_rank.division, eager=True) }}<span class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</span></span>{% else %}{{ _("Rango: sin datos") }}{% endif %}</span>
+                <span class="dash-level-next">{{ _('faltan %(n)s XP', n=xp.to_next|num) }} {{ macros.icon('chevron-right', 16) }}</span>
             </span>
             <span class="dash-level-bar" aria-hidden="true"><i style="width: {{ xp.pct }}%"></i></span>
         </a>
@@ -362,7 +361,7 @@
         <div class="dash-notes" id="dashNotes">
             <form action="{{ url_for('update_notes') }}" method="post">
                 {{ notes_form.hidden_tag() }}
-                {{ notes_form.notes(rows=3, placeholder="Notas rápidas para ti mismo...") }}
+                {{ notes_form.notes(rows=3, placeholder=_("Notas rápidas para ti mismo...")) }}
                 <button type="submit" class="btn-outline">{{ _("Guardar nota") }}</button>
             </form>
         </div>
@@ -392,7 +391,7 @@
 
     {% include "_workout_history.html" %}
     {% if total_workouts > grouped|map(attribute='workouts')|map('length')|sum %}
-        <a class="btn-outline history-more" href="{{ url_for('history') }}">Ver todo el historial ({{ total_workouts }} entrenos)</a>
+        <a class="btn-outline history-more" href="{{ url_for('history') }}">{{ ngettext('Ver todo el historial (%(num)d entreno)', 'Ver todo el historial (%(num)d entrenos)', total_workouts) }}</a>
     {% endif %}
 
     {% if request.args.get('celebrate') %}
@@ -421,7 +420,7 @@
                 data: {
                     labels: weightChartData.labels,
                     datasets: [{
-                        label: 'Peso (kg)',
+                        label: {{ _('Peso (kg)')|tojson }},
                         data: weightChartData.values,
                         borderColor: '#7c4dff',
                         pointBackgroundColor: '#7c4dff',
@@ -441,7 +440,7 @@
             const expanded = panel.classList.toggle('dash-expanded');
             btn.setAttribute('aria-expanded', expanded);
             btn.querySelector('.dash-toggle-label').textContent =
-                expanded ? 'Ocultar calendario y peso' : 'Ver calendario y peso';
+                expanded ? {{ _('Ocultar calendario y peso')|tojson }} : {{ _('Ver calendario y peso')|tojson }};
             if (expanded) {
                 if (weightMiniChart) {
                     weightMiniChart.resize();
