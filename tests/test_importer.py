@@ -61,11 +61,12 @@ class ImporterTests(DbTestCase):
         self.assertIn("/importar/revisar", r.headers["Location"])
         html = self.client.get("/importar/revisar").get_data(as_text=True)
         self.assertIn('value="press de banca"', html)  # se une al ejercicio que ya tenía
+        # "fondos" no existe ni en el catálogo ni entre tus ejercicios: no se crea ni se importa.
         form = {"map-0": "press de banca", "map-1": "fondos", "map-2": ""}  # la sentadilla, fuera
         self.client.post("/importar/revisar", data=form)
         with app.app_context():
             sets = db.session.scalars(sa.select(SetEntry).join(Workout).where(Workout.user_id == self.uid)).all()
-            self.assertEqual(sorted(s.exercise for s in sets), ["fondos", "press de banca", "press de banca", "press de banca"])
+            self.assertEqual(sorted(s.exercise for s in sets), ["press de banca", "press de banca", "press de banca"])
             user = db.session.get(User, self.uid)
             self.assertEqual(user.effort_scale, "rir")
             heavy = next(s for s in sets if s.weight == 80)
@@ -86,11 +87,18 @@ class ImporterTests(DbTestCase):
             for name in ("press de banca agarre medio", "press de banca agarre cerrado", "dominadas"):
                 db.session.add(SetEntry(workout_id=w.id, exercise=name, weight=60, reps=5, completed=True))
             db.session.commit()
-            m, _ = importer.suggest_names(self.uid, ["Press de Banca - Agarre Cerrado (Barra)", "Press de Banca Inclinado (Mancuerna)",
-                                                     "Dominada (Con Peso Añadido)"])
+            from app.models import Exercise
+            db.session.add(Exercise(id="dips", name="Dips - Chest Version", name_es="Fondos", primary_muscles="chest",
+                                    name_normalized="dips - chest version", name_es_normalized="fondos"))
+            db.session.commit()
+            m, _, valid = importer.suggest_names(self.uid, ["Press de Banca - Agarre Cerrado (Barra)", "Press de Banca Inclinado (Mancuerna)",
+                                                            "Dominada (Con Peso Añadido)", "Fondos"])
         self.assertEqual(m["Press de Banca - Agarre Cerrado (Barra)"], "press de banca agarre cerrado")
-        self.assertEqual(m["Press de Banca Inclinado (Mancuerna)"], "press de banca inclinado (mancuerna)")
+        self.assertEqual(m["Press de Banca Inclinado (Mancuerna)"], "")  # ni tuyo ni del catálogo: sin elegir
         self.assertEqual(m["Dominada (Con Peso Añadido)"], "dominadas")
+        self.assertEqual(m["Fondos"], "fondos")  # del catálogo
+        self.assertIn("fondos", valid)
+        self.assertNotIn("press de banca inclinado (mancuerna)", valid)
 
     def test_notes_are_added_below_yours_never_replaced(self):
         with app.app_context():

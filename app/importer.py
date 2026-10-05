@@ -3,8 +3,9 @@
 Flujo (rutas /importar en routes.py):
   1. parse_csv(): lee el CSV y lo convierte en entrenos con sus series.
      Se guarda como borrador (ImportDraft) para no tener que volver a subirlo.
-  2. El usuario revisa a qué ejercicio suyo corresponde cada nombre
-     (suggest_names() propone uno) o lo deja fuera.
+  2. El usuario elige a qué ejercicio corresponde cada nombre: uno suyo o
+     uno del catálogo (suggest_names() propone uno); nunca se crea uno nuevo
+     con el nombre de la otra app. Lo que quede sin elegir no se importa.
   3. apply_import(): crea los entrenos (saltándose los que ya existen a la
      misma hora, así reimportar no duplica), las series, las notas de
      ejercicio que no tuviera, las medallas de récord y los logros.
@@ -168,7 +169,6 @@ def parse_csv(raw, unit="kg"):
 
 
 # ------------------------------------------------------------ nombres
-_BARBELL = re.compile(r"\s*\((barra|barbell)\)\s*$", re.IGNORECASE)
 
 
 def _key(name):
@@ -193,32 +193,33 @@ def _core(name):
 
 
 def suggest_names(user_id, names):
-    """{nombre del CSV: nombre propuesto en Gyre}. Si ya tienes ese ejercicio
-    con las mismas palabras clave (sin mirar acentos, mayúsculas, plurales ni
-    "(Barra)", "agarre medio"...), ese; si hay varios, el que más usas. Si
-    no, el nombre del CSV en minúsculas, quitando "(Barra)" (la app entiende
-    "press de banca" como el de barra) o escribiéndolo "con barra" si así lo
-    reconocen los estándares de fuerza."""
+    """Propuesta para cada nombre del CSV, SOLO entre ejercicios que ya
+    existen: primero uno tuyo con las mismas palabras clave (sin mirar
+    acentos, mayúsculas, plurales, "(Barra)", "agarre medio"...; si hay
+    varios, el que más usas) y si no, uno del catálogo. Si no hay ninguno,
+    "" (queda sin elegir y no se importa hasta que elijas uno): la
+    importación nunca crea ejercicios nuevos con el nombre de la otra app.
+
+    Devuelve (propuestas, [(nombre tuyo, series)], nombres válidos)."""
+    from app.models import Exercise
+    from app.routes import catalog_display_name
+
     own_counts = db.session.execute(
         sa.select(SetEntry.exercise, sa.func.count()).join(Workout, Workout.id == SetEntry.workout_id)
         .where(Workout.user_id == user_id).group_by(SetEntry.exercise)).all()
-    by_core = {}
+    own_by_core = {}
     for ex, n in sorted(own_counts, key=lambda r: -r[1]):
-        by_core.setdefault(_core(ex), ex)  # el más usado primero
-    from app.strength_standards import lift_of
-
-    out = {}
-    for name in names:
-        clean = re.sub(r"\s+", " ", _BARBELL.sub("", name)).strip().lower()
-        default = clean
-        if clean != name.strip().lower() and lift_of(clean) is None:
-            # "Remo Inclinado (Barra)": sin "(Barra)" la app no sabe que es
-            # con barra; "remo inclinado con barra" sí cuenta para el rango.
-            spelled = f"{clean} con barra" if "barra" in name.lower() else f"barbell {clean}"
-            if lift_of(spelled):
-                default = spelled
-        out[name] = by_core.get(_core(name)) or default[:64]
-    return out, sorted(own_counts, key=lambda r: (-r[1], r[0]))  # [(nombre, series)], los más usados primero
+        own_by_core.setdefault(_core(ex), ex)  # el más usado primero
+    catalog_by_core = {}
+    valid = {ex for ex, _ in own_counts}
+    for e in db.session.scalars(sa.select(Exercise)):
+        display = catalog_display_name(e).strip().lower()
+        valid.update(n.strip().lower() for n in (e.name, e.name_es) if n)
+        for n in (catalog_display_name(e), e.name_es, e.name):  # el nombre que se ve, primero
+            if n:
+                catalog_by_core.setdefault(_core(n), display)
+    out = {name: own_by_core.get(_core(name)) or catalog_by_core.get(_core(name)) or "" for name in names}
+    return out, sorted(own_counts, key=lambda r: (-r[1], r[0])), valid
 
 
 # ------------------------------------------------------------ importar

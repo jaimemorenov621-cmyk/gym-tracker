@@ -2370,7 +2370,13 @@ def import_review():
     names = list(draft["exercises"])
     form = EmptyForm()
     if form.validate_on_submit():
-        mapping = {name: (request.form.get(f"map-{i}") or "").strip() for i, name in enumerate(names)}
+        # Solo ejercicios que ya existen (tuyos o del catálogo): nunca se crea
+        # uno nuevo con el nombre de la otra app. Lo demás no se importa.
+        _, _, valid = importer.suggest_names(current_user.id, [])
+        mapping = {}
+        for i, name in enumerate(names):
+            chosen = (request.form.get(f"map-{i}") or "").strip()
+            mapping[name] = chosen if chosen.lower() in valid else ""
         result = importer.apply_import(current_user, draft, mapping, skip_same_day=bool(request.form.get("skip_same_day")))
         db.session.delete(record)
         db.session.commit()
@@ -2378,7 +2384,7 @@ def import_review():
         flash(gettext("Importados %(w)s entrenos y %(s)s series.", w=result["workouts"], s=result["sets"])
               + (" " + gettext("%(n)s ya estaban y no se han duplicado.", n=result["duplicates"]) if result["duplicates"] else ""))
         return redirect(url_for("history"))
-    suggestions, own = importer.suggest_names(current_user.id, names)
+    suggestions, own, _valid = importer.suggest_names(current_user.id, names)
     starts = [w["start"] for w in draft["workouts"]]
     return render_template(
         "import_review.html", title=gettext("Revisar importación"), form=form, draft=draft,

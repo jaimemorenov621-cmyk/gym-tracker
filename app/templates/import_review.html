@@ -5,7 +5,7 @@
     <h1 class="page-title">{{ _("Revisar importación") }}</h1>
     <div class="card card-elevated">
         <p><b>{{ ngettext('%(num)d entreno', '%(num)d entrenos', draft.workouts|length) }}</b> · {{ ngettext('%(num)d serie', '%(num)d series', total_sets) }} · {{ _('del %(a)s al %(b)s', a=first.strftime('%d/%m/%Y'), b=last.strftime('%d/%m/%Y')) }}</p>
-        <p class="std-note">{{ _("Elige con qué nombre se guarda cada ejercicio. Pulsa la lupa para ver tus ejercicios y el catálogo: si eliges uno que ya tienes (borde verde), se une a tu historial y a tus récords. Déjalo vacío para no importarlo.") }}</p>
+        <p class="std-note">{{ _("Cada ejercicio se importa como uno del catálogo o como uno tuyo: nunca se crea uno nuevo con el nombre de la otra app. Toca un ejercicio para cambiarlo. Los que estén en verde ya tienen series en Gyre y se unen a tu historial; los que queden sin elegir no se importan.") }}</p>
     </div>
     <form method="post" class="import-review-form">
         {{ form.hidden_tag() }}
@@ -13,13 +13,12 @@
             {% for i, name, n, suggestion in rows %}
                 <li>
                     <span class="import-map-source"><strong>{{ name }}</strong><small>{{ ngettext('%(num)d serie', '%(num)d series', n) }}</small></span>
-                    <span class="import-map-target">
-                        <input type="text" id="map-{{ i }}" name="map-{{ i }}" value="{{ suggestion }}" maxlength="64"
-                               aria-label="{{ _('Nombre en Gyre para %(name)s', name=name) }}" autocapitalize="none"
-                               class="{{ 'is-own' if suggestion in own_names }}">
-                        <button type="button" class="btn-icon import-pick" data-index="{{ i }}" data-source="{{ name }}"
-                                aria-label="{{ _('Elegir ejercicio') }}" title="{{ _('Elegir ejercicio') }}">{{ macros.icon('search', 18) }}</button>
-                    </span>
+                    <input type="hidden" id="map-{{ i }}" name="map-{{ i }}" value="{{ suggestion }}">
+                    <button type="button" class="import-choice import-pick{% if not suggestion %} is-empty{% elif suggestion in own_names %} is-own{% endif %}"
+                            data-index="{{ i }}" data-source="{{ name }}" aria-label="{{ _('Elegir ejercicio para %(name)s', name=name) }}">
+                        <span class="import-choice-name">{{ suggestion|title if suggestion else _('Elegir ejercicio') }}</span>
+                        <small class="import-choice-state">{% if not suggestion %}{{ _("Sin elegir: no se importará") }}{% elif suggestion in own_names %}{{ _("Ya lo tienes: se une a tu historial") }}{% else %}{{ _("Del catálogo") }}{% endif %}</small>
+                    </button>
                 </li>
             {% endfor %}
         </ul>
@@ -27,6 +26,7 @@
             {% if overlap %}
                 <label class="import-skip"><input type="checkbox" name="skip_same_day" checked> {{ ngettext('Saltar %(num)d entreno de un día en el que ya entrenaste en Gyre (por si lo apuntaste en las dos apps)', 'Saltar %(num)d entrenos de días en los que ya entrenaste en Gyre (por si los apuntaste en las dos apps)', overlap) }}</label>
             {% endif %}
+            <p class="import-pending" id="importPending" hidden></p>
             <button type="submit" class="btn">{{ _("Importar") }}</button>
         </div>
     </form>
@@ -63,6 +63,19 @@
         // (filtrados aquí mismo) y el catálogo (/api/exercises/search).
         (function () {
             let target = null, timer = null;
+            const T_PICK = {{ _('Elegir ejercicio')|tojson }};
+            const T_STATE = {empty: {{ _('Sin elegir: no se importará')|tojson }}, own: {{ _('Ya lo tienes: se une a tu historial')|tojson }},
+                             catalog: {{ _('Del catálogo')|tojson }}};
+            const T_PENDING = [{{ _('1 ejercicio sin elegir no se importará.')|tojson }}, {{ _('{n} ejercicios sin elegir no se importarán.')|tojson }}];
+            const titleCase = s => s.replace(/(^|\s)(\S)/g, (m, sp, c) => sp + c.toUpperCase());
+            let current = null;
+
+            function pending() {
+                const n = document.querySelectorAll('.import-choice.is-empty').length;
+                const box = document.getElementById('importPending');
+                box.hidden = n === 0;
+                box.textContent = n === 1 ? T_PENDING[0] : T_PENDING[1].replace('{n}', n);
+            }
             const sheet = document.getElementById('importPickerSheet');
             const backdrop = document.getElementById('importPickerBackdrop');
             const search = document.getElementById('importPickerSearch');
@@ -127,6 +140,7 @@
 
             function open(button) {
                 target = document.getElementById('map-' + button.dataset.index);
+                current = button;
                 document.getElementById('importPickerTitle').textContent = button.dataset.source;
                 // De entrada busca el nombre de la otra app sin el equipo entre paréntesis.
                 search.value = button.dataset.source.replace(/\(.*?\)/g, '').replace(/\s+-\s+/g, ' ').trim();
@@ -141,9 +155,14 @@
                 document.body.style.overflow = '';
             }
             function choose(name) {
-                if (target) {
+                if (target && current) {
                     target.value = name;
-                    target.classList.toggle('is-own', ownNames.has(name));
+                    const kind = !name ? 'empty' : ownNames.has(name) ? 'own' : 'catalog';
+                    current.classList.toggle('is-empty', kind === 'empty');
+                    current.classList.toggle('is-own', kind === 'own');
+                    current.querySelector('.import-choice-name').textContent = name ? titleCase(name) : T_PICK;
+                    current.querySelector('.import-choice-state').textContent = T_STATE[kind];
+                    pending();
                 }
                 close();
             }
@@ -157,9 +176,7 @@
             document.getElementById('importPickerClose').addEventListener('click', close);
             search.addEventListener('input', filter);
             document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-            // Al escribir a mano, se marca en verde si coincide con uno tuyo.
-            document.querySelectorAll('.import-map input').forEach(inp => inp.addEventListener('input',
-                () => inp.classList.toggle('is-own', ownNames.has(inp.value.trim().toLowerCase()))));
+            pending();
         })();
     </script>
 {% endblock %}

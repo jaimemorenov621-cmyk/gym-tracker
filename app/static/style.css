@@ -4336,3 +4336,13 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 .import-cat-text small { color: var(--color-text-muted); font-weight: 500; }
 .import-cat-sets { white-space: nowrap; }
 .import-cat-row.has-sets .import-cat-sets { color: var(--color-success-dark, #17a973); font-weight: 700; }
+
+/* Importar: cada fila es un botón con el ejercicio elegido (sin texto libre). */
+.import-choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; margin: 0; padding: 9px 12px; text-align: left; background: var(--surface-2); color: var(--color-text); border: 1.5px solid var(--color-border-soft); border-radius: 10px; box-shadow: none; font-weight: 700; }
+.import-choice .import-choice-state { font-weight: 500; font-size: 0.78rem; color: var(--color-text-muted); }
+.import-choice.is-own { border-color: var(--color-success-dark, #17a973); }
+.import-choice.is-own .import-choice-state { color: var(--color-success-dark, #17a973); }
+.import-choice.is-empty { border-style: dashed; border-color: var(--color-danger); color: var(--color-danger); }
+.import-choice.is-empty .import-choice-state { color: var(--color-danger); }
+@media (hover: hover) { .import-choice:hover { background: var(--color-surface-hover); color: var(--color-text); } }
+.import-pending { margin: 0; color: var(--color-danger); font-weight: 600; font-size: 0.88rem; }

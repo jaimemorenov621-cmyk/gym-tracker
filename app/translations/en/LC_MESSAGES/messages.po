@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-05 17:30+0200\n"
+"POT-Creation-Date: 2026-10-05 17:43+0200\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1821,7 +1821,7 @@ msgstr "Calves"
 msgid "Marcar como favorito"
 msgstr "Mark as favorite"
 
-#: app/i18n.py:78 app/templates/import_review.html:75
+#: app/i18n.py:78 app/templates/import_review.html:88
 msgid "Sin resultados en el catálogo."
 msgstr "No results in the catalog."
 
@@ -1861,11 +1861,11 @@ msgstr "Equipment (optional)"
 msgid "Crear y usar"
 msgstr "Create and use"
 
-#: app/i18n.py:88 app/routes.py:3314
+#: app/i18n.py:88 app/routes.py:3320
 msgid "El nombre es obligatorio."
 msgstr "Name is required."
 
-#: app/i18n.py:89 app/routes.py:3316
+#: app/i18n.py:89 app/routes.py:3322
 msgid "Elige al menos un músculo primario."
 msgstr "Choose at least one primary muscle."
 
@@ -2003,15 +2003,15 @@ msgstr ""
 "🏅 New record on {name}: {kg} kg × {reps} (est. 1RM {e1rm} kg). I log "
 "everything with Gyre 👉 {url}"
 
-#: app/importer.py:100
+#: app/importer.py:101
 msgid "El archivo es demasiado grande (máximo 10 MB)."
 msgstr "The file is too large (10 MB max)."
 
-#: app/importer.py:111
+#: app/importer.py:112
 msgid "El archivo está vacío."
 msgstr "The file is empty."
 
-#: app/importer.py:141
+#: app/importer.py:142
 msgid ""
 "No reconozco el formato. Sube el CSV que exporta Hevy (Export Workouts) o"
 " Strong."
@@ -2019,7 +2019,7 @@ msgstr ""
 "I don't recognize the format. Upload the CSV exported by Hevy (Export "
 "Workouts) or Strong."
 
-#: app/importer.py:164
+#: app/importer.py:165
 msgid "No he encontrado series con repeticiones en el archivo."
 msgstr "I couldn't find any sets with reps in the file."
 
@@ -2145,7 +2145,7 @@ msgstr "Choose an exercise from the catalog."
 msgid "No tienes acceso a esta página."
 msgstr "You don't have access to this page."
 
-#: app/routes.py:699 app/routes.py:2539
+#: app/routes.py:699 app/routes.py:2545
 msgid "mañana"
 msgstr "tomorrow"
 
@@ -2289,7 +2289,7 @@ msgstr "%(day)s workout"
 msgid "No se pudo empezar el entreno. Inténtalo de nuevo."
 msgstr "Couldn't start the workout. Please try again."
 
-#: app/routes.py:1207 app/routes.py:3084
+#: app/routes.py:1207 app/routes.py:3090
 msgid "Ya tienes un entreno en curso — termínalo antes de empezar otro."
 msgstr ""
 "You already have a workout in progress — finish it before starting "
@@ -2300,7 +2300,7 @@ msgid "El nombre no puede estar vacío."
 msgstr "The name can't be empty."
 
 #: app/routes.py:1236 app/routes.py:1484 app/routes.py:1643 app/routes.py:1746
-#: app/routes.py:3346
+#: app/routes.py:3352
 msgid "No tienes acceso a este entrenamiento."
 msgstr "You don't have access to this workout."
 
@@ -2474,84 +2474,84 @@ msgstr "Choose the CSV file you exported."
 msgid "Importar entrenos"
 msgstr "Import workouts"
 
-#: app/routes.py:2378
+#: app/routes.py:2384
 #, python-format
 msgid "Importados %(w)s entrenos y %(s)s series."
 msgstr "Imported %(w)s workouts and %(s)s sets."
 
-#: app/routes.py:2379
+#: app/routes.py:2385
 #, python-format
 msgid "%(n)s ya estaban y no se han duplicado."
 msgstr "%(n)s were already there and weren't duplicated."
 
-#: app/routes.py:2384 app/templates/import_review.html:5
+#: app/routes.py:2390 app/templates/import_review.html:5
 msgid "Revisar importación"
 msgstr "Review import"
 
-#: app/routes.py:2420
+#: app/routes.py:2426
 msgid "Escribe tu nombre de usuario exactamente igual para confirmar."
 msgstr "Type your username exactly to confirm."
 
-#: app/routes.py:2426
+#: app/routes.py:2432
 msgid "Tu cuenta y todos tus datos se han borrado."
 msgstr "Your account and all your data have been deleted."
 
-#: app/routes.py:2428 app/templates/delete_account.html:5
+#: app/routes.py:2434 app/templates/delete_account.html:5
 #: app/templates/privacy.html:36 app/templates/settings.html:151
 msgid "Borrar mi cuenta"
 msgstr "Delete my account"
 
-#: app/routes.py:2444
+#: app/routes.py:2450
 msgid "Escribe tu mensaje."
 msgstr "Write your message."
 
-#: app/routes.py:2446
+#: app/routes.py:2452
 msgid "Has enviado muchos mensajes hoy. Inténtalo mañana."
 msgstr "You've sent a lot of messages today. Try again tomorrow."
 
-#: app/routes.py:2453
+#: app/routes.py:2459
 msgid "Mensaje enviado. Te responderemos al email de tu cuenta."
 msgstr "Message sent. We'll reply to your account's email."
 
-#: app/routes.py:2455 app/templates/contact.html:4
+#: app/routes.py:2461 app/templates/contact.html:4
 #: app/templates/privacy.html:39 app/templates/settings.html:149
 msgid "Contacto"
 msgstr "Contact"
 
-#: app/routes.py:2498
+#: app/routes.py:2504
 msgid "No tienes acceso a ese registro de peso."
 msgstr "You don't have access to that weight entry."
 
-#: app/routes.py:2502
+#: app/routes.py:2508
 msgid "Registro de peso eliminado."
 msgstr "Weight entry deleted."
 
-#: app/routes.py:2536
+#: app/routes.py:2542
 #, python-format
 msgid "en %(n)s h"
 msgstr "in %(n)s h"
 
-#: app/routes.py:2539
+#: app/routes.py:2545
 #, python-format
 msgid "en %(n)s días"
 msgstr "in %(n)s days"
 
-#: app/routes.py:2557 app/templates/ai_analysis.html:4
+#: app/routes.py:2563 app/templates/ai_analysis.html:4
 #: app/templates/ai_analysis.html:61
 msgid "Análisis de IA"
 msgstr "AI analysis"
 
-#: app/routes.py:2590
+#: app/routes.py:2596
 msgid ""
 "Ya has usado tus análisis de esta semana. Vuelve a intentarlo más "
 "adelante."
 msgstr "You've used your analyses for this week. Try again later."
 
-#: app/routes.py:2591
+#: app/routes.py:2597
 msgid "Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante."
 msgstr "You already generated an analysis this week. Try again later."
 
-#: app/routes.py:2601
+#: app/routes.py:2607
 #, python-format
 msgid ""
 "Necesitas al menos %(min)s entrenamientos registrados para generar un "
@@ -2560,111 +2560,111 @@ msgstr ""
 "You need at least %(min)s logged workouts to generate an analysis (you "
 "have %(n)s)."
 
-#: app/routes.py:2614
+#: app/routes.py:2620
 msgid ""
 "No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos "
 "minutos."
 msgstr "Couldn't generate the analysis right now. Try again in a few minutes."
 
-#: app/routes.py:2620
+#: app/routes.py:2626
 msgid "¡Análisis generado!"
 msgstr "Analysis generated!"
 
-#: app/routes.py:2687
+#: app/routes.py:2693
 msgid "Mis rutinas"
 msgstr "My routines"
 
-#: app/routes.py:2805 app/routes.py:2905 app/routes.py:2911 app/routes.py:3026
-#: app/routes.py:3079
+#: app/routes.py:2811 app/routes.py:2911 app/routes.py:2917 app/routes.py:3032
+#: app/routes.py:3085
 msgid "No tienes acceso a esta rutina."
 msgstr "You don't have access to this routine."
 
-#: app/routes.py:2819
+#: app/routes.py:2825
 msgid "No se pudo actualizar ese ejercicio."
 msgstr "Couldn't update that exercise."
 
-#: app/routes.py:2829
+#: app/routes.py:2835
 msgid "Ejercicio actualizado."
 msgstr "Exercise updated."
 
-#: app/routes.py:2895
+#: app/routes.py:2901
 msgid "Rutina creada. Añade ejercicios."
 msgstr "Routine created. Add exercises."
 
-#: app/routes.py:2897 app/routes.py:3362 app/templates/new_routine.html:4
+#: app/routes.py:2903 app/routes.py:3368 app/templates/new_routine.html:4
 #: app/templates/routines.html:10
 msgid "Nueva rutina"
 msgstr "New routine"
 
-#: app/routes.py:2915
+#: app/routes.py:2921
 msgid "Ejercicio eliminado de la rutina."
 msgstr "Exercise removed from the routine."
 
-#: app/routes.py:2949
+#: app/routes.py:2955
 msgid "Las series van de 1 a 15."
 msgstr "Sets go from 1 to 15."
 
-#: app/routes.py:2963
+#: app/routes.py:2969
 #, python-format
 msgid "El máximo de series va de %(n)s a 15."
 msgstr "Max sets go from %(n)s to 15."
 
-#: app/routes.py:2974
+#: app/routes.py:2980
 msgid "Las repeticiones tienen que ser números."
 msgstr "Reps have to be numbers."
 
-#: app/routes.py:2976
+#: app/routes.py:2982
 msgid "Repeticiones de 1 a 100, y el máximo no puede ser menor que el mínimo."
 msgstr "Reps from 1 to 100, and the max can't be lower than the min."
 
-#: app/routes.py:2981
+#: app/routes.py:2987
 msgid "Escribe las reps (máx. 16 caracteres), p. ej. 8-10."
 msgstr "Enter the reps (16 characters max), e.g. 8-10."
 
-#: app/routes.py:2986
+#: app/routes.py:2992
 msgid "Usa un número (ej. 2) o un rango (ej. 2-3)."
 msgstr "Use a number (e.g. 2) or a range (e.g. 2-3)."
 
-#: app/routes.py:3015
+#: app/routes.py:3021
 msgid "Elige un ejercicio."
 msgstr "Choose an exercise."
 
-#: app/routes.py:3041
+#: app/routes.py:3047
 msgid "Rutina eliminada."
 msgstr "Routine deleted."
 
-#: app/routes.py:3117
+#: app/routes.py:3123
 #, python-format
 msgid "¡Entrenamiento '%(name)s' iniciado!"
 msgstr "Workout '%(name)s' started!"
 
-#: app/routes.py:3273
+#: app/routes.py:3279
 msgid "Ejercicio no encontrado."
 msgstr "Exercise not found."
 
-#: app/routes.py:3359
+#: app/routes.py:3365
 msgid "Este entrenamiento no tiene series registradas."
 msgstr "This workout has no logged sets."
 
-#: app/routes.py:3378
+#: app/routes.py:3384
 #, python-format
 msgid "Rutina '%(name)s' creada a partir de este entrenamiento."
 msgstr "Routine '%(name)s' created from this workout."
 
-#: app/routes.py:4221 app/templates/index.html:107
+#: app/routes.py:4227 app/templates/index.html:107
 msgid "hoy"
 msgstr "today"
 
-#: app/routes.py:4223 app/templates/index.html:107
+#: app/routes.py:4229 app/templates/index.html:107
 msgid "ayer"
 msgstr "yesterday"
 
-#: app/routes.py:4225
+#: app/routes.py:4231
 #, python-format
 msgid "hace %(n)s días"
 msgstr "%(n)s days ago"
 
-#: app/routes.py:4227
+#: app/routes.py:4233
 #, python-format
 msgid "hace %(n)s semanas"
 msgstr "%(n)s weeks ago"
@@ -2957,7 +2957,8 @@ msgstr "medium"
 msgid "baja"
 msgstr "low"
 
-#: app/templates/_macros.html:104 app/templates/import_review.html:21
+#: app/templates/_macros.html:104 app/templates/import_review.html:19
+#: app/templates/import_review.html:66
 msgid "Elegir ejercicio"
 msgstr "Choose exercise"
 
@@ -3909,20 +3910,34 @@ msgstr "from %(a)s to %(b)s"
 
 #: app/templates/import_review.html:8
 msgid ""
-"Elige con qué nombre se guarda cada ejercicio. Pulsa la lupa para ver tus"
-" ejercicios y el catálogo: si eliges uno que ya tienes (borde verde), se "
-"une a tu historial y a tus récords. Déjalo vacío para no importarlo."
+"Cada ejercicio se importa como uno del catálogo o como uno tuyo: nunca se"
+" crea uno nuevo con el nombre de la otra app. Toca un ejercicio para "
+"cambiarlo. Los que estén en verde ya tienen series en Gyre y se unen a tu"
+" historial; los que queden sin elegir no se importan."
 msgstr ""
-"Choose the name each exercise is saved under. Tap the magnifier to see "
-"your exercises and the catalog: if you pick one you already have (green "
-"border), it joins your history and records. Leave it empty to skip it."
+"Each exercise is imported as one from the catalog or one of yours: a new "
+"one is never created with the other app's name. Tap an exercise to change"
+" it. Green ones already have sets in Gyre and join your history; the ones"
+" left without a choice aren't imported."
 
 #: app/templates/import_review.html:18
 #, python-format
-msgid "Nombre en Gyre para %(name)s"
-msgstr "Name in Gyre for %(name)s"
+msgid "Elegir ejercicio para %(name)s"
+msgstr "Choose exercise for %(name)s"
 
-#: app/templates/import_review.html:28
+#: app/templates/import_review.html:20 app/templates/import_review.html:67
+msgid "Sin elegir: no se importará"
+msgstr "Not chosen: won't be imported"
+
+#: app/templates/import_review.html:20 app/templates/import_review.html:67
+msgid "Ya lo tienes: se une a tu historial"
+msgstr "You have it: joins your history"
+
+#: app/templates/import_review.html:20 app/templates/import_review.html:68
+msgid "Del catálogo"
+msgstr "From the catalog"
+
+#: app/templates/import_review.html:27
 #, python-format
 msgid ""
 "Saltar %(num)d entreno de un día en el que ya entrenaste en Gyre (por si "
@@ -3972,16 +3987,25 @@ msgstr[1] "%(num)d saved sets"
 msgid "Ninguno coincide."
 msgstr "None match."
 
-#: app/templates/import_review.html:71
+#: app/templates/import_review.html:69
+msgid "1 ejercicio sin elegir no se importará."
+msgstr "1 exercise without a choice won't be imported."
+
+#: app/templates/import_review.html:69
+#, python-brace-format
+msgid "{n} ejercicios sin elegir no se importarán."
+msgstr "{n} exercises without a choice won't be imported."
+
+#: app/templates/import_review.html:84
 msgid "1 serie guardada"
 msgstr "1 saved set"
 
-#: app/templates/import_review.html:71
+#: app/templates/import_review.html:84
 #, python-brace-format
 msgid "{n} series guardadas"
 msgstr "{n} saved sets"
 
-#: app/templates/import_review.html:72
+#: app/templates/import_review.html:85
 msgid "Sin series guardadas"
 msgstr "No saved sets"
 
