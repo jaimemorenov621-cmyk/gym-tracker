@@ -124,7 +124,7 @@
                     {% endfor %}
                 </ol>
             {% endfor %}
-            <p class="std-note">{{ _("Progreso: cuánto ha subido tu índice de fuerza en 4 semanas, comparándote contigo mismo (al empezar se progresa más rápido). Récords: los que dan XP en las últimas 4 semanas. Constancia: días entrenados en las últimas 4 semanas. Rango: tus marcas de los últimos 90 días, ajustadas a peso y sexo; un récord que salta mucho de golpe no cuenta hasta que lo repites.") }}</p>
+            <p class="std-note">{{ _("Progreso: cuánto ha subido tu índice de fuerza en 4 semanas, comparándote contigo mismo (al empezar se progresa más rápido). Récords: veces que has superado tu mejor marca anterior en las últimas 4 semanas (como mucho 3 al día). Constancia: días entrenados en las últimas 4 semanas. Rango: tus marcas de los últimos 90 días, ajustadas a peso y sexo; un récord que salta mucho de golpe no cuenta hasta que lo repites.") }}</p>
         {% endif %}
         <a class="ranking-mycard" href="{{ url_for('athlete_card', user_id=current_user.id) }}">{{ _('Mi tarjeta de atleta') }} {{ macros.icon('chevron-right', 16) }}</a>
     </div>

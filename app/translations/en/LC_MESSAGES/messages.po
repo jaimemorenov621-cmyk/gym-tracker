@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-05 14:05+0200\n"
+"POT-Creation-Date: 2026-10-05 17:00+0200\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1861,11 +1861,11 @@ msgstr "Equipment (optional)"
 msgid "Crear y usar"
 msgstr "Create and use"
 
-#: app/i18n.py:88 app/routes.py:3289
+#: app/i18n.py:88 app/routes.py:3292
 msgid "El nombre es obligatorio."
 msgstr "Name is required."
 
-#: app/i18n.py:89 app/routes.py:3291
+#: app/i18n.py:89 app/routes.py:3294
 msgid "Elige al menos un músculo primario."
 msgstr "Choose at least one primary muscle."
 
@@ -2083,8 +2083,8 @@ msgstr "cap of %(n)s workout days per week"
 
 #: app/progression.py:231
 #, python-format
-msgid "menos de %(sets)s series de XP o de %(reps)s repeticiones"
-msgstr "fewer than %(sets)s XP sets or %(reps)s reps"
+msgid "menos de %(sets)s series con carga o de %(reps)s repeticiones"
+msgstr "fewer than %(sets)s loaded sets or %(reps)s reps"
 
 #: app/progression.py:236
 #, python-format
@@ -2123,8 +2123,8 @@ msgid "Check-in"
 msgstr "Check-in"
 
 #: app/routes.py:189
-msgid "Check-in actualizado (+0 XP: ya lo habías hecho hoy)."
-msgstr "Check-in updated (+0 XP: you had already done it today)."
+msgid "Check-in actualizado."
+msgstr "Check-in updated."
 
 #: app/routes.py:204 app/templates/athlete_card.html:23
 #: app/templates/level.html:4 app/templates/level.html:109
@@ -2144,7 +2144,7 @@ msgstr "Choose an exercise from the catalog."
 msgid "No tienes acceso a esta página."
 msgstr "You don't have access to this page."
 
-#: app/routes.py:699 app/routes.py:2534
+#: app/routes.py:699 app/routes.py:2537
 msgid "mañana"
 msgstr "tomorrow"
 
@@ -2288,7 +2288,7 @@ msgstr "%(day)s workout"
 msgid "No se pudo empezar el entreno. Inténtalo de nuevo."
 msgstr "Couldn't start the workout. Please try again."
 
-#: app/routes.py:1207 app/routes.py:3079
+#: app/routes.py:1207 app/routes.py:3082
 msgid "Ya tienes un entreno en curso — termínalo antes de empezar otro."
 msgstr ""
 "You already have a workout in progress — finish it before starting "
@@ -2299,7 +2299,7 @@ msgid "El nombre no puede estar vacío."
 msgstr "The name can't be empty."
 
 #: app/routes.py:1236 app/routes.py:1484 app/routes.py:1643 app/routes.py:1746
-#: app/routes.py:3321
+#: app/routes.py:3324
 msgid "No tienes acceso a este entrenamiento."
 msgstr "You don't have access to this workout."
 
@@ -2508,49 +2508,49 @@ msgstr "Write your message."
 msgid "Has enviado muchos mensajes hoy. Inténtalo mañana."
 msgstr "You've sent a lot of messages today. Try again tomorrow."
 
-#: app/routes.py:2448
+#: app/routes.py:2451
 msgid "Mensaje enviado. Te responderemos al email de tu cuenta."
 msgstr "Message sent. We'll reply to your account's email."
 
-#: app/routes.py:2450 app/templates/contact.html:4
+#: app/routes.py:2453 app/templates/contact.html:4
 #: app/templates/privacy.html:39 app/templates/settings.html:149
 msgid "Contacto"
 msgstr "Contact"
 
-#: app/routes.py:2493
+#: app/routes.py:2496
 msgid "No tienes acceso a ese registro de peso."
 msgstr "You don't have access to that weight entry."
 
-#: app/routes.py:2497
+#: app/routes.py:2500
 msgid "Registro de peso eliminado."
 msgstr "Weight entry deleted."
 
-#: app/routes.py:2531
+#: app/routes.py:2534
 #, python-format
 msgid "en %(n)s h"
 msgstr "in %(n)s h"
 
-#: app/routes.py:2534
+#: app/routes.py:2537
 #, python-format
 msgid "en %(n)s días"
 msgstr "in %(n)s days"
 
-#: app/routes.py:2552 app/templates/ai_analysis.html:4
+#: app/routes.py:2555 app/templates/ai_analysis.html:4
 #: app/templates/ai_analysis.html:61
 msgid "Análisis de IA"
 msgstr "AI analysis"
 
-#: app/routes.py:2585
+#: app/routes.py:2588
 msgid ""
 "Ya has usado tus análisis de esta semana. Vuelve a intentarlo más "
 "adelante."
 msgstr "You've used your analyses for this week. Try again later."
 
-#: app/routes.py:2586
+#: app/routes.py:2589
 msgid "Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante."
 msgstr "You already generated an analysis this week. Try again later."
 
-#: app/routes.py:2596
+#: app/routes.py:2599
 #, python-format
 msgid ""
 "Necesitas al menos %(min)s entrenamientos registrados para generar un "
@@ -2559,111 +2559,111 @@ msgstr ""
 "You need at least %(min)s logged workouts to generate an analysis (you "
 "have %(n)s)."
 
-#: app/routes.py:2609
+#: app/routes.py:2612
 msgid ""
 "No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos "
 "minutos."
 msgstr "Couldn't generate the analysis right now. Try again in a few minutes."
 
-#: app/routes.py:2615
+#: app/routes.py:2618
 msgid "¡Análisis generado!"
 msgstr "Analysis generated!"
 
-#: app/routes.py:2682
+#: app/routes.py:2685
 msgid "Mis rutinas"
 msgstr "My routines"
 
-#: app/routes.py:2800 app/routes.py:2900 app/routes.py:2906 app/routes.py:3021
-#: app/routes.py:3074
+#: app/routes.py:2803 app/routes.py:2903 app/routes.py:2909 app/routes.py:3024
+#: app/routes.py:3077
 msgid "No tienes acceso a esta rutina."
 msgstr "You don't have access to this routine."
 
-#: app/routes.py:2814
+#: app/routes.py:2817
 msgid "No se pudo actualizar ese ejercicio."
 msgstr "Couldn't update that exercise."
 
-#: app/routes.py:2824
+#: app/routes.py:2827
 msgid "Ejercicio actualizado."
 msgstr "Exercise updated."
 
-#: app/routes.py:2890
+#: app/routes.py:2893
 msgid "Rutina creada. Añade ejercicios."
 msgstr "Routine created. Add exercises."
 
-#: app/routes.py:2892 app/routes.py:3337 app/templates/new_routine.html:4
+#: app/routes.py:2895 app/routes.py:3340 app/templates/new_routine.html:4
 #: app/templates/routines.html:10
 msgid "Nueva rutina"
 msgstr "New routine"
 
-#: app/routes.py:2910
+#: app/routes.py:2913
 msgid "Ejercicio eliminado de la rutina."
 msgstr "Exercise removed from the routine."
 
-#: app/routes.py:2944
+#: app/routes.py:2947
 msgid "Las series van de 1 a 15."
 msgstr "Sets go from 1 to 15."
 
-#: app/routes.py:2958
+#: app/routes.py:2961
 #, python-format
 msgid "El máximo de series va de %(n)s a 15."
 msgstr "Max sets go from %(n)s to 15."
 
-#: app/routes.py:2969
+#: app/routes.py:2972
 msgid "Las repeticiones tienen que ser números."
 msgstr "Reps have to be numbers."
 
-#: app/routes.py:2971
+#: app/routes.py:2974
 msgid "Repeticiones de 1 a 100, y el máximo no puede ser menor que el mínimo."
 msgstr "Reps from 1 to 100, and the max can't be lower than the min."
 
-#: app/routes.py:2976
+#: app/routes.py:2979
 msgid "Escribe las reps (máx. 16 caracteres), p. ej. 8-10."
 msgstr "Enter the reps (16 characters max), e.g. 8-10."
 
-#: app/routes.py:2981
+#: app/routes.py:2984
 msgid "Usa un número (ej. 2) o un rango (ej. 2-3)."
 msgstr "Use a number (e.g. 2) or a range (e.g. 2-3)."
 
-#: app/routes.py:3010
+#: app/routes.py:3013
 msgid "Elige un ejercicio."
 msgstr "Choose an exercise."
 
-#: app/routes.py:3036
+#: app/routes.py:3039
 msgid "Rutina eliminada."
 msgstr "Routine deleted."
 
-#: app/routes.py:3112
+#: app/routes.py:3115
 #, python-format
 msgid "¡Entrenamiento '%(name)s' iniciado!"
 msgstr "Workout '%(name)s' started!"
 
-#: app/routes.py:3248
+#: app/routes.py:3251
 msgid "Ejercicio no encontrado."
 msgstr "Exercise not found."
 
-#: app/routes.py:3334
+#: app/routes.py:3337
 msgid "Este entrenamiento no tiene series registradas."
 msgstr "This workout has no logged sets."
 
-#: app/routes.py:3353
+#: app/routes.py:3356
 #, python-format
 msgid "Rutina '%(name)s' creada a partir de este entrenamiento."
 msgstr "Routine '%(name)s' created from this workout."
 
-#: app/routes.py:4196 app/templates/index.html:107
+#: app/routes.py:4199 app/templates/index.html:107
 msgid "hoy"
 msgstr "today"
 
-#: app/routes.py:4198 app/templates/index.html:107
+#: app/routes.py:4201 app/templates/index.html:107
 msgid "ayer"
 msgstr "yesterday"
 
-#: app/routes.py:4200
+#: app/routes.py:4203
 #, python-format
 msgid "hace %(n)s días"
 msgstr "%(n)s days ago"
 
-#: app/routes.py:4202
+#: app/routes.py:4205
 #, python-format
 msgid "hace %(n)s semanas"
 msgstr "%(n)s weeks ago"
@@ -3849,6 +3849,14 @@ msgstr ""
 "which of your exercises each one matches; importing the same file again "
 "won't duplicate anything."
 
+#: app/templates/import.html:6
+msgid ""
+"Las notas de cada ejercicio se añaden debajo de las que ya tengas: no se "
+"borra nada."
+msgstr ""
+"Each exercise's notes are added below the ones you already have: nothing "
+"is deleted."
+
 #: app/templates/import.html:9
 msgid "Hevy"
 msgstr "Hevy"
@@ -4115,8 +4123,8 @@ msgid "¿Cómo llegas hoy?"
 msgstr "How are you feeling today?"
 
 #: app/templates/index.html:132
-msgid "3 toques · +10 XP"
-msgstr "3 taps · +10 XP"
+msgid "3 toques"
+msgstr "3 taps"
 
 #: app/templates/index.html:150
 msgid "Es tu valoración: no se mide nada y no bloquea nada."
@@ -5629,16 +5637,18 @@ msgstr "Nobody has data here yet."
 #: app/templates/rango.html:127
 msgid ""
 "Progreso: cuánto ha subido tu índice de fuerza en 4 semanas, comparándote"
-" contigo mismo (al empezar se progresa más rápido). Récords: los que dan "
-"XP en las últimas 4 semanas. Constancia: días entrenados en las últimas 4"
-" semanas. Rango: tus marcas de los últimos 90 días, ajustadas a peso y "
-"sexo; un récord que salta mucho de golpe no cuenta hasta que lo repites."
+" contigo mismo (al empezar se progresa más rápido). Récords: veces que "
+"has superado tu mejor marca anterior en las últimas 4 semanas (como mucho"
+" 3 al día). Constancia: días entrenados en las últimas 4 semanas. Rango: "
+"tus marcas de los últimos 90 días, ajustadas a peso y sexo; un récord que"
+" salta mucho de golpe no cuenta hasta que lo repites."
 msgstr ""
 "Progress: how much your strength index rose in 4 weeks, compared with "
-"yourself (beginners progress faster). Records: the ones that give XP in "
-"the last 4 weeks. Consistency: days trained in the last 4 weeks. Rank: "
-"your marks from the last 90 days, adjusted for weight and sex; a record "
-"that jumps a lot at once doesn't count until you repeat it."
+"yourself (beginners progress faster). Records: times you beat your "
+"previous best in the last 4 weeks (3 per day at most). Consistency: days "
+"trained in the last 4 weeks. Rank: your marks from the last 90 days, "
+"adjusted for weight and sex; a record that jumps a lot at once doesn't "
+"count until you repeat it."
 
 #: app/templates/rango.html:129
 msgid "Mi tarjeta de atleta"
@@ -6509,8 +6519,8 @@ msgid "Serie de trabajo de siempre."
 msgstr "Your regular working set."
 
 #: app/templates/workout_detail.html:278
-msgid "Para entrar en calor: no cuenta para volumen, XP ni rango."
-msgstr "To warm up: doesn't count toward volume, XP or rank."
+msgid "Para entrar en calor: no cuenta para el volumen ni para el rango."
+msgstr "To warm up: doesn't count toward volume or rank."
 
 #: app/templates/workout_detail.html:279
 msgid "Llegaste al fallo muscular: no podías hacer otra repetición."

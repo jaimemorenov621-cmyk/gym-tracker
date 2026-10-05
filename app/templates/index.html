@@ -129,7 +129,7 @@
         <details class="checkin"{% if not checkin and home_cta.kind == 'rest' %} open{% endif %}>
             <summary>
                 {% if checkin %}{{ _("Cambiar el check-in") }}{% else %}{{ _("¿Cómo llegas hoy?") }}{% endif %}
-                {% if not checkin %}<small>{{ _("3 toques · +10 XP") }}</small>{% endif %}
+                {% if not checkin %}<small>{{ _("3 toques") }}</small>{% endif %}
             </summary>
             <form action="{{ url_for('recovery_checkin') }}" method="post" class="checkin-form">
                 {{ checkin_form.hidden_tag() }}

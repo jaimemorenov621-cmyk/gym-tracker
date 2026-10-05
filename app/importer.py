@@ -177,16 +177,34 @@ def _key(name):
     return re.sub(r"\s+", " ", plain).strip()
 
 
+# Palabras que no cambian el ejercicio ("press de banca (barra)" = "press de
+# banca agarre medio"); todo lo demás (mancuerna, inclinado, cerrado, smith...)
+# sí lo distingue, así que tiene que coincidir.
+_FILLER = {"de", "la", "el", "los", "las", "con", "en", "a", "al", "del", "y", "the", "with", "on",
+           "barra", "barbell", "agarre", "medio", "media", "grip", "medium", "normal", "standard"}
+
+
+def _core(name):
+    """Palabras que definen el ejercicio, sin acentos, relleno ni plurales."""
+    # "Dominada (Con Peso Añadido)" = "dominadas": en la app el lastre ya va en el peso.
+    plain = re.sub(r"\(?(con peso anadido|con lastre|weighted|with added weight)\)?", " ", _key(name))
+    words = re.findall(r"[a-z0-9]+", plain)
+    return frozenset(w[:-1] if len(w) > 3 and w.endswith("s") else w for w in words if w not in _FILLER)
+
+
 def suggest_names(user_id, names):
-    """{nombre del CSV: nombre propuesto en Gyre}. Si ya tienes un ejercicio
-    igual (sin mirar acentos, mayúsculas ni el "(Barra)"), ese; si no, el
-    nombre del CSV en minúsculas, quitando "(Barra)" (la app entiende "press
-    de banca" como el de barra) o escribiéndolo "con barra" si así lo
+    """{nombre del CSV: nombre propuesto en Gyre}. Si ya tienes ese ejercicio
+    con las mismas palabras clave (sin mirar acentos, mayúsculas, plurales ni
+    "(Barra)", "agarre medio"...), ese; si hay varios, el que más usas. Si
+    no, el nombre del CSV en minúsculas, quitando "(Barra)" (la app entiende
+    "press de banca" como el de barra) o escribiéndolo "con barra" si así lo
     reconocen los estándares de fuerza."""
-    own = db.session.scalars(
-        sa.select(SetEntry.exercise).join(Workout, Workout.id == SetEntry.workout_id)
-        .where(Workout.user_id == user_id).distinct()).all()
-    by_key = {_key(n): n for n in own}
+    own_counts = db.session.execute(
+        sa.select(SetEntry.exercise, sa.func.count()).join(Workout, Workout.id == SetEntry.workout_id)
+        .where(Workout.user_id == user_id).group_by(SetEntry.exercise)).all()
+    by_core = {}
+    for ex, n in sorted(own_counts, key=lambda r: -r[1]):
+        by_core.setdefault(_core(ex), ex)  # el más usado primero
     from app.strength_standards import lift_of
 
     out = {}
@@ -199,8 +217,8 @@ def suggest_names(user_id, names):
             spelled = f"{clean} con barra" if "barra" in name.lower() else f"barbell {clean}"
             if lift_of(spelled):
                 default = spelled
-        out[name] = by_key.get(_key(name)) or by_key.get(_key(clean)) or default[:64]
-    return out, sorted(own)
+        out[name] = by_core.get(_core(name)) or default[:64]
+    return out, sorted(ex for ex, _ in own_counts)
 
 
 # ------------------------------------------------------------ importar
@@ -264,13 +282,21 @@ def apply_import(user, draft, mapping, skip_same_day=True):
         # para este usuario, en la misma transacción.
         db.session.execute(sa.insert(SetEntry).execution_options(xp_irrelevant=True), created_sets)
         progression._bump_users(db.session.connection(), {user.id})
-    # Notas de ejercicio (las de Hevy), solo si no tenías ya.
-    have_notes = set(db.session.scalars(sa.select(ExerciseNote.exercise).where(ExerciseNote.user_id == user.id)))
+    # Notas de ejercicio de la otra app: se AÑADEN debajo de las que ya
+    # tuvieras (nunca se borra nada) y sin repetir líneas que ya estén.
+    notes = {n.exercise: n for n in db.session.scalars(sa.select(ExerciseNote).where(ExerciseNote.user_id == user.id))}
     for csv_name, note in draft.get("notes", {}).items():
         name = (mapping.get(csv_name) or "").strip().lower()[:64]
-        if name and name in names_used and name not in have_notes:
-            db.session.add(ExerciseNote(user_id=user.id, exercise=name, notes=note[:1000]))
-            have_notes.add(name)
+        if not name or name not in names_used:
+            continue
+        current = notes.get(name)
+        if current is None:
+            current = notes[name] = ExerciseNote(user_id=user.id, exercise=name, notes="")
+            db.session.add(current)
+        lines = [line for line in (current.notes or "").split("\n") if line.strip()]
+        new = [line for line in note.split("\n") if line.strip() and line.strip() not in {x.strip() for x in lines}]
+        if new:
+            current.notes = "\n".join(lines + new)[:1000]
     db.session.commit()
 
     for name in names_used:  # medallas de récord, con el mismo código que la app

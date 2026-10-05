@@ -186,7 +186,7 @@ def recovery_checkin():
     if gained > 0:
         queue_xp_gain(gettext("Check-in"), gained, [[gettext("Check-in"), gained]])
     else:
-        flash(gettext("Check-in actualizado (+0 XP: ya lo habías hecho hoy)."))
+        flash(gettext("Check-in actualizado."))
     session["checkin_saved"] = True
     return redirect(url_for("index"))
 
@@ -2445,6 +2445,9 @@ def contact():
         else:
             db.session.add(ContactMessage(user_id=current_user.id, body=body[:CONTACT_MAX_CHARS]))
             db.session.commit()
+            from app import mailer
+            mailer.notify_contact(current_user.username, current_user.email, body[:CONTACT_MAX_CHARS],
+                                  url_for("landing_stats", _external=True) + "#mensajes")
             flash(gettext("Mensaje enviado. Te responderemos al email de tu cuenta."))
             return redirect(url_for("settings"))
     return render_template("contact.html", title=gettext("Contacto"), form=form, body=body,

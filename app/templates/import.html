@@ -3,7 +3,7 @@
 {% block content %}
     <p class="page-back"><a href="{{ url_for('settings') }}">{{ _("← Configuración") }}</a></p>
     <h1 class="page-title">{{ _("Importar entrenos") }}</h1>
-    <p class="alias-intro">{{ _("Trae tu historial de otra app. Antes de importar podrás revisar a qué ejercicio tuyo corresponde cada uno; si vuelves a importar el mismo archivo, no se duplica nada.") }}</p>
+    <p class="alias-intro">{{ _("Trae tu historial de otra app. Antes de importar podrás revisar a qué ejercicio tuyo corresponde cada uno; si vuelves a importar el mismo archivo, no se duplica nada.") }} {{ _("Las notas de cada ejercicio se añaden debajo de las que ya tengas: no se borra nada.") }}</p>
 
     <div class="card card-elevated import-help">
         <h2>{{ _("Hevy") }}</h2>

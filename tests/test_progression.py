@@ -376,7 +376,7 @@ class CheckinRouteTests(_XpCase):
         fx = xp_fx(html)
         self.assertEqual((fx["reason"], fx["gain"], fx["parts"]), ("Check-in", 10, [["Check-in", 10]]))
         html = self.post(sleep=2).get_data(as_text=True)
-        self.assertIn("+0 XP", html)
+        self.assertIn("Check-in actualizado.", html)
         self.assertIsNone(xp_fx(html))
         with app.app_context():
             rows = db.session.scalars(sa.select(DailyCheckin).where(DailyCheckin.user_id == self.a)).all()

@@ -80,6 +80,29 @@ class ImporterTests(DbTestCase):
             self.assertEqual(db.session.scalar(sa.select(sa.func.count()).select_from(Workout).where(Workout.user_id == self.uid)), 2)
         self.assertEqual(self.client.get("/progress").status_code, 200)
 
+    def test_suggests_your_own_name_but_not_other_variants(self):
+        with app.app_context():
+            w = db.session.scalar(sa.select(Workout).where(Workout.user_id == self.uid))
+            for name in ("press de banca agarre medio", "press de banca agarre cerrado", "dominadas"):
+                db.session.add(SetEntry(workout_id=w.id, exercise=name, weight=60, reps=5, completed=True))
+            db.session.commit()
+            m, _ = importer.suggest_names(self.uid, ["Press de Banca - Agarre Cerrado (Barra)", "Press de Banca Inclinado (Mancuerna)",
+                                                     "Dominada (Con Peso Añadido)"])
+        self.assertEqual(m["Press de Banca - Agarre Cerrado (Barra)"], "press de banca agarre cerrado")
+        self.assertEqual(m["Press de Banca Inclinado (Mancuerna)"], "press de banca inclinado (mancuerna)")
+        self.assertEqual(m["Dominada (Con Peso Añadido)"], "dominadas")
+
+    def test_notes_are_added_below_yours_never_replaced(self):
+        with app.app_context():
+            db.session.add(ExerciseNote(user_id=self.uid, exercise="press de banca", notes="Mi nota\n-Codos"))
+            db.session.commit()
+        self.login(self.uid)
+        self.client.post("/importar", data={"file": (io.BytesIO(HEVY.encode("utf-8")), "w.csv")}, content_type="multipart/form-data")
+        self.client.post("/importar/revisar", data={"map-0": "press de banca", "map-1": "", "map-2": ""})
+        with app.app_context():
+            note = db.session.scalar(sa.select(ExerciseNote).where(ExerciseNote.user_id == self.uid))
+            self.assertEqual(note.notes, "Mi nota\n-Codos\n-Pausa")  # "-Codos" no se repite
+
     def test_unknown_file(self):
         self.login(self.uid)
         r = self.client.post("/importar", data={"file": (io.BytesIO(b"a,b\n1,2\n"), "x.csv")},

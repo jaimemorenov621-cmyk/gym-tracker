@@ -228,7 +228,7 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
                 week["workout_days"] += 1
                 info["workout"] = XP_WORKOUT
         else:
-            info["notes"].append(_l("menos de %(sets)s series de XP o de %(reps)s repeticiones",
+            info["notes"].append(_l("menos de %(sets)s series con carga o de %(reps)s repeticiones",
                                      sets=MIN_SETS_FOR_WORKOUT, reps=MIN_REPS_FOR_WORKOUT))
 
         n = min(len(work), max(0, MAX_SETS_PER_DAY - day["sets"]))

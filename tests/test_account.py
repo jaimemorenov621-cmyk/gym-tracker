@@ -60,3 +60,24 @@ class AccountTests(DbTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ContactEmailTests(DbTestCase):
+    def test_email_notice_has_reply_to_the_user_and_is_off_without_config(self):
+        import os
+        from unittest import mock
+        from app import mailer
+        uid = self.make_user("escribe")
+        self.login(uid)
+        with mock.patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("MAIL_USERNAME", None)
+            with mock.patch.object(mailer, "_send") as send:
+                self.client.post("/contacto", data={"body": "hola"})
+                send.assert_not_called()
+        env = {"MAIL_USERNAME": "gyre.app@example.com", "MAIL_APP_PASSWORD": "x"}
+        with mock.patch.dict(os.environ, env), mock.patch.object(mailer.threading, "Thread") as thread:
+            self.client.post("/contacto", data={"body": "segundo mensaje"})
+            msg = thread.call_args.kwargs["args"][0]
+        self.assertEqual(msg["Reply-To"], "escribe@example.com")
+        self.assertEqual(msg["To"], "gyre.app@example.com")
+        self.assertIn("segundo mensaje", msg.get_content())
