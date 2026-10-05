@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-05 17:14+0200\n"
+"POT-Creation-Date: 2026-10-05 17:30+0200\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1821,7 +1821,7 @@ msgstr "Calves"
 msgid "Marcar como favorito"
 msgstr "Mark as favorite"
 
-#: app/i18n.py:78 app/templates/import_review.html:70
+#: app/i18n.py:78 app/templates/import_review.html:75
 msgid "Sin resultados en el catálogo."
 msgstr "No results in the catalog."
 
@@ -1861,11 +1861,11 @@ msgstr "Equipment (optional)"
 msgid "Crear y usar"
 msgstr "Create and use"
 
-#: app/i18n.py:88 app/routes.py:3292
+#: app/i18n.py:88 app/routes.py:3314
 msgid "El nombre es obligatorio."
 msgstr "Name is required."
 
-#: app/i18n.py:89 app/routes.py:3294
+#: app/i18n.py:89 app/routes.py:3316
 msgid "Elige al menos un músculo primario."
 msgstr "Choose at least one primary muscle."
 
@@ -2145,7 +2145,7 @@ msgstr "Choose an exercise from the catalog."
 msgid "No tienes acceso a esta página."
 msgstr "You don't have access to this page."
 
-#: app/routes.py:699 app/routes.py:2537
+#: app/routes.py:699 app/routes.py:2539
 msgid "mañana"
 msgstr "tomorrow"
 
@@ -2289,7 +2289,7 @@ msgstr "%(day)s workout"
 msgid "No se pudo empezar el entreno. Inténtalo de nuevo."
 msgstr "Couldn't start the workout. Please try again."
 
-#: app/routes.py:1207 app/routes.py:3082
+#: app/routes.py:1207 app/routes.py:3084
 msgid "Ya tienes un entreno en curso — termínalo antes de empezar otro."
 msgstr ""
 "You already have a workout in progress — finish it before starting "
@@ -2300,7 +2300,7 @@ msgid "El nombre no puede estar vacío."
 msgstr "The name can't be empty."
 
 #: app/routes.py:1236 app/routes.py:1484 app/routes.py:1643 app/routes.py:1746
-#: app/routes.py:3324
+#: app/routes.py:3346
 msgid "No tienes acceso a este entrenamiento."
 msgstr "You don't have access to this workout."
 
@@ -2342,7 +2342,6 @@ msgstr "Workout"
 
 #: app/routes.py:1690 app/templates/exercise_muscles.html:18
 #: app/templates/import_review.html:7 app/templates/import_review.html:15
-#: app/templates/import_review.html:49
 #, python-format
 msgid "%(num)d serie"
 msgid_plural "%(num)d series"
@@ -2489,70 +2488,70 @@ msgstr "%(n)s were already there and weren't duplicated."
 msgid "Revisar importación"
 msgstr "Review import"
 
-#: app/routes.py:2418
+#: app/routes.py:2420
 msgid "Escribe tu nombre de usuario exactamente igual para confirmar."
 msgstr "Type your username exactly to confirm."
 
-#: app/routes.py:2424
+#: app/routes.py:2426
 msgid "Tu cuenta y todos tus datos se han borrado."
 msgstr "Your account and all your data have been deleted."
 
-#: app/routes.py:2426 app/templates/delete_account.html:5
+#: app/routes.py:2428 app/templates/delete_account.html:5
 #: app/templates/privacy.html:36 app/templates/settings.html:151
 msgid "Borrar mi cuenta"
 msgstr "Delete my account"
 
-#: app/routes.py:2442
+#: app/routes.py:2444
 msgid "Escribe tu mensaje."
 msgstr "Write your message."
 
-#: app/routes.py:2444
+#: app/routes.py:2446
 msgid "Has enviado muchos mensajes hoy. Inténtalo mañana."
 msgstr "You've sent a lot of messages today. Try again tomorrow."
 
-#: app/routes.py:2451
+#: app/routes.py:2453
 msgid "Mensaje enviado. Te responderemos al email de tu cuenta."
 msgstr "Message sent. We'll reply to your account's email."
 
-#: app/routes.py:2453 app/templates/contact.html:4
+#: app/routes.py:2455 app/templates/contact.html:4
 #: app/templates/privacy.html:39 app/templates/settings.html:149
 msgid "Contacto"
 msgstr "Contact"
 
-#: app/routes.py:2496
+#: app/routes.py:2498
 msgid "No tienes acceso a ese registro de peso."
 msgstr "You don't have access to that weight entry."
 
-#: app/routes.py:2500
+#: app/routes.py:2502
 msgid "Registro de peso eliminado."
 msgstr "Weight entry deleted."
 
-#: app/routes.py:2534
+#: app/routes.py:2536
 #, python-format
 msgid "en %(n)s h"
 msgstr "in %(n)s h"
 
-#: app/routes.py:2537
+#: app/routes.py:2539
 #, python-format
 msgid "en %(n)s días"
 msgstr "in %(n)s days"
 
-#: app/routes.py:2555 app/templates/ai_analysis.html:4
+#: app/routes.py:2557 app/templates/ai_analysis.html:4
 #: app/templates/ai_analysis.html:61
 msgid "Análisis de IA"
 msgstr "AI analysis"
 
-#: app/routes.py:2588
+#: app/routes.py:2590
 msgid ""
 "Ya has usado tus análisis de esta semana. Vuelve a intentarlo más "
 "adelante."
 msgstr "You've used your analyses for this week. Try again later."
 
-#: app/routes.py:2589
+#: app/routes.py:2591
 msgid "Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante."
 msgstr "You already generated an analysis this week. Try again later."
 
-#: app/routes.py:2599
+#: app/routes.py:2601
 #, python-format
 msgid ""
 "Necesitas al menos %(min)s entrenamientos registrados para generar un "
@@ -2561,111 +2560,111 @@ msgstr ""
 "You need at least %(min)s logged workouts to generate an analysis (you "
 "have %(n)s)."
 
-#: app/routes.py:2612
+#: app/routes.py:2614
 msgid ""
 "No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos "
 "minutos."
 msgstr "Couldn't generate the analysis right now. Try again in a few minutes."
 
-#: app/routes.py:2618
+#: app/routes.py:2620
 msgid "¡Análisis generado!"
 msgstr "Analysis generated!"
 
-#: app/routes.py:2685
+#: app/routes.py:2687
 msgid "Mis rutinas"
 msgstr "My routines"
 
-#: app/routes.py:2803 app/routes.py:2903 app/routes.py:2909 app/routes.py:3024
-#: app/routes.py:3077
+#: app/routes.py:2805 app/routes.py:2905 app/routes.py:2911 app/routes.py:3026
+#: app/routes.py:3079
 msgid "No tienes acceso a esta rutina."
 msgstr "You don't have access to this routine."
 
-#: app/routes.py:2817
+#: app/routes.py:2819
 msgid "No se pudo actualizar ese ejercicio."
 msgstr "Couldn't update that exercise."
 
-#: app/routes.py:2827
+#: app/routes.py:2829
 msgid "Ejercicio actualizado."
 msgstr "Exercise updated."
 
-#: app/routes.py:2893
+#: app/routes.py:2895
 msgid "Rutina creada. Añade ejercicios."
 msgstr "Routine created. Add exercises."
 
-#: app/routes.py:2895 app/routes.py:3340 app/templates/new_routine.html:4
+#: app/routes.py:2897 app/routes.py:3362 app/templates/new_routine.html:4
 #: app/templates/routines.html:10
 msgid "Nueva rutina"
 msgstr "New routine"
 
-#: app/routes.py:2913
+#: app/routes.py:2915
 msgid "Ejercicio eliminado de la rutina."
 msgstr "Exercise removed from the routine."
 
-#: app/routes.py:2947
+#: app/routes.py:2949
 msgid "Las series van de 1 a 15."
 msgstr "Sets go from 1 to 15."
 
-#: app/routes.py:2961
+#: app/routes.py:2963
 #, python-format
 msgid "El máximo de series va de %(n)s a 15."
 msgstr "Max sets go from %(n)s to 15."
 
-#: app/routes.py:2972
+#: app/routes.py:2974
 msgid "Las repeticiones tienen que ser números."
 msgstr "Reps have to be numbers."
 
-#: app/routes.py:2974
+#: app/routes.py:2976
 msgid "Repeticiones de 1 a 100, y el máximo no puede ser menor que el mínimo."
 msgstr "Reps from 1 to 100, and the max can't be lower than the min."
 
-#: app/routes.py:2979
+#: app/routes.py:2981
 msgid "Escribe las reps (máx. 16 caracteres), p. ej. 8-10."
 msgstr "Enter the reps (16 characters max), e.g. 8-10."
 
-#: app/routes.py:2984
+#: app/routes.py:2986
 msgid "Usa un número (ej. 2) o un rango (ej. 2-3)."
 msgstr "Use a number (e.g. 2) or a range (e.g. 2-3)."
 
-#: app/routes.py:3013
+#: app/routes.py:3015
 msgid "Elige un ejercicio."
 msgstr "Choose an exercise."
 
-#: app/routes.py:3039
+#: app/routes.py:3041
 msgid "Rutina eliminada."
 msgstr "Routine deleted."
 
-#: app/routes.py:3115
+#: app/routes.py:3117
 #, python-format
 msgid "¡Entrenamiento '%(name)s' iniciado!"
 msgstr "Workout '%(name)s' started!"
 
-#: app/routes.py:3251
+#: app/routes.py:3273
 msgid "Ejercicio no encontrado."
 msgstr "Exercise not found."
 
-#: app/routes.py:3337
+#: app/routes.py:3359
 msgid "Este entrenamiento no tiene series registradas."
 msgstr "This workout has no logged sets."
 
-#: app/routes.py:3356
+#: app/routes.py:3378
 #, python-format
 msgid "Rutina '%(name)s' creada a partir de este entrenamiento."
 msgstr "Routine '%(name)s' created from this workout."
 
-#: app/routes.py:4199 app/templates/index.html:107
+#: app/routes.py:4221 app/templates/index.html:107
 msgid "hoy"
 msgstr "today"
 
-#: app/routes.py:4201 app/templates/index.html:107
+#: app/routes.py:4223 app/templates/index.html:107
 msgid "ayer"
 msgstr "yesterday"
 
-#: app/routes.py:4203
+#: app/routes.py:4225
 #, python-format
 msgid "hace %(n)s días"
 msgstr "%(n)s days ago"
 
-#: app/routes.py:4205
+#: app/routes.py:4227
 #, python-format
 msgid "hace %(n)s semanas"
 msgstr "%(n)s weeks ago"
@@ -3950,21 +3949,41 @@ msgstr "Search exercise…"
 msgid "No importar este ejercicio"
 msgstr "Don't import this exercise"
 
-#: app/templates/import_review.html:46 app/templates/progress.html:201
-msgid "Tus ejercicios"
-msgstr "Your exercises"
-
-#: app/templates/import_review.html:52
-msgid "Ninguno coincide."
-msgstr "None match."
-
-#: app/templates/import_review.html:53
+#: app/templates/import_review.html:46
 msgid "Catálogo"
 msgstr "Catalog"
 
-#: app/templates/import_review.html:55
+#: app/templates/import_review.html:48
 msgid "Escribe al menos 2 letras para buscar en el catálogo."
 msgstr "Type at least 2 letters to search the catalog."
+
+#: app/templates/import_review.html:50
+msgid "Tus ejercicios que no están en el catálogo"
+msgstr "Your exercises that aren't in the catalog"
+
+#: app/templates/import_review.html:53
+#, python-format
+msgid "%(num)d serie guardada"
+msgid_plural "%(num)d series guardadas"
+msgstr[0] "%(num)d saved set"
+msgstr[1] "%(num)d saved sets"
+
+#: app/templates/import_review.html:56
+msgid "Ninguno coincide."
+msgstr "None match."
+
+#: app/templates/import_review.html:71
+msgid "1 serie guardada"
+msgstr "1 saved set"
+
+#: app/templates/import_review.html:71
+#, python-brace-format
+msgid "{n} series guardadas"
+msgstr "{n} saved sets"
+
+#: app/templates/import_review.html:72
+msgid "Sin series guardadas"
+msgstr "No saved sets"
 
 #: app/templates/index.html:13
 msgid "Entreno en curso"
@@ -5474,6 +5493,10 @@ msgstr "Not logged"
 #: app/templates/progress.html:193
 msgid "Apunta tu peso para ver su evolución"
 msgstr "Log your weight to see how it evolves"
+
+#: app/templates/progress.html:201
+msgid "Tus ejercicios"
+msgstr "Your exercises"
 
 #: app/templates/progress.html:202
 msgid "Buscar ejercicio"

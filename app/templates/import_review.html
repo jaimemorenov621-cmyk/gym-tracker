@@ -43,18 +43,21 @@
         </div>
         <div class="import-picker-body">
             <button type="button" class="import-picker-skip" data-name="">{{ _("No importar este ejercicio") }}</button>
-            <h4>{{ _("Tus ejercicios") }}</h4>
-            <ul id="importPickerOwn">
-                {% for ex, count in own %}
-                    <li><button type="button" data-name="{{ ex }}"><span>{{ ex|title }}</span><small>{{ ngettext('%(num)d serie', '%(num)d series', count) }}</small></button></li>
-                {% endfor %}
-            </ul>
-            <p class="import-picker-empty" id="importPickerOwnEmpty" hidden>{{ _("Ninguno coincide.") }}</p>
             <h4>{{ _("Catálogo") }}</h4>
-            <ul id="importPickerCatalog"></ul>
+            <ul id="importPickerCatalog" class="import-picker-catalog"></ul>
             <p class="import-picker-empty" id="importPickerCatalogHint">{{ _("Escribe al menos 2 letras para buscar en el catálogo.") }}</p>
+            {% if own_custom %}
+                <h4>{{ _("Tus ejercicios que no están en el catálogo") }}</h4>
+                <ul id="importPickerOwn">
+                    {% for ex, count in own_custom %}
+                        <li><button type="button" data-name="{{ ex }}"><span>{{ ex|title }}</span><small>{{ ngettext('%(num)d serie guardada', '%(num)d series guardadas', count) }}</small></button></li>
+                    {% endfor %}
+                </ul>
+                <p class="import-picker-empty" id="importPickerOwnEmpty" hidden>{{ _("Ninguno coincide.") }}</p>
+            {% endif %}
         </div>
     </div>
+    <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
     <script>
         // Selector de nombre para cada ejercicio importado: tus ejercicios
         // (filtrados aquí mismo) y el catálogo (/api/exercises/search).
@@ -64,7 +67,9 @@
             const backdrop = document.getElementById('importPickerBackdrop');
             const search = document.getElementById('importPickerSearch');
             const ownItems = Array.from(document.querySelectorAll('#importPickerOwn li'));
-            const ownNames = new Set(ownItems.map(li => li.querySelector('button').dataset.name));
+            const ownNames = new Set({{ own_names|list|tojson }});
+            const T_SETS = [{{ _('1 serie guardada')|tojson }}, {{ _('{n} series guardadas')|tojson }}];
+            const T_NONE = {{ _('Sin series guardadas')|tojson }};
             const catalog = document.getElementById('importPickerCatalog');
             const hint = document.getElementById('importPickerCatalogHint');
             const noResults = {{ _('Sin resultados en el catálogo.')|tojson }};
@@ -78,31 +83,46 @@
                     li.hidden = !ok;
                     if (ok) shown++;
                 });
-                document.getElementById('importPickerOwnEmpty').hidden = shown > 0;
+                const ownEmpty = document.getElementById('importPickerOwnEmpty');
+                if (ownEmpty) ownEmpty.hidden = shown > 0 || !ownItems.length;
                 clearTimeout(timer);
-                if (search.value.trim().length < 2) { catalog.innerHTML = ''; hint.hidden = false; return; }
-                hint.hidden = true;
+                hint.hidden = search.value.trim().length >= 2;
                 timer = setTimeout(function () {
-                    fetch({{ url_for('api_search_exercises')|tojson }} + '?q=' + encodeURIComponent(search.value.trim()))
+                    // Vacío: tus favoritos del catálogo (como en el selector normal).
+                    fetch({{ url_for('api_search_exercises')|tojson }} + '?with_sets=1&q=' + encodeURIComponent(search.value.trim()))
                         .then(r => r.json()).then(function (list) {
                             catalog.innerHTML = '';
                             list.forEach(function (ex) {
                                 const li = document.createElement('li');
                                 const b = document.createElement('button');
                                 b.type = 'button';
-                                b.dataset.name = ex.name.toLowerCase();
-                                b.textContent = ex.name;
+                                b.dataset.name = ex.value;
+                                b.className = 'import-cat-row' + (ex.sets ? ' has-sets' : '');
+                                const img = document.createElement(ex.image ? 'img' : 'span');
+                                img.className = 'import-cat-thumb';
+                                if (ex.image) { img.src = ex.image; img.alt = ''; img.loading = 'lazy'; }
+                                const text = document.createElement('span');
+                                text.className = 'import-cat-text';
+                                const name = document.createElement('strong');
+                                name.textContent = ex.name;
+                                const muscles = document.createElement('small');
+                                muscles.textContent = ex.muscles ? muscleLabels(ex.muscles) : '';
+                                text.append(name, muscles);
+                                const sets = document.createElement('small');
+                                sets.className = 'import-cat-sets';
+                                sets.textContent = !ex.sets ? T_NONE : ex.sets === 1 ? T_SETS[0] : T_SETS[1].replace('{n}', ex.sets);
+                                b.append(img, text, sets);
                                 li.appendChild(b);
                                 catalog.appendChild(li);
                             });
-                            if (!list.length) {
+                            if (!list.length && search.value.trim().length >= 2) {
                                 const li = document.createElement('li');
                                 li.className = 'import-picker-empty';
                                 li.textContent = noResults;
                                 catalog.appendChild(li);
                             }
                         });
-                }, 250);
+                }, 200);
             }
 
             function open(button) {

@@ -103,6 +103,20 @@ class ImporterTests(DbTestCase):
             note = db.session.scalar(sa.select(ExerciseNote).where(ExerciseNote.user_id == self.uid))
             self.assertEqual(note.notes, "Mi nota\n-Codos\n-Pausa")  # "-Codos" no se repite
 
+    def test_catalog_search_tells_your_saved_sets(self):
+        from app.models import Exercise
+        with app.app_context():
+            db.session.add(Exercise(id="bp", name="Barbell Bench Press", name_es="Press de banca", primary_muscles="chest",
+                                    name_normalized="barbell bench press", name_es_normalized="press de banca"))
+            db.session.add(Exercise(id="ib", name="Incline Bench Press", name_es="Press de banca inclinado", primary_muscles="chest",
+                                    name_normalized="incline bench press", name_es_normalized="press de banca inclinado"))
+            db.session.commit()
+        self.login(self.uid)
+        items = {i["id"]: i for i in self.client.get("/api/exercises/search?q=banca&with_sets=1").get_json()}
+        self.assertEqual((items["bp"]["sets"], items["bp"]["value"]), (1, "press de banca"))  # la serie del setUp
+        self.assertEqual((items["ib"]["sets"], items["ib"]["value"]), (0, "press de banca inclinado"))
+        self.assertNotIn("sets", self.client.get("/api/exercises/search?q=banca").get_json()[0])
+
     def test_unknown_file(self):
         self.login(self.uid)
         r = self.client.post("/importar", data={"file": (io.BytesIO(b"a,b\n1,2\n"), "x.csv")},

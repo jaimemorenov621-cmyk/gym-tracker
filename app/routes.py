@@ -2383,7 +2383,9 @@ def import_review():
     return render_template(
         "import_review.html", title=gettext("Revisar importación"), form=form, draft=draft,
         rows=[(i, name, draft["exercises"][name], suggestions[name]) for i, name in enumerate(names)],
-        own=own, own_names={n for n, _ in own}, first=to_local(datetime.fromisoformat(min(starts))), last=to_local(datetime.fromisoformat(max(starts))),
+        own=own, own_names={n for n, _ in own},
+        own_custom=[(n, c) for n, c in own if find_catalog_exercise(n) is None],  # los que no salen en el catálogo
+        first=to_local(datetime.fromisoformat(min(starts))), last=to_local(datetime.fromisoformat(max(starts))),
         total_sets=sum(len(w["sets"]) for w in draft["workouts"]), overlap=importer.overlap(current_user.id, draft),
     )
 
@@ -3230,18 +3232,38 @@ def api_search_exercises():
             sa.select(Exercise).where(sa.and_(*word_conditions)).limit(24)
         ).all()
         results = sorted(results, key=lambda e: e.id not in favorite_ids)
-    return jsonify(
-        [
-            {
-                "id": e.id,
-                "name": catalog_display_name(e),
-                "image": e.image_url,
-                "muscles": e.primary_muscles,
-                "is_favorite": e.id in favorite_ids,
-            }
-            for e in results
-        ]
-    )
+    items = [
+        {
+            "id": e.id,
+            "name": catalog_display_name(e),
+            "image": e.image_url,
+            "muscles": e.primary_muscles,
+            "is_favorite": e.id in favorite_ids,
+        }
+        for e in results
+    ]
+    if request.args.get("with_sets"):
+        # Series que ya tienes guardadas con este ejercicio (con su nombre del
+        # catálogo en cualquier idioma o con un nombre tuyo asignado a él), y
+        # el nombre con el que se guardaría para unirse a ese historial.
+        def norm(text):
+            return _strip_accents(text.strip().lower())
+
+        by_norm = defaultdict(list)  # nombre normalizado -> [(series, nombre tal cual)]
+        for name, n in db.session.execute(
+                sa.select(SetEntry.exercise, sa.func.count()).join(Workout, Workout.id == SetEntry.workout_id)
+                .where(Workout.user_id == current_user.id).group_by(SetEntry.exercise)):
+            by_norm[norm(name)].append((n, name))
+        aliases = defaultdict(list)
+        for name, ex_id in db.session.execute(
+                sa.select(ExerciseAlias.name, ExerciseAlias.exercise_id).where(ExerciseAlias.user_id == current_user.id)):
+            aliases[ex_id].append(name)
+        for item, e in zip(items, results):
+            keys = {norm(n) for n in (e.name, e.name_es, *aliases[e.id]) if n}
+            used = sorted((pair for k in keys for pair in by_norm.get(k, [])), reverse=True)
+            item["sets"] = sum(c for c, _ in used)
+            item["value"] = used[0][1] if used else item["name"].strip().lower()
+    return jsonify(items)
 
 
 @app.route("/api/exercises/<exercise_id>/favorite", methods=["POST"])

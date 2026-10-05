@@ -4329,3 +4329,10 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 @media (hover: hover) { .import-picker-body li button:hover { background: var(--color-surface-hover); color: var(--color-text); } }
 .import-picker-skip { width: 100%; margin: 4px 0 0; background: transparent; color: var(--color-danger); border: 1.5px dashed var(--color-border-soft); box-shadow: none; }
 .import-picker-empty { color: var(--color-text-muted); font-size: 0.88rem; margin: 6px 0; }
+.import-cat-row { align-items: center; }
+.import-cat-thumb { width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; object-fit: cover; background: var(--surface-2); }
+.import-cat-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.import-cat-text strong { overflow-wrap: anywhere; }
+.import-cat-text small { color: var(--color-text-muted); font-weight: 500; }
+.import-cat-sets { white-space: nowrap; }
+.import-cat-row.has-sets .import-cat-sets { color: var(--color-success-dark, #17a973); font-weight: 700; }

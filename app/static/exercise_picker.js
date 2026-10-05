@@ -214,6 +214,7 @@ function openExercisePicker(replaceUrl, replaceExtra) {
 }
 
 function closeExercisePicker() {
+    if (!document.getElementById('exercisePickerSheet')) return;  // página sin el selector (p. ej. importar)
     document.getElementById('exercisePickerBackdrop').classList.remove('open');
     document.getElementById('exercisePickerSheet').classList.remove('open');
     document.body.style.overflow = '';
