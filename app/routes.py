@@ -2383,7 +2383,7 @@ def import_review():
     return render_template(
         "import_review.html", title=gettext("Revisar importación"), form=form, draft=draft,
         rows=[(i, name, draft["exercises"][name], suggestions[name]) for i, name in enumerate(names)],
-        own=own, first=to_local(datetime.fromisoformat(min(starts))), last=to_local(datetime.fromisoformat(max(starts))),
+        own=own, own_names={n for n, _ in own}, first=to_local(datetime.fromisoformat(min(starts))), last=to_local(datetime.fromisoformat(max(starts))),
         total_sets=sum(len(w["sets"]) for w in draft["workouts"]), overlap=importer.overlap(current_user.id, draft),
     )
 

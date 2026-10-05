@@ -218,7 +218,7 @@ def suggest_names(user_id, names):
             if lift_of(spelled):
                 default = spelled
         out[name] = by_core.get(_core(name)) or default[:64]
-    return out, sorted(ex for ex, _ in own_counts)
+    return out, sorted(own_counts, key=lambda r: (-r[1], r[0]))  # [(nombre, series)], los más usados primero
 
 
 # ------------------------------------------------------------ importar

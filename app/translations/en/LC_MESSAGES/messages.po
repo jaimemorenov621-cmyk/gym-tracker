@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-05 17:00+0200\n"
+"POT-Creation-Date: 2026-10-05 17:14+0200\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1821,7 +1821,7 @@ msgstr "Calves"
 msgid "Marcar como favorito"
 msgstr "Mark as favorite"
 
-#: app/i18n.py:78
+#: app/i18n.py:78 app/templates/import_review.html:70
 msgid "Sin resultados en el catálogo."
 msgstr "No results in the catalog."
 
@@ -1954,7 +1954,8 @@ msgstr "Track your workouts for free with Gyre"
 msgid "Comparte tu récord"
 msgstr "Share your record"
 
-#: app/i18n.py:110 app/templates/_macros.html:105 app/templates/index.html:211
+#: app/i18n.py:110 app/templates/_macros.html:105
+#: app/templates/import_review.html:39 app/templates/index.html:211
 #: app/templates/workout_detail.html:273 app/templates/workout_detail.html:297
 msgid "Cerrar"
 msgstr "Close"
@@ -2340,7 +2341,8 @@ msgid "Entreno"
 msgstr "Workout"
 
 #: app/routes.py:1690 app/templates/exercise_muscles.html:18
-#: app/templates/import_review.html:6 app/templates/import_review.html:15
+#: app/templates/import_review.html:7 app/templates/import_review.html:15
+#: app/templates/import_review.html:49
 #, python-format
 msgid "%(num)d serie"
 msgid_plural "%(num)d series"
@@ -2483,7 +2485,7 @@ msgstr "Imported %(w)s workouts and %(s)s sets."
 msgid "%(n)s ya estaban y no se han duplicado."
 msgstr "%(n)s were already there and weren't duplicated."
 
-#: app/routes.py:2384 app/templates/import_review.html:4
+#: app/routes.py:2384 app/templates/import_review.html:5
 msgid "Revisar importación"
 msgstr "Review import"
 
@@ -2956,7 +2958,7 @@ msgstr "medium"
 msgid "baja"
 msgstr "low"
 
-#: app/templates/_macros.html:104
+#: app/templates/_macros.html:104 app/templates/import_review.html:21
 msgid "Elegir ejercicio"
 msgstr "Choose exercise"
 
@@ -3824,7 +3826,7 @@ msgstr "Copy your link:"
 msgid "← Inicio"
 msgstr "← Home"
 
-#: app/templates/history.html:5 app/templates/import_review.html:6
+#: app/templates/history.html:5 app/templates/import_review.html:7
 #, python-format
 msgid "%(num)d entreno"
 msgid_plural "%(num)d entrenos"
@@ -3897,31 +3899,31 @@ msgstr "pounds"
 msgid "Leer archivo"
 msgstr "Read file"
 
-#: app/templates/import_review.html:3
+#: app/templates/import_review.html:4
 msgid "← Elegir otro archivo"
 msgstr "← Choose another file"
 
-#: app/templates/import_review.html:6
+#: app/templates/import_review.html:7
 #, python-format
 msgid "del %(a)s al %(b)s"
 msgstr "from %(a)s to %(b)s"
 
-#: app/templates/import_review.html:7
+#: app/templates/import_review.html:8
 msgid ""
-"Elige con qué nombre se guarda cada ejercicio. Si ya lo tienes en Gyre "
-"con otro nombre, escríbelo igual (o elígelo de la lista) para que se una "
-"a tu historial y a tus récords. Déjalo vacío para no importarlo."
+"Elige con qué nombre se guarda cada ejercicio. Pulsa la lupa para ver tus"
+" ejercicios y el catálogo: si eliges uno que ya tienes (borde verde), se "
+"une a tu historial y a tus récords. Déjalo vacío para no importarlo."
 msgstr ""
-"Choose the name each exercise is saved under. If you already have it in "
-"Gyre with another name, type it the same (or pick it from the list) so it"
-" joins your history and records. Leave it empty to skip it."
+"Choose the name each exercise is saved under. Tap the magnifier to see "
+"your exercises and the catalog: if you pick one you already have (green "
+"border), it joins your history and records. Leave it empty to skip it."
 
-#: app/templates/import_review.html:17
+#: app/templates/import_review.html:18
 #, python-format
 msgid "Nombre en Gyre para %(name)s"
 msgstr "Name in Gyre for %(name)s"
 
-#: app/templates/import_review.html:23
+#: app/templates/import_review.html:28
 #, python-format
 msgid ""
 "Saltar %(num)d entreno de un día en el que ya entrenaste en Gyre (por si "
@@ -3936,9 +3938,33 @@ msgstr[1] ""
 "Skip %(num)d workouts on days you already trained in Gyre (in case you "
 "logged them in both apps)"
 
-#: app/templates/import_review.html:25
+#: app/templates/import_review.html:30
 msgid "Importar"
 msgstr "Import"
+
+#: app/templates/import_review.html:42 app/templates/progress.html:202
+msgid "Buscar ejercicio…"
+msgstr "Search exercise…"
+
+#: app/templates/import_review.html:45
+msgid "No importar este ejercicio"
+msgstr "Don't import this exercise"
+
+#: app/templates/import_review.html:46 app/templates/progress.html:201
+msgid "Tus ejercicios"
+msgstr "Your exercises"
+
+#: app/templates/import_review.html:52
+msgid "Ninguno coincide."
+msgstr "None match."
+
+#: app/templates/import_review.html:53
+msgid "Catálogo"
+msgstr "Catalog"
+
+#: app/templates/import_review.html:55
+msgid "Escribe al menos 2 letras para buscar en el catálogo."
+msgstr "Type at least 2 letters to search the catalog."
 
 #: app/templates/index.html:13
 msgid "Entreno en curso"
@@ -5448,14 +5474,6 @@ msgstr "Not logged"
 #: app/templates/progress.html:193
 msgid "Apunta tu peso para ver su evolución"
 msgstr "Log your weight to see how it evolves"
-
-#: app/templates/progress.html:201
-msgid "Tus ejercicios"
-msgstr "Your exercises"
-
-#: app/templates/progress.html:202
-msgid "Buscar ejercicio…"
-msgstr "Search exercise…"
 
 #: app/templates/progress.html:202
 msgid "Buscar ejercicio"

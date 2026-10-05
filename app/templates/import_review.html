@@ -1,20 +1,25 @@
 {% extends "base.html" %}
+{% import "_macros.html" as macros %}
 {% block content %}
     <p class="page-back"><a href="{{ url_for('import_data') }}">{{ _("← Elegir otro archivo") }}</a></p>
     <h1 class="page-title">{{ _("Revisar importación") }}</h1>
     <div class="card card-elevated">
         <p><b>{{ ngettext('%(num)d entreno', '%(num)d entrenos', draft.workouts|length) }}</b> · {{ ngettext('%(num)d serie', '%(num)d series', total_sets) }} · {{ _('del %(a)s al %(b)s', a=first.strftime('%d/%m/%Y'), b=last.strftime('%d/%m/%Y')) }}</p>
-        <p class="std-note">{{ _("Elige con qué nombre se guarda cada ejercicio. Si ya lo tienes en Gyre con otro nombre, escríbelo igual (o elígelo de la lista) para que se una a tu historial y a tus récords. Déjalo vacío para no importarlo.") }}</p>
+        <p class="std-note">{{ _("Elige con qué nombre se guarda cada ejercicio. Pulsa la lupa para ver tus ejercicios y el catálogo: si eliges uno que ya tienes (borde verde), se une a tu historial y a tus récords. Déjalo vacío para no importarlo.") }}</p>
     </div>
     <form method="post" class="import-review-form">
         {{ form.hidden_tag() }}
-        <datalist id="ownExercises">{% for n in own %}<option value="{{ n }}">{% endfor %}</datalist>
         <ul class="card card-elevated import-map">
             {% for i, name, n, suggestion in rows %}
                 <li>
                     <span class="import-map-source"><strong>{{ name }}</strong><small>{{ ngettext('%(num)d serie', '%(num)d series', n) }}</small></span>
-                    <input type="text" name="map-{{ i }}" value="{{ suggestion }}" list="ownExercises" maxlength="64"
-                           aria-label="{{ _('Nombre en Gyre para %(name)s', name=name) }}" autocapitalize="none">
+                    <span class="import-map-target">
+                        <input type="text" id="map-{{ i }}" name="map-{{ i }}" value="{{ suggestion }}" maxlength="64"
+                               aria-label="{{ _('Nombre en Gyre para %(name)s', name=name) }}" autocapitalize="none"
+                               class="{{ 'is-own' if suggestion in own_names }}">
+                        <button type="button" class="btn-icon import-pick" data-index="{{ i }}" data-source="{{ name }}"
+                                aria-label="{{ _('Elegir ejercicio') }}" title="{{ _('Elegir ejercicio') }}">{{ macros.icon('search', 18) }}</button>
+                    </span>
                 </li>
             {% endfor %}
         </ul>
@@ -25,4 +30,116 @@
             <button type="submit" class="btn">{{ _("Importar") }}</button>
         </div>
     </form>
+
+    <div class="sheet-backdrop" id="importPickerBackdrop"></div>
+    <div class="bottom-sheet import-picker" id="importPickerSheet" role="dialog" aria-modal="true" aria-labelledby="importPickerTitle">
+        <div class="bottom-sheet-grabber" aria-hidden="true"></div>
+        <div class="bottom-sheet-header">
+            <h3 id="importPickerTitle" class="bottom-sheet-title"></h3>
+            <button type="button" class="sheet-close-btn" id="importPickerClose" aria-label="{{ _('Cerrar') }}">{{ macros.icon('close', 20) }}</button>
+        </div>
+        <div class="import-picker-search">
+            <input type="search" id="importPickerSearch" placeholder="{{ _('Buscar ejercicio…') }}" autocapitalize="none" autocomplete="off">
+        </div>
+        <div class="import-picker-body">
+            <button type="button" class="import-picker-skip" data-name="">{{ _("No importar este ejercicio") }}</button>
+            <h4>{{ _("Tus ejercicios") }}</h4>
+            <ul id="importPickerOwn">
+                {% for ex, count in own %}
+                    <li><button type="button" data-name="{{ ex }}"><span>{{ ex|title }}</span><small>{{ ngettext('%(num)d serie', '%(num)d series', count) }}</small></button></li>
+                {% endfor %}
+            </ul>
+            <p class="import-picker-empty" id="importPickerOwnEmpty" hidden>{{ _("Ninguno coincide.") }}</p>
+            <h4>{{ _("Catálogo") }}</h4>
+            <ul id="importPickerCatalog"></ul>
+            <p class="import-picker-empty" id="importPickerCatalogHint">{{ _("Escribe al menos 2 letras para buscar en el catálogo.") }}</p>
+        </div>
+    </div>
+    <script>
+        // Selector de nombre para cada ejercicio importado: tus ejercicios
+        // (filtrados aquí mismo) y el catálogo (/api/exercises/search).
+        (function () {
+            let target = null, timer = null;
+            const sheet = document.getElementById('importPickerSheet');
+            const backdrop = document.getElementById('importPickerBackdrop');
+            const search = document.getElementById('importPickerSearch');
+            const ownItems = Array.from(document.querySelectorAll('#importPickerOwn li'));
+            const ownNames = new Set(ownItems.map(li => li.querySelector('button').dataset.name));
+            const catalog = document.getElementById('importPickerCatalog');
+            const hint = document.getElementById('importPickerCatalogHint');
+            const noResults = {{ _('Sin resultados en el catálogo.')|tojson }};
+            const plain = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+            function filter() {
+                const words = plain(search.value).split(/\s+/).filter(Boolean);
+                let shown = 0;
+                ownItems.forEach(li => {
+                    const ok = words.every(w => plain(li.querySelector('button').dataset.name).includes(w));
+                    li.hidden = !ok;
+                    if (ok) shown++;
+                });
+                document.getElementById('importPickerOwnEmpty').hidden = shown > 0;
+                clearTimeout(timer);
+                if (search.value.trim().length < 2) { catalog.innerHTML = ''; hint.hidden = false; return; }
+                hint.hidden = true;
+                timer = setTimeout(function () {
+                    fetch({{ url_for('api_search_exercises')|tojson }} + '?q=' + encodeURIComponent(search.value.trim()))
+                        .then(r => r.json()).then(function (list) {
+                            catalog.innerHTML = '';
+                            list.forEach(function (ex) {
+                                const li = document.createElement('li');
+                                const b = document.createElement('button');
+                                b.type = 'button';
+                                b.dataset.name = ex.name.toLowerCase();
+                                b.textContent = ex.name;
+                                li.appendChild(b);
+                                catalog.appendChild(li);
+                            });
+                            if (!list.length) {
+                                const li = document.createElement('li');
+                                li.className = 'import-picker-empty';
+                                li.textContent = noResults;
+                                catalog.appendChild(li);
+                            }
+                        });
+                }, 250);
+            }
+
+            function open(button) {
+                target = document.getElementById('map-' + button.dataset.index);
+                document.getElementById('importPickerTitle').textContent = button.dataset.source;
+                // De entrada busca el nombre de la otra app sin el equipo entre paréntesis.
+                search.value = button.dataset.source.replace(/\(.*?\)/g, '').replace(/\s+-\s+/g, ' ').trim();
+                filter();
+                backdrop.classList.add('open');
+                sheet.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+            function close() {
+                backdrop.classList.remove('open');
+                sheet.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+            function choose(name) {
+                if (target) {
+                    target.value = name;
+                    target.classList.toggle('is-own', ownNames.has(name));
+                }
+                close();
+            }
+
+            document.querySelectorAll('.import-pick').forEach(b => b.addEventListener('click', () => open(b)));
+            sheet.addEventListener('click', function (e) {
+                const b = e.target.closest('button[data-name]');
+                if (b) choose(b.dataset.name);
+            });
+            backdrop.addEventListener('click', close);
+            document.getElementById('importPickerClose').addEventListener('click', close);
+            search.addEventListener('input', filter);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+            // Al escribir a mano, se marca en verde si coincide con uno tuyo.
+            document.querySelectorAll('.import-map input').forEach(inp => inp.addEventListener('input',
+                () => inp.classList.toggle('is-own', ownNames.has(inp.value.trim().toLowerCase()))));
+        })();
+    </script>
 {% endblock %}
