@@ -125,7 +125,7 @@ class PersonalRangeTests(DbTestCase):
     def build(self, pattern, rounds):
         """Una sesión por semana. El cambio de 1RM de cada sesión depende de las
         series de la sesión anterior (12 -> +2 %, 8 -> +0,5 %, 20 -> -0,5 %)."""
-        effect = {12: 0.02, 8: 0.005, 20: -0.005}
+        effect = {12: 0.02, 8: 0.005, 20: -0.005, 14: 0.01, 3: 0.03}
         counts = pattern * rounds
         weight = 100.0
         start = self.TODAY - timedelta(weeks=len(counts))
@@ -153,11 +153,24 @@ class PersonalRangeTests(DbTestCase):
         self.assertAlmostEqual(chest["gain_pct"], 2.0, places=1)
         self.assertEqual(chest["confidence"], "baja")
         item = next(i for i in vol["items"] if i["group"] == "pecho")
-        self.assertEqual(item["status"], "ok")          # 12 series dentro de su 10-14
+        self.assertEqual(item["status"], "ok")          # 12 series: dentro de 10-20 (el mapa no usa el rango personal)
+        self.assertEqual((item["low"], item["high"]), (10, 20))
         self.assertTrue(item["personal"])
         triceps = next(i for i in vol["items"] if i["group"] == "triceps")
         self.assertFalse(triceps["personal"])           # sin ejercicios principales: rango por defecto
         self.assertEqual((triceps["low"], triceps["high"]), (10, 20))
+
+    def test_deload_rebounds_do_not_make_low_volume_look_best(self):
+        """Semanas normales de 14 series y una descarga de 3 cada cuatro, tras
+        la que la fuerza rebota (+3 %). Antes salía un "punto dulce" de 0-6
+        series; las descargas ya no cuentan."""
+        self.build([14, 14, 14, 3], 6)
+        with app.app_context():
+            ranges = volume.personal_ranges(self.uid, today=self.TODAY)
+            vol = volume.weekly_volume(self.uid, today=self.TODAY, personal=ranges)
+        self.assertNotEqual(ranges.get("pecho", {}).get("low"), 0)
+        item = next(i for i in vol["items"] if i["group"] == "pecho")
+        self.assertEqual((item["low"], item["high"]), (10, 20))  # el mapa usa siempre 10-20
 
     def test_not_enough_data_keeps_the_default_range(self):
         self.build([12, 8], 2)

@@ -58,6 +58,7 @@ def N_(text):
 # un .js hay que añadirlo aquí. Los {nombre} se sustituyen en el propio JS.
 JS_STRINGS = [
     N_("Todos"),
+    N_("Nivel máximo"),
     N_("Hombros"),
     N_("Cuello"),
     N_("Pecho"),

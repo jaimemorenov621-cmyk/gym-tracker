@@ -74,10 +74,31 @@ class ContactEmailTests(DbTestCase):
             with mock.patch.object(mailer, "_send") as send:
                 self.client.post("/contacto", data={"body": "hola"})
                 send.assert_not_called()
-        env = {"MAIL_USERNAME": "gyre.app@example.com", "MAIL_APP_PASSWORD": "x"}
+        env = {"MAIL_USERNAME": "gyre.app@example.com", "BREVO_API_KEY": "k"}
         with mock.patch.dict(os.environ, env), mock.patch.object(mailer.threading, "Thread") as thread:
             self.client.post("/contacto", data={"body": "segundo mensaje"})
-            msg = thread.call_args.kwargs["args"][0]
+            msg, how = thread.call_args.kwargs["args"]
+        self.assertEqual(how, "brevo")  # Render gratis bloquea SMTP: va por la API web
         self.assertEqual(msg["Reply-To"], "escribe@example.com")
         self.assertEqual(msg["To"], "gyre.app@example.com")
         self.assertIn("segundo mensaje", msg.get_content())
+
+
+class BrevoPayloadTests(unittest.TestCase):
+    def test_payload_and_status(self):
+        import json, os
+        from unittest import mock
+        from app import mailer
+        env = {"MAIL_USERNAME": "gyre.app@example.com", "BREVO_API_KEY": "clave"}
+        with mock.patch.dict(os.environ, env):
+            msg = mailer.build_contact_email("ana", "ana@example.com", "hola", "https://x/landing/stats")
+            with mock.patch.object(mailer.urllib.request, "urlopen") as urlopen:
+                urlopen.return_value.__enter__.return_value.status = 201
+                mailer._send(msg, "brevo")
+            req = urlopen.call_args.args[0]
+        body = json.loads(req.data)
+        self.assertEqual(req.get_header("Api-key"), "clave")
+        self.assertEqual(body["replyTo"], {"email": "ana@example.com"})
+        self.assertEqual(body["to"], [{"email": "gyre.app@example.com"}])
+        self.assertIn("hola", body["textContent"])
+        self.assertTrue(mailer.LAST_STATUS["ok"])

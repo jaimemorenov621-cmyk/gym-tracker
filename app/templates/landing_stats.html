@@ -130,6 +130,10 @@
 
     <div class="card card-elevated" style="margin-top:16px;" id="mensajes">
         <h3 style="margin-top:0;">Mensajes de contacto <small>({{ contact_messages|length }})</small></h3>
+        <p class="stats-footnote" style="margin-top:0;">
+            Avisos por email: {% if mail.method == 'brevo' %}activados (Brevo){% elif mail.method == 'smtp' %}SMTP de Gmail (Render gratis lo bloquea: usa Brevo){% else %}sin configurar{% endif %}.
+            {% if mail.at %}Último intento {{ to_local(mail.at).strftime('%d/%m %H:%M') }}: {% if mail.ok %}enviado{% else %}<b class="form-error">falló</b> — {{ mail.detail }}{% endif %}.{% endif %}
+        </p>
         {% if contact_messages %}
             <ul class="stats-messages">
                 {% for m, u in contact_messages %}

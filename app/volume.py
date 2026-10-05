@@ -77,11 +77,21 @@ def status_for(sets, low=LOW, high=HIGH):
 # tu "punto dulce" es el tramo en que más progresaste. Requisitos: 12
 # mediciones y al menos 2 tramos con 4 o más. Es una CORRELACIÓN (influyen
 # sueño, dieta, descargas...) y el 1RM mide fuerza, no tamaño: la app lo
-# presenta como estimación, con su confianza, y hasta tener datos usa 10-20.
+# presenta como estimación, con su confianza. Es SOLO informativa: el mapa
+# y los colores del volumen usan siempre el rango de la evidencia (10-20).
+#
+# Sesgo corregido: tras una descarga, unas vacaciones o una semana floja la
+# fuerza suele subir porque se va la fatiga, no porque poco volumen sea
+# mejor; contar esas mediciones empujaba el "punto dulce" a 0-6 series. Por
+# eso se descartan las mediciones cuyo volumen de esos 7 días está muy por
+# debajo de tu media de las 3 semanas anteriores (descarga) o llegan tras
+# semanas sin entrenar ese grupo (vuelta de un parón), y las que comparan
+# sesiones separadas más de 14 días.
 PERSONAL_WEEKS = 26
 MIN_PAIRS = 12
 MIN_PER_BIN = 4
-MAX_GAP_DAYS = 21
+MAX_GAP_DAYS = 14
+DELOAD_RATIO = 0.6   # semana con menos del 60 % de tu media reciente = descarga
 BINS = [(0, 6), (6, 10), (10, 14), (14, 18), (18, 22), (22, None)]
 _CHANGE_CAP = 0.2
 _WORSE_BY = 0.005  # medio punto por sesión menos que el mejor tramo
@@ -159,8 +169,12 @@ def personal_ranges(user_id, today=None):
                 continue
             change = max(-_CHANGE_CAP, min(_CHANGE_CAP, math.log(by_day[d1] / by_day[d0])))
             window = [d1 - timedelta(days=i) for i in range(1, 8)]
+            before = [d1 - timedelta(days=i) for i in range(8, 29)]   # las 3 semanas anteriores
             for g in primary.get(exercise, []):
                 vol = sum(daily_sets[g].get(d, 0.0) for d in window)
+                baseline = sum(daily_sets[g].get(d, 0.0) for d in before) / 3
+                if baseline <= 0 or vol < DELOAD_RATIO * baseline:
+                    continue  # vuelta de un parón o descarga: sesgaría hacia poco volumen
                 rirs = [x for d in window for x in daily_rir[g].get(d, [])]
                 pairs[g].append((vol, change, sum(rirs) / len(rirs) if rirs else None))
 
@@ -266,8 +280,8 @@ def weekly_volume(user_id, today=None, personal=None):
         if group not in MAIN_GROUPS and not total.get(group):
             continue
         sets7 = last7.get(group, 0.0)
-        own = personal.get(group)
-        low, high = (own["low"], own["high"]) if own else (LOW, HIGH)
+        own = personal.get(group)  # estimación tuya, solo informativa
+        low, high = LOW, HIGH
         items.append({
             "group": group,
             "label": MUSCLE_GROUP_LABELS.get(group, group),

@@ -20,6 +20,9 @@ ACCENTS = [
     {"key": "azul", "name": _l("Azul"), "level": 10},
     {"key": "verde", "name": _l("Verde"), "level": 15},
     {"key": "naranja", "name": _l("Naranja"), "level": 25},
+    {"key": "rojo", "name": _l("Rojo"), "level": 30},
+    {"key": "turquesa", "name": _l("Turquesa"), "level": 40},
+    {"key": "dorado", "name": _l("Dorado"), "level": 50},
 ]
 
 # Diseños de la tarjeta de récord (los dibuja app/static/share_card.js).
@@ -36,6 +39,15 @@ SHARE_DESIGNS = [
     {"key": "oro", "name": _l("Oro"), "level": 25,
      "bg": ["#0d0b07", "#2b2412"], "glows": ["rgba(212, 175, 55, 0.45)", "rgba(255, 236, 179, 0.16)"],
      "kicker": "#f3dc95", "metric": ["#f9e7a6", "#e6c35c", "#c9a227"], "link": "#e6c35c"},
+    {"key": "aurora", "name": _l("Aurora"), "level": 35,
+     "bg": ["#04201c", "#1b1046"], "glows": ["rgba(45, 212, 191, 0.5)", "rgba(168, 85, 247, 0.35)"],
+     "kicker": "#a7f3d0", "metric": ["#99f6e4", "#c4b5fd", "#f0abfc"], "link": "#5eead4"},
+    {"key": "obsidiana", "name": _l("Obsidiana"), "level": 45,
+     "bg": ["#050505", "#1c1c22"], "glows": ["rgba(226, 232, 240, 0.28)", "rgba(148, 163, 184, 0.18)"],
+     "kicker": "#e2e8f0", "metric": ["#f8fafc", "#cbd5e1", "#94a3b8"], "link": "#e2e8f0"},
+    {"key": "leyenda", "name": _l("Leyenda"), "level": 50,
+     "bg": ["#14051f", "#3b0a2a"], "glows": ["rgba(250, 204, 21, 0.45)", "rgba(244, 63, 94, 0.3)"],
+     "kicker": "#fde68a", "metric": ["#fde68a", "#fbbf24", "#f472b6"], "link": "#fbbf24"},
 ]
 
 BADGE_LEVEL = 10        # nivel (y rango) en la tarjeta compartida

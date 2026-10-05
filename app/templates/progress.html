@@ -90,7 +90,7 @@
         <div class="strength-head">
             <div>
                 <h2>{{ _("Volumen semanal por músculo") }}</h2>
-                <p>{{ _('Series duras de los últimos 7 días frente a tu rango (el respaldado de %(low)s-%(high)s hasta que la app aprenda el tuyo)', low=volume_mod.LOW, high=volume_mod.HIGH) }}</p>
+                <p>{{ _('Series duras de los últimos 7 días frente al rango que respalda la evidencia: %(low)s-%(high)s por semana.', low=volume_mod.LOW, high=volume_mod.HIGH) }}</p>
             </div>
         </div>
         {% if volume.hard_sets %}
@@ -107,7 +107,7 @@
             </div>
             <div class="vol-legend">
                 <span><i class="vol-dot low"></i>{{ _("Por debajo") }}</span>
-                <span><i class="vol-dot ok"></i>{{ _("En tu rango") }}</span>
+                <span><i class="vol-dot ok"></i>{{ _("En rango") }}</span>
                 <span><i class="vol-dot high"></i>{{ _("Te pasas") }}</span>
                 <span><i class="vol-dot none"></i>{{ _("Sin series") }}</span>
             </div>
@@ -123,7 +123,7 @@
                             <i class="vol-{{ g.status }}" style="width: {{ g.bar_pct }}%"></i>
                         </div>
                         <small>
-                            {% if g.personal %}<b class="vol-personal">{{ _('Tu rango %(low)s-%(high)s', low=g.low, high=g.high if g.high is not none else '+') }}</b>{% else %}{{ g.low }}-{{ g.high }}{% endif %}
+                            {{ g.low }}-{{ g.high }}
                             · {{ _('media %(n)s/sem', n=g.avg4|num) }}
                         </small>
                     </li>
@@ -165,8 +165,11 @@
                 {{ _("Cada persona tolera y aprovecha un volumen distinto. Cada vez que repites un ejercicio, la app mira cuánto cambió tu 1RM estimado frente a la vez anterior y cuántas series duras hiciste de ese músculo los 7 días previos. Agrupa esas mediciones por tramos de volumen (menos de 6, 6-10, 10-14, 14-18, 18-22 y más de 22 series) y tu punto dulce es el tramo en el que más progresaste, con el RIR medio con el que entrenaste ahí.") }}
             </p>
             <p>
-                {{ _("Necesita al menos 12 mediciones y 2 tramos con 4 o más; hasta entonces usa el rango de 10-20. Es una") }}
-                <b>{{ _("estimación") }}</b>{{ _(": el progreso también depende del sueño, la comida o las descargas, y el 1RM mide fuerza, no tamaño muscular. Por eso se muestra la confianza y se recalcula con tus últimas 26 semanas.") }}
+                {{ _("No cuenta las semanas de descarga (menos del 60 %% de tu volumen de las 3 semanas anteriores) ni las vueltas de un parón: después de descansar la fuerza sube porque se va la fatiga, y eso haría parecer que te va mejor con muy pocas series.") }}
+            </p>
+            <p>
+                {{ _("Necesita al menos 12 mediciones y 2 tramos con 4 o más. Es una") }}
+                <b>{{ _("estimación") }}</b>{{ _(": el progreso también depende del sueño o la comida, y el 1RM mide fuerza, no tamaño muscular. Por eso se muestra la confianza, se recalcula con tus últimas 26 semanas y es solo informativa: los colores del volumen usan siempre el rango de 10-20.") }}
             </p>
         </details>
         <details class="strength-how">

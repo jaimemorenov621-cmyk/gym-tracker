@@ -8,7 +8,7 @@
             <span class="level-badge">{{ xp.level }}</span>
             <div>
                 <strong>{{ _('Nivel %(n)s', n=xp.level) }}</strong>
-                <span>{{ _('%(total)s XP en total · faltan %(left)s para el nivel %(next)s', total=xp.total|num, left=xp.to_next|num, next=xp.level + 1) }}</span>
+                <span>{% if xp.is_max %}{{ _('%(total)s XP en total · nivel máximo', total=xp.total|num) }}{% else %}{{ _('%(total)s XP en total · faltan %(left)s para el nivel %(next)s', total=xp.total|num, left=xp.to_next|num, next=xp.level + 1) }}{% endif %}</span>
             </div>
         </div>
         <div class="dash-level-bar"><i style="width: {{ xp.pct }}%"></i></div>
@@ -104,7 +104,7 @@
     <div class="card card-elevated level-section">
         <details class="strength-how">
             <summary>{{ _("Curva de niveles") }}</summary>
-            <p>{{ _("Pasar del nivel N al N+1 cuesta 500 + 100 × (N − 1) XP. Entrenando 4 días a la semana se suman unos 1.000 XP semanales.") }}</p>
+            <p>{{ _("Pasar del nivel N al N+1 cuesta 500 + 100 × (N − 1) XP. Entrenando 4 días a la semana se suman unos 1.000 XP semanales. El nivel máximo es el 50.") }}</p>
             <table class="level-rules">
                 <thead><tr><th>{{ _("Nivel") }}</th><th>{{ _("XP acumulado") }}</th><th>{{ _("Para el siguiente") }}</th></tr></thead>
                 <tbody>

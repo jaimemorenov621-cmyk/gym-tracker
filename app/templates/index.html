@@ -309,7 +309,7 @@
         <a class="dash-level-link" href="{{ url_for('rank_page') }}">
             <span class="dash-level-top">
                 <span><b>{{ _('Nivel %(n)s', n=xp.level) }}</b> · {% if profile.global_rank %}<span class="rank-chip">{{ macros.rank_emblem(profile.global_rank.key, 22, profile.global_rank.division, eager=True) }}<span class="rank-badge rank-{{ profile.global_rank.key }}">{{ profile.global_rank.label }}</span></span>{% else %}{{ _("Rango: sin datos") }}{% endif %}</span>
-                <span class="dash-level-next">{{ _('faltan %(n)s XP', n=xp.to_next|num) }} {{ macros.icon('chevron-right', 16) }}</span>
+                <span class="dash-level-next">{{ _('Nivel máximo') if xp.is_max else _('faltan %(n)s XP', n=xp.to_next|num) }} {{ macros.icon('chevron-right', 16) }}</span>
             </span>
             <span class="dash-level-bar" aria-hidden="true"><i style="width: {{ xp.pct }}%"></i></span>
         </a>
@@ -338,8 +338,8 @@
                     <svg viewBox="724 0 724 1448" aria-hidden="true" class="mm-figure">{{ muscle_svg.back }}</svg>
                 </div>
                 <a class="dash-muscle-caption" href="{{ url_for('progress') }}#volumen">
-                    <span><i class="vol-dot low"></i>{{ _("Corto") }}</span><span><i class="vol-dot ok"></i>{{ _("En tu rango") }}</span><span><i class="vol-dot high"></i>{{ _("Te pasas") }}</span>
-                    <small>{{ _("Series de los últimos 7 días frente a tu rango →") }}</small>
+                    <span><i class="vol-dot low"></i>{{ _("Corto") }}</span><span><i class="vol-dot ok"></i>{{ _("En rango") }}</span><span><i class="vol-dot high"></i>{{ _("Te pasas") }}</span>
+                    <small>{{ _("Series de los últimos 7 días frente a 10-20 por semana →") }}</small>
                 </a>
             </div>
             <div class="dash-calendar" id="dashCalendar">
@@ -397,7 +397,7 @@
     {% if request.args.get('celebrate') %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            celebrate();
+            window.whenShown(() => celebrate());
             const url = new URL(window.location);
             url.searchParams.delete('celebrate');
             window.history.replaceState({}, '', url);

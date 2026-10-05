@@ -30,7 +30,8 @@
         const bar = el.querySelector('.xp-pop-bar i');
         const up = el.querySelector('.xp-pop-up');
         el.querySelector('.xp-pop-reason').textContent = d.reason || T('Subida de nivel');
-        el.querySelector('.xp-pop-next').textContent = T('Faltan {xp} XP para el nivel {level}').replace('{xp}', d.to.to_next.toLocaleString(GYRE_NUM_LOCALE)).replace('{level}', d.to.level + 1);
+        el.querySelector('.xp-pop-next').textContent = d.to.is_max ? T('Nivel máximo')
+            : T('Faltan {xp} XP para el nivel {level}').replace('{xp}', d.to.to_next.toLocaleString(GYRE_NUM_LOCALE)).replace('{level}', d.to.level + 1);
         const parts = el.querySelector('.xp-pop-parts');
         (d.parts || []).forEach(function (p, i) {
             const chip = document.createElement('span');
@@ -114,7 +115,10 @@
         const data = document.getElementById('xpFxData');
         if (!data) return;
         const d = JSON.parse(data.textContent);
-        // Un poco de margen para que se vea después del confeti / la carga.
-        setTimeout(function () { whenClear(function () { show(d); }); }, 400);
+        // Un poco de margen para que se vea después del confeti / la carga
+        // (y nunca mientras la página se precarga oculta).
+        window.whenShown(function () {
+            setTimeout(function () { whenClear(function () { show(d); }); }, 400);
+        });
     });
 })();

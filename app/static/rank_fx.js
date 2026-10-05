@@ -97,8 +97,10 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        splash();
-        animateBar();
         centerShowcase();
+        window.whenShown(function () {  // no animar mientras la página se precarga oculta
+            splash();
+            animateBar();
+        });
     });
 })();

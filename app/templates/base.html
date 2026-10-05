@@ -9,6 +9,13 @@
         window.GYRE_T = {{ js_translations()|tojson }};
         window.GYRE_NUM_LOCALE = {{ ('en-US' if get_locale().language == 'en' else 'es-ES')|tojson }};
         function T(text) { return window.GYRE_T[text] || text; }
+        // Las pestañas se precargan al pulsarlas (speculationrules): una página
+        // precargada ejecuta su JS oculta. Las animaciones de aviso (nivel,
+        // logros, rango, confeti) esperan a que se vea de verdad.
+        window.whenShown = function (cb) {
+            if (document.prerendering) document.addEventListener('prerenderingchange', cb, {once: true});
+            else cb();
+        };
     </script>
     <script>
         // Tema antes de pintar (sin destello claro en modo oscuro). Preferencia

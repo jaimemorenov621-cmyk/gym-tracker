@@ -4353,3 +4353,32 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 .muscle-chip { flex-shrink: 0; margin: 0; padding: 6px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; background: var(--surface-2); color: var(--color-text-soft); border: 1.5px solid var(--color-border-soft); box-shadow: none; }
 .muscle-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 @media (hover: hover) { .muscle-chip:not(.active):hover { background: var(--color-surface-hover); color: var(--color-text); } }
+
+/* Acentos de los niveles 30, 40 y 50 */
+:root[data-accent="rojo"] {
+    --accent: #c81e1e; --accent-2: #e11d48; --accent-rgb: 200, 30, 30; --accent-light: #dc2f2f;
+    --color-border-soft: #f9d4d4; --color-surface-hover: #fff4f4; --color-surface-active: #fde3e3;
+    --color-brand: #c81e1e; --color-brand-dark: #a31616; --color-brand-deep: #7f1010; --color-brand-soft: #d24848;
+}
+:root[data-accent="turquesa"] {
+    --accent: #0f766e; --accent-2: #0891b2; --accent-rgb: 15, 118, 110; --accent-light: #138a80;
+    --color-border-soft: #c9ecea; --color-surface-hover: #f0faf9; --color-surface-active: #dcf3f1;
+    --color-brand: #0f766e; --color-brand-dark: #0b5f58; --color-brand-deep: #084a44; --color-brand-soft: #2f8f87;
+}
+:root[data-accent="dorado"] {
+    --accent: #9a6a00; --accent-2: #c2410c; --accent-rgb: 154, 106, 0; --accent-light: #b07c06;
+    --color-border-soft: #f3e2b8; --color-surface-hover: #fffaf0; --color-surface-active: #fbefd2;
+    --color-brand: #9a6a00; --color-brand-dark: #7c5500; --color-brand-deep: #5c3f00; --color-brand-soft: #b08a2e;
+}
+:root[data-theme="dark"][data-accent="rojo"] {
+    --color-brand: #f87171; --color-brand-dark: #fca5a5; --color-brand-deep: #fecaca; --color-brand-soft: #ef8a8a;
+    --color-border-soft: #5a2424; --color-surface-hover: #2a1a1a; --color-surface-active: #3a2020;
+}
+:root[data-theme="dark"][data-accent="turquesa"] {
+    --color-brand: #2dd4bf; --color-brand-dark: #5eead4; --color-brand-deep: #99f6e4; --color-brand-soft: #5cc7bb;
+    --color-border-soft: #1f4a46; --color-surface-hover: #172826; --color-surface-active: #1c3532;
+}
+:root[data-theme="dark"][data-accent="dorado"] {
+    --color-brand: #facc15; --color-brand-dark: #fde047; --color-brand-deep: #fef08a; --color-brand-soft: #e7c14a;
+    --color-border-soft: #4d4019; --color-surface-hover: #29251a; --color-surface-active: #3a321f;
+}

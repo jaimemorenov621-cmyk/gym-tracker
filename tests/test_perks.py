@@ -130,3 +130,15 @@ class LevelPageTests(_PerkCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LevelCapTests(unittest.TestCase):
+    def test_levels_stop_at_50_with_perks_up_to_there(self):
+        from app import perks, progression
+        top = progression.level_for(10 ** 7)
+        self.assertEqual((top["level"], top["is_max"], top["pct"], top["to_next"]), (50, True, 100, 0))
+        self.assertEqual(progression.level_for(progression.xp_to_reach(50) - 1)["level"], 49)
+        self.assertFalse(progression.level_for(0)["is_max"])
+        levels = sorted({r["level"] for r in perks.perk_list(1)})
+        self.assertEqual(levels[-1], 50)
+        self.assertTrue({30, 35, 40, 45, 50} <= set(levels))

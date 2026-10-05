@@ -160,7 +160,7 @@ def xp_fx_data(xp_total, gain_info, level_up):
         "gain": gain,
         "parts": gain_info["parts"] if gain_info else [],
         "from": {"level": before["level"], "pct": before["pct"]},
-        "to": {"level": after["level"], "pct": after["pct"], "to_next": after["to_next"]},
+        "to": {"level": after["level"], "pct": after["pct"], "to_next": after["to_next"], "is_max": after["is_max"]},
         "level_up": level_up,
     }
 
@@ -196,9 +196,12 @@ def recovery_checkin():
 def level_page():
     """Nivel y XP con TODO documentado: reglas y su versión, topes, curva y
     desglose semanal."""
-    report, _ = progression.refresh_xp(current_user.id)
+    # El desglose sale de todo el historial: en caché mientras no cambien los
+    # datos (antes se recalculaba en cada visita, lento con años importados).
+    uid = current_user.id
+    report = datacache.cached("xp_report", uid, lambda: progression.compute_xp(progression.load_xp_inputs(uid)))
     weeks = list(report.weeks.items())[:12]
-    xp = progression.level_for(report.total)
+    xp = progression.level_for(progression.current_xp(uid))
     return render_template(
         "level.html",
         title=gettext("Nivel"),
@@ -208,7 +211,7 @@ def level_page():
         profile=cached_profile(current_user),
         p=progression,
         curve=[(lvl, progression.xp_to_reach(lvl), progression.xp_to_reach(lvl + 1) - progression.xp_to_reach(lvl))
-               for lvl in range(1, 31)],
+               for lvl in range(1, progression.MAX_LEVEL)],
     )
 
 
@@ -516,6 +519,12 @@ def delete_demo_account(user_id):
     return redirect(url_for("landing_stats") + "#demo")
 
 
+def mail_status():
+    from app import mailer
+
+    return {"method": mailer.method(), **mailer.LAST_STATUS}
+
+
 def demo_accounts():
     from app import demo
 
@@ -633,6 +642,7 @@ def landing_stats():
         usage_report=usage.rest_day_report(weeks=6),
         activity=usage.activity_summary(),
         demo=demo_accounts(),
+        mail=mail_status(),
         demo_form=EmptyForm(),
         contact_messages=db.session.execute(
             sa.select(ContactMessage, User).join(User, User.id == ContactMessage.user_id)
@@ -794,7 +804,8 @@ def onboarding_status(user_id):
     )
     has_finished = any_row(
         sa.select(Workout.id).where(
-            Workout.user_id == user_id, Workout.performance_rating.is_not(None)
+            Workout.user_id == user_id,
+            sa.or_(Workout.performance_rating.is_not(None), Workout.ended_at.is_not(None)),  # importados: sin valoración
         )
     )
     steps = [
@@ -1012,8 +1023,8 @@ def index():
         pace=pace,
         weight_chart_labels=[to_local(e.timestamp).strftime("%d/%m") for e in weight_entries],
         weight_chart_values=[e.weight for e in weight_entries],
-        # Mapa: series duras de 7 días frente a TU rango (personal si hay
-        # datos, si no el respaldado de 10-20), no frente a tu músculo más entrenado.
+        # Mapa: series duras de 7 días frente al rango de la evidencia (10-20);
+        # tu rango personal estimado solo se enseña, informativo, en Progreso.
         muscle_colors=volume_mod.map_colors(cached_volume(current_user.id)),
         muscle_svg=muscle_svg_markup(current_user.sex),
         notes_form=notes_form,
@@ -1172,6 +1183,7 @@ def get_active_workout(user_id):
         .where(
             Workout.user_id == user_id,
             Workout.performance_rating.is_(None),
+            Workout.ended_at.is_(None),  # uno importado tiene hora de fin aunque no tenga valoración
             Workout.timestamp >= cutoff,
         )
         .order_by(Workout.timestamp.desc())
@@ -2377,13 +2389,20 @@ def import_review():
         for i, name in enumerate(names):
             chosen = (request.form.get(f"map-{i}") or "").strip()
             mapping[name] = chosen if chosen.lower() in valid else ""
+        xp_before = progression.current_xp(current_user.id)
         result = importer.apply_import(current_user, draft, mapping, skip_same_day=bool(request.form.get("skip_same_day")))
         db.session.delete(record)
         db.session.commit()
         datacache.invalidate(current_user.id)
         flash(gettext("Importados %(w)s entrenos y %(s)s series.", w=result["workouts"], s=result["sets"])
               + (" " + gettext("%(n)s ya estaban y no se han duplicado.", n=result["duplicates"]) if result["duplicates"] else ""))
-        return redirect(url_for("history"))
+        # A Inicio, con la misma celebración que al terminar un entreno: lo
+        # ganado y la subida de nivel (y la tarjeta de logros nuevos).
+        gained = progression.current_xp(current_user.id) - xp_before
+        if gained > 0:
+            queue_xp_gain(gettext("Historial importado"), gained,
+                          [[ngettext("%(num)d entreno", "%(num)d entrenos", result["workouts"]), gained]])
+        return redirect(url_for("index", celebrate=1) if result["workouts"] else url_for("history"))
     suggestions, own, _valid = importer.suggest_names(current_user.id, names)
     starts = [w["start"] for w in draft["workouts"]]
     return render_template(

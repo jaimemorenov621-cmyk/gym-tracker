@@ -161,7 +161,8 @@ def training_days(user_id, days=CONSISTENCY_DAYS):
     since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=days)
     stamps = db.session.scalars(
         sa.select(Workout.timestamp).where(
-            Workout.user_id == user_id, Workout.performance_rating.is_not(None), Workout.timestamp >= since,
+            Workout.user_id == user_id, Workout.timestamp >= since,
+            sa.or_(Workout.performance_rating.is_not(None), Workout.ended_at.is_not(None)),
             sa.exists().where(SetEntry.workout_id == Workout.id, SetEntry.completed.is_(True), SetEntry.reps > 0))
     ).all()
     return len({to_local(ts).date() for ts in stamps})

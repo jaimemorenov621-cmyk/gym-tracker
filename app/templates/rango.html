@@ -81,7 +81,7 @@
     <div class="rank-links">
         <a class="rank-link" href="{{ url_for('level_page') }}">
             <span class="rank-link-badge">{{ xp.level }}</span>
-            <span><small>{{ _("Nivel") }}</small><b>{{ _('%(xp)s XP para el %(next)s', xp=xp.to_next|num, next=xp.level + 1) }}</b></span>
+            <span><small>{{ _("Nivel") }}</small><b>{{ _('Nivel máximo') if xp.is_max else _('%(xp)s XP para el %(next)s', xp=xp.to_next|num, next=xp.level + 1) }}</b></span>
             {{ macros.icon('chevron-right', 18) }}
         </a>
         <a class="rank-link" href="{{ url_for('achievements_page') }}">

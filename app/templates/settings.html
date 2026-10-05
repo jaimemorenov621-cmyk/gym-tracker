@@ -17,7 +17,7 @@
         </div>
         <div class="field">
             <span class="field-label">{{ _("Color de acento") }}</span>
-            {% set swatch = {'morado': '#7c4dff', 'azul': '#2563eb', 'verde': '#0b7a54', 'naranja': '#c2410c'} %}
+            {% set swatch = {'morado': '#7c4dff', 'azul': '#2563eb', 'verde': '#0b7a54', 'naranja': '#c2410c', 'rojo': '#c81e1e', 'turquesa': '#0f766e', 'dorado': '#9a6a00'} %}
             <div class="accent-swatches" role="radiogroup" aria-label="{{ _('Color de acento') }}">
                 {% for a in accents %}
                     {% set open = user_level >= a.level %}

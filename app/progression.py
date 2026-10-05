@@ -95,10 +95,16 @@ def xp_to_reach(level):
     return 500 * n + 100 * n * (n - 1) // 2
 
 
+MAX_LEVEL = 50
+
+
 def level_for(total):
     level = 1
-    while xp_to_reach(level + 1) <= total:
+    while level < MAX_LEVEL and xp_to_reach(level + 1) <= total:
         level += 1
+    if level == MAX_LEVEL:  # nivel máximo: la barra queda llena
+        return {"level": level, "total": total, "into": total - xp_to_reach(level), "span": 0,
+                "to_next": 0, "pct": 100, "is_max": True}
     start, nxt = xp_to_reach(level), xp_to_reach(level + 1)
     return {
         "level": level,
@@ -107,6 +113,7 @@ def level_for(total):
         "span": nxt - start,
         "to_next": nxt - total,
         "pct": round(100 * (total - start) / (nxt - start)),
+        "is_max": False,
     }
 
 
