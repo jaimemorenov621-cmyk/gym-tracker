@@ -1948,8 +1948,12 @@ def athlete_card_edit():
         card.featured_lifts = json.dumps(lifts, ensure_ascii=False)
         card.featured_achievements = json.dumps(codes)
         db.session.commit()
+        if wants_json():
+            return jsonify({"ok": True})
         flash(gettext("Tarjeta guardada."))
         return redirect(url_for("athlete_card", user_id=current_user.id))
+    if request.method == "POST" and wants_json():
+        return jsonify({"ok": False, "error": gettext("La sesión ha caducado: recarga la página.")}), 400
     card = social.card_for(current_user.id)
     lift_names, codes = social.featured(card)
     exercises = sorted(overview, key=lambda i: -i["best_1rm"])
@@ -1962,6 +1966,11 @@ def athlete_card_edit():
 
 
 MAX_PERSONAL_BASICS = 8
+
+
+def wants_json():
+    """Formularios con autoguardado (base.html, form[data-autosave])."""
+    return request.headers.get("X-Requested-With") == "fetch"
 
 
 def personal_basics_data(user, profile):
@@ -2012,14 +2021,21 @@ def personal_basics():
     if form.validate_on_submit():
         allowed = set(available) | set(chosen)
         picked = [n for n in dict.fromkeys(x.strip().lower() for x in request.form.getlist("exercise")) if n in allowed]
+        message = None
         if len(picked) > MAX_PERSONAL_BASICS:
-            flash(gettext("Como mucho %(n)s básicos: se han guardado los %(n)s primeros.", n=MAX_PERSONAL_BASICS))
+            message = gettext("Como mucho %(n)s básicos: se han guardado los %(n)s primeros.", n=MAX_PERSONAL_BASICS)
             picked = picked[:MAX_PERSONAL_BASICS]
         db.session.execute(sa.delete(PersonalBasic).where(PersonalBasic.user_id == current_user.id))
         for i, name in enumerate(picked):
             db.session.add(PersonalBasic(user_id=current_user.id, exercise=name, position=i))
         db.session.commit()
+        if wants_json():
+            return jsonify({"ok": True, "message": message})
+        if message:
+            flash(message)
         return redirect(url_for("rank_page") + "#basicos")
+    if request.method == "POST" and wants_json():
+        return jsonify({"ok": False, "error": gettext("La sesión ha caducado: recarga la página.")}), 400
     # Primero los elegidos (en su orden), luego el resto por último entrenado.
     # Con cuántas sesiones y cuándo, para distinguir nombres parecidos
     # ("press banca" / "press de banca"), y a qué tabla cuenta cada uno.
@@ -3550,7 +3566,9 @@ def strength_progress(user_id, rows=None):
     while wk <= current_week:
         weeks.append(wk)
         wk += timedelta(days=7)
-    if len(weeks) < 2:
+    # Hacen falta 2 semanas CON entrenos: contar la semana en curso vacía
+    # pintaba una línea plana ("0 % en 1 semana") con un solo entreno.
+    if len({w for per_week in weekly.values() for w in per_week}) < 2:
         return None
 
     lo, hi = STRENGTH_STEP_CAP

@@ -2,7 +2,8 @@
 
 Orden: 1) el que el usuario eligió en Ajustes (User.language); 2) sin
 sesión, la cookie "lang"; 3) el idioma del navegador/móvil
-(Accept-Language); 4) español.
+(Accept-Language): español si aparece en la lista, inglés si no; 4) sin
+cabecera, español.
 
 I18N_ENABLED=0 (config) apaga el inglés y deja todo en español.
 
@@ -17,6 +18,7 @@ from flask_login import current_user
 
 LANGUAGES = {"es": "Español", "en": "English"}
 DEFAULT = "es"
+FALLBACK = "en"  # navegador en un idioma que la app no tiene
 # Palabras clave que marcan textos traducibles, además de las de Babel
 # (_, gettext, ngettext, pgettext...). tools/i18n_update.py y los tests las usan.
 EXTRACT_KEYWORDS = ["_l", "N_", "lazy_gettext", "lazy_pgettext:1c,2", "_lp:1c,2"]
@@ -37,7 +39,13 @@ def select_locale():
     cookie = request.cookies.get("lang")
     if cookie in LANGUAGES:
         return cookie
-    return request.accept_languages.best_match(list(LANGUAGES)) or DEFAULT
+    accept = request.accept_languages
+    if not accept:
+        return DEFAULT  # sin cabecera (robots, enlaces previos): español
+    # Si el navegador lista el español en cualquier posición (p. ej. catalán
+    # con español de segunda opción), español; si no, inglés: lo entiende
+    # más gente que el español.
+    return accept.best_match(list(LANGUAGES)) or FALLBACK
 
 
 def N_(text):

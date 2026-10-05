@@ -43,6 +43,15 @@ class PersonalBasicsTests(DbTestCase):
         self.client.post("/rango/basicos", data={})  # desmarcar todo
         self.assertEqual(self.chosen(), [])
 
+    def test_autosave_answers_json(self):
+        self.lift("hip thrust", 100, 9)
+        self.login(self.uid)
+        r = self.client.post("/rango/basicos", data={"exercise": ["hip thrust"]}, headers={"X-Requested-With": "fetch"})
+        self.assertEqual(r.get_json(), {"ok": True, "message": None})
+        self.assertEqual(self.chosen(), ["hip thrust"])
+        r = self.client.post("/rango/tarjeta", data={"show_rank": "on"}, headers={"X-Requested-With": "fetch"})
+        self.assertEqual(r.get_json(), {"ok": True})
+
     def test_rank_tab_shows_rank_with_table_and_progress_without(self):
         with app.app_context():
             db.session.get(User, self.uid).sex = "hombre"

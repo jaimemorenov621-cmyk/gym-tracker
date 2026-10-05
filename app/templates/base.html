@@ -247,6 +247,36 @@
             showDebugError({{ _('Promesa sin capturar:')|tojson }} + ' ' + reason);
         });
 
+        // Aviso breve arriba ("Guardado ✓" o un error), sin recargar.
+        function gyreToast(message, isError) {
+            document.querySelectorAll('.gyre-toast').forEach(t => t.remove());
+            const t = document.createElement('div');
+            t.className = 'gyre-toast' + (isError ? ' is-error' : '');
+            t.setAttribute('role', 'status');
+            t.textContent = message;
+            document.body.appendChild(t);
+            requestAnimationFrame(() => t.classList.add('visible'));
+            setTimeout(() => { t.classList.remove('visible'); setTimeout(() => t.remove(), 250); }, isError ? 3500 : 1400);
+        }
+
+        // <form data-autosave>: cada cambio se guarda solo (sin botón al final).
+        // La ruta responde {"ok": ...} cuando la petición lleva X-Requested-With.
+        document.addEventListener('change', function (e) {
+            const form = e.target.closest && e.target.closest('form[data-autosave]');
+            if (!form) return;
+            clearTimeout(form._saveTimer);
+            form._saveTimer = setTimeout(function () {
+                fetch(form.action || location.href, {
+                    method: 'POST', body: new FormData(form), headers: {'X-Requested-With': 'fetch'}
+                }).then(r => r.json()).then(function (data) {
+                    if (!data.ok) throw new Error(data.error || '');
+                    gyreToast(data.message || {{ _('Guardado ✓')|tojson }});
+                }).catch(function (err) {
+                    gyreToast((err && err.message) || {{ _('No se pudo guardar. Revisa la conexión.')|tojson }}, true);
+                });
+            }, 350);
+        });
+
         // window.confirm() no muestra nada y devuelve false al instante en
         // Android con la app instalada como PWA (display:standalone) --
         // reemplazo propio en HTML/CSS para que la confirmación funcione

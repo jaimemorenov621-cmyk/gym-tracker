@@ -4254,3 +4254,25 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 .ac-toggles input:checked + .ac-switch::after { transform: translateX(18px); }
 .ac-toggles input:focus-visible + .ac-switch { outline: 2px solid var(--accent); outline-offset: 2px; }
 .ac-sensitive { font-size: 0.68rem; font-weight: 700; color: #b26a00; }
+
+/* Aviso breve (autoguardado de formularios, base.html gyreToast). */
+.gyre-toast {
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top));
+    left: 50%;
+    transform: translate(-50%, -8px);
+    z-index: 2000;
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--color-success-dark, #17a973);
+    border: 1.5px solid currentColor;
+    font-weight: 700;
+    font-size: 0.88rem;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+}
+.gyre-toast.is-error { color: var(--color-danger, #c62828); }
+.gyre-toast.visible { opacity: 1; transform: translate(-50%, 0); }

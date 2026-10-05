@@ -3,7 +3,8 @@
 {% block content %}
     <p class="page-back"><a href="{{ url_for('athlete_card', user_id=current_user.id) }}">{{ _("← Tu tarjeta") }}</a></p>
     <h1 class="page-title">{{ _("Qué ven tus amigos") }}</h1>
-    <form method="post" class="ac-form">
+    <p class="alias-intro">{{ _("Cada cambio se guarda al momento.") }}</p>
+    <form method="post" class="ac-form" data-autosave>
         {{ form.hidden_tag() }}
         <div class="card card-elevated">
             <h2>{{ _("Rankings y datos") }}</h2>
@@ -54,7 +55,7 @@
                 <p class="alias-empty">{{ _("Aún no has desbloqueado logros.") }}</p>
             {% endif %}
         </div>
-        <button type="submit" class="btn form-submit">{{ _("Guardar") }}</button>
+        <noscript><button type="submit" class="btn form-submit">{{ _("Guardar") }}</button></noscript>
     </form>
     <script>
         // Tope por lista: se desactivan las casillas sin marcar al llegar.

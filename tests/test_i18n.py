@@ -21,7 +21,11 @@ class LocaleTests(DbTestCase):
         html = self.client.get("/login", headers={"Accept-Language": "en-US,en;q=0.9"}).get_data(as_text=True)
         self.assertEqual(self.lang_of(html), "en")
         html = self.client.get("/login", headers={"Accept-Language": "fr-FR,fr"}).get_data(as_text=True)
-        self.assertEqual(self.lang_of(html), "es")  # idioma sin traducir: español
+        self.assertEqual(self.lang_of(html), "en")  # idioma sin traducir: inglés
+        html = self.client.get("/login", headers={"Accept-Language": "ca-ES,ca;q=0.9,es;q=0.8"}).get_data(as_text=True)
+        self.assertEqual(self.lang_of(html), "es")  # el español aparece en la lista
+        html = self.client.get("/login").get_data(as_text=True)
+        self.assertEqual(self.lang_of(html), "es")  # sin cabecera
 
     def test_user_choice_wins_and_auto_goes_back_to_the_browser(self):
         self.login(self.uid)

@@ -6,9 +6,9 @@
     <p class="alias-intro">
         {{ _('Marca hasta %(n)s ejercicios que quieras seguir de cerca en la pestaña Rango.', n=max_basics) }} <b>{{ _("No cambia tu rango global") }}</b> {{ _("(sale siempre de los básicos clásicos): solo añade su seguimiento. Los que cuentan para una tabla de estándares muestran") }} <b>{{ _("su propio rango") }}</b>{{ _("; el resto, tu progresión.") }}
     </p>
-    <p class="alias-intro">{{ _("Aparecen tal y como los escribiste. Si ves dos nombres para el mismo ejercicio, son historiales distintos: elige el que uses ahora (verás cuántas sesiones tiene cada uno).") }}</p>
+    <p class="alias-intro">{{ _("Aparecen tal y como los escribiste. Si ves dos nombres para el mismo ejercicio, son historiales distintos: elige el que uses ahora (verás cuántas sesiones tiene cada uno).") }} {{ _("Cada cambio se guarda al momento.") }}</p>
     {% if items %}
-        <form method="post" class="card card-elevated pbasics-form">
+        <form method="post" class="card card-elevated pbasics-form" data-autosave>
             {{ form.hidden_tag() }}
             <ul class="pbasics-pick">
                 {% for it in items %}
@@ -27,7 +27,7 @@
                     </li>
                 {% endfor %}
             </ul>
-            <button type="submit" class="btn form-submit">{{ _("Guardar") }}</button>
+            <noscript><button type="submit" class="btn form-submit">{{ _("Guardar") }}</button></noscript>
         </form>
         <script>
             // Tope de {{ max_basics }}: se desactivan las casillas sin marcar al llegar.
