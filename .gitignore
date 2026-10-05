@@ -6,3 +6,4 @@ app.db
 .claude/
 local_assets/
 messages.pot
+debug/

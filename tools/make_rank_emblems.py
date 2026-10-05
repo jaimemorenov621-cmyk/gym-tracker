@@ -14,12 +14,13 @@ Presupuesto de adornos por rango (se acumulan; ver RANK_CFG):
                        resplandor, filigrana floral en el marco (campeón: corona alta)
   Titán                todo, con alas de fuego, + corona radiada, rayos y halo
 Divisiones: el numeral; II y III añaden gemas en la cinta.
-Efectos (todos desactivables): destellos solo donde la luz de arriba-izquierda
-reflejaría (SPARKLES, fijos), halo en Esmeralda/Campeón/Titán (GLOW) y rayos
+Efectos (todos desactivables): destellos solo en huecos vacíos de la silueta
+(tools/rank_sparkles.json, fijos), halo en Esmeralda/Campeón/Titán (GLOW) y rayos
 en Titán.
 
 Ejecutar: python tools/make_rank_emblems.py [--preview]
 """
+import json
 import math
 import os
 import random
@@ -498,39 +499,36 @@ def halo(doc, m, op=0.5):
 
 
 # ------------------------------------------------------------ efectos
-# Una única luz arriba-izquierda para todos. Un destello solo donde esa luz
-# daría un reflejo especular: esquina superior izquierda del marco y, si
-# existen, gema y corona (nunca en laurel, cinta, barra, alas, G ni
-# numeral). Coordenadas FIJAS relativas al lienzo (0-1), calculadas una vez
-# a partir de la geometría de cada rango; el primero es el dominante.
-SPARKLES = {
-    "hierro": [],
-    "bronce": [],
-    "plata": [(0.303, 0.231)],                                   # marco
-    "oro": [(0.303, 0.231)],
-    "platino": [(0.307, 0.237)],
-    "diamante": [(0.310, 0.240), (0.490, 0.104)],                # marco, cristal
-    "esmeralda": [(0.316, 0.248), (0.493, 0.206)],               # marco, gema de la corona
-    "campeon": [(0.318, 0.251), (0.493, 0.206)],
-    "titan": [(0.321, 0.254), (0.494, 0.210), (0.495, 0.137)],   # marco, gema, punta de la corona
-}
-SPARKLE_MAIN = 0.08 * 256      # el dominante mide ~8 % del ancho del emblema
+# Destellos SOLO en huecos vacíos de la silueta: posiciones y tamaños fijos,
+# calculados una vez por tools/place_rank_sparkles.py (máscara, envolvente
+# convexa y mapa de distancias) y guardados en tools/rank_sparkles.json:
+# [x, y, radio] relativos al lienzo. Aquí solo se leen, nunca se recalculan.
+SPARKLE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rank_sparkles.json")
+
+
+def load_sparkles(path=SPARKLE_FILE):
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+SPARKLES = load_sparkles()
 SPARKLE_MIN_PX = 64            # por debajo de este tamaño de pantalla, sin destellos
 GLOW = {"esmeralda": 0.25, "campeon": 0.42, "titan": 0.6}     # intensidad del halo por rango
 
 
 def sparkles(m, points):
-    """Estrella cóncava de 4 puntas: la primera dominante, el resto a la mitad."""
+    """Estrella cóncava de 4 puntas en cada [x, y, radio] (relativos al lienzo)."""
     spec = m["specular"]
     out = []
-    for i, (fx, fy) in enumerate(points):
-        x, y = fx * 256, fy * 256
-        r = SPARKLE_MAIN / 2 * (1 if i == 0 else 0.5)
+    for fx, fy, fr in points:
+        x, y, r = fx * 256, fy * 256, fr * 256
         k = r * 0.14
         star = (f"M{n(x)} {n(y - r)}Q{n(x + k)} {n(y - k)} {n(x + r)} {n(y)}Q{n(x + k)} {n(y + k)} {n(x)} {n(y + r)}"
                 f"Q{n(x - k)} {n(y + k)} {n(x - r)} {n(y)}Q{n(x - k)} {n(y - k)} {n(x)} {n(y - r)}Z")
         out.append(f'<path d="{star}" fill="{spec}"/><circle cx="{n(x)}" cy="{n(y)}" r="{n(r * 0.16)}" fill="{spec}"/>')
-    return "".join(out)
+    return f'<g id="sparkles">{"".join(out)}</g>' if out else ""
 
 
 def numeral_glyphs(x, y, h=12):
@@ -606,7 +604,7 @@ RANK_CFG = {
 }
 
 
-def build(key, division, sparkle=True, glow=True, sunburst=True):
+def build(key, division, sparkle=True, glow=True, sunburst=True, sparkle_points=None):
     """Emblema de un rango y división. Los tres efectos (destellos, halo y
     rayos) se pueden apagar por separado."""
     m = MATERIALS[key]
@@ -641,7 +639,8 @@ def build(key, division, sparkle=True, glow=True, sunburst=True):
             inner.append(crystal(doc, m, 128, 46 - 30 * sc, 16))
     body = f'<g transform="{inset(scale)}">{"".join(inner)}</g>'
     div = None if key == "titan" else division
-    fx = sparkles(m, SPARKLES[key]) if sparkle else ""
+    points = SPARKLES.get(key, []) if sparkle_points is None else sparkle_points
+    fx = sparkles(m, points) if sparkle else ""
     return doc.svg("".join(back) + body + ribbon(doc, m, div, y=CY + (202 - CY) * scale - 8) + fx)
 
 
