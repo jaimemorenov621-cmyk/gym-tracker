@@ -468,10 +468,68 @@ def _landing_stats_period():
     return "nueva", "Desde la landing nueva (30/09)", NEW_LANDING_SINCE
 
 
+ADMIN_USERNAME = "Jaime_309"
+
+
+def is_admin():
+    return current_user.is_authenticated and current_user.username == ADMIN_USERNAME
+
+
+@app.route("/landing/demo", methods=["POST"])
+@login_required
+def create_demo_account():
+    """Cuenta de demostración (app/demo.py) creada desde /landing/stats, con
+    el usuario y la contraseña que elige el administrador."""
+    from app import demo
+
+    if not is_admin() or not EmptyForm().validate_on_submit():
+        return redirect(url_for("index"))
+    username = (request.form.get("username") or "").strip()
+    password = request.form.get("password") or ""
+    lang = request.form.get("lang") if request.form.get("lang") in ("es", "en") else "es"
+    strength = {"diamante": 1.0, "esmeralda": 1.15, "campeon": 1.3}.get(request.form.get("rank"), 1.0)
+    if not re.fullmatch(r"[A-Za-z0-9_]{3,30}", username):
+        flash("Usuario: de 3 a 30 letras, números o _.")
+    elif len(password) < 8:
+        flash("La contraseña necesita al menos 8 caracteres.")
+    elif db.session.scalar(sa.select(User.id).where(User.username == username)) is not None:
+        flash(f"Ya existe el usuario {username}.")
+    elif not demo.start_demo_job(username, password, strength, lang,
+                                 current_user.username if request.form.get("friend") else None):
+        flash("Ya se está creando otra cuenta demo; espera a que termine.")
+    else:
+        flash(f"Creando {username}: tarda unos segundos. Recarga esta página para verla en la lista.")
+    return redirect(url_for("landing_stats") + "#demo")
+
+
+@app.route("/landing/demo/<int:user_id>/delete", methods=["POST"])
+@login_required
+def delete_demo_account(user_id):
+    if not is_admin() or not EmptyForm().validate_on_submit():
+        return redirect(url_for("index"))
+    user = db.session.get(User, user_id)
+    if user is not None and user.signup_method == "demo":  # solo cuentas demo
+        progression.delete_user_data(user.id)
+        datacache.clear()
+        flash(f"Cuenta demo {user.username} borrada.")
+    return redirect(url_for("landing_stats") + "#demo")
+
+
+def demo_accounts():
+    from app import demo
+
+    rows = []
+    for u in db.session.scalars(sa.select(User).where(User.signup_method == "demo").order_by(User.id)):
+        rows.append({"user": u, "level": progression.level_for(progression.current_xp(u.id))["level"],
+                     "rank": cached_profile(u)["global_rank"],
+                     "friend": social.are_friends(u.id, current_user.id)})
+    return {"accounts": rows, "job": dict(demo.DEMO_JOB)}
+
+
 @app.route("/landing/stats")
 @login_required
 def landing_stats():
-    if current_user.username != "Jaime_309":
+    if not is_admin():
         flash(gettext("No tienes acceso a esta página."))
         return redirect(url_for("index"))
 
@@ -573,6 +631,8 @@ def landing_stats():
         # Uso de la app en días sin entreno (no depende del periodo elegido).
         usage_report=usage.rest_day_report(weeks=6),
         activity=usage.activity_summary(),
+        demo=demo_accounts(),
+        demo_form=EmptyForm(),
         contact_messages=db.session.execute(
             sa.select(ContactMessage, User).join(User, User.id == ContactMessage.user_id)
             .order_by(ContactMessage.created_at.desc()).limit(30)

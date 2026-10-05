@@ -6,7 +6,7 @@
         {{ form.hidden_tag() }}
         <label for="body">{{ _("Dudas, errores, ideas o peticiones sobre tus datos:") }}</label>
         <textarea id="body" name="body" rows="7" maxlength="{{ max_chars }}" required>{{ body }}</textarea>
-        <p class="std-note">{{ _("Te responderemos al email de tu cuenta (%(email)s).", email=current_user.email) }}</p>
+        <p class="std-note">{{ _("Te responderemos al email con el que creaste tu cuenta.") }}</p>
         <button type="submit" class="btn">{{ _("Enviar") }}</button>
     </form>
 {% endblock %}

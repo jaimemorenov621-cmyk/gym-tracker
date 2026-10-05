@@ -4287,3 +4287,6 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 .stats-messages { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .stats-messages li { border-top: 1px solid var(--color-border, rgba(127,127,127,.2)); padding-top: 10px; }
 .stats-messages p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.demo-form { display: grid; gap: 10px; margin-top: 14px; }
+.demo-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.9rem; }
+.demo-form .demo-check { flex-direction: row; align-items: center; gap: 8px; font-weight: 500; }

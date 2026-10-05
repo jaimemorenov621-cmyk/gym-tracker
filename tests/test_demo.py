@@ -31,3 +31,42 @@ class DemoSeedTests(DbTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DemoFromStatsPageTests(DbTestCase):
+    def test_admin_creates_lists_and_deletes_a_demo_account(self):
+        from unittest import mock
+        from app import demo
+
+        class InlineThread:  # el hilo en segundo plano, sin hilo (determinista)
+            def __init__(self, target, daemon=None):
+                self.target = target
+
+            def start(self):
+                self.target()
+
+        admin = self.make_user("Jaime_309")
+        self.login(admin)
+        with mock.patch.object(demo.threading, "Thread", InlineThread):
+            r = self.client.post("/landing/demo", data={"username": "VideoDemo", "password": "clave-larga", "rank": "campeon",
+                                                         "lang": "es", "friend": "on"}, follow_redirects=True)
+        html = r.get_data(as_text=True)
+        self.assertIn("VideoDemo", html)
+        with app.app_context():
+            user = db.session.scalar(sa.select(User).where(User.username == "VideoDemo"))
+            self.assertTrue(user.check_password("clave-larga"))
+            self.assertTrue(social.are_friends(user.id, admin))
+            uid = user.id
+        self.client.post(f"/landing/demo/{uid}/delete")
+        with app.app_context():
+            self.assertIsNone(db.session.get(User, uid))
+            # una cuenta normal no se puede borrar por esta vía
+            self.client.post(f"/landing/demo/{admin}/delete")
+            self.assertIsNotNone(db.session.get(User, admin))
+
+    def test_only_admin(self):
+        uid = self.make_user("cualquiera")
+        self.login(uid)
+        self.client.post("/landing/demo", data={"username": "x_demo", "password": "12345678"})
+        with app.app_context():
+            self.assertIsNone(db.session.scalar(sa.select(User).where(User.username == "x_demo")))

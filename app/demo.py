@@ -11,9 +11,13 @@ la terminal de quien ejecuta el comando.
 
 Marcadas como demo: signup_method="demo" (no cuentan como altas reales en
 /landing/stats) y fecha de alta al inicio del historial.
+
+También se pueden crear desde /landing/stats (solo el administrador), en
+segundo plano: start_demo_job().
 """
 import random
 import secrets
+import threading
 from datetime import datetime, time, timedelta, timezone
 
 import click
@@ -66,7 +70,7 @@ def _weight_for(e1rm, reps, rir):
     return e1rm / (1 + (reps + rir) / 30)
 
 
-def seed_demo(username, weeks=52, strength=1.0, lang="es", friend=None, seed=7):
+def seed_demo(username, weeks=52, strength=1.0, lang="es", friend=None, seed=7, password=None):
     rnd = random.Random(seed)
     now = datetime.now(timezone.utc).replace(tzinfo=None)
     today = now.date()
@@ -74,7 +78,7 @@ def seed_demo(username, weeks=52, strength=1.0, lang="es", friend=None, seed=7):
     start_day -= timedelta(days=start_day.weekday())  # lunes
     name = (lambda k: EXERCISES[k][0]) if lang == "es" else (lambda k: EXERCISES[k][1])
 
-    password = secrets.token_urlsafe(9)
+    password = password or secrets.token_urlsafe(9)
     user = User(username=username, email=f"{username.lower()}@demo.gyre.invalid", sex="hombre", height_cm=178,
                 training_goal="hipertrofia", training_days="".join(map(str, TRAINING_DAYS)), body_phase="volumen",
                 effort_scale="rir", signup_method="demo", signup_source="demo",
@@ -213,3 +217,33 @@ def seed_demo_command(username, weeks, strength, lang, friend):
     sets = db.session.scalar(sa.select(sa.func.count()).select_from(SetEntry).join(Workout).where(Workout.user_id == user.id))
     click.echo(f"Creado {username!r}: nivel {level}, rango {rank['label'] if rank else 'sin rango'}, {sets} series.")
     click.echo(f"Contraseña (solo se muestra ahora): {password}")
+
+
+# ------------------------------------------------------------ desde la web
+# Creación en segundo plano desde /landing/stats: tarda unos segundos y no
+# debe chocar con el tiempo máximo de una petición. Estado del último trabajo
+# (un solo proceso en Render; si se reinicia, se pierde el estado, no la cuenta).
+DEMO_JOB = {"running": None, "error": None, "done": None}
+_job_lock = threading.Lock()
+
+
+def start_demo_job(username, password, strength, lang, friend):
+    with _job_lock:
+        if DEMO_JOB["running"]:
+            return False
+        DEMO_JOB.update(running=username, error=None, done=None)
+
+    def run():
+        with app.app_context():
+            try:
+                seed_demo(username, strength=strength, lang=lang, friend=friend, password=password)
+                DEMO_JOB["done"] = username
+            except Exception as exc:  # se enseña en la página
+                db.session.rollback()
+                app.logger.exception("Error creando la cuenta demo")
+                DEMO_JOB["error"] = f"{username}: {exc}"
+            finally:
+                DEMO_JOB["running"] = None
+
+    threading.Thread(target=run, daemon=True).start()
+    return True

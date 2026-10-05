@@ -94,6 +94,40 @@
         {% endif %}
     </div>
 
+    <div class="card card-elevated" style="margin-top:16px;" id="demo">
+        <h3 style="margin-top:0;">Cuentas de demostración</h3>
+        <p class="stats-footnote" style="margin-top:0;">Un año de entrenos realistas: el nivel, los logros y el rango salen de los datos. No cuentan en estas estadísticas. Entra con el usuario y la contraseña que pongas aquí (cierra antes tu sesión).</p>
+        {% if demo.job.running %}<p class="stats-footnote"><b>Creando {{ demo.job.running }}…</b> recarga en unos segundos.</p>{% endif %}
+        {% if demo.job.error %}<p class="form-error">Error: {{ demo.job.error }}</p>{% endif %}
+        {% if demo.accounts %}
+            <table class="stats-daily">
+                <thead><tr><th>Usuario</th><th>Nivel</th><th>Rango</th><th>Amiga tuya</th><th></th></tr></thead>
+                <tbody>
+                    {% for d in demo.accounts %}
+                        <tr>
+                            <td><b>{{ d.user.username }}</b></td><td>{{ d.level }}</td>
+                            <td>{{ d.rank.label if d.rank else '—' }}</td><td>{{ 'sí' if d.friend else 'no' }}</td>
+                            <td><form method="post" action="{{ url_for('delete_demo_account', user_id=d.user.id) }}" onsubmit="return confirmFormSubmit(this, '¿Borrar la cuenta demo {{ d.user.username }}?');">{{ demo_form.hidden_tag() }}<button type="submit" class="btn-inline">Borrar</button></form></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+        <form method="post" action="{{ url_for('create_demo_account') }}" class="form-ui demo-form">
+            {{ demo_form.hidden_tag() }}
+            <label>Usuario<input type="text" name="username" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+" autocapitalize="none" autocomplete="off"></label>
+            <label>Contraseña (mín. 8)<input type="text" name="password" required minlength="8" autocomplete="off"></label>
+            <label>Rango
+                <select name="rank"><option value="diamante">Diamante (alas de 3 filas)</option><option value="esmeralda">Esmeralda (alas grandes)</option><option value="campeon" selected>Campeón (alas grandes y corona)</option></select>
+            </label>
+            <label>Idioma de ejercicios y rutinas
+                <select name="lang"><option value="es">Español</option><option value="en">Inglés</option></select>
+            </label>
+            <label class="demo-check"><input type="checkbox" name="friend" checked> Amiga de mi cuenta (sale en tus rankings)</label>
+            <button type="submit" class="btn">Crear cuenta demo</button>
+        </form>
+    </div>
+
     <div class="card card-elevated" style="margin-top:16px;">
         <h3 style="margin-top:0;">Mensajes de contacto <small>({{ contact_messages|length }})</small></h3>
         {% if contact_messages %}
