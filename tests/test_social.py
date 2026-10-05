@@ -114,6 +114,29 @@ class SocialTests(DbTestCase):
         self.assertEqual(seen.count("1RM est."), 1)  # solo el de banca
         self.assertNotIn("rank-emblem", seen)
 
+    def test_effort_boards_come_first_and_respect_the_card(self):
+        """Progreso (contra uno mismo), récords del mes y constancia antes que el rango."""
+        self.befriend(self.ana, self.bea)
+        for days, kg in ((24, 100), (17, 102.5), (10, 105), (3, 107.5)):  # bea mejora cada semana
+            self.lift(self.bea, "press de banca", kg, days)
+        self.lift(self.ana, "press de banca", 140, 3)  # ana, más fuerte pero sin progreso medible
+        with app.app_context():
+            from app.routes import friends_rankings
+            boards = friends_rankings(db.session.get(User, self.ana))["boards"]
+            self.assertEqual(list(boards)[:4], ["progreso", "records", "constancia", "global"])
+            self.assertEqual([r["user"].username for r in boards["progreso"]], ["bea"])
+            self.assertGreater(boards["progreso"][0]["score"], 0)
+            bea_prs = next(r["score"] for r in boards["records"] if r["user"].username == "bea")
+            self.assertEqual(bea_prs, 3)  # la primera sesión no cuenta como récord
+        self.login(self.bea)
+        self.client.post("/rango/tarjeta", data={"in_rankings": "on", "show_rank": "on"})  # sin "show_progress"
+        with app.app_context():
+            from app import datacache
+            datacache.clear()
+            boards = friends_rankings(db.session.get(User, self.ana))["boards"]
+            self.assertEqual(boards["progreso"], [])
+            self.assertNotIn("bea", [r["user"].username for r in boards["records"]])
+
     def test_rankings_only_friends_and_opt_out(self):
         self.befriend(self.ana, self.bea)
         for uid, kg in ((self.ana, 100), (self.bea, 120), (self.carl, 200)):

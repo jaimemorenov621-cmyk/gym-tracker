@@ -45,6 +45,7 @@ from app.models import (
     LandingEvent,
     AiAnalysis,
     ContactMessage,
+    ImportDraft,
     BodyWeightEntry,
     WeeklyGoalHistory,
     UserAchievement,
@@ -1861,12 +1862,15 @@ def rank_page():
 
 # ------------------------------------------------------------ amigos
 def friends_rankings(user):
-    """Rankings con tus amigos (tú siempre incluido): rango global, cada
-    básico y constancia. Solo amigos aceptados que no se hayan salido de los
-    rankings, y solo lo que cada uno deja ver en su tarjeta."""
+    """Rankings con tus amigos (tú siempre incluido). Primero los que miden
+    esfuerzo y mejora frente a uno mismo (progreso del índice de fuerza en 4
+    semanas, récords del mes, constancia), para que no gane siempre quien
+    tiene mejor genética; después el rango global y cada básico. Solo amigos
+    aceptados que no se hayan salido de los rankings, y solo lo que cada uno
+    deja ver en su tarjeta."""
     ids = social.friend_ids(user.id)
     people = [user] + [u for u in (db.session.get(User, i) for i in ids) if u is not None]
-    boards = {"global": [], "constancia": [], **{b: [] for b in standards.BASICS}}
+    boards = {"progreso": [], "records": [], "constancia": [], "global": [], **{b: [] for b in standards.BASICS}}
     for person in people:
         me = person.id == user.id
         card = social.card_for(person.id)
@@ -1882,6 +1886,12 @@ def friends_rankings(user):
         if me or card.show_consistency:
             days = datacache.cached("consistency", person.id, lambda p=person: social.training_days(p.id))
             boards["constancia"].append({"user": person, "me": me, "score": days, "rank": None})
+        if me or card.show_progress:
+            strength = cached_strength(person.id)
+            if strength is not None:
+                boards["progreso"].append({"user": person, "me": me, "score": strength["pct"], "rank": None})
+            prs = datacache.cached("recent_prs", person.id, lambda p=person: progression.recent_prs(p.id))
+            boards["records"].append({"user": person, "me": me, "score": prs, "rank": None})
     for rows in boards.values():
         rows.sort(key=lambda r: (-r["score"], r["user"].username.lower()))
         for i, row in enumerate(rows, 1):
@@ -2006,7 +2016,8 @@ def athlete_card_edit():
         if card is None:
             card = social.card_for(current_user.id)
             db.session.add(card)
-        for flag in ("in_rankings", "show_rank", "show_level", "show_streak", "show_consistency", "show_kg", "show_bodyweight"):
+        for flag in ("in_rankings", "show_rank", "show_level", "show_streak", "show_consistency", "show_progress", "show_kg",
+                     "show_bodyweight"):
             setattr(card, flag, request.form.get(flag) == "on")
         valid_lifts = {i["exercise"] for i in overview}
         lifts = [n for n in dict.fromkeys(request.form.getlist("lift")) if n in valid_lifts][:social.MAX_FEATURED_LIFTS]
@@ -2318,6 +2329,62 @@ def weight():
         entries=list(reversed(entries)),
         chart_labels=[to_local(e.timestamp).strftime("%d/%m/%Y") for e in entries],
         chart_values=[e.weight for e in entries],
+    )
+
+
+# ------------------------------------------------------------ importar
+@app.route("/importar", methods=["GET", "POST"])
+@login_required
+def import_data():
+    """Paso 1: subir el CSV de Hevy o Strong (app/importer.py)."""
+    from app import importer
+
+    form = EmptyForm()
+    if form.validate_on_submit():
+        upload = request.files.get("file")
+        if upload is None or not upload.filename:
+            flash(gettext("Elige el archivo CSV que exportaste."))
+            return redirect(url_for("import_data"))
+        try:
+            draft = importer.parse_csv(upload.read(importer.MAX_BYTES + 1), unit=request.form.get("unit", "kg"))
+        except importer.ImportError_ as exc:
+            flash(str(exc))
+            return redirect(url_for("import_data"))
+        db.session.execute(sa.delete(ImportDraft).where(ImportDraft.user_id == current_user.id))
+        db.session.add(ImportDraft(user_id=current_user.id, payload=importer.draft_json(draft)))
+        db.session.commit()
+        return redirect(url_for("import_review"))
+    return render_template("import.html", title=gettext("Importar entrenos"), form=form)
+
+
+@app.route("/importar/revisar", methods=["GET", "POST"])
+@login_required
+def import_review():
+    """Paso 2: elegir a qué ejercicio tuyo corresponde cada nombre e importar."""
+    from app import importer
+
+    record = db.session.scalar(sa.select(ImportDraft).where(ImportDraft.user_id == current_user.id))
+    if record is None:
+        return redirect(url_for("import_data"))
+    draft = json.loads(record.payload)
+    names = list(draft["exercises"])
+    form = EmptyForm()
+    if form.validate_on_submit():
+        mapping = {name: (request.form.get(f"map-{i}") or "").strip() for i, name in enumerate(names)}
+        result = importer.apply_import(current_user, draft, mapping, skip_same_day=bool(request.form.get("skip_same_day")))
+        db.session.delete(record)
+        db.session.commit()
+        datacache.invalidate(current_user.id)
+        flash(gettext("Importados %(w)s entrenos y %(s)s series.", w=result["workouts"], s=result["sets"])
+              + (" " + gettext("%(n)s ya estaban y no se han duplicado.", n=result["duplicates"]) if result["duplicates"] else ""))
+        return redirect(url_for("history"))
+    suggestions, own = importer.suggest_names(current_user.id, names)
+    starts = [w["start"] for w in draft["workouts"]]
+    return render_template(
+        "import_review.html", title=gettext("Revisar importación"), form=form, draft=draft,
+        rows=[(i, name, draft["exercises"][name], suggestions[name]) for i, name in enumerate(names)],
+        own=own, first=to_local(datetime.fromisoformat(min(starts))), last=to_local(datetime.fromisoformat(max(starts))),
+        total_sets=sum(len(w["sets"]) for w in draft["workouts"]), overlap=importer.overlap(current_user.id, draft),
     )
 
 

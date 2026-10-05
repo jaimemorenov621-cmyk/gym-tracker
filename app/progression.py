@@ -46,6 +46,7 @@ from app import app, db
 from app.models import (
     AiAnalysis,
     ContactMessage,
+    ImportDraft,
     BodyWeightEntry,
     DailyActivity,
     DailyCheckin,
@@ -264,6 +265,16 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
         week["capped"] = sorted(set(week["capped"]))
         total += week["total"]
     return XpReport(total, dict(sorted(weeks.items(), reverse=True)), by_workout)
+
+
+def recent_prs(user_id, days=28):
+    """Récords reales (los que dan XP: superan una sesión anterior, con el
+    tope diario) en los últimos `days` días. Para el ranking de amigos."""
+    inputs = load_xp_inputs(user_id)
+    report = compute_xp(inputs)
+    since = _now() - timedelta(days=days)
+    recent = {w.id for w in inputs.workouts if w.ts >= since}
+    return sum(info["prs_n"] for wid, info in report.by_workout.items() if wid in recent)
 
 
 # ------------------------------------------------------------------ caché
@@ -598,6 +609,7 @@ def _user_tables(user_id):
         (DailyActivity, DailyActivity.user_id == user_id),
         (DailyCheckin, DailyCheckin.user_id == user_id),
         (ContactMessage, ContactMessage.user_id == user_id),
+        (ImportDraft, ImportDraft.user_id == user_id),
     ]
 
 

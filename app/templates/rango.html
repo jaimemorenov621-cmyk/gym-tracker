@@ -98,31 +98,33 @@
             <a class="btn-outline btn-inline" href="{{ url_for('friends_page') }}">{{ _('Amigos') if rankings.friends else _('Invitar') }}</a>
         </div>
         {% if not rankings.friends %}
-            <p class="std-note">{{ _("Invita a quien entrene contigo y comparad rangos, levantamientos y constancia. Solo veis lo que cada uno elige enseñar.") }}</p>
+            <p class="std-note">{{ _("Invita a quien entrene contigo y comparad progreso, récords, constancia y rangos. Solo veis lo que cada uno elige enseñar.") }}</p>
         {% else %}
             <div class="ranking-tabs" role="tablist">
-                <button type="button" role="tab" class="is-active" data-board="global">{{ _("Rango") }}</button>
-                <button type="button" role="tab" data-board="basico">{{ _("Por básico") }}</button>
+                <button type="button" role="tab" class="is-active" data-board="progreso">{{ _("Progreso") }}</button>
+                <button type="button" role="tab" data-board="records">{{ _("Récords") }}</button>
                 <button type="button" role="tab" data-board="constancia">{{ _("Constancia") }}</button>
+                <button type="button" role="tab" data-board="global">{{ _("Rango") }}</button>
+                <button type="button" role="tab" data-board="basico">{{ _("Por básico") }}</button>
             </div>
             <select class="ranking-basic" aria-label="{{ _('Básico') }}" hidden>
                 {% for b in standards.BASICS %}<option value="{{ b }}">{{ rankings.basic_labels[b] }}</option>{% endfor %}
             </select>
             {% for key, rows in rankings.boards.items() %}
-                <ol class="ranking-list" data-board-key="{{ key }}"{% if key != 'global' %} hidden{% endif %}>
+                <ol class="ranking-list" data-board-key="{{ key }}"{% if key != 'progreso' %} hidden{% endif %}>
                     {% for row in rows %}
                         <li class="{{ 'is-me' if row.me }}">
                             <span class="ranking-pos">{{ row.pos }}</span>
                             {% if row.rank %}{{ macros.rank_emblem(row.rank.key, 30, row.rank.division) }}{% endif %}
                             <a class="ranking-name" href="{{ url_for('athlete_card', user_id=row.user.id) }}">{{ row.user.username }}{% if row.me %} <small>{{ _("(tú)") }}</small>{% endif %}</a>
-                            <span class="ranking-value">{% if row.rank %}{{ row.rank.label }}{% else %}{{ ngettext('%(num)d día', '%(num)d días', row.score) }}{% endif %}</span>
+                            <span class="ranking-value">{% if row.rank %}{{ row.rank.label }}{% elif key == 'progreso' %}<b class="{{ 'up' if row.score > 0 else ('down' if row.score < 0 else '') }}">{{ '+' if row.score > 0 }}{{ row.score|num }} %</b>{% elif key == 'records' %}{{ ngettext('%(num)d récord', '%(num)d récords', row.score) }}{% else %}{{ ngettext('%(num)d día', '%(num)d días', row.score) }}{% endif %}</span>
                         </li>
                     {% else %}
                         <li class="ranking-empty">{{ _("Nadie tiene datos aquí todavía.") }}</li>
                     {% endfor %}
                 </ol>
             {% endfor %}
-            <p class="std-note">{{ _("Rango con tus marcas de los últimos 90 días, ajustadas a peso y sexo; un récord que salta mucho de golpe no cuenta aquí hasta que lo repites. Constancia: días entrenados en las últimas 4 semanas.") }}</p>
+            <p class="std-note">{{ _("Progreso: cuánto ha subido tu índice de fuerza en 4 semanas, comparándote contigo mismo (al empezar se progresa más rápido). Récords: los que dan XP en las últimas 4 semanas. Constancia: días entrenados en las últimas 4 semanas. Rango: tus marcas de los últimos 90 días, ajustadas a peso y sexo; un récord que salta mucho de golpe no cuenta hasta que lo repites.") }}</p>
         {% endif %}
         <a class="ranking-mycard" href="{{ url_for('athlete_card', user_id=current_user.id) }}">{{ _('Mi tarjeta de atleta') }} {{ macros.icon('chevron-right', 16) }}</a>
     </div>

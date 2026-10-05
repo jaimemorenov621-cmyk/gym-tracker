@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+    <p class="page-back"><a href="{{ url_for('import_data') }}">{{ _("← Elegir otro archivo") }}</a></p>
+    <h1 class="page-title">{{ _("Revisar importación") }}</h1>
+    <div class="card card-elevated">
+        <p><b>{{ ngettext('%(num)d entreno', '%(num)d entrenos', draft.workouts|length) }}</b> · {{ ngettext('%(num)d serie', '%(num)d series', total_sets) }} · {{ _('del %(a)s al %(b)s', a=first.strftime('%d/%m/%Y'), b=last.strftime('%d/%m/%Y')) }}</p>
+        <p class="std-note">{{ _("Elige con qué nombre se guarda cada ejercicio. Si ya lo tienes en Gyre con otro nombre, escríbelo igual (o elígelo de la lista) para que se una a tu historial y a tus récords. Déjalo vacío para no importarlo.") }}</p>
+    </div>
+    <form method="post" class="import-review-form">
+        {{ form.hidden_tag() }}
+        <datalist id="ownExercises">{% for n in own %}<option value="{{ n }}">{% endfor %}</datalist>
+        <ul class="card card-elevated import-map">
+            {% for i, name, n, suggestion in rows %}
+                <li>
+                    <span class="import-map-source"><strong>{{ name }}</strong><small>{{ ngettext('%(num)d serie', '%(num)d series', n) }}</small></span>
+                    <input type="text" name="map-{{ i }}" value="{{ suggestion }}" list="ownExercises" maxlength="64"
+                           aria-label="{{ _('Nombre en Gyre para %(name)s', name=name) }}" autocapitalize="none">
+                </li>
+            {% endfor %}
+        </ul>
+        <div class="import-actions">
+            {% if overlap %}
+                <label class="import-skip"><input type="checkbox" name="skip_same_day" checked> {{ ngettext('Saltar %(num)d entreno de un día en el que ya entrenaste en Gyre (por si lo apuntaste en las dos apps)', 'Saltar %(num)d entrenos de días en los que ya entrenaste en Gyre (por si los apuntaste en las dos apps)', overlap) }}</label>
+            {% endif %}
+            <button type="submit" class="btn">{{ _("Importar") }}</button>
+        </div>
+    </form>
+{% endblock %}

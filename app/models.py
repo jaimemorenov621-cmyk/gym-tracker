@@ -471,6 +471,7 @@ class AthleteCard(db.Model):
     show_consistency: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
     show_kg: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
     show_bodyweight: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
+    show_progress: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
     featured_lifts: so.Mapped[str] = so.mapped_column(sa.Text, default="[]", server_default="[]")
     featured_achievements: so.Mapped[str] = so.mapped_column(sa.Text, default="[]", server_default="[]")
 
@@ -483,4 +484,15 @@ class ContactMessage(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
     body: so.Mapped[str] = so.mapped_column(sa.Text)
+    created_at: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+
+
+class ImportDraft(db.Model):
+    """CSV de otra app ya leído (app/importer.py), a la espera de que el
+    usuario revise los nombres de los ejercicios. Uno por usuario; se borra
+    al importar o al subir otro."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True, unique=True)
+    payload: so.Mapped[str] = so.mapped_column(sa.Text)
     created_at: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))

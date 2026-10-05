@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <p class="page-back"><a href="{{ url_for('settings') }}">{{ _("← Configuración") }}</a></p>
+    <h1 class="page-title">{{ _("Importar entrenos") }}</h1>
+    <p class="alias-intro">{{ _("Trae tu historial de otra app. Antes de importar podrás revisar a qué ejercicio tuyo corresponde cada uno; si vuelves a importar el mismo archivo, no se duplica nada.") }}</p>
+
+    <div class="card card-elevated import-help">
+        <h2>{{ _("Hevy") }}</h2>
+        <p>{{ _("Perfil → Ajustes → Exportar e importar datos → Exportar datos → Exportar entrenamientos. Te llega un archivo CSV al email de tu cuenta de Hevy.") }}</p>
+        <h2>{{ _("Strong") }}</h2>
+        <p>{{ _("Ajustes → Exportar datos de Strong. Indica abajo si tus pesos están en kg o en libras.") }}</p>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="card card-elevated form-ui import-form">
+        {{ form.hidden_tag() }}
+        <label class="field-label" for="file">{{ _("Archivo CSV") }}</label>
+        <input type="file" id="file" name="file" accept=".csv,.tsv,text/csv" required>
+        <label class="field-label" for="unit">{{ _("Unidad de peso (solo Strong; Hevy la indica en el archivo)") }}</label>
+        <select id="unit" name="unit"><option value="kg">kg</option><option value="lb">{{ _("libras") }}</option></select>
+        <button type="submit" class="btn">{{ macros.icon('upload', 16) }} {{ _("Leer archivo") }}</button>
+    </form>
+{% endblock %}

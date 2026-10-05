@@ -4290,3 +4290,25 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 .demo-form { display: grid; gap: 10px; margin-top: 14px; }
 .demo-form label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.9rem; }
 .demo-form .demo-check { flex-direction: row; align-items: center; gap: 8px; font-weight: 500; }
+
+/* Importar entrenos */
+.import-help h2 { font-size: 1rem; margin: 0 0 4px; }
+.import-help p { margin: 0 0 12px; color: var(--color-text-muted); font-size: 0.9rem; }
+.import-form { display: flex; flex-direction: column; gap: 10px; }
+.import-map { list-style: none; padding: 6px 16px; display: flex; flex-direction: column; }
+.import-map li { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--color-border-soft); }
+.import-map li:last-child { border-bottom: 0; }
+.import-map-source { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.import-map-source small { color: var(--color-text-muted); }
+.import-map input { width: 100%; box-sizing: border-box; padding: 9px 10px; font: inherit; font-size: 16px; border: 1.5px solid var(--color-border-soft); border-radius: 10px; background: var(--surface-2); color: var(--color-text); }
+/* El botón siempre a mano (la lista puede ser muy larga). */
+.import-actions { position: sticky; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 5; display: flex; flex-direction: column; gap: 8px; padding: 12px; margin-top: 12px; border-radius: var(--radius-card, 16px); background: var(--surface); box-shadow: 0 -6px 20px rgba(0,0,0,.12); }
+@media (min-width: 601px) { .import-actions { bottom: 12px; } }
+.import-skip { display: flex; gap: 8px; align-items: flex-start; font-size: 0.88rem; }
+@media (max-width: 420px) { .import-map li { grid-template-columns: 1fr; gap: 4px; } }
+
+/* Barra de arriba (ordenador): la rueda de ajustes, solo icono y al final. */
+.top-nav-app .btn-nav-icon { margin-left: auto; padding: 8px 10px; }
+.top-nav-app { flex-wrap: wrap; row-gap: 4px; }
+/* En ordenador la rueda ya está en la barra de arriba. */
+@media (min-width: 601px) { body:has(.top-nav-app) .tab-gear { display: none; } }

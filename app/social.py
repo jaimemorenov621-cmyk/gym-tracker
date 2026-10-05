@@ -133,7 +133,7 @@ def card_for(user_id):
     card = db.session.get(AthleteCard, user_id)
     if card is None:
         card = AthleteCard(user_id=user_id, in_rankings=True, show_rank=True, show_level=True, show_streak=True,
-                           show_consistency=True, show_kg=True, show_bodyweight=False,
+                           show_consistency=True, show_kg=True, show_bodyweight=False, show_progress=True,
                            featured_lifts="[]", featured_achievements="[]")
     return card
 
