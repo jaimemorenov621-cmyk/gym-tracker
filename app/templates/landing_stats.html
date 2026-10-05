@@ -95,6 +95,19 @@
     </div>
 
     <div class="card card-elevated" style="margin-top:16px;">
+        <h3 style="margin-top:0;">Mensajes de contacto <small>({{ contact_messages|length }})</small></h3>
+        {% if contact_messages %}
+            <ul class="stats-messages">
+                {% for m, u in contact_messages %}
+                    <li><small>{{ to_local(m.created_at).strftime('%d/%m/%Y %H:%M') }} · <b>{{ u.username }}</b> · {{ u.email }}</small><p>{{ m.body }}</p></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="stats-footnote" style="margin:0;">Nadie ha escrito todavía (Configuración → Contacto).</p>
+        {% endif %}
+    </div>
+
+    <div class="card card-elevated" style="margin-top:16px;">
         <h3 style="margin-top:0;">Usuarios activos</h3>
         <p class="stats-footnote" style="margin-top:0;">
             <b>{{ activity.today }}</b> hoy · <b>{{ activity.week }}</b> en 7 días · <b>{{ activity.month }}</b> en 30 días · {{ activity.total }} cuentas en total.

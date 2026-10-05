@@ -44,6 +44,7 @@ from app.models import (
     ExerciseFavorite,
     LandingEvent,
     AiAnalysis,
+    ContactMessage,
     BodyWeightEntry,
     WeeklyGoalHistory,
     UserAchievement,
@@ -572,6 +573,10 @@ def landing_stats():
         # Uso de la app en días sin entreno (no depende del periodo elegido).
         usage_report=usage.rest_day_report(weeks=6),
         activity=usage.activity_summary(),
+        contact_messages=db.session.execute(
+            sa.select(ContactMessage, User).join(User, User.id == ContactMessage.user_id)
+            .order_by(ContactMessage.created_at.desc()).limit(30)
+        ).all(),
     )
 
 
@@ -2254,6 +2259,69 @@ def weight():
         chart_labels=[to_local(e.timestamp).strftime("%d/%m/%Y") for e in entries],
         chart_values=[e.weight for e in entries],
     )
+
+
+# ------------------------------------------------------------ cuenta
+CONTACT_MAX_CHARS = 2000
+CONTACT_PER_DAY = 5
+
+
+@app.route("/cuenta/exportar")
+@login_required
+def export_account():
+    """Descarga de todos tus datos en JSON (portabilidad, RGPD)."""
+    data = json.dumps(progression.export_user_data(current_user.id), ensure_ascii=False, indent=2)
+    response = make_response(data)
+    response.headers["Content-Type"] = "application/json; charset=utf-8"
+    name = re.sub(r"[^A-Za-z0-9_-]", "", current_user.username) or "usuario"
+    response.headers["Content-Disposition"] = f'attachment; filename="gyre-{name}-{usage.local_today().isoformat()}.json"'
+    return response
+
+
+@app.route("/cuenta/borrar", methods=["GET", "POST"])
+@login_required
+def delete_account():
+    """Borrar tu cuenta y todos tus datos tú mismo. Para confirmar hay que
+    escribir el nombre de usuario (vale también para cuentas de Google, que
+    no tienen contraseña)."""
+    form = EmptyForm()
+    error = None
+    if form.validate_on_submit():
+        if (request.form.get("confirm") or "").strip() != current_user.username:
+            error = gettext("Escribe tu nombre de usuario exactamente igual para confirmar.")
+        else:
+            uid = current_user.id
+            logout_user()
+            progression.delete_user_data(uid)
+            datacache.clear()
+            flash(gettext("Tu cuenta y todos tus datos se han borrado."))
+            return redirect(url_for("landing"))
+    return render_template("delete_account.html", title=gettext("Borrar mi cuenta"), form=form, error=error)
+
+
+@app.route("/contacto", methods=["GET", "POST"])
+@login_required
+def contact():
+    """Escribir al responsable de la app sin publicar un email."""
+    form = EmptyForm()
+    body = (request.form.get("body") or "").strip()
+    if form.validate_on_submit():
+        since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=1)
+        sent_today = db.session.scalar(
+            sa.select(sa.func.count()).select_from(ContactMessage)
+            .where(ContactMessage.user_id == current_user.id, ContactMessage.created_at >= since)
+        )
+        if not body:
+            flash(gettext("Escribe tu mensaje."))
+        elif sent_today >= CONTACT_PER_DAY:
+            flash(gettext("Has enviado muchos mensajes hoy. Inténtalo mañana."))
+        else:
+            db.session.add(ContactMessage(user_id=current_user.id, body=body[:CONTACT_MAX_CHARS]))
+            db.session.commit()
+            flash(gettext("Mensaje enviado. Te responderemos al email de tu cuenta."))
+            return redirect(url_for("settings"))
+    return render_template("contact.html", title=gettext("Contacto"), form=form, body=body,
+                           max_chars=CONTACT_MAX_CHARS)
 
 
 @app.route("/idioma", methods=["POST"])

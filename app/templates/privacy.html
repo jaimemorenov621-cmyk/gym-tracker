@@ -3,7 +3,7 @@
 {% block content %}
 <div style="max-width:680px; margin:0 auto;">
     <h1>{{ _("Política de privacidad de Gyre") }}</h1>
-    <p style="color:var(--color-text-muted);">{{ _("Última actualización: 04/10/2026") }}</p>
+    <p style="color:var(--color-text-muted);">{{ _("Última actualización: 05/10/2026") }}</p>
 
     <h3>{{ _("Qué datos guardamos") }}</h3>
     <p>{{ _("Al crear una cuenta (con usuario/contraseña o con Google) guardamos tu nombre de usuario y tu email. Si inicias sesión con Google, no vemos ni guardamos tu contraseña de Google en ningún momento — Google solo nos confirma tu email y nombre.") }}</p>
@@ -30,10 +30,13 @@
     <p>{{ _("No usamos cookies de publicidad ni de seguimiento de terceros.") }}</p>
 
     <h3>{{ _("Borrar tu cuenta y tus datos") }}</h3>
-    <p>{{ _("Escríbenos a") }} <a href="mailto:jaimemorenov621@gmail.com">{{ _("jaimemorenov621@gmail.com") }}</a> {{ _("pidiendo el borrado de tu cuenta y te eliminaremos todos los datos asociados: entrenamientos, rutinas, notas, peso, check-in, logros, amistades, tarjeta de atleta, registro de uso y análisis de IA.") }}</p>
-    <p>{{ _("También puedes pedirnos por el mismo email una copia de tus datos en un archivo (formato JSON).") }}</p>
+    <p>{{ _("Desde Configuración puedes, tú mismo y al momento:") }}</p>
+    <ul>
+        <li><b>{{ _("Descargar mis datos") }}</b>{{ _(": una copia de todos tus datos en un archivo (formato JSON).") }}</li>
+        <li><b>{{ _("Borrar mi cuenta") }}</b>{{ _(": se eliminan para siempre tu cuenta y todos sus datos (entrenamientos, rutinas, notas, peso, check-in, logros, amistades, tarjeta de atleta, registro de uso, mensajes y análisis de IA).") }}</li>
+    </ul>
 
     <h3>{{ _("Contacto") }}</h3>
-    <p><a href="mailto:jaimemorenov621@gmail.com">{{ _("jaimemorenov621@gmail.com") }}</a></p>
+    <p>{{ _("Desde la app, en Configuración → Contacto. Guardamos el mensaje para poder responderte y se borra junto con tu cuenta.") }}{% if current_user.is_authenticated %} <a class="btn-inline" href="{{ url_for('contact') }}">{{ _("Escribir un mensaje") }}</a>{% endif %}</p>
 </div>
 {% endblock %}

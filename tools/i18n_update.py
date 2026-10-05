@@ -22,6 +22,7 @@ def pybabel(*args):
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")  # consola de Windows (cp1252)
     keywords = [arg for kw in EXTRACT_KEYWORDS for arg in ("-k", kw)]
     pybabel("extract", "-F", "babel.cfg", *keywords, "-o", "messages.pot", ".")
     pybabel("update", "-i", "messages.pot", "-d", "app/translations")

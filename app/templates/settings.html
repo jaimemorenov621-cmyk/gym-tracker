@@ -145,6 +145,9 @@
     <nav class="card card-elevated settings-list" aria-label="{{ _('Más opciones') }}">
         <a href="{{ url_for('achievements_page') }}"><span class="settings-list-icon">{{ macros.icon('trophy', 18) }}</span><span>{{ _("Logros") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
         <a href="{{ url_for('privacy') }}"><span class="settings-list-icon">{{ macros.icon('shield', 18) }}</span><span>{{ _("Privacidad") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
+        <a href="{{ url_for('contact') }}"><span class="settings-list-icon">{{ macros.icon('mail', 18) }}</span><span>{{ _("Contacto") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
+        <a href="{{ url_for('export_account') }}"><span class="settings-list-icon">{{ macros.icon('download', 18) }}</span><span>{{ _("Descargar mis datos") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
+        <a href="{{ url_for('delete_account') }}" class="is-danger-soft"><span class="settings-list-icon">{{ macros.icon('trash', 18) }}</span><span>{{ _("Borrar mi cuenta") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
         <a href="{{ url_for('logout') }}" class="is-danger"><span class="settings-list-icon">{{ macros.icon('log-out', 18) }}</span><span>{{ _("Cerrar sesión") }}</span></a>
     </nav>
 {% endblock %}

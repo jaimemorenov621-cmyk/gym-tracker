@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <p class="page-back"><a href="{{ url_for('settings') }}">{{ _("← Configuración") }}</a></p>
+    <h1 class="page-title">{{ _("Borrar mi cuenta") }}</h1>
+    <div class="card card-elevated">
+        <p>{{ _("Se borrarán para siempre tu cuenta y todos tus datos: entrenamientos, series, rutinas, notas, peso corporal, check-in, logros, amistades, tarjeta de atleta, registro de uso, mensajes y análisis de IA. No se puede deshacer.") }}</p>
+        <p class="std-note">{{ _("Si quieres guardar una copia antes, descárgala:") }} <a class="btn-inline" href="{{ url_for('export_account') }}">{{ macros.icon('download', 15) }} {{ _("Descargar mis datos") }}</a></p>
+        <form method="post" class="delete-account-form form-ui">
+            {{ form.hidden_tag() }}
+            <label for="confirm">{{ _("Para confirmar, escribe tu nombre de usuario: %(name)s", name=current_user.username) }}</label>
+            <input type="text" id="confirm" name="confirm" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+            {% if error %}<p class="form-error">{{ error }}</p>{% endif %}
+            <button type="submit" class="btn btn-danger">{{ macros.icon('trash', 16) }} {{ _("Borrar mi cuenta para siempre") }}</button>
+        </form>
+    </div>
+{% endblock %}

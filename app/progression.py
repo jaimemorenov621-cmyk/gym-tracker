@@ -45,6 +45,7 @@ from sqlalchemy.pool import Pool
 from app import app, db
 from app.models import (
     AiAnalysis,
+    ContactMessage,
     BodyWeightEntry,
     DailyActivity,
     DailyCheckin,
@@ -596,12 +597,13 @@ def _user_tables(user_id):
         (UserAchievement, UserAchievement.user_id == user_id),
         (DailyActivity, DailyActivity.user_id == user_id),
         (DailyCheckin, DailyCheckin.user_id == user_id),
+        (ContactMessage, ContactMessage.user_id == user_id),
     ]
 
 
 def delete_user_data(user_id):
-    """Borra la cuenta y TODOS sus datos (petición de borrado por email,
-    ver privacy.html). Con sentencias directas: el ORM no puede borrar un
+    """Borra la cuenta y TODOS sus datos (Ajustes > Borrar mi cuenta, o
+    flask delete-user). Con sentencias directas: el ORM no puede borrar un
     User (User.workouts es WriteOnly)."""
     for model, cond in _user_tables(user_id):
         db.session.execute(sa.delete(model).where(cond).execution_options(xp_irrelevant=True))

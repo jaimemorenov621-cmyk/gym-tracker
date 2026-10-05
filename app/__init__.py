@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from authlib.integrations.flask_client import OAuth
-from flask_babel import Babel, get_locale
+from flask_babel import Babel, get_locale, lazy_gettext
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -17,6 +17,7 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login = LoginManager(app)
 login.login_view = "login"
+login.login_message = lazy_gettext("Inicia sesión para ver esta página.")
 
 from app import i18n  # noqa: E402
 

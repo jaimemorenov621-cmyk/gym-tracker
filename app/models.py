@@ -473,3 +473,14 @@ class AthleteCard(db.Model):
     show_bodyweight: so.Mapped[bool] = so.mapped_column(default=False, server_default=sa.false())
     featured_lifts: so.Mapped[str] = so.mapped_column(sa.Text, default="[]", server_default="[]")
     featured_achievements: so.Mapped[str] = so.mapped_column(sa.Text, default="[]", server_default="[]")
+
+
+class ContactMessage(db.Model):
+    """Mensaje de un usuario al responsable de la app (Ajustes > Contacto),
+    en lugar de publicar un email. Se lee en /landing/stats y se borra con
+    la cuenta."""
+
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
+    body: so.Mapped[str] = so.mapped_column(sa.Text)
+    created_at: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))

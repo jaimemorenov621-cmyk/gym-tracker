@@ -4276,3 +4276,14 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 }
 .gyre-toast.is-error { color: var(--color-danger, #c62828); }
 .gyre-toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+/* Borrar cuenta y contacto */
+.delete-account-form, .contact-form { display: flex; flex-direction: column; gap: 10px; }
+.delete-account-form input[type="text"], .contact-form textarea { width: 100%; box-sizing: border-box; }
+.contact-form textarea { resize: vertical; min-height: 140px; font: inherit; }
+.form-error { color: var(--color-danger); font-weight: 600; margin: 0; }
+.delete-account-form .btn-danger { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.settings-list a.is-danger-soft { color: var(--color-danger); }
+.stats-messages { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.stats-messages li { border-top: 1px solid var(--color-border, rgba(127,127,127,.2)); padding-top: 10px; }
+.stats-messages p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
