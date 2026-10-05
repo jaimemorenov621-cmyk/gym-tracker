@@ -142,6 +142,8 @@ class ImporterTests(DbTestCase):
         self.assertEqual(names("jalon cable"), ["Jalón al pecho", "Jalón al pecho agarre ancho"])  # ninguno dice "cable": los de "jalon"
         lats = [i["name"] for i in self.client.get("/api/exercises/search?muscle=lats").get_json()]
         self.assertEqual(sorted(lats), ["Dominada supina", "Jalón al pecho", "Jalón al pecho agarre ancho"])
+        both = [i["name"] for i in self.client.get("/api/exercises/search?muscle=lats&q=jalon").get_json()]
+        self.assertEqual(both, ["Jalón al pecho", "Jalón al pecho agarre ancho"])  # músculo y texto a la vez
 
     def test_guess_muscle_from_the_name(self):
         self.assertEqual(importer.guess_muscle("Triceps Pressdown"), "triceps")

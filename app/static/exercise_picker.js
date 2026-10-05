@@ -54,14 +54,49 @@ function toggleFavorite(event, id) {
         });
 }
 
+// Chips de músculos bajo el buscador ("Todos" + los del catálogo). Al tocar
+// uno se llama a onSelect(slug o ''). Los usan este selector y el de importar.
+let pickerMuscle = '';
+
+function buildMuscleChips(container, onSelect) {
+    if (!container) return;
+    container.innerHTML = '';
+    [['', T('Todos')]].concat(MUSCLE_OPTIONS).forEach(([slug, label]) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'muscle-chip' + (slug === '' ? ' active' : '');
+        b.dataset.muscle = slug;
+        b.textContent = label;
+        b.setAttribute('aria-pressed', slug === '' ? 'true' : 'false');
+        b.addEventListener('click', () => {
+            container.querySelectorAll('.muscle-chip').forEach(c => {
+                c.classList.toggle('active', c === b);
+                c.setAttribute('aria-pressed', c === b ? 'true' : 'false');
+            });
+            onSelect(slug);
+        });
+        container.appendChild(b);
+    });
+}
+
+function setMuscleChip(container, slug) {
+    if (!container) return;
+    container.querySelectorAll('.muscle-chip').forEach(c => {
+        const on = c.dataset.muscle === (slug || '');
+        c.classList.toggle('active', on);
+        c.setAttribute('aria-pressed', on ? 'true' : 'false');
+        if (on && slug) c.scrollIntoView({block: 'nearest', inline: 'center'});
+    });
+}
+
 function searchExercises(query) {
     clearTimeout(searchTimeout);
-    if (query.trim().length < 2) {
+    if (query.trim().length < 2 && !pickerMuscle) {
         resetExercisePickerResults();
         return;
     }
     searchTimeout = setTimeout(() => {
-        fetch('/api/exercises/search?q=' + encodeURIComponent(query))
+        fetch('/api/exercises/search?q=' + encodeURIComponent(query) + (pickerMuscle ? '&muscle=' + encodeURIComponent(pickerMuscle) : ''))
             .then(r => r.json())
             .then(results => {
                 lastSearchResults = results;
@@ -207,6 +242,15 @@ function openExercisePicker(replaceUrl, replaceExtra) {
     document.getElementById('exercisePickerBackdrop').classList.add('open');
     document.getElementById('exercisePickerSheet').classList.add('open');
     document.body.style.overflow = 'hidden';
+    pickerMuscle = '';
+    const chips = document.getElementById('exercisePickerMuscles');
+    if (chips && !chips.children.length) {
+        buildMuscleChips(chips, slug => {
+            pickerMuscle = slug;
+            searchExercises(document.getElementById('exercisePickerSearchInput').value);
+        });
+    }
+    setMuscleChip(chips, '');
     resetExercisePickerResults();
     const input = document.getElementById('exercisePickerSearchInput');
     input.value = '';

@@ -57,6 +57,7 @@ def N_(text):
 # window.GYRE_T y los scripts usan T('texto original', ...). Un texto nuevo en
 # un .js hay que añadirlo aquí. Los {nombre} se sustituyen en el propio JS.
 JS_STRINGS = [
+    N_("Todos"),
     N_("Hombros"),
     N_("Cuello"),
     N_("Pecho"),

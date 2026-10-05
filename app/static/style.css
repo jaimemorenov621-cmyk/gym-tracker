@@ -4346,3 +4346,10 @@ button.set-type-pill { border: 0; font-family: inherit; margin: 0; }
 .import-choice.is-empty .import-choice-state { color: var(--color-danger); }
 @media (hover: hover) { .import-choice:hover { background: var(--color-surface-hover); color: var(--color-text); } }
 .import-pending { margin: 0; color: var(--color-danger); font-weight: 600; font-size: 0.88rem; }
+
+/* Chips de músculos en los buscadores del catálogo */
+.muscle-chips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 16px 10px; scrollbar-width: none; flex-shrink: 0; }
+.muscle-chips::-webkit-scrollbar { display: none; }
+.muscle-chip { flex-shrink: 0; margin: 0; padding: 6px 12px; border-radius: 999px; font-size: 0.82rem; font-weight: 600; background: var(--surface-2); color: var(--color-text-soft); border: 1.5px solid var(--color-border-soft); box-shadow: none; }
+.muscle-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+@media (hover: hover) { .muscle-chip:not(.active):hover { background: var(--color-surface-hover); color: var(--color-text); } }

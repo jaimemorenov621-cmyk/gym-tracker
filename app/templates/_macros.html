@@ -109,6 +109,7 @@ de la barra inferior) en un cuadro de color, para que se lea como título. #}
         <input type="text" id="exercisePickerSearchInput" class="bottom-sheet-search-input"
                placeholder="{{ _('Buscar en el catálogo...') }}" autocomplete="off" oninput="searchExercises(this.value)">
     </div>
+    <div class="muscle-chips" id="exercisePickerMuscles" role="group" aria-label="{{ _('Filtrar por músculo') }}"></div>
     <div class="bottom-sheet-body" id="exercisePickerResults"></div>
 </div>
 {% endmacro %}

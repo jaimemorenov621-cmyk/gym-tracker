@@ -3263,15 +3263,20 @@ def api_search_exercises():
         return sorted((pair for k in keys for pair in by_norm.get(k, [])), reverse=True)
 
     terms = search_terms(q)
+
+    def cond(t):
+        return sa.or_(Exercise.name_normalized.ilike(f"%{t}%"), Exercise.name_es_normalized.ilike(f"%{t}%"))
+
     if muscle:
-        results = [e for e in db.session.scalars(
-            sa.select(Exercise).where(Exercise.primary_muscles.ilike(f"%{muscle}%")))
-            if muscle in [m.strip() for m in (e.primary_muscles or "").split(",")]]
+        # Por músculo principal (chips del buscador), con o sin texto.
+        query = sa.select(Exercise).where(Exercise.primary_muscles.ilike(f"%{muscle}%"))
+        if len(q) >= 2 and terms:
+            query = query.where(sa.and_(*map(cond, terms)))
+        results = [e for e in db.session.scalars(query)
+                   if muscle in [m.strip() for m in (e.primary_muscles or "").split(",")]]
     elif len(q) < 2 or not terms:
         results = db.session.scalars(sa.select(Exercise).where(Exercise.id.in_(favorite_ids))).all() if favorite_ids else []
     else:
-        def cond(t):
-            return sa.or_(Exercise.name_normalized.ilike(f"%{t}%"), Exercise.name_es_normalized.ilike(f"%{t}%"))
         results = db.session.scalars(sa.select(Exercise).where(sa.and_(*map(cond, terms))).limit(300)).all()
         if not results and len(terms) > 1:  # ninguno tiene todas las palabras: los que tengan alguna
             results = db.session.scalars(sa.select(Exercise).where(sa.or_(*map(cond, terms))).limit(300)).all()
@@ -3284,7 +3289,7 @@ def api_search_exercises():
         return (-sum(c for c, _ in used_names(e)), e.id not in favorite_ids, -sum(t in text for t in terms),
                 not display.startswith(first), len(display))
 
-    results = sorted(results, key=rank)[:30]
+    results = sorted(results, key=rank)[:150 if muscle else 30]
     items = [
         {
             "id": e.id,

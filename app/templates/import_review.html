@@ -41,6 +41,7 @@
         <div class="import-picker-search">
             <input type="search" id="importPickerSearch" placeholder="{{ _('Buscar ejercicio…') }}" autocapitalize="none" autocomplete="off">
         </div>
+        <div class="muscle-chips" id="importPickerMuscles" role="group" aria-label="{{ _('Filtrar por músculo') }}"></div>
         <div class="import-picker-body">
             <button type="button" class="import-picker-skip" data-name="">{{ _("No importar este ejercicio") }}</button>
             <h4>{{ _("Catálogo") }}</h4>
@@ -66,7 +67,7 @@
         // Selector de nombre para cada ejercicio importado: tus ejercicios
         // (filtrados aquí mismo) y el catálogo (/api/exercises/search).
         (function () {
-            let target = null, timer = null;
+            let target = null, timer = null, muscleFilter = '';
             const T_PICK = {{ _('Elegir ejercicio')|tojson }};
             const T_STATE = {empty: {{ _('Sin elegir: no se importará')|tojson }}, own: {{ _('Ya lo tienes: se une a tu historial')|tojson }},
                              catalog: {{ _('Del catálogo')|tojson }}};
@@ -152,13 +153,14 @@
                 const ownEmpty = document.getElementById('importPickerOwnEmpty');
                 if (ownEmpty) ownEmpty.hidden = shown > 0 || !ownItems.length;
                 clearTimeout(timer);
-                hint.hidden = search.value.trim().length >= 2;
+                hint.hidden = search.value.trim().length >= 2 || !!muscleFilter;
                 timer = setTimeout(function () {
                     // Vacío: tus favoritos del catálogo (como en el selector normal).
-                    fetch({{ url_for('api_search_exercises')|tojson }} + '?with_sets=1&q=' + encodeURIComponent(search.value.trim()))
+                    fetch({{ url_for('api_search_exercises')|tojson }} + '?with_sets=1&q=' + encodeURIComponent(search.value.trim())
+                          + (muscleFilter ? '&muscle=' + encodeURIComponent(muscleFilter) : ''))
                         .then(r => r.json()).then(function (list) {
                             renderCatalog(catalog, list);
-                            if (!list.length && search.value.trim().length >= 2) {
+                            if (!list.length && (search.value.trim().length >= 2 || muscleFilter)) {
                                 const li = document.createElement('li');
                                 li.className = 'import-picker-empty';
                                 li.textContent = noResults;
@@ -174,6 +176,8 @@
                 document.getElementById('importPickerTitle').textContent = button.dataset.source;
                 // De entrada busca el nombre de la otra app sin el equipo entre paréntesis.
                 search.value = button.dataset.source.replace(/\(.*?\)/g, '').replace(/\s+-\s+/g, ' ').trim();
+                muscleFilter = '';
+                setMuscleChip(document.getElementById('importPickerMuscles'), '');
                 filter();
                 loadMuscle(button.dataset.muscle);
                 backdrop.classList.add('open');
@@ -206,6 +210,10 @@
             backdrop.addEventListener('click', close);
             document.getElementById('importPickerClose').addEventListener('click', close);
             search.addEventListener('input', filter);
+            buildMuscleChips(document.getElementById('importPickerMuscles'), function (slug) {
+                muscleFilter = slug;
+                filter();
+            });
             document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
             pending();
         })();
