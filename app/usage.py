@@ -189,12 +189,13 @@ def activity_summary(today=None):
     from app.models import User
 
     today = today or local_today()
+    real = sa.select(User.id).where(User.signup_method.is_distinct_from("demo"))
     last = dict(db.session.execute(
         sa.select(DailyActivity.user_id, sa.func.max(DailyActivity.day))
-        .where(DailyActivity.opened.is_(True)).group_by(DailyActivity.user_id)
+        .where(DailyActivity.opened.is_(True), DailyActivity.user_id.in_(real)).group_by(DailyActivity.user_id)
     ).all())
     ages = [(today - day).days for day in last.values()]
-    total = db.session.scalar(sa.select(sa.func.count()).select_from(User))
+    total = db.session.scalar(sa.select(sa.func.count()).select_from(User).where(User.signup_method.is_distinct_from("demo")))
     buckets = [{"label": label, "users": sum(lo <= a <= hi for a in ages)} for lo, hi, label in ACTIVITY_BUCKETS]
     buckets.append({"label": "Sin registro de uso", "users": total - len(ages)})
     since = db.session.scalar(sa.select(sa.func.min(DailyActivity.day)))

@@ -32,7 +32,7 @@ oauth.register(
     client_kwargs={"scope": "openid email profile"},
 )
 
-from app import routes, models, progression  # progression: listeners de la caché de XP
+from app import routes, models, progression, demo  # progression: listeners de la caché de XP; demo: flask seed-demo
 from app.routes import format_rest, get_exercise_image, to_local, fmt_num, relative_day
 
 app.jinja_env.globals["format_rest"] = format_rest

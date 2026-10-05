@@ -486,7 +486,7 @@ def landing_stats():
         LandingEvent.language,
     )
     users_q = sa.select(User.created_at, User.signup_method, User.signup_source).where(
-        User.created_at.is_not(None)
+        User.created_at.is_not(None), User.signup_method.is_distinct_from("demo")
     )
     if start is not None:
         events_q = events_q.where(LandingEvent.timestamp >= start)
