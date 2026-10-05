@@ -175,3 +175,34 @@ def rest_day_report(weeks=6, today=None):
         })
         week_start -= timedelta(weeks=1)
     return {"since": first, "weeks": result, "has_checkin": has_checkin}
+
+
+ACTIVITY_BUCKETS = [(0, 0, "Hoy"), (1, 1, "Ayer"), (2, 7, "Hace 2-7 días"), (8, 30, "Hace 8-30 días"),
+                    (31, RETENTION_DAYS, f"Hace 31-{RETENTION_DAYS} días")]
+
+
+def activity_summary(today=None):
+    """Usuarios activos (abrieron la app) hoy / 7 / 30 días y cuántos hay en
+    cada tramo de "última vez que la abrieron". Solo recuentos, sin nombres:
+    es lo que promete la política de privacidad. No hay hora ni "conectados
+    ahora": DailyActivity guarda días, no momentos."""
+    from app.models import User
+
+    today = today or local_today()
+    last = dict(db.session.execute(
+        sa.select(DailyActivity.user_id, sa.func.max(DailyActivity.day))
+        .where(DailyActivity.opened.is_(True)).group_by(DailyActivity.user_id)
+    ).all())
+    ages = [(today - day).days for day in last.values()]
+    total = db.session.scalar(sa.select(sa.func.count()).select_from(User))
+    buckets = [{"label": label, "users": sum(lo <= a <= hi for a in ages)} for lo, hi, label in ACTIVITY_BUCKETS]
+    buckets.append({"label": "Sin registro de uso", "users": total - len(ages)})
+    since = db.session.scalar(sa.select(sa.func.min(DailyActivity.day)))
+    return {
+        "total": total,
+        "today": sum(a == 0 for a in ages),
+        "week": sum(a <= 6 for a in ages),
+        "month": sum(a <= 29 for a in ages),
+        "buckets": buckets,
+        "since": since,
+    }

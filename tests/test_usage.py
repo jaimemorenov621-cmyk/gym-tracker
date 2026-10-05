@@ -183,6 +183,7 @@ class StatsPageTests(DbTestCase):
         uid = self.make_user("Jaime_309")
         self.login(uid)
         html = self.client.get("/landing/stats").get_data(as_text=True)
+        self.assertIn("Usuarios activos", html)
         self.assertIn("Uso en días sin entreno", html)
         # Al abrir la propia página de estadísticas ya hay una fila de hoy.
         self.assertIn("Solo usuarios que entrenaron esa semana", html)
@@ -190,3 +191,17 @@ class StatsPageTests(DbTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ActivitySummaryTests(DbTestCase):
+    def test_counts_by_last_open_without_names(self):
+        today = date(2026, 10, 5)
+        ids = [self.make_user(f"u{i}") for i in range(4)]
+        with app.app_context():
+            for uid, ago in ((ids[0], 0), (ids[0], 9), (ids[1], 1), (ids[2], 12)):
+                db.session.add(DailyActivity(user_id=uid, day=today - timedelta(days=ago), opened=True))
+            db.session.commit()
+            s = usage.activity_summary(today)
+        self.assertEqual((s["total"], s["today"], s["week"], s["month"]), (4, 1, 2, 3))
+        self.assertEqual([b["users"] for b in s["buckets"]], [1, 1, 0, 1, 0, 1])  # ids[3]: sin registro
+        self.assertNotIn("u0", str(s))

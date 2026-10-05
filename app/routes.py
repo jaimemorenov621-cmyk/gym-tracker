@@ -571,6 +571,7 @@ def landing_stats():
         ),
         # Uso de la app en días sin entreno (no depende del periodo elegido).
         usage_report=usage.rest_day_report(weeks=6),
+        activity=usage.activity_summary(),
     )
 
 
