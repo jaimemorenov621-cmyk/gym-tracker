@@ -310,3 +310,43 @@ def apply_import(user, draft, mapping, skip_same_day=True):
 
 def draft_json(draft):
     return json.dumps(draft, ensure_ascii=False)
+
+
+# ------------------------------------------------------------ músculos
+# Músculo principal deducido del nombre (el CSV no lo trae), para proponer
+# en el selector ejercicios del catálogo que trabajan lo mismo cuando el
+# nombre no coincide con ninguno. Vocabulario de Exercise.primary_muscles.
+# El orden importa: lo más concreto primero ("curl femoral" antes que "curl").
+_MUSCLE_WORDS = [
+    ("lower back", ("hiperextension", "extension de espalda", "back extension", "lumbar", "buenos dias", "good morning")),
+    ("hamstrings", ("femoral", "curl de pierna", "leg curl", "isquio", "rumano", "romanian", "nordic")),
+    ("lower back", ("peso muerto", "deadlift")),  # convencional (el rumano ya ha salido arriba)
+    ("abdominals", ("abdominal", "crunch", "plancha", "plank", "pallof", "russian twist", "elevacion de pierna",
+                    "leg raise", "pies a barra", "toes to bar", "rueda abdominal", "ab wheel", "core")),
+    ("quadriceps", ("sentadilla", "squat", "prensa", "leg press", "press de pierna", "extension de pierna",
+                    "extensiones a una pierna", "leg extension", "zancada", "lunge", "bulgara", "hack", "cuadricep")),
+    ("glutes", ("gluteo", "hip thrust", "puente", "glute", "patada", "kickback")),
+    ("calves", ("pantorrilla", "gemelo", "calf", "soleo")),
+    ("adductors", ("aductor", "aduccion", "adduct")),
+    ("abductors", ("abductor", "abduccion", "abduct")),
+    ("triceps", ("tricep", "pressdown", "press frances", "skull", "fondo", "dip")),
+    ("biceps", ("bicep", "curl", "martillo", "hammer", "predicador", "preacher")),
+    ("lats", ("jalon", "dominada", "pull up", "pullup", "chin up", "pulldown", "pull over", "pullover")),
+    ("middle back", ("remo", "row")),
+    ("traps", ("trapecio", "encogimiento", "shrug")),
+    ("shoulders", ("hombro", "militar", "elevacion lateral", "lateral raise", "elevacion en y", "pajaro", "vuelos posteriores",
+                   "rear delt", "face pull", "tiron a la cara", "shoulder", "overhead", "arnold")),
+    ("chest", ("pecho", "banca", "banch", "bench", "apertura", "fly", "mariposa", "pec deck", "cruce de polea",
+               "crossover", "chest")),
+    ("forearms", ("antebrazo", "muneca", "wrist", "farmer")),
+    ("neck", ("cuello", "neck")),
+]
+
+
+def guess_muscle(name):
+    """Músculo principal probable de un ejercicio por su nombre, o None."""
+    text = " " + re.sub(r"[^a-z0-9]+", " ", _key(name)) + " "
+    for muscle, words in _MUSCLE_WORDS:
+        if any(w in text for w in words):
+            return muscle
+    return None

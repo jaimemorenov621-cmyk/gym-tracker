@@ -125,6 +125,32 @@ class ImporterTests(DbTestCase):
         self.assertEqual((items["ib"]["sets"], items["ib"]["value"]), (0, "press de banca inclinado"))
         self.assertNotIn("sets", self.client.get("/api/exercises/search?q=banca").get_json()[0])
 
+    def test_catalog_search_ignores_accents_and_plurals_and_filters_by_muscle(self):
+        from app.models import Exercise
+        with app.app_context():
+            for i, (en, es, m) in enumerate([("Wide-Grip Lat Pulldown", "Jalón al pecho agarre ancho", "lats"),
+                                            ("Lat Pulldown", "Jalón al pecho", "lats"),
+                                            ("Triceps Pushdown", "Extensión de tríceps en polea", "triceps"),
+                                            ("Chin-Up", "Dominada supina", "lats")]):
+                db.session.add(Exercise(id=f"e{i}", name=en, name_es=es, primary_muscles=m))
+            db.session.commit()
+        self.login(self.uid)
+        names = lambda q: [i["name"] for i in self.client.get("/api/exercises/search?q=" + q).get_json()]
+        self.assertEqual(names("jalones al pecho")[0], "Jalón al pecho")  # sin tilde, plural y "al"; el más corto primero
+        self.assertEqual(names("extensiones triceps"), ["Extensión de tríceps en polea"])
+        self.assertEqual(names("Dominadas"), ["Dominada supina"])
+        self.assertEqual(names("jalon cable"), ["Jalón al pecho", "Jalón al pecho agarre ancho"])  # ninguno dice "cable": los de "jalon"
+        lats = [i["name"] for i in self.client.get("/api/exercises/search?muscle=lats").get_json()]
+        self.assertEqual(sorted(lats), ["Dominada supina", "Jalón al pecho", "Jalón al pecho agarre ancho"])
+
+    def test_guess_muscle_from_the_name(self):
+        self.assertEqual(importer.guess_muscle("Triceps Pressdown"), "triceps")
+        self.assertEqual(importer.guess_muscle("Curl de Pierna Sentado"), "hamstrings")
+        self.assertEqual(importer.guess_muscle("Curl de Bíceps (Mancuerna)"), "biceps")
+        self.assertEqual(importer.guess_muscle("Peso Muerto Rumano (Barra)"), "hamstrings")
+        self.assertEqual(importer.guess_muscle("Vuelos Posteriores (Cable)"), "shoulders")
+        self.assertIsNone(importer.guess_muscle("Burpees"))
+
     def test_unknown_file(self):
         self.login(self.uid)
         r = self.client.post("/importar", data={"file": (io.BytesIO(b"a,b\n1,2\n"), "x.csv")},

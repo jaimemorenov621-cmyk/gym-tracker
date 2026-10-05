@@ -2388,7 +2388,7 @@ def import_review():
     starts = [w["start"] for w in draft["workouts"]]
     return render_template(
         "import_review.html", title=gettext("Revisar importación"), form=form, draft=draft,
-        rows=[(i, name, draft["exercises"][name], suggestions[name]) for i, name in enumerate(names)],
+        rows=[(i, name, draft["exercises"][name], suggestions[name], importer.guess_muscle(name)) for i, name in enumerate(names)],
         own=own, own_names={n for n, _ in own},
         own_custom=[(n, c) for n, c in own if find_catalog_exercise(n) is None],  # los que no salen en el catálogo
         first=to_local(datetime.fromisoformat(min(starts))), last=to_local(datetime.fromisoformat(max(starts))),
@@ -3212,32 +3212,79 @@ def inject_active_workout():
     return {"active_workout": None}
 
 
+# Palabras que no ayudan a buscar ("jalón AL pecho CON cable").
+_SEARCH_STOP = {"de", "la", "el", "los", "las", "al", "a", "con", "en", "del", "y", "the", "with", "on", "of"}
+
+
+def search_terms(text):
+    """Palabras de búsqueda sin tildes, mayúsculas, relleno ni plurales
+    ("Jalones al pecho" -> ["jalon", "pecho"]). Se buscan como trozos del
+    nombre, así que basta con quitar la terminación del plural."""
+    terms = []
+    for w in re.findall(r"[a-z0-9]+", _strip_accents(text or "")):
+        if w in _SEARCH_STOP:
+            continue
+        if len(w) > 5 and w.endswith("es") and w[-3] not in "aeiou":
+            w = w[:-2]  # extensiones -> extension, aductores -> aductor
+        elif len(w) > 3 and w.endswith("s"):
+            w = w[:-1]  # dominadas -> dominada, triceps -> tricep
+        terms.append(w)
+    return terms
+
+
 @app.route("/api/exercises/search")
 @login_required
 def api_search_exercises():
+    """Catálogo para los selectores de ejercicio. Sin tildes ni plurales, con
+    los ejercicios que ya usas primero, luego tus favoritos y luego los que
+    empiezan por lo que escribes. ?muscle=triceps: los que trabajan ese
+    músculo (principal). ?with_sets=1: añade tus series guardadas de cada uno
+    y el nombre con el que se guardaría para unirse a ese historial."""
     q = request.args.get("q", "").strip()
-    favorite_ids = set(
-        db.session.scalars(
-            sa.select(ExerciseFavorite.exercise_id).where(
-                ExerciseFavorite.user_id == current_user.id
-            )
-        )
-    )
-    if len(q) < 2:
-        if not favorite_ids:
-            return jsonify([])
-        results = db.session.scalars(
-            sa.select(Exercise).where(Exercise.id.in_(favorite_ids))
-        ).all()
+    muscle = (request.args.get("muscle") or "").strip().lower()
+    favorite_ids = set(db.session.scalars(
+        sa.select(ExerciseFavorite.exercise_id).where(ExerciseFavorite.user_id == current_user.id)))
+
+    def norm(text):
+        return _strip_accents(text.strip().lower())
+
+    by_norm = defaultdict(list)  # nombre normalizado -> [(series, nombre tal cual)]
+    for name, n in db.session.execute(
+            sa.select(SetEntry.exercise, sa.func.count()).join(Workout, Workout.id == SetEntry.workout_id)
+            .where(Workout.user_id == current_user.id).group_by(SetEntry.exercise)):
+        by_norm[norm(name)].append((n, name))
+    aliases = defaultdict(list)
+    for name, ex_id in db.session.execute(
+            sa.select(ExerciseAlias.name, ExerciseAlias.exercise_id).where(ExerciseAlias.user_id == current_user.id)):
+        aliases[ex_id].append(name)
+
+    def used_names(e):
+        keys = {norm(n) for n in (e.name, e.name_es, *aliases[e.id]) if n}
+        return sorted((pair for k in keys for pair in by_norm.get(k, [])), reverse=True)
+
+    terms = search_terms(q)
+    if muscle:
+        results = [e for e in db.session.scalars(
+            sa.select(Exercise).where(Exercise.primary_muscles.ilike(f"%{muscle}%")))
+            if muscle in [m.strip() for m in (e.primary_muscles or "").split(",")]]
+    elif len(q) < 2 or not terms:
+        results = db.session.scalars(sa.select(Exercise).where(Exercise.id.in_(favorite_ids))).all() if favorite_ids else []
     else:
-        word_conditions = [
-            sa.or_(Exercise.name.ilike(f"%{word}%"), Exercise.name_es.ilike(f"%{word}%"))
-            for word in q.split()
-        ]
-        results = db.session.scalars(
-            sa.select(Exercise).where(sa.and_(*word_conditions)).limit(24)
-        ).all()
-        results = sorted(results, key=lambda e: e.id not in favorite_ids)
+        def cond(t):
+            return sa.or_(Exercise.name_normalized.ilike(f"%{t}%"), Exercise.name_es_normalized.ilike(f"%{t}%"))
+        results = db.session.scalars(sa.select(Exercise).where(sa.and_(*map(cond, terms))).limit(300)).all()
+        if not results and len(terms) > 1:  # ninguno tiene todas las palabras: los que tengan alguna
+            results = db.session.scalars(sa.select(Exercise).where(sa.or_(*map(cond, terms))).limit(300)).all()
+
+    first = terms[0] if terms else ""
+
+    def rank(e):
+        text = " ".join(filter(None, (e.name_normalized, e.name_es_normalized)))
+        display = norm(catalog_display_name(e))
+        return (-sum(c for c, _ in used_names(e)), e.id not in favorite_ids, -sum(t in text for t in terms),
+                not display.startswith(first), len(display))
+
+    results = sorted(results, key=rank)[:30]
     items = [
         {
             "id": e.id,
@@ -3249,24 +3296,8 @@ def api_search_exercises():
         for e in results
     ]
     if request.args.get("with_sets"):
-        # Series que ya tienes guardadas con este ejercicio (con su nombre del
-        # catálogo en cualquier idioma o con un nombre tuyo asignado a él), y
-        # el nombre con el que se guardaría para unirse a ese historial.
-        def norm(text):
-            return _strip_accents(text.strip().lower())
-
-        by_norm = defaultdict(list)  # nombre normalizado -> [(series, nombre tal cual)]
-        for name, n in db.session.execute(
-                sa.select(SetEntry.exercise, sa.func.count()).join(Workout, Workout.id == SetEntry.workout_id)
-                .where(Workout.user_id == current_user.id).group_by(SetEntry.exercise)):
-            by_norm[norm(name)].append((n, name))
-        aliases = defaultdict(list)
-        for name, ex_id in db.session.execute(
-                sa.select(ExerciseAlias.name, ExerciseAlias.exercise_id).where(ExerciseAlias.user_id == current_user.id)):
-            aliases[ex_id].append(name)
         for item, e in zip(items, results):
-            keys = {norm(n) for n in (e.name, e.name_es, *aliases[e.id]) if n}
-            used = sorted((pair for k in keys for pair in by_norm.get(k, [])), reverse=True)
+            used = used_names(e)
             item["sets"] = sum(c for c, _ in used)
             item["value"] = used[0][1] if used else item["name"].strip().lower()
     return jsonify(items)

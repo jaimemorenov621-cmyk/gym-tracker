@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-05 17:43+0200\n"
+"POT-Creation-Date: 2026-10-05 18:03+0200\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1821,7 +1821,7 @@ msgstr "Calves"
 msgid "Marcar como favorito"
 msgstr "Mark as favorite"
 
-#: app/i18n.py:78 app/templates/import_review.html:88
+#: app/i18n.py:78 app/templates/import_review.html:92
 msgid "Sin resultados en el catálogo."
 msgstr "No results in the catalog."
 
@@ -1861,11 +1861,11 @@ msgstr "Equipment (optional)"
 msgid "Crear y usar"
 msgstr "Create and use"
 
-#: app/i18n.py:88 app/routes.py:3320
+#: app/i18n.py:88 app/routes.py:3351
 msgid "El nombre es obligatorio."
 msgstr "Name is required."
 
-#: app/i18n.py:89 app/routes.py:3322
+#: app/i18n.py:89 app/routes.py:3353
 msgid "Elige al menos un músculo primario."
 msgstr "Choose at least one primary muscle."
 
@@ -2300,7 +2300,7 @@ msgid "El nombre no puede estar vacío."
 msgstr "The name can't be empty."
 
 #: app/routes.py:1236 app/routes.py:1484 app/routes.py:1643 app/routes.py:1746
-#: app/routes.py:3352
+#: app/routes.py:3383
 msgid "No tienes acceso a este entrenamiento."
 msgstr "You don't have access to this workout."
 
@@ -2591,7 +2591,7 @@ msgstr "Exercise updated."
 msgid "Rutina creada. Añade ejercicios."
 msgstr "Routine created. Add exercises."
 
-#: app/routes.py:2903 app/routes.py:3368 app/templates/new_routine.html:4
+#: app/routes.py:2903 app/routes.py:3399 app/templates/new_routine.html:4
 #: app/templates/routines.html:10
 msgid "Nueva rutina"
 msgstr "New routine"
@@ -2638,33 +2638,33 @@ msgstr "Routine deleted."
 msgid "¡Entrenamiento '%(name)s' iniciado!"
 msgstr "Workout '%(name)s' started!"
 
-#: app/routes.py:3279
+#: app/routes.py:3310
 msgid "Ejercicio no encontrado."
 msgstr "Exercise not found."
 
-#: app/routes.py:3365
+#: app/routes.py:3396
 msgid "Este entrenamiento no tiene series registradas."
 msgstr "This workout has no logged sets."
 
-#: app/routes.py:3384
+#: app/routes.py:3415
 #, python-format
 msgid "Rutina '%(name)s' creada a partir de este entrenamiento."
 msgstr "Routine '%(name)s' created from this workout."
 
-#: app/routes.py:4227 app/templates/index.html:107
+#: app/routes.py:4258 app/templates/index.html:107
 msgid "hoy"
 msgstr "today"
 
-#: app/routes.py:4229 app/templates/index.html:107
+#: app/routes.py:4260 app/templates/index.html:107
 msgid "ayer"
 msgstr "yesterday"
 
-#: app/routes.py:4231
+#: app/routes.py:4262
 #, python-format
 msgid "hace %(n)s días"
 msgstr "%(n)s days ago"
 
-#: app/routes.py:4233
+#: app/routes.py:4264
 #, python-format
 msgid "hace %(n)s semanas"
 msgstr "%(n)s weeks ago"
@@ -2958,7 +2958,7 @@ msgid "baja"
 msgstr "low"
 
 #: app/templates/_macros.html:104 app/templates/import_review.html:19
-#: app/templates/import_review.html:66
+#: app/templates/import_review.html:70
 msgid "Elegir ejercicio"
 msgstr "Choose exercise"
 
@@ -3925,15 +3925,15 @@ msgstr ""
 msgid "Elegir ejercicio para %(name)s"
 msgstr "Choose exercise for %(name)s"
 
-#: app/templates/import_review.html:20 app/templates/import_review.html:67
+#: app/templates/import_review.html:20 app/templates/import_review.html:71
 msgid "Sin elegir: no se importará"
 msgstr "Not chosen: won't be imported"
 
-#: app/templates/import_review.html:20 app/templates/import_review.html:67
+#: app/templates/import_review.html:20 app/templates/import_review.html:71
 msgid "Ya lo tienes: se une a tu historial"
 msgstr "You have it: joins your history"
 
-#: app/templates/import_review.html:20 app/templates/import_review.html:68
+#: app/templates/import_review.html:20 app/templates/import_review.html:72
 msgid "Del catálogo"
 msgstr "From the catalog"
 
@@ -3972,42 +3972,47 @@ msgstr "Catalog"
 msgid "Escribe al menos 2 letras para buscar en el catálogo."
 msgstr "Type at least 2 letters to search the catalog."
 
-#: app/templates/import_review.html:50
+#: app/templates/import_review.html:54
 msgid "Tus ejercicios que no están en el catálogo"
 msgstr "Your exercises that aren't in the catalog"
 
-#: app/templates/import_review.html:53
+#: app/templates/import_review.html:57
 #, python-format
 msgid "%(num)d serie guardada"
 msgid_plural "%(num)d series guardadas"
 msgstr[0] "%(num)d saved set"
 msgstr[1] "%(num)d saved sets"
 
-#: app/templates/import_review.html:56
+#: app/templates/import_review.html:60
 msgid "Ninguno coincide."
 msgstr "None match."
 
-#: app/templates/import_review.html:69
+#: app/templates/import_review.html:73
 msgid "1 ejercicio sin elegir no se importará."
 msgstr "1 exercise without a choice won't be imported."
 
-#: app/templates/import_review.html:69
+#: app/templates/import_review.html:73
 #, python-brace-format
 msgid "{n} ejercicios sin elegir no se importarán."
 msgstr "{n} exercises without a choice won't be imported."
 
-#: app/templates/import_review.html:84
+#: app/templates/import_review.html:88
 msgid "1 serie guardada"
 msgstr "1 saved set"
 
-#: app/templates/import_review.html:84
+#: app/templates/import_review.html:88
 #, python-brace-format
 msgid "{n} series guardadas"
 msgstr "{n} saved sets"
 
-#: app/templates/import_review.html:85
+#: app/templates/import_review.html:89
 msgid "Sin series guardadas"
 msgstr "No saved sets"
+
+#: app/templates/import_review.html:94
+#, python-brace-format
+msgid "Trabajan el mismo músculo: {muscle}"
+msgstr "Work the same muscle: {muscle}"
 
 #: app/templates/index.html:13
 msgid "Entreno en curso"

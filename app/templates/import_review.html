@@ -10,12 +10,12 @@
     <form method="post" class="import-review-form">
         {{ form.hidden_tag() }}
         <ul class="card card-elevated import-map">
-            {% for i, name, n, suggestion in rows %}
+            {% for i, name, n, suggestion, muscle in rows %}
                 <li>
                     <span class="import-map-source"><strong>{{ name }}</strong><small>{{ ngettext('%(num)d serie', '%(num)d series', n) }}</small></span>
                     <input type="hidden" id="map-{{ i }}" name="map-{{ i }}" value="{{ suggestion }}">
                     <button type="button" class="import-choice import-pick{% if not suggestion %} is-empty{% elif suggestion in own_names %} is-own{% endif %}"
-                            data-index="{{ i }}" data-source="{{ name }}" aria-label="{{ _('Elegir ejercicio para %(name)s', name=name) }}">
+                            data-index="{{ i }}" data-source="{{ name }}" data-muscle="{{ muscle or '' }}" aria-label="{{ _('Elegir ejercicio para %(name)s', name=name) }}">
                         <span class="import-choice-name">{{ suggestion|title if suggestion else _('Elegir ejercicio') }}</span>
                         <small class="import-choice-state">{% if not suggestion %}{{ _("Sin elegir: no se importará") }}{% elif suggestion in own_names %}{{ _("Ya lo tienes: se une a tu historial") }}{% else %}{{ _("Del catálogo") }}{% endif %}</small>
                     </button>
@@ -46,6 +46,10 @@
             <h4>{{ _("Catálogo") }}</h4>
             <ul id="importPickerCatalog" class="import-picker-catalog"></ul>
             <p class="import-picker-empty" id="importPickerCatalogHint">{{ _("Escribe al menos 2 letras para buscar en el catálogo.") }}</p>
+            <div id="importPickerMuscleBox" hidden>
+                <h4 id="importPickerMuscleTitle"></h4>
+                <ul id="importPickerMuscle" class="import-picker-catalog"></ul>
+            </div>
             {% if own_custom %}
                 <h4>{{ _("Tus ejercicios que no están en el catálogo") }}</h4>
                 <ul id="importPickerOwn">
@@ -87,12 +91,61 @@
             const hint = document.getElementById('importPickerCatalogHint');
             const noResults = {{ _('Sin resultados en el catálogo.')|tojson }};
             const plain = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+            const T_MUSCLE = {{ _('Trabajan el mismo músculo: {muscle}')|tojson }};
+            const STOP = new Set(['de', 'la', 'el', 'los', 'las', 'al', 'a', 'con', 'en', 'del', 'y', 'the', 'with', 'on', 'of']);
+            // Mismas reglas que la búsqueda del servidor: sin tildes, relleno ni plurales.
+            function terms(text) {
+                return (plain(text).match(/[a-z0-9]+/g) || []).filter(w => !STOP.has(w)).map(function (w) {
+                    if (w.length > 5 && w.endsWith('es') && !'aeiou'.includes(w[w.length - 3])) return w.slice(0, -2);
+                    if (w.length > 3 && w.endsWith('s')) return w.slice(0, -1);
+                    return w;
+                });
+            }
+
+            // Filas del catálogo como en el selector normal: imagen, nombre,
+            // músculos y tus series guardadas.
+            function renderCatalog(ul, list) {
+                ul.innerHTML = '';
+                list.forEach(function (ex) {
+                    const li = document.createElement('li');
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.dataset.name = ex.value;
+                    b.className = 'import-cat-row' + (ex.sets ? ' has-sets' : '');
+                    const img = document.createElement(ex.image ? 'img' : 'span');
+                    img.className = 'import-cat-thumb';
+                    if (ex.image) { img.src = ex.image; img.alt = ''; img.loading = 'lazy'; }
+                    const text = document.createElement('span');
+                    text.className = 'import-cat-text';
+                    const name = document.createElement('strong');
+                    name.textContent = ex.name;
+                    const muscles = document.createElement('small');
+                    muscles.textContent = ex.muscles ? muscleLabels(ex.muscles) : '';
+                    text.append(name, muscles);
+                    const sets = document.createElement('small');
+                    sets.className = 'import-cat-sets';
+                    sets.textContent = !ex.sets ? T_NONE : ex.sets === 1 ? T_SETS[0] : T_SETS[1].replace('{n}', ex.sets);
+                    b.append(img, text, sets);
+                    li.appendChild(b);
+                    ul.appendChild(li);
+                });
+            }
+
+            function loadMuscle(muscle) {
+                const box = document.getElementById('importPickerMuscleBox');
+                box.hidden = !muscle;
+                if (!muscle) return;
+                document.getElementById('importPickerMuscleTitle').textContent = T_MUSCLE.replace('{muscle}', muscleLabels(muscle));
+                fetch({{ url_for('api_search_exercises')|tojson }} + '?with_sets=1&muscle=' + encodeURIComponent(muscle))
+                    .then(r => r.json()).then(list => renderCatalog(document.getElementById('importPickerMuscle'), list));
+            }
 
             function filter() {
-                const words = plain(search.value).split(/\s+/).filter(Boolean);
+                const words = terms(search.value);
                 let shown = 0;
                 ownItems.forEach(li => {
-                    const ok = words.every(w => plain(li.querySelector('button').dataset.name).includes(w));
+                    const name = plain(li.querySelector('button').dataset.name);
+                    const ok = words.every(w => name.includes(w));
                     li.hidden = !ok;
                     if (ok) shown++;
                 });
@@ -104,30 +157,7 @@
                     // Vacío: tus favoritos del catálogo (como en el selector normal).
                     fetch({{ url_for('api_search_exercises')|tojson }} + '?with_sets=1&q=' + encodeURIComponent(search.value.trim()))
                         .then(r => r.json()).then(function (list) {
-                            catalog.innerHTML = '';
-                            list.forEach(function (ex) {
-                                const li = document.createElement('li');
-                                const b = document.createElement('button');
-                                b.type = 'button';
-                                b.dataset.name = ex.value;
-                                b.className = 'import-cat-row' + (ex.sets ? ' has-sets' : '');
-                                const img = document.createElement(ex.image ? 'img' : 'span');
-                                img.className = 'import-cat-thumb';
-                                if (ex.image) { img.src = ex.image; img.alt = ''; img.loading = 'lazy'; }
-                                const text = document.createElement('span');
-                                text.className = 'import-cat-text';
-                                const name = document.createElement('strong');
-                                name.textContent = ex.name;
-                                const muscles = document.createElement('small');
-                                muscles.textContent = ex.muscles ? muscleLabels(ex.muscles) : '';
-                                text.append(name, muscles);
-                                const sets = document.createElement('small');
-                                sets.className = 'import-cat-sets';
-                                sets.textContent = !ex.sets ? T_NONE : ex.sets === 1 ? T_SETS[0] : T_SETS[1].replace('{n}', ex.sets);
-                                b.append(img, text, sets);
-                                li.appendChild(b);
-                                catalog.appendChild(li);
-                            });
+                            renderCatalog(catalog, list);
                             if (!list.length && search.value.trim().length >= 2) {
                                 const li = document.createElement('li');
                                 li.className = 'import-picker-empty';
@@ -145,6 +175,7 @@
                 // De entrada busca el nombre de la otra app sin el equipo entre paréntesis.
                 search.value = button.dataset.source.replace(/\(.*?\)/g, '').replace(/\s+-\s+/g, ' ').trim();
                 filter();
+                loadMuscle(button.dataset.muscle);
                 backdrop.classList.add('open');
                 sheet.classList.add('open');
                 document.body.style.overflow = 'hidden';
