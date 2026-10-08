@@ -96,6 +96,12 @@ def _version_static_urls(endpoint, values):
 def _cache_versioned_static(response):
     if request.path.startswith("/static/") and request.args.get("v") and response.status_code in (200, 304):
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif (response.mimetype == "text/html" and "Cache-Control" not in response.headers
+          and current_user.is_authenticated):
+        # Al volver atrás, Chrome reutiliza el HTML de su caché aunque esté
+        # viejo (el entreno sin los ticks que pusiste después). no-store le
+        # obliga a pedirlo otra vez.
+        response.headers["Cache-Control"] = "no-store"
     return response
 
 
@@ -304,6 +310,15 @@ def healthz():
 # Peticiones que no son "abrir la app": estáticos, el service worker, el ping
 # de UptimeRobot y el aviso de reintento de CSS (que ya cuenta por su lado).
 _NOT_AN_OPEN = {None, "static", "service_worker", "healthz", "css_retry"}
+
+
+@app.before_request
+def _remember_old_sessions():
+    """Sesiones iniciadas sin "Recordarme" (cuando era opcional): reciben la
+    cookie larga de Flask-Login para que no se cierren al cerrar la app."""
+    if (request.method == "GET" and request.endpoint not in _NOT_AN_OPEN and current_user.is_authenticated
+            and not request.cookies.get(app.config.get("REMEMBER_COOKIE_NAME", "remember_token"))):
+        session["_remember"] = "set"
 
 
 @app.before_request
@@ -1071,7 +1086,9 @@ def login():
         if user is None or not user.check_password(form.password.data):
             flash(gettext("Usuario o contraseña incorrectos."))
             return redirect(url_for("login"))
-        login_user(user, remember=form.remember_me.data)
+        # Siempre recordada: es una app del móvil y, sin la cookie larga,
+        # Android cerraba la sesión a mitad de entreno al matar la app.
+        login_user(user, remember=True)
         return redirect(safe_next(request.args.get("next")))
     return render_template("login.html", title=gettext("Iniciar sesión"), form=form)
 
@@ -1338,6 +1355,17 @@ def reorder_workout_exercises(workout_id):
     return jsonify({"ok": True})
 
 
+SET_TYPES = ("normal", "calentamiento", "fallo", "dropset")
+MAX_SET_REPS = 100  # límite de cordura; el aviso de "¿seguro?" es User.reps_warning
+
+
+def _effort_for(scale, effort, set_type):
+    """Esfuerzo a guardar: al fallo es RIR 0 / RPE 10 aunque no se apunte."""
+    if effort in (None, "") and set_type == "fallo":
+        return 0 if scale == "rir" else 10
+    return max(0, min(10, int(effort))) if effort not in (None, "") else None
+
+
 @app.route("/workout/<int:workout_id>/set", methods=["POST"])
 @login_required
 def api_create_set(workout_id):
@@ -1350,17 +1378,18 @@ def api_create_set(workout_id):
         return jsonify({"ok": False}), 400
 
     weight = max(0, min(500, float(str(data.get("weight") or 0).replace(",", "."))))
-    reps = max(0, min(30, int(float(data.get("reps") or 0))))
-    effort = data.get("effort")
+    reps = max(0, min(MAX_SET_REPS, int(float(data.get("reps") or 0))))
     scale = current_user.effort_scale
+    set_type = data.get("set_type") if data.get("set_type") in SET_TYPES else "normal"
+    effort = _effort_for(scale, data.get("effort"), set_type)
 
     entry = SetEntry(
         exercise=exercise,
         weight=weight,
         reps=reps,
-        rir=max(0, min(10, int(effort))) if scale == "rir" and effort not in (None, "") else None,
-        rpe=max(0, min(10, int(effort))) if scale == "rpe" and effort not in (None, "") else None,
-        set_type=data.get("set_type", "normal"),
+        rir=effort if scale == "rir" else None,
+        rpe=effort if scale == "rpe" else None,
+        set_type=set_type,
         workout=workout,
     )
     db.session.add(entry)
@@ -1382,19 +1411,20 @@ def api_update_set(set_id):
         entry.weight = max(0, min(500, float(str(data["weight"] or 0).replace(",", "."))))
         pr_relevant_changed = True
     if "reps" in data:
-        entry.reps = max(0, min(30, int(float(data["reps"] or 0))))
+        entry.reps = max(0, min(MAX_SET_REPS, int(float(data["reps"] or 0))))
         pr_relevant_changed = True
-    if "effort" in data:
-        effort = data["effort"]
-        if scale == "rir":
-            entry.rir = max(0, min(10, int(effort))) if effort not in (None, "") else None
-            entry.rpe = None
-        elif scale == "rpe":
-            entry.rpe = max(0, min(10, int(effort))) if effort not in (None, "") else None
-            entry.rir = None
-        pr_relevant_changed = True
-    if "set_type" in data:
+    if "set_type" in data and data["set_type"] in SET_TYPES:
         entry.set_type = data["set_type"]
+        # Pasar a "Fallo" sin indicar esfuerzo = RIR 0 / RPE 10.
+        if entry.set_type == "fallo" and "effort" not in data and scale in ("rir", "rpe"):
+            data["effort"] = None
+    if "effort" in data:
+        effort = _effort_for(scale, data["effort"], entry.set_type)
+        if scale == "rir":
+            entry.rir, entry.rpe = effort, None
+        elif scale == "rpe":
+            entry.rpe, entry.rir = effort, None
+        pr_relevant_changed = True
 
     just_completed = False
     if "completed" in data:
@@ -1782,6 +1812,7 @@ def exercise_progress(name):
     )
 
     chart_labels = [to_local(s["timestamp"]).strftime("%d/%m") for s in display_sessions]
+    chart_dates = [to_local(s["timestamp"]).date().isoformat() for s in display_sessions]
     chart_values = [round(s["best_1rm"], 1) for s in display_sessions]
     chart_colors = []
     for s in display_sessions:
@@ -1812,6 +1843,7 @@ def exercise_progress(name):
         improvement=improvement,
         threshold=threshold,
         chart_labels=chart_labels,
+        chart_dates=chart_dates,
         chart_values=chart_values,
         chart_colors=chart_colors,
         stats=exercise_stats(session_list, threshold),
@@ -2273,6 +2305,7 @@ def settings():
     if form.validate_on_submit():
         current_user.stagnation_threshold = form.stagnation_threshold.data
         current_user.effort_scale = form.effort_scale.data
+        current_user.reps_warning = form.reps_warning.data
         current_user.rest_sound_enabled = form.rest_sound_enabled.data
         current_user.rest_vibration_enabled = form.rest_vibration_enabled.data
         current_user.sex = form.sex.data or None
@@ -2301,6 +2334,7 @@ def settings():
     elif request.method == "GET":
         form.stagnation_threshold.data = current_user.stagnation_threshold
         form.effort_scale.data = current_user.effort_scale
+        form.reps_warning.data = current_user.reps_warning
         form.rest_sound_enabled.data = current_user.rest_sound_enabled
         form.rest_vibration_enabled.data = current_user.rest_vibration_enabled
         form.sex.data = current_user.sex or ""
@@ -3488,12 +3522,19 @@ _RTS_PERCENT_1RM = {
 }
 
 
+MAX_1RM_REPS = 30  # por encima no se estima el 1RM (y casi siempre es un error al apuntar: 64 por 6)
+
+
 def estimated_1rm(entry, bodyweight=0.0):
     """1RM real vía tabla RTS cuando reps/RIR caen en el rango cubierto
     (1-12 reps, RIR 0-4); si no (RIR>=5, reps>12, o sin RIR/RPE anotado),
     respaldo con Epley y repeticiones efectivas. En el límite RIR4/RIR5 el
     valor puede dar un salto pequeño no suave (Epley no empalma exacto con
-    la tabla ahí) -- conocido, no corregido."""
+    la tabla ahí) -- conocido, no corregido.
+    Con más de MAX_1RM_REPS repeticiones devuelve 0 (sin estimación): una
+    serie así no puede ser récord ni mejor serie (40 kg × 64 daba 129 kg)."""
+    if entry.reps > MAX_1RM_REPS:
+        return 0.0
     rir = entry.rir if entry.rir is not None else (
         10 - entry.rpe if entry.rpe is not None else None
     )
@@ -3635,7 +3676,7 @@ def sessions_from_rows(rows):
 
     running_max = float("-inf")
     for s in session_list:
-        candidates = [st for st in s["sets"] if is_real_set(st)]
+        candidates = [st for st in s["sets"] if is_real_set(st) and st.reps <= MAX_1RM_REPS]
         if candidates:
             s["best_set"] = max(candidates, key=lambda st: estimated_1rm(st, bw))
             s["best_1rm"] = estimated_1rm(s["best_set"], bw)

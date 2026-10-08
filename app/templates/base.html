@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {# Antes del script del tema, que le pone el color (acento o modo oscuro). #}
+    <meta name="theme-color" content="#7c4dff">
     <script>
         // Textos de los .js estáticos en el idioma de la app (app/i18n.py,
         // JS_STRINGS). T('texto original') devuelve la traducción o el original.
@@ -41,14 +43,19 @@
                 accent = value;
                 try { localStorage.setItem("gyre-accent", value); } catch (e) {}
                 applyAccent(value);
+                apply();
             };
+            // Barra de estado del móvil (theme-color) en modo claro: del color
+            // de acento elegido, no siempre morada. Mismos valores que --accent.
+            var BAR_COLORS = {morado: "#7c4dff", azul: "#2563eb", verde: "#0b7a54", naranja: "#c2410c",
+                              rojo: "#c81e1e", turquesa: "#0f766e", dorado: "#9a6a00"};
             window.getGyreAccent = function () { return allowed.indexOf(accent) >= 0 ? accent : "morado"; };
             var mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
             function apply() {
                 var dark = lock ? lock === "dark" : (pref === "dark" || (pref === "auto" && mq && mq.matches));
                 document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
                 var meta = document.querySelector('meta[name="theme-color"]');
-                if (meta) meta.setAttribute("content", dark ? "#0f0d1a" : "#7c4dff");
+                if (meta) meta.setAttribute("content", dark ? "#0f0d1a" : (BAR_COLORS[root.getAttribute("data-accent") || "morado"] || "#7c4dff"));
             }
             window.setGyreTheme = function (value) {
                 pref = value;
@@ -100,18 +107,18 @@
     no mostrar datos viejos). Nunca /logout: precargarlo cerraría la sesión. #}
     <script type="speculationrules">
     {"prerender": [{"where": {"and": [
-        {"selector_matches": ".bottom-nav a, .top-nav-app a.btn-nav"},
+        {"selector_matches": ".bottom-nav a, .top-nav-app a.btn-nav, a.active-toast"},
         {"not": {"href_matches": "/logout"}}
     ]}, "eagerness": "conservative"}]}
     </script>
     <link rel="icon" href="{{ url_for('static', filename='icons/favicon.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
-    <meta name="theme-color" content="#7c4dff">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     {% block head %}{% endblock %}
 </head>
 <body{% block body_attrs %}{% endblock %}>
+    <div class="nav-progress-bar" aria-hidden="true"></div>
     {% import "_macros.html" as macros %}
     {% set routine_endpoints = ('routines', 'routine_detail', 'new_routine', 'new_workout', 'workout_detail') %}
     {% set progress_endpoints = ('progress', 'exercise_progress', 'exercise_notes', 'weight', 'exercise_muscles') %}
@@ -185,22 +192,23 @@
     {% block content %}
     {% endblock %}
 
-    <div id="restTimerBox" class="rest-toast" style="display:none;">
-        <div class="rt-ring-wrap">
-            <svg width="84" height="84" viewBox="0 0 84 84">
-                <circle class="rt-ring-track" cx="42" cy="42" r="37" fill="none" stroke-width="6"/>
-                <circle class="rt-ring-fill" id="restRingFill" cx="42" cy="42" r="37" fill="none" stroke-width="6"
-                        stroke-dasharray="232.5" stroke-dashoffset="0"/>
+    {# Descanso: píldora pequeña encima de la barra de abajo. Tocar el
+       tiempo la pliega (solo anillo y tiempo) o la despliega; se puede
+       arrastrar a otro sitio. #}
+    <div id="restTimerBox" class="rest-toast" style="display:none;" role="timer" aria-live="off">
+        <div class="rt-main" role="button" tabindex="0" aria-label="{{ _('Descanso: tocar para plegar o desplegar') }}">
+            <svg class="rt-ring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+                <circle class="rt-ring-track" cx="13" cy="13" r="10.5" fill="none" stroke-width="3.5"/>
+                <circle class="rt-ring-fill" id="restRingFill" cx="13" cy="13" r="10.5" fill="none" stroke-width="3.5"
+                        stroke-dasharray="66" stroke-dashoffset="0"/>
             </svg>
             <span class="rt-time" id="timerDisplay">00:00</span>
+            <span class="visually-hidden">{{ _("Descanso") }} <span id="restExerciseName"></span></span>
         </div>
-        <div class="rt-controls">
-            <div class="rt-label"><strong>{{ _("⏱ Descanso") }}</strong> <span id="restExerciseName"></span></div>
-            <div class="rt-adjust">
-                <button type="button" class="btn-outline" onclick="adjustTimer(-15)">{{ _("−15s") }}</button>
-                <button type="button" class="btn-outline" onclick="adjustTimer(15)">{{ _("+15s") }}</button>
-                <button type="button" class="btn-outline" onclick="stopRestTimer()" aria-label="{{ _('Parar descanso') }}">⏹</button>
-            </div>
+        <div class="rt-adjust">
+            <button type="button" onclick="adjustTimer(-15)" aria-label="{{ _('Quitar 15 segundos') }}">{{ _("−15") }}</button>
+            <button type="button" onclick="adjustTimer(15)" aria-label="{{ _('Añadir 15 segundos') }}">{{ _("+15") }}</button>
+            <button type="button" class="rt-stop" onclick="stopRestTimer()" aria-label="{{ _('Parar descanso') }}">{{ macros.icon('close', 16) }}</button>
         </div>
     </div>
 
@@ -253,8 +261,169 @@
             // La transición entre páginas (@view-transition) rechaza su promesa
             // interna si se navega antes de que termine: es normal, no un fallo.
             if (e.reason && (e.reason.name === 'AbortError' || /transition/i.test(reason))) return;
+            // Sin cobertura (el gimnasio): no es un fallo de la app; lo que haya
+            // que guardar ya lo reintenta la cola de abajo y lo avisa ella.
+            if (isNetworkError(e.reason)) { e.preventDefault(); return; }
             showDebugError({{ _('Promesa sin capturar:')|tojson }} + ' ' + reason);
         });
+
+        function isNetworkError(err) {
+            const msg = (err && err.message) || String(err || '');
+            return (err && err.name === 'TypeError' && /fetch|network|load failed/i.test(msg)) || err === 'timeout';
+        }
+
+        // fetch con límite de tiempo: con cobertura mala una petición puede
+        // quedarse colgada minutos sin fallar; así falla y se reintenta.
+        function fetchWithTimeout(url, options, ms) {
+            const ctrl = window.AbortController ? new AbortController() : null;
+            const timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, ms || 15000);
+            return fetch(url, Object.assign({}, options || {}, ctrl ? {signal: ctrl.signal} : {}))
+                .catch(function (err) { throw (err && err.name === 'AbortError') ? new TypeError('network timeout') : err; })
+                .finally(function () { clearTimeout(timer); });
+        }
+
+        // Barra fina de carga arriba: al tocar un enlace o enviar un
+        // formulario se ve al instante que la app ha reaccionado aunque el
+        // servidor tarde (cobertura del gimnasio, servidor despertando).
+        window.gyreBusy = function (on) { document.documentElement.classList.toggle('is-navigating', !!on); };
+        document.addEventListener('click', function (e) {
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            const a = e.target.closest && e.target.closest('a[href]');
+            if (!a || a.target || a.hasAttribute('download')) return;
+            const href = a.getAttribute('href') || '';
+            if (href.charAt(0) === '#' || href.indexOf('javascript:') === 0) return;
+            const url = new URL(a.href, location.href);
+            if (url.origin !== location.origin || (url.pathname === location.pathname && url.search === location.search && url.hash)) return;
+            a.classList.add('is-pending');
+            gyreBusy(true);
+        });
+        document.addEventListener('submit', function (e) {
+            const form = e.target;
+            if (e.defaultPrevented || form.method.toLowerCase() === 'dialog') return;
+            // Doble toque mientras carga = un solo envío (dos entrenos, dos series...).
+            if (form.dataset.submitting) { e.preventDefault(); return; }
+            form.dataset.submitting = '1';
+            const btn = e.submitter || form.querySelector('[type="submit"]');
+            if (btn) { btn.classList.add('is-pending'); btn.setAttribute('aria-busy', 'true'); }
+            gyreBusy(true);
+        });
+        // Al volver atrás (página restaurada de la caché del navegador) nada
+        // debe seguir "cargando".
+        window.addEventListener('pageshow', function () {
+            gyreBusy(false);
+            document.querySelectorAll('.is-pending').forEach(function (el) { el.classList.remove('is-pending'); el.removeAttribute('aria-busy'); });
+            document.querySelectorAll('form[data-submitting]').forEach(function (f) { delete f.dataset.submitting; });
+        });
+
+        // Cola de guardado de las series. Los cambios (PUT, que se pueden
+        // repetir sin efectos raros) se apuntan en el móvil y se reintentan
+        // hasta que lleguen: sin cobertura, con la app cerrada o con la sesión
+        // caducada no se pierde nada. Mientras quede algo pendiente se ve un
+        // aviso discreto arriba.
+        window.gyreSync = (function () {
+            const KEY = 'gyre-pending-puts';
+            const waiters = {};
+            let pending = {};
+            try { pending = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) {}
+            let timer = null, delay = 2000, flushing = false, seq = Date.now();
+            const hadLeftovers = Object.keys(pending).length > 0;
+
+            function persist() { try { localStorage.setItem(KEY, JSON.stringify(pending)); } catch (e) {} }
+
+            function status(kind) {
+                let el = document.getElementById('syncStatus');
+                if (!kind) { if (el) el.remove(); return; }
+                if (!el) {
+                    el = document.createElement('div');
+                    el.id = 'syncStatus';
+                    el.className = 'sync-status';
+                    el.setAttribute('role', 'status');
+                    document.body.appendChild(el);
+                }
+                const n = Object.keys(pending).length;
+                if (kind === 'login') {
+                    el.innerHTML = '';
+                    const link = document.createElement('a');
+                    link.href = '/login?next=' + encodeURIComponent(location.pathname);
+                    link.textContent = {{ _('Tu sesión se cerró: vuelve a entrar y se guardará lo pendiente')|tojson }};
+                    el.appendChild(link);
+                } else {
+                    el.textContent = n === 1 ? {{ _('Sin conexión · 1 serie por guardar, reintentando…')|tojson }}
+                        : {{ _('Sin conexión · %(n)s series por guardar, reintentando…', n='{n}')|tojson }}.replace('{n}', n);
+                }
+                el.classList.toggle('is-login', kind === 'login');
+            }
+
+            function settle(url, data) {
+                (waiters[url] || []).forEach(function (fn) { fn(data); });
+                delete waiters[url];
+            }
+
+            async function flush() {
+                if (flushing) return;
+                flushing = true;
+                clearTimeout(timer);
+                let problem = null;
+                for (const url of Object.keys(pending)) {
+                    // Versión y contenido de ESTE envío: si mientras viaja se cambia
+                    // otra casilla de la serie, el objeto pendiente cambia y se reenvía.
+                    const sentV = pending[url].v;
+                    const body = JSON.stringify(pending[url].data);
+                    let r;
+                    try {
+                        r = await fetchWithTimeout(url, {
+                            method: 'PUT', headers: {'Content-Type': 'application/json'}, body: body
+                        }, 15000);
+                    } catch (err) { problem = 'offline'; break; }
+                    // Sesión caducada: Flask-Login redirige a /login (HTML, no JSON).
+                    if (r.redirected && new URL(r.url).pathname === '/login') { problem = 'login'; break; }
+                    if (r.status >= 500 || r.status === 429) { problem = 'offline'; break; }
+                    let data = {ok: false};
+                    try { data = await r.json(); } catch (e) {}
+                    // Si mientras viajaba se cambió otra vez, se queda para el siguiente envío.
+                    if (pending[url] && pending[url].v === sentV) delete pending[url];
+                    persist();
+                    if (!pending[url]) settle(url, data);
+                }
+                flushing = false;
+                if (problem) {
+                    status(problem);
+                    timer = setTimeout(flush, delay);
+                    delay = Math.min(delay * 2, 30000);
+                    return false;
+                }
+                delay = 2000;
+                if (Object.keys(pending).length) return flush();  // llegó algo nuevo durante el envío
+                status(null);
+                return true;
+            }
+
+            function put(url, data) {
+                const item = pending[url] || {data: {}};
+                Object.assign(item.data, data);
+                item.v = ++seq;
+                pending[url] = item;
+                persist();
+                return new Promise(function (resolve) {
+                    (waiters[url] = waiters[url] || []).push(resolve);
+                    flush();
+                });
+            }
+
+            window.addEventListener('online', flush);
+            document.addEventListener('visibilitychange', function () { if (!document.hidden && Object.keys(pending).length) flush(); });
+            // Lo que quedó pendiente de otra visita (se cortó la conexión o se
+            // cerró la app): se envía ahora y, si la página lo enseña, se
+            // recarga para verlo ya guardado.
+            if (hadLeftovers) {
+                document.addEventListener('DOMContentLoaded', function () {
+                    flush().then(function (ok) {
+                        if (ok && document.body.hasAttribute('data-reload-after-sync')) location.reload();
+                    });
+                });
+            }
+            return {put: put, flush: flush, pendingCount: function () { return Object.keys(pending).length; }};
+        })();
 
         // Aviso breve arriba ("Guardado ✓" o un error), sin recargar.
         function gyreToast(message, isError) {
@@ -330,7 +499,7 @@
         const restSoundEnabled = {{ current_user.rest_sound_enabled|tojson if current_user.is_authenticated else 'true' }};
         const restVibrationEnabled = {{ current_user.rest_vibration_enabled|tojson if current_user.is_authenticated else 'true' }};
         const restWorker = ('Worker' in window) ? new Worker("{{ url_for('static', filename='rest_timer_worker.js') }}") : null;
-        const RING_CIRCUMFERENCE = 232.5;
+        const RING_CIRCUMFERENCE = 66;  // 2π · 10,5
 
         // Un AudioContext creado fuera de un gesto de usuario nace "suspended"
         // y no suena (política de autoplay de Chrome). Se crea uno persistente
@@ -423,7 +592,7 @@
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({seconds: totalSeconds})
-                });
+                }).catch(function () {});  // solo recuerda el descanso por defecto: si falla, no pasa nada
             }
 
             restTotalSeconds = totalSeconds;
@@ -496,7 +665,7 @@
             }
 
             window.restoreRestTimerPosition = function () {
-                const saved = localStorage.getItem('restTimerPos');
+                const saved = localStorage.getItem('restTimerPos2');  // la de la versión grande ya no vale
                 if (!saved) return;
                 try {
                     const pos = JSON.parse(saved);
@@ -506,9 +675,25 @@
                 } catch (e) {}
             };
 
+            // Plegada (solo anillo y tiempo) o desplegada: se recuerda.
+            let compact = false;
+            try { compact = localStorage.getItem('restTimerCompact') === '1'; } catch (e) {}
+            box.classList.toggle('is-compact', compact);
+            function toggleCompact() {
+                compact = !compact;
+                box.classList.toggle('is-compact', compact);
+                try { localStorage.setItem('restTimerCompact', compact ? '1' : '0'); } catch (e) {}
+            }
+            box.querySelector('.rt-main').addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleCompact(); }
+            });
+            let moved = false, downOnMain = false;
+
             box.addEventListener('pointerdown', function (e) {
                 if (e.target.closest('button')) return;
                 dragging = true;
+                moved = false;
+                downOnMain = !!e.target.closest('.rt-main');  // con setPointerCapture, el pointerup llega a la caja
                 box.setPointerCapture(e.pointerId);
                 const rect = box.getBoundingClientRect();
                 startX = e.clientX;
@@ -519,14 +704,20 @@
             });
             box.addEventListener('pointermove', function (e) {
                 if (!dragging) return;
+                if (Math.abs(e.clientX - startX) + Math.abs(e.clientY - startY) < 6 && !moved) return;
+                moved = true;
                 applyPosition(startLeft + (e.clientX - startX), startTop + (e.clientY - startY));
             });
             function endDrag(e) {
                 if (!dragging) return;
                 dragging = false;
                 box.classList.remove('rest-toast-dragging');
+                if (!moved) {  // un toque, no un arrastre
+                    if (e.type === 'pointerup' && downOnMain) toggleCompact();
+                    return;
+                }
                 const rect = box.getBoundingClientRect();
-                localStorage.setItem('restTimerPos', JSON.stringify({left: rect.left, top: rect.top}));
+                localStorage.setItem('restTimerPos2', JSON.stringify({left: rect.left, top: rect.top}));
             }
             box.addEventListener('pointerup', endDrag);
             box.addEventListener('pointercancel', endDrag);

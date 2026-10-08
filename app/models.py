@@ -30,6 +30,8 @@ class User(UserMixin, db.Model):
     notes: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
     rest_sound_enabled: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
     rest_vibration_enabled: so.Mapped[bool] = so.mapped_column(default=True, server_default=sa.true())
+    # Repeticiones a partir de las que la casilla se pone roja ("¿seguro?"); 0 = sin aviso.
+    reps_warning: so.Mapped[int] = so.mapped_column(default=30, server_default="30")
     # Para las estadísticas de la landing. Las cuentas anteriores a estas
     # columnas se quedan en NULL ("sin fecha"), no se inventa un valor.
     created_at: so.Mapped[Optional[datetime]] = so.mapped_column(

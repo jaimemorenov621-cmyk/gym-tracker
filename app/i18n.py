@@ -59,6 +59,7 @@ def N_(text):
 JS_STRINGS = [
     N_("Todos"),
     N_("Nivel máximo"),
+    N_("Reemplazando por {name}…"),
     N_("Hombros"),
     N_("Cuello"),
     N_("Pecho"),

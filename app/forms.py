@@ -43,7 +43,6 @@ from app.models import User
 class LoginForm(FlaskForm):
     username = StringField(_l("Usuario"), validators=[DataRequired(_l("Campo obligatorio."))])
     password = PasswordField(_l("Contraseña"), validators=[DataRequired(_l("Campo obligatorio."))])
-    remember_me = BooleanField(_l("Recordarme"))
     submit = SubmitField(_l("Iniciar sesión"))
 
 
@@ -149,6 +148,12 @@ class SettingsForm(FlaskForm):
         _l("¿Cómo quieres medir el esfuerzo?"),
         choices=[("rir", "RIR"), ("rpe", "RPE")],
         default="rir",
+    )
+    reps_warning = SelectField(
+        _l("Avisar si apuntas más repeticiones de"),
+        coerce=int,
+        choices=[(0, _l("No avisar")), (15, "15"), (20, "20"), (25, "25"), (30, "30"), (40, "40"), (50, "50")],
+        default=30,
     )
     rest_sound_enabled = BooleanField(_l("Sonido de notificación del descanso"))
     rest_vibration_enabled = BooleanField(_l("Vibración del descanso"))

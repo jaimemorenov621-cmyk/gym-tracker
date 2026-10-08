@@ -72,6 +72,12 @@
                 {% for e in form.stagnation_threshold.errors %}<span class="field-error">{{ e }}</span>{% endfor %}
             </div>
 
+            <div class="field">
+                <label class="field-label" for="{{ form.reps_warning.id }}">{{ form.reps_warning.label.text }}</label>
+                {{ form.reps_warning(class="input-short") }}
+                <small class="field-help">{{ _("La casilla se pone roja para que veas a tiempo un error al apuntar (64 en vez de 6). Las series de más de 30 repeticiones no cuentan para el 1RM ni los récords.") }}</small>
+            </div>
+
             <label class="toggle-row">
                 <span>{{ form.rest_sound_enabled.label.text }}</span>
                 {{ form.rest_sound_enabled(class="toggle") }}

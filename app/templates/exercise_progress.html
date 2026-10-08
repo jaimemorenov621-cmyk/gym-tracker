@@ -77,7 +77,7 @@
             <p><em>{{ _("Sin notas todavía.") }}</em></p>
         {% endif %}
         <a class="btn-outline" href="{{ url_for('exercise_notes', name=exercise) }}">
-            {{ macros.icon('note') }} {{ _('Editar notas y descanso') }}{% if exercise_note and exercise_note.default_rest_seconds %} ({{ macros.icon('stopwatch') }} {{ format_rest(exercise_note.default_rest_seconds) }}){% endif %}
+            {{ macros.icon('note') }} {{ _('Editar notas y descanso') }}{% if exercise_note and exercise_note.default_rest_seconds %} <span class="nowrap">· {{ macros.icon('stopwatch') }} {{ format_rest(exercise_note.default_rest_seconds) }}</span>{% endif %}
         </a>
     </div>
 
@@ -89,49 +89,113 @@
             <h3>{{ _("1RM estimado") }}</h3>
             <span class="chart-legend">
                 <span><i style="background:#17a973"></i>{{ _("Récord") }}</span>
-                <span><i style="background:#5a4fcf"></i>{{ _("Sesión") }}</span>
                 {% if stagnation %}<span><i style="background:#c62828"></i>{{ _("Sin récord") }}</span>{% endif %}
             </span>
+        </div>
+        <div class="chart-range" role="group" aria-label="{{ _('Periodo') }}" id="chartRange" hidden>
+            <button type="button" data-days="90">{{ _("3 meses") }}</button>
+            <button type="button" data-days="365">{{ _("1 año") }}</button>
+            <button type="button" data-days="0">{{ _("Todo") }}</button>
         </div>
         <div class="chart-box"><canvas id="progressChart"></canvas></div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
+        // Línea limpia: con muchas sesiones los puntos normales no se dibujan
+        // (solo récords y, si toca, las sesiones sin récord); el resto aparece
+        // al tocar. Periodo elegible cuando hay más de un año de datos.
         (function () {
-            const values = {{ chart_values|tojson }};
+            const all = {{ chart_dates|tojson }}.map((d, i) => ({
+                date: new Date(d + 'T12:00:00'), value: {{ chart_values|tojson }}[i], color: {{ chart_colors|tojson }}[i]
+            }));
             const fmt = v => v.toLocaleString(GYRE_NUM_LOCALE, { maximumFractionDigits: 1 });
+            const cs = getComputedStyle(document.documentElement);
+            const accent = cs.getPropertyValue('--accent').trim() || '#7c4dff';
+            const accentRgb = cs.getPropertyValue('--accent-rgb').trim() || '124, 77, 255';
+            const surface = cs.getPropertyValue('--surface').trim() || '#fff';
+            const PLAIN = '#5a4fcf';
             applyChartTheme();
-            new Chart(document.getElementById('progressChart'), {
+
+            const spanDays = (all[all.length - 1].date - all[0].date) / 864e5;
+            const rangeBox = document.getElementById('chartRange');
+            let days = spanDays > 400 ? 365 : 0;
+            if (spanDays > 120) rangeBox.hidden = false;
+
+            function visible() {
+                if (!days) return all;
+                const from = all[all.length - 1].date.getTime() - days * 864e5;
+                const slice = all.filter(p => p.date.getTime() >= from);
+                return slice.length >= 2 ? slice : all.slice(-2);
+            }
+            function label(d, longSpan) {
+                return longSpan
+                    ? d.toLocaleDateString(GYRE_NUM_LOCALE, { month: 'short', year: '2-digit' })
+                    : d.toLocaleDateString(GYRE_NUM_LOCALE, { day: '2-digit', month: '2-digit' });
+            }
+
+            const chart = new Chart(document.getElementById('progressChart'), {
                 type: 'line',
-                data: {
-                    labels: {{ chart_labels|tojson }},
-                    datasets: [{
-                        data: values,
-                        borderColor: '#7c4dff',
-                        borderWidth: 3,
-                        backgroundColor: 'rgba(124, 77, 255, 0.10)',
-                        fill: true,
-                        pointBackgroundColor: {{ chart_colors|tojson }},
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
-                        pointRadius: 6,
-                        pointHoverRadius: 8,
-                        tension: 0.3
-                    }]
-                },
+                data: { labels: [], datasets: [{ data: [] }] },
                 options: {
                     maintainAspectRatio: false,
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { callbacks: { label: c => '1RM ' + fmt(c.parsed.y) + ' kg' } }
+                        tooltip: {
+                            displayColors: false,
+                            callbacks: {
+                                title: items => items[0] ? visible()[items[0].dataIndex].date.toLocaleDateString(GYRE_NUM_LOCALE) : '',
+                                label: c => '1RM ' + fmt(c.parsed.y) + ' kg'
+                            }
+                        }
                     },
                     scales: {
-                        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 12 } },
-                        y: { ticks: { callback: v => fmt(v) },
-                             suggestedMin: Math.min(...values) * 0.95, suggestedMax: Math.max(...values) * 1.03 }
+                        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 18, maxTicksLimit: 6 } },
+                        y: { grid: { color: 'rgba(' + accentRgb + ', 0.08)' }, border: { display: false },
+                             ticks: { callback: v => fmt(v), maxTicksLimit: 5 } }
                     }
                 }
             });
+
+            function render() {
+                const pts = visible();
+                const longSpan = (pts[pts.length - 1].date - pts[0].date) / 864e5 > 300;
+                const dense = pts.length > 16;
+                const values = pts.map(p => p.value);
+                chart.data.labels = pts.map(p => label(p.date, longSpan));
+                chart.data.datasets[0] = {
+                    data: values,
+                    borderColor: accent,
+                    borderWidth: 2.5,
+                    fill: true,
+                    backgroundColor: function (ctx) {
+                        const area = ctx.chart.chartArea;
+                        if (!area) return 'rgba(' + accentRgb + ', 0.12)';
+                        const g = ctx.chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+                        g.addColorStop(0, 'rgba(' + accentRgb + ', 0.22)');
+                        g.addColorStop(1, 'rgba(' + accentRgb + ', 0)');
+                        return g;
+                    },
+                    cubicInterpolationMode: 'monotone',
+                    pointBackgroundColor: pts.map(p => p.color === PLAIN ? accent : p.color),
+                    pointBorderColor: surface,
+                    pointBorderWidth: 2,
+                    pointRadius: pts.map(p => (dense && p.color === PLAIN) ? 0 : (dense ? 4 : 5)),
+                    pointHoverRadius: 6,
+                    pointHitRadius: 10
+                };
+                chart.options.scales.y.suggestedMin = Math.min(...values) * 0.95;
+                chart.options.scales.y.suggestedMax = Math.max(...values) * 1.03;
+                chart.update();
+                rangeBox.querySelectorAll('button').forEach(b => b.classList.toggle('active', Number(b.dataset.days) === days));
+            }
+            rangeBox.addEventListener('click', function (e) {
+                const b = e.target.closest('button');
+                if (!b) return;
+                days = Number(b.dataset.days);
+                render();
+            });
+            render();
         })();
     </script>
     {% endif %}

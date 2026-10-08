@@ -58,8 +58,58 @@ self.addEventListener('fetch', (e) => {
         e.respondWith(staticFirst(e.request));
         return;
     }
+    if (e.request.mode === 'navigate') {
+        e.respondWith(navigateOrRetryPage(e.request));
+        return;
+    }
     e.respondWith(fetch(e.request));
 });
+
+// Abrir una página sin cobertura (o con el servidor despertando) daba la
+// pantalla de error de Chrome (ERR_FAILED) y había que recargar a mano. En
+// su lugar: una página propia que reintenta sola cada pocos segundos y en
+// cuanto vuelve la conexión. Lo pendiente de guardar sigue en el móvil.
+const NAV_TIMEOUT_MS = 20000;
+
+async function navigateOrRetryPage(request) {
+    try {
+        return await Promise.race([
+            fetch(request),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), NAV_TIMEOUT_MS)),
+        ]);
+    } catch (err) {
+        return new Response(retryPageHtml(), {
+            status: 503,
+            headers: {'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store'},
+        });
+    }
+}
+
+function retryPageHtml() {
+    const en = !/^es/i.test((self.navigator && self.navigator.language) || 'es');
+    const t = en
+        ? {title: 'No connection', h: "Can't reach Gyre", p: 'Retrying automatically… Your unsaved sets stay on your phone and will be saved when the connection is back.', b: 'Retry now'}
+        : {title: 'Sin conexión', h: 'No se puede conectar con Gyre', p: 'Reintentando solo… Las series sin guardar siguen en tu móvil y se guardarán al volver la conexión.', b: 'Reintentar ahora'};
+    return `<!doctype html><html lang="${en ? 'en' : 'es'}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>${t.title}</title>
+<style>
+:root{color-scheme:light dark;--bg:#f7f5ff;--fg:#1d1a2e;--muted:#6b6880;--accent:#7c4dff}
+@media (prefers-color-scheme:dark){:root{--bg:#0f0d1a;--fg:#ece9ff;--muted:#a19dbb}}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--fg);font:16px/1.45 system-ui,sans-serif;padding:24px;box-sizing:border-box;text-align:center}
+main{max-width:340px}h1{font-size:1.25rem;margin:18px 0 8px}p{color:var(--muted);margin:0 0 22px}
+.spin{width:34px;height:34px;margin:0 auto;border:3px solid rgba(124,77,255,.25);border-top-color:var(--accent);border-radius:50%;animation:s 0.9s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 20px;background:var(--accent);color:#fff}
+</style></head><body><main><div class="spin" aria-hidden="true"></div><h1>${t.h}</h1><p>${t.p}</p>
+<button type="button" onclick="location.reload()">${t.b}</button></main>
+<script>
+let wait = 3000;
+function again(){ fetch('/healthz', {cache: 'no-store'}).then(r => { if (r.ok) location.reload(); else later(); }).catch(later); }
+function later(){ setTimeout(again, wait); wait = Math.min(wait * 1.5, 15000); }
+window.addEventListener('online', () => location.reload());
+later();
+</script></body></html>`;
+}
 self.addEventListener('notificationclick', (e) => {
     e.notification.close();
     e.waitUntil(self.clients.openWindow('/'));

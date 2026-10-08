@@ -1,5 +1,7 @@
 {% extends "base.html" %}
 {% import "_macros.html" as macros %}
+{# Si quedaron cambios sin enviar (sin cobertura), al enviarlos se recarga. #}
+{% block body_attrs %} data-reload-after-sync{% endblock %}
 {% block content %}
     <div class="workout-title">
         <h1 id="workoutTitle">{{ workout.note or _("Entrenamiento") }}</h1>
@@ -93,6 +95,15 @@
         })();
     </script>
     {% endif %}
+    {% if current_user.notes and current_user.notes.strip() %}
+        {# Tus notas generales (las de Inicio), plegadas en una línea para no
+           estorbar: se abren al tocarlas. #}
+        <details class="workout-general-notes">
+            <summary>{{ macros.icon('note', 15) }} <span class="wgn-label">{{ _("Tus notas") }}</span>
+                <span class="wgn-preview">{{ current_user.notes.strip().splitlines()[0] }}</span></summary>
+            <div class="wgn-body">{{ current_user.notes.strip() }}</div>
+        </details>
+    {% endif %}
     {% if workout.performance_comment %}
         <div class="notes-box" style="margin-top:10px;">💬 {{ workout.performance_comment }}</div>
     {% endif %}
@@ -101,13 +112,17 @@
         <div class="card card-elevated">
             <h3 style="margin-top:0;">{{ _("📋 Plan de la rutina") }}</h3>
             {% for p in routine_plan %}
-                <div class="plan-row">
-                    <span class="pill pill-label">{{ p.exercise|title }}</span>
-                    <span class="pill">{{ p.sets_label }}x{{ p.target_reps }}{% if p.rir is not none %} @RIR{{ p.rir }}{% elif p.rpe is not none %} @RPE{{ p.rpe }}{% endif %}</span>
-                    <span class="pill{% if p.done >= p.target_sets %} pill-success{% endif %}"
-                          data-plan-exercise="{{ p.exercise|trim|lower }}"
-                          data-done="{{ p.done }}"
-                          data-target="{{ p.target_sets }}">{{ p.done }}/{{ p.target_sets }}</span>
+                {# Nombre a la izquierda y cifras a la derecha, siempre en la misma
+                   fila; al completar las series del plan, el nombre se tacha. #}
+                <div class="plan-row{% if p.done >= p.target_sets %} is-done{% endif %}">
+                    <span class="plan-name">{{ p.exercise|title }}</span>
+                    <span class="plan-pills">
+                        <span class="pill">{{ p.sets_label }}x{{ p.target_reps }}{% if p.rir is not none %} @RIR{{ p.rir }}{% elif p.rpe is not none %} @RPE{{ p.rpe }}{% endif %}</span>
+                        <span class="pill{% if p.done >= p.target_sets %} pill-success{% endif %}"
+                              data-plan-exercise="{{ p.exercise|trim|lower }}"
+                              data-done="{{ p.done }}"
+                              data-target="{{ p.target_sets }}">{{ p.done }}/{{ p.target_sets }}</span>
+                    </span>
                 </div>
             {% endfor %}
         </div>
@@ -172,7 +187,7 @@
                         <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" role="button" tabindex="0" title="{{ _('Récord personal · toca para compartir') }}" aria-label="{{ _('Récord personal, compartir') }}">🏅</span>{% endif %}</td>
                         <td class="set-previous">{{ p.label if p else "—" }}</td>
                         <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="{{ _('Peso en kg, serie %(n)s', n=loop.index) }}" value="{{ '' if ghost else ('%g' % s.weight).replace('.', ',') }}"{% if ghost %} placeholder="{{ ('%g' % p.weight).replace('.', ',') }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
-                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="{{ _('Repeticiones, serie %(n)s', n=loop.index) }}" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'reps', this.value)"></td>
+                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="{{ _('Repeticiones, serie %(n)s', n=loop.index) }}" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" oninput="checkRepsInput(this)" onchange="checkRepsInput(this, true); updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
                         {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
                         {% set effort_ghost = (effort_val == '' and p and p.effort is not none and p.effort_scale == effort_scale) %}
@@ -194,7 +209,7 @@
             </table>
             <div class="swipe-delete-zone"><button type="button" aria-label="{{ _('Eliminar serie') }}">{{ macros.icon('trash') }}</button></div>
             </div>
-            <button type="button" class="btn-outline" onclick="addSet({{ exercise|tojson|forceescape }})">{{ _("+ Agregar serie") }}</button>
+            <button type="button" class="btn-outline" onclick="addSet({{ exercise|tojson|forceescape }}, this)">{{ _("+ Agregar serie") }}</button>
         </div>
     {% endfor %}
     </div>
@@ -240,7 +255,7 @@
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({order: order})
-                    });
+                    }).catch(function () { showPickerErrorToast({{ _('No se pudo guardar el orden. Revisa la conexión.')|tojson }}); });
                 }
             });
         })();
@@ -431,6 +446,25 @@
         const SET_TYPE_SHORT = {{ type_short|tojson }};
         const SET_TYPE_LABEL = {{ type_label|tojson }};
         const T_SET_TYPE = {{ _('Tipo de serie: {type}')|tojson }};
+        const EFFORT_SCALE = {{ effort_scale|tojson }};
+        // Repeticiones a partir de las que se avisa (Configuración; 0 = sin aviso).
+        const REPS_WARNING = {{ (current_user.reps_warning or 0)|tojson }};
+
+        // Más repeticiones de lo normal = casi siempre un dedo de más (64 en
+        // vez de 6): la casilla se pone roja y, al confirmar, se avisa.
+        function checkRepsInput(input, announce) {
+            const reps = parseInt(input.value, 10);
+            const off = REPS_WARNING > 0 && reps > REPS_WARNING;
+            input.classList.toggle('cell-input-warn', off);
+            if (off && announce) {
+                gyreToast({{ _('¿Seguro? %(n)s repeticiones. Si es un error, corrígelo.', n='{n}')|tojson }}.replace('{n}', reps), true);
+            }
+        }
+        document.querySelectorAll('.set-table input[inputmode="numeric"]').forEach(function (i) { checkRepsInput(i); });
+
+        // Volver atrás a esta página (caché del navegador) la recarga: siempre
+        // con las series tal y como están guardadas.
+        window.addEventListener('pageshow', function (e) { if (e.persisted) location.reload(); });
 
         function setTypeCellHtml(id, type) {
             return '<td><button type="button" class="set-type-pill set-type-' + type + '" data-type="' + type + '"' +
@@ -475,7 +509,17 @@
             pill.querySelector('.set-type-long').textContent = SET_TYPE_LABEL[type];
             pill.classList.add('set-type-bump');
             setTimeout(() => pill.classList.remove('set-type-bump'), 250);
-            updateSet(setTypePickerId, 'set_type', type);
+            const change = {set_type: type};
+            // Al fallo = sin repeticiones en reserva: RIR 0 o RPE 10, solo.
+            const chip = pill.closest('tr').querySelector('.effort-chip');
+            if (type === 'fallo' && chip && EFFORT_SCALE !== 'none') {
+                const value = EFFORT_SCALE === 'rpe' ? '10' : '0';
+                chip.textContent = value;
+                chip.classList.remove('effort-chip-placeholder', 'effort-chip-empty');
+                chip.setAttribute('onclick', chip.getAttribute('onclick').replace(/openEffortPicker\((\d+), '[^']*'/, "openEffortPicker($1, '" + value + "'"));
+                change.effort = value;
+            }
+            saveSet(setTypePickerId, change);
         }
 
         function tapFeedback() {
@@ -508,15 +552,16 @@
         function updateSet(id, field, value) {
             const payload = {};
             payload[field] = value;
-            fetch("/set/" + id, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (!data.ok) return;
-                syncPrBadge(document.getElementById('row-' + id), data.is_pr);
+            saveSet(id, payload);
+        }
+
+        // Todo cambio de una serie pasa por la cola de guardado (base.html):
+        // sin cobertura se reintenta solo y no se pierde.
+        function saveSet(id, payload) {
+            return gyreSync.put("/set/" + id, payload).then(function (data) {
+                if (data.ok) syncPrBadge(document.getElementById('row-' + id), data.is_pr);
+                else if (data.error) showPickerErrorToast(data.error);
+                return data;
             });
         }
 
@@ -533,7 +578,7 @@
                     row.classList.remove('set-row-removing');
                     showPickerErrorToast(msg);
                 };
-                fetch("/set/" + id + "/delete", { method: 'POST' })
+                fetchWithTimeout("/set/" + id + "/delete", { method: 'POST' })
                     .then(r => {
                         if (!r.ok) throw new Error('status ' + r.status);
                         return r.json();
@@ -582,7 +627,13 @@
                 });
         }
 
-        function addSet(exercise) {
+        function addSet(exercise, btn) {
+            if (btn) {
+                if (btn.dataset.pending) return;  // un toque = una serie, aunque tarde
+                btn.dataset.pending = '1';
+                btn.classList.add('is-pending');
+            }
+            const done = function () { if (btn) { delete btn.dataset.pending; btn.classList.remove('is-pending'); } };
             const table = document.getElementById('table-' + exercise.replace(/ /g, '_'));
             const rows = table.querySelectorAll('tbody tr');
             let lastWeight = 0, lastReps = 0, lastEffort = '', lastType = 'normal';
@@ -601,7 +652,7 @@
                 lastType = last.dataset.setType || 'normal';
             }
 
-            fetch("{{ url_for('api_create_set', workout_id=workout.id) }}", {
+            fetchWithTimeout("{{ url_for('api_create_set', workout_id=workout.id) }}", {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
@@ -611,7 +662,8 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (!data.ok) return;
+                done();
+                if (!data.ok) { showPickerErrorToast({{ _('No se pudo añadir la serie.')|tojson }}); return; }
                 const tbody = table.querySelector('tbody');
                 const tr = document.createElement('tr');
                 tr.id = 'row-' + data.id;
@@ -636,7 +688,7 @@
                     '<td class="set-num">' + (rows.length + 1) + '</td>' +
                     '<td class="set-previous">' + previousLabel + '</td>' +
                     '<td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="' + T_WEIGHT_N.replace('{n}', rows.length + 1) + '" value="' + weightValue + '" placeholder="' + weightPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'weight\', this.value.replace(\',\', \'.\'))"></td>' +
-                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="' + T_REPS_N.replace('{n}', rows.length + 1) + '" value="' + repsValue + '" placeholder="' + repsPlaceholder + '" onfocus="this.select()" onchange="updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
+                    '<td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="' + T_REPS_N.replace('{n}', rows.length + 1) + '" value="' + repsValue + '" placeholder="' + repsPlaceholder + '" onfocus="this.select()" oninput="checkRepsInput(this)" onchange="checkRepsInput(this, true); updateSet(' + data.id + ', \'reps\', this.value)"></td>' +
                     '{% if effort_scale != "none" %}' +
                     '<td><button type="button" class="pill effort-chip' + effortClass + '" data-set-id="' + data.id + '" onclick="openEffortPicker(' + data.id + ', \'' + effortCurrentValue + '\', \'' + exercise.replace(/\b\w/g, c => c.toUpperCase()).replace(/'/g, "\\'") + ' · ' + T_SET_N.replace('{n}', rows.length + 1) + '\')">' + effortDisplay + '</button></td>' +
                     '{% endif %}' +
@@ -648,6 +700,10 @@
                 setTimeout(() => tr.classList.remove('set-row-entering'), 300);
                 attachSwipeHandlers(tr);
                 updateExerciseCardState(exercise);
+            })
+            .catch(function () {
+                done();
+                showPickerErrorToast({{ _('No se pudo añadir la serie. Revisa la conexión.')|tojson }});
             });
         }
 
@@ -709,16 +765,14 @@
             };
 
             btn.dataset.pending = '1';
-            fetch("/set/" + id, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
-            })
-            .then(r => r.json())
+            // Sin cobertura no se deshace nada: queda en la cola y se envía al
+            // volver la conexión (el aviso de arriba lo indica).
+            setTimeout(function () { delete btn.dataset.pending; }, 1500);
+            gyreSync.put("/set/" + id, payload)
             .then(data => {
                 delete btn.dataset.pending;
                 if (!data.ok) {
-                    rollback(data.error);
+                    rollback(data.error || {{ _('No se pudo guardar la serie.')|tojson }});
                     return;
                 }
                 syncPrBadge(row, data.is_pr);
@@ -731,10 +785,6 @@
                         showPrShareToast(id, exercise.replace(/\b\w/g, c => c.toUpperCase()));
                     }
                 }
-            })
-            .catch(() => {
-                delete btn.dataset.pending;
-                rollback();
             });
         }
 
@@ -746,6 +796,7 @@
             pill.dataset.done = done;
             pill.textContent = done + '/' + target;
             pill.classList.toggle('pill-success', done >= target);
+            pill.closest('.plan-row').classList.toggle('is-done', done >= target);
 
             let totalDone = 0, totalTarget = 0;
             document.querySelectorAll('.plan-row [data-plan-exercise]').forEach(p => {

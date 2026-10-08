@@ -188,19 +188,25 @@ function submitNewExercise() {
 function selectExercise(name) {
     if (pickerReplaceUrl) {
         const payload = Object.assign({exercise: name}, pickerReplaceExtra || {});
-        fetch(pickerReplaceUrl, {
+        // Se ve al momento que está en marcha (barra de arriba + aviso), aunque
+        // el servidor o la cobertura tarden.
+        if (window.gyreBusy) gyreBusy(true);
+        if (window.gyreToast) gyreToast(T('Reemplazando por {name}…').replace('{name}', name));
+        const failed = function () {
+            if (window.gyreBusy) gyreBusy(false);
+            showPickerErrorToast(T('No se pudo reemplazar el ejercicio.'));
+        };
+        (window.fetchWithTimeout || fetch)(pickerReplaceUrl, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(payload)
         })
         .then(r => r.json())
         .then(data => {
-            if (!data.ok) {
-                showPickerErrorToast(T('No se pudo reemplazar el ejercicio.'));
-                return;
-            }
+            if (!data.ok) { failed(); return; }
             window.location.reload();
-        });
+        })
+        .catch(failed);
         closeExercisePicker();
         return;
     }

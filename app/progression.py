@@ -69,7 +69,7 @@ from app.models import (
 # ------------------------------------------------------------------ reglas
 # Cambiar cualquier regla = subir XP_RULES_VERSION (todas las cachés se
 # recalculan solas) y actualizar la página /nivel.
-XP_RULES_VERSION = 1
+XP_RULES_VERSION = 2  # v2: las series de más de 30 repeticiones no cuentan para récords
 XP_WORKOUT = 100            # entreno válido
 XP_SET = 5                  # serie de XP
 XP_PR = 25                  # récord real
@@ -210,17 +210,19 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
         day = days[d]
         info = {"workout": 0, "sets_n": 0, "sets": 0, "prs_n": 0, "prs": 0, "total": 0, "notes": []}
 
-        work, session_best = [], {}
+        work, session_best, trained = [], {}, False
         for s in w.sets:
             if not is_real_set(s) or (s.set_type or "normal") == "calentamiento":
                 continue
+            trained = True
             e1rm = estimated_1rm(s, inputs.bodyweight)
-            session_best[s.exercise] = max(session_best.get(s.exercise, 0.0), e1rm)
-            prev = best.get(s.exercise)
-            if prev is not None and e1rm < MIN_LOAD_FRACTION * prev:
-                continue  # serie casi sin carga para ti en ese ejercicio
+            if e1rm > 0:  # 0 = más de 30 repeticiones: sin 1RM, ni récord ni filtro de carga
+                session_best[s.exercise] = max(session_best.get(s.exercise, 0.0), e1rm)
+                prev = best.get(s.exercise)
+                if prev is not None and e1rm < MIN_LOAD_FRACTION * prev:
+                    continue  # serie casi sin carga para ti en ese ejercicio
             work.append(s)
-        if session_best:
+        if trained:
             week["days"].add(d)
 
         # Entreno válido: 1 al día y 6 días por semana como mucho.
