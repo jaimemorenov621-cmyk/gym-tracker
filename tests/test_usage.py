@@ -188,6 +188,19 @@ class StatsPageTests(DbTestCase):
         # Al abrir la propia página de estadísticas ya hay una fila de hoy.
         self.assertIn("Solo usuarios que entrenaron esa semana", html)
 
+    def test_stats_page_lists_new_accounts(self):
+        uid = self.make_user("Jaime_309")
+        other = self.make_user("nuevo_atleta")
+        with app.app_context():
+            u = db.session.get(User, other)
+            u.created_at = datetime.now(timezone.utc).replace(tzinfo=None)
+            u.signup_method = "password"
+            db.session.commit()
+        self.login(uid)
+        html = self.client.get("/landing/stats?periodo=todo").get_data(as_text=True)
+        self.assertIn("Cuentas nuevas", html)
+        self.assertIn("nuevo_atleta", html)
+
 
 if __name__ == "__main__":
     unittest.main()

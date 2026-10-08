@@ -568,9 +568,16 @@ def landing_stats():
         LandingEvent.source,
         LandingEvent.language,
     )
-    users_q = sa.select(User.created_at, User.signup_method, User.signup_source).where(
-        User.created_at.is_not(None), User.signup_method.is_distinct_from("demo")
+    # Entrenos con alguna serie hecha: para ver si la cuenta nueva llegó a usar la app.
+    trained = (
+        sa.select(sa.func.count(sa.distinct(Workout.id)))
+        .join(SetEntry, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == User.id, SetEntry.completed.is_(True))
+        .scalar_subquery()
     )
+    users_q = sa.select(User.created_at, User.signup_method, User.signup_source, User.username, trained).where(
+        User.created_at.is_not(None), User.signup_method.is_distinct_from("demo")
+    ).order_by(User.created_at.desc())
     if start is not None:
         events_q = events_q.where(LandingEvent.timestamp >= start)
         users_q = users_q.where(User.created_at >= start)
@@ -608,7 +615,10 @@ def landing_stats():
             by_language[language]["clicks"] += 1
 
     signups_password = signups_google = 0
-    for created_at, method, signup_source in db.session.execute(users_q):
+    new_accounts = []
+    for created_at, method, signup_source, username, workouts in db.session.execute(users_q):
+        new_accounts.append({"username": username, "created_at": to_local(created_at), "method": method,
+                             "source": signup_source, "workouts": workouts})
         if method == "google":
             signups_google += 1
         else:
@@ -638,6 +648,7 @@ def landing_stats():
         signups_password=signups_password,
         signups_google=signups_google,
         signup_rate=(100 * signups / visits) if visits else None,
+        new_accounts=new_accounts,
         total_users=total_users,
         referrer_counts=dict(sorted(referrer_counts.items(), key=lambda kv: -kv[1])),
         daily=sorted(daily.items(), reverse=True)[:60],
