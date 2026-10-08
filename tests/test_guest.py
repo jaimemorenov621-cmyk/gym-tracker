@@ -55,6 +55,17 @@ class GuestTests(DbTestCase):
             self.assertEqual(db.session.scalar(sa.select(sa.func.count()).select_from(Workout).where(Workout.user_id == uid)), 1)
         self.assertNotIn("Guardar mi progreso", self.client.get("/settings").get_data(as_text=True))
 
+    def test_trial_counted_apart_from_signup_clicks(self):
+        self.start()
+        self.client.get("/logout")
+        admin = self.make_user("Jaime_309")
+        self.login(admin)
+        html = self.client.get("/landing/stats?periodo=todo").get_data(as_text=True)
+        self.assertIn("Probaron sin cuenta", html)
+        self.assertIn("1 siguen probando", html)
+        tile = html.split("Clics para crear cuenta")[0].rsplit('stats-tile-value">', 1)[1]
+        self.assertTrue(tile.startswith("0<"), tile[:20])  # probar no es un clic de crear cuenta
+
     def test_guest_can_open_login(self):
         self.start()
         self.assertEqual(self.client.get("/login").status_code, 200)

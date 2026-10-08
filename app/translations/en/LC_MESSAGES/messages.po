@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-08 22:00+0200\n"
+"POT-Creation-Date: 2026-10-08 23:08+0200\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1367,8 +1367,8 @@ msgstr "Required field."
 msgid "Contraseña"
 msgstr "Password"
 
-#: app/forms.py:46 app/routes.py:1164 app/templates/landing.html:24
-#: app/templates/landing.html:249
+#: app/forms.py:46 app/routes.py:1167 app/templates/landing.html:24
+#: app/templates/landing.html:252
 msgid "Iniciar sesión"
 msgstr "Log in"
 
@@ -1404,7 +1404,7 @@ msgstr "Repeat the password."
 msgid "Las contraseñas no coinciden."
 msgstr "The passwords don't match."
 
-#: app/forms.py:63 app/templates/landing.html:59
+#: app/forms.py:63 app/templates/landing.html:62
 msgid "Crear cuenta gratis"
 msgstr "Create free account"
 
@@ -1601,37 +1601,37 @@ msgstr "Fat loss"
 msgid "Días que sueles entrenar"
 msgstr "Days you usually train"
 
-#: app/forms.py:187 app/routes.py:779
+#: app/forms.py:187 app/routes.py:782
 msgctxt "inicial de lunes"
 msgid "L"
 msgstr "M"
 
-#: app/forms.py:187 app/routes.py:779
+#: app/forms.py:187 app/routes.py:782
 msgctxt "inicial de martes"
 msgid "M"
 msgstr "T"
 
-#: app/forms.py:187 app/routes.py:780
+#: app/forms.py:187 app/routes.py:783
 msgctxt "inicial de miércoles"
 msgid "X"
 msgstr "W"
 
-#: app/forms.py:187 app/routes.py:780
+#: app/forms.py:187 app/routes.py:783
 msgctxt "inicial de jueves"
 msgid "J"
 msgstr "T"
 
-#: app/forms.py:187 app/routes.py:781
+#: app/forms.py:187 app/routes.py:784
 msgctxt "inicial de viernes"
 msgid "V"
 msgstr "F"
 
-#: app/forms.py:187 app/routes.py:781
+#: app/forms.py:187 app/routes.py:784
 msgctxt "inicial de sábado"
 msgid "S"
 msgstr "S"
 
-#: app/forms.py:187 app/routes.py:782
+#: app/forms.py:187 app/routes.py:785
 msgctxt "inicial de domingo"
 msgid "D"
 msgstr "S"
@@ -1878,11 +1878,11 @@ msgstr "Equipment (optional)"
 msgid "Crear y usar"
 msgstr "Create and use"
 
-#: app/i18n.py:91 app/routes.py:3513
+#: app/i18n.py:91 app/routes.py:3516
 msgid "El nombre es obligatorio."
 msgstr "Name is required."
 
-#: app/i18n.py:92 app/routes.py:3515
+#: app/i18n.py:92 app/routes.py:3518
 msgid "Elige al menos un músculo primario."
 msgstr "Choose at least one primary muscle."
 
@@ -2007,7 +2007,7 @@ msgid "No se pudo preparar la tarjeta."
 msgstr "Couldn't prepare the card."
 
 #: app/i18n.py:121 app/templates/exercise_progress.html:52
-#: app/templates/landing.html:107
+#: app/templates/landing.html:110
 msgid "¡Nuevo récord!"
 msgstr "New record!"
 
@@ -2152,7 +2152,7 @@ msgstr "Calves"
 msgid "Logros"
 msgstr "Achievements"
 
-#: app/routes.py:149 app/templates/landing.html:250
+#: app/routes.py:149 app/templates/landing.html:253
 msgid "Política de privacidad"
 msgstr "Privacy policy"
 
@@ -2194,102 +2194,102 @@ msgstr ""
 msgid "No tienes acceso a esta página."
 msgstr "You don't have access to this page."
 
-#: app/routes.py:795 app/routes.py:2699
+#: app/routes.py:798 app/routes.py:2702
 msgid "mañana"
 msgstr "tomorrow"
 
-#: app/routes.py:795
+#: app/routes.py:798
 #, python-format
 msgid "el %(day)s"
 msgstr "on %(day)s"
 
-#: app/routes.py:800
+#: app/routes.py:803
 msgid "El músculo crece mientras descansas."
 msgstr "Muscle grows while you rest."
 
-#: app/routes.py:801
+#: app/routes.py:804
 msgid "Recuperar también es entrenar."
 msgstr "Recovering is training too."
 
-#: app/routes.py:802
+#: app/routes.py:805
 msgid "Duerme bien: mañana se nota."
 msgstr "Sleep well: you'll feel it tomorrow."
 
-#: app/routes.py:803
+#: app/routes.py:806
 msgid "Hoy toca cargar pilas, no barras."
 msgstr "Today you recharge, not load the bar."
 
-#: app/routes.py:804
+#: app/routes.py:807
 msgid "Un buen descanso vale un récord."
 msgstr "A good rest is worth a record."
 
-#: app/routes.py:805
+#: app/routes.py:808
 msgid "Estira, camina, bebe agua. Mañana, a por ello."
 msgstr "Stretch, walk, drink water. Tomorrow, go for it."
 
-#: app/routes.py:808
+#: app/routes.py:811
 msgid "Buen trabajo. Ahora, a recuperar."
 msgstr "Good job. Now, recover."
 
-#: app/routes.py:809
+#: app/routes.py:812
 msgid "Un día más que suma."
 msgstr "One more day that counts."
 
-#: app/routes.py:810
+#: app/routes.py:813
 msgid "Hecho. Come bien y descansa."
 msgstr "Done. Eat well and rest."
 
-#: app/routes.py:811
+#: app/routes.py:814
 msgid "Constancia > intensidad. Hoy has cumplido."
 msgstr "Consistency > intensity. You delivered today."
 
-#: app/routes.py:898
+#: app/routes.py:901
 msgid "Crea una rutina o empieza un entreno libre"
 msgstr "Create a routine or start a free workout"
 
-#: app/routes.py:899
+#: app/routes.py:902
 msgid "Con una rutina, cada entreno viene con tus ejercicios ya puestos."
 msgstr "With a routine, each workout comes with your exercises already set up."
 
-#: app/routes.py:900
+#: app/routes.py:903
 msgid "Marca tu primera serie"
 msgstr "Check off your first set"
 
-#: app/routes.py:901
+#: app/routes.py:904
 msgid "Apunta peso y repeticiones y pulsa ✓: el descanso arranca solo."
 msgstr "Enter weight and reps and tap ✓: the rest timer starts on its own."
 
-#: app/routes.py:902
+#: app/routes.py:905
 msgid "Termina tu primer entreno"
 msgstr "Finish your first workout"
 
-#: app/routes.py:903
+#: app/routes.py:906
 msgid "Verás el resumen de la sesión y empezará tu historial de progreso."
 msgstr "You'll see the session summary and your progress history will begin."
 
-#: app/routes.py:995 app/templates/exercise_progress.html:203
+#: app/routes.py:998 app/templates/exercise_progress.html:203
 #: app/templates/history.html:5
 msgid "Historial"
 msgstr "History"
 
-#: app/routes.py:1098 app/templates/base.html:130 app/templates/base.html:150
+#: app/routes.py:1101 app/templates/base.html:130 app/templates/base.html:150
 #: app/templates/index.html:4
 msgid "Inicio"
 msgstr "Home"
 
-#: app/routes.py:1144 app/routes.py:2362
+#: app/routes.py:1147 app/routes.py:2365
 msgid "Notas guardadas."
 msgstr "Notes saved."
 
-#: app/routes.py:1158
+#: app/routes.py:1161
 msgid "Usuario o contraseña incorrectos."
 msgstr "Wrong username or password."
 
-#: app/routes.py:1222
+#: app/routes.py:1225
 msgid "¡Cuenta guardada! Ya puedes entrar con Google desde cualquier móvil."
 msgstr "Account saved! You can now sign in with Google from any phone."
 
-#: app/routes.py:1231
+#: app/routes.py:1234
 msgid ""
 "Ya hay una cuenta con ese email. Inicia sesión con tu usuario y "
 "contraseña."
@@ -2297,111 +2297,111 @@ msgstr ""
 "There's already an account with that email. Log in with your username and"
 " password."
 
-#: app/routes.py:1265
+#: app/routes.py:1268
 msgid "¡Cuenta guardada! Ya puedes entrar con tu usuario desde cualquier móvil."
 msgstr "Account saved! You can now sign in with your username from any phone."
 
-#: app/routes.py:1280
+#: app/routes.py:1283
 msgid "¡Bienvenido a Gyre! Empieza un entreno o crea tu primera rutina."
 msgstr "Welcome to Gyre! Start a workout or create your first routine."
 
-#: app/routes.py:1284 app/templates/register.html:33
+#: app/routes.py:1287 app/templates/register.html:33
 msgid "Guardar mi cuenta"
 msgstr "Save my account"
 
-#: app/routes.py:1284
+#: app/routes.py:1287
 msgid "Crear cuenta"
 msgstr "Create account"
 
-#: app/routes.py:1308
+#: app/routes.py:1311
 msgid "lunes"
 msgstr "Monday"
 
-#: app/routes.py:1308
+#: app/routes.py:1311
 msgid "martes"
 msgstr "Tuesday"
 
-#: app/routes.py:1308
+#: app/routes.py:1311
 msgid "miércoles"
 msgstr "Wednesday"
 
-#: app/routes.py:1308
+#: app/routes.py:1311
 msgid "jueves"
 msgstr "Thursday"
 
-#: app/routes.py:1309
+#: app/routes.py:1312
 msgid "viernes"
 msgstr "Friday"
 
-#: app/routes.py:1309
+#: app/routes.py:1312
 msgid "sábado"
 msgstr "Saturday"
 
-#: app/routes.py:1309
+#: app/routes.py:1312
 msgid "domingo"
 msgstr "Sunday"
 
-#: app/routes.py:1316
+#: app/routes.py:1319
 #, python-format
 msgid "Entreno del %(day)s"
 msgstr "%(day)s workout"
 
-#: app/routes.py:1329
+#: app/routes.py:1332
 msgid "No se pudo empezar el entreno. Inténtalo de nuevo."
 msgstr "Couldn't start the workout. Please try again."
 
-#: app/routes.py:1334 app/routes.py:3247
+#: app/routes.py:1337 app/routes.py:3250
 msgid "Ya tienes un entreno en curso — termínalo antes de empezar otro."
 msgstr ""
 "You already have a workout in progress — finish it before starting "
 "another."
 
-#: app/routes.py:1352
+#: app/routes.py:1355
 msgid "El nombre no puede estar vacío."
 msgstr "The name can't be empty."
 
-#: app/routes.py:1363 app/routes.py:1624 app/routes.py:1783 app/routes.py:1886
-#: app/routes.py:3545
+#: app/routes.py:1366 app/routes.py:1627 app/routes.py:1786 app/routes.py:1889
+#: app/routes.py:3548
 msgid "No tienes acceso a este entrenamiento."
 msgstr "You don't have access to this workout."
 
-#: app/routes.py:1572
+#: app/routes.py:1575
 msgid "Marca la serie como hecha para compartirla."
 msgstr "Mark the set as done to share it."
 
-#: app/routes.py:1588
+#: app/routes.py:1591
 #, python-format
 msgid "NIVEL %(n)s"
 msgstr "LEVEL %(n)s"
 
-#: app/routes.py:1706 app/templates/_workout_history.html:7
+#: app/routes.py:1709 app/templates/_workout_history.html:7
 #: app/templates/base.html:179 app/templates/finish_workout.html:9
 #: app/templates/settings.html:58 app/templates/workout_detail.html:7
 msgid "Entrenamiento"
 msgstr "Workout"
 
-#: app/routes.py:1795
+#: app/routes.py:1798
 msgid ""
 "No puedes finalizar un entrenamiento sin ninguna serie con repeticiones "
 "registradas."
 msgstr "You can't finish a workout without any set with reps logged."
 
-#: app/routes.py:1818
+#: app/routes.py:1821
 #, python-format
 msgid "Entrenamiento guardado. Se eliminó %(num)d serie vacía sin rellenar."
 msgid_plural "Entrenamiento guardado. Se eliminaron %(num)d series vacías sin rellenar."
 msgstr[0] "Workout saved. %(num)d empty set was removed."
 msgstr[1] "Workout saved. %(num)d empty sets were removed."
 
-#: app/routes.py:1821
+#: app/routes.py:1824
 msgid "Entrenamiento guardado."
 msgstr "Workout saved."
 
-#: app/routes.py:1828
+#: app/routes.py:1831
 msgid "Entreno"
 msgstr "Workout"
 
-#: app/routes.py:1830 app/templates/exercise_muscles.html:18
+#: app/routes.py:1833 app/templates/exercise_muscles.html:18
 #: app/templates/import_review.html:7 app/templates/import_review.html:15
 #, python-format
 msgid "%(num)d serie"
@@ -2409,147 +2409,147 @@ msgid_plural "%(num)d series"
 msgstr[0] "%(num)d set"
 msgstr[1] "%(num)d sets"
 
-#: app/routes.py:1832 app/templates/rango.html:120
+#: app/routes.py:1835 app/templates/rango.html:120
 #, python-format
 msgid "%(num)d récord"
 msgid_plural "%(num)d récords"
 msgstr[0] "%(num)d record"
 msgstr[1] "%(num)d records"
 
-#: app/routes.py:1834 app/templates/level.html:64
+#: app/routes.py:1837 app/templates/level.html:64
 msgid "Semana cumplida"
 msgstr "Week completed"
 
-#: app/routes.py:1835
+#: app/routes.py:1838
 msgid "Entreno terminado"
 msgstr "Workout finished"
 
-#: app/routes.py:1867 app/templates/landing.html:100
+#: app/routes.py:1870 app/templates/landing.html:103
 #: app/templates/workout_detail.html:397
 msgid "Terminar entreno"
 msgstr "Finish workout"
 
-#: app/routes.py:1893
+#: app/routes.py:1896
 msgid "Entrenamiento eliminado."
 msgstr "Workout deleted."
 
-#: app/routes.py:1970 app/templates/base.html:136 app/templates/base.html:162
+#: app/routes.py:1973 app/templates/base.html:136 app/templates/base.html:162
 #: app/templates/progress.html:4 app/templates/rango.html:104
 msgid "Progreso"
 msgstr "Progress"
 
-#: app/routes.py:1991 app/templates/base.html:137 app/templates/base.html:166
+#: app/routes.py:1994 app/templates/base.html:137 app/templates/base.html:166
 #: app/templates/rango.html:4 app/templates/rango.html:107
 msgid "Rango"
 msgstr "Rank"
 
-#: app/routes.py:2094 app/templates/friends.html:5 app/templates/rango.html:98
+#: app/routes.py:2097 app/templates/friends.html:5 app/templates/rango.html:98
 msgid "Amigos"
 msgstr "Friends"
 
-#: app/routes.py:2117
+#: app/routes.py:2120
 msgid "Ese enlace de invitación no es válido."
 msgstr "That invite link isn't valid."
 
-#: app/routes.py:2117
+#: app/routes.py:2120
 msgid "Ese es tu propio enlace de invitación."
 msgstr "That's your own invite link."
 
-#: app/routes.py:2119
+#: app/routes.py:2122
 msgid "Invitación"
 msgstr "Invite"
 
-#: app/routes.py:2144
+#: app/routes.py:2147
 msgid "Solo puedes ver la tarjeta de tus amigos."
 msgstr "You can only see your friends' cards."
 
-#: app/routes.py:2172
+#: app/routes.py:2175
 msgid "Tarjeta guardada."
 msgstr "Card saved."
 
-#: app/routes.py:2175 app/routes.py:2257
+#: app/routes.py:2178 app/routes.py:2260
 msgid "La sesión ha caducado: recarga la página."
 msgstr "Your session expired: reload the page."
 
-#: app/routes.py:2180
+#: app/routes.py:2183
 msgid "Tu tarjeta"
 msgstr "Your card"
 
-#: app/routes.py:2245
+#: app/routes.py:2248
 #, python-format
 msgid "Como mucho %(n)s básicos: se han guardado los %(n)s primeros."
 msgstr "%(n)s basics at most: the first %(n)s were saved."
 
-#: app/routes.py:2270 app/templates/personal_basics.html:5
+#: app/routes.py:2273 app/templates/personal_basics.html:5
 #: app/templates/rango.html:46
 msgid "Tus básicos"
 msgstr "Your basics"
 
-#: app/routes.py:2280
+#: app/routes.py:2283
 msgid "No se encontró este ejercicio en el catálogo."
 msgstr "This exercise wasn't found in the catalog."
 
-#: app/routes.py:2288
+#: app/routes.py:2291
 msgid "Ese nombre es demasiado largo (máximo 64 caracteres)."
 msgstr "That name is too long (64 characters max)."
 
-#: app/routes.py:2294
+#: app/routes.py:2297
 msgid "Nombre en español guardado."
 msgstr "Spanish name saved."
 
-#: app/routes.py:2294
+#: app/routes.py:2297
 #, python-format
 msgid "Se actualizó en %(num)d serie para que siga contando."
 msgid_plural "Se actualizó en %(num)d series para que sigan contando."
 msgstr[0] "Updated in %(num)d set so it keeps counting."
 msgstr[1] "Updated in %(num)d sets so they keep counting."
 
-#: app/routes.py:2372
+#: app/routes.py:2375
 #, python-format
 msgid "Notas de %(name)s"
 msgstr "%(name)s notes"
 
-#: app/routes.py:2430
+#: app/routes.py:2433
 msgid "Configuración guardada."
 msgstr "Settings saved."
 
-#: app/routes.py:2444 app/templates/_macros.html:19 app/templates/base.html:141
+#: app/routes.py:2447 app/templates/_macros.html:19 app/templates/base.html:141
 #: app/templates/settings.html:4
 msgid "Configuración"
 msgstr "Settings"
 
-#: app/routes.py:2455
+#: app/routes.py:2458
 msgid "Peso registrado."
 msgstr "Weight logged."
 
-#: app/routes.py:2467 app/templates/progress.html:190
+#: app/routes.py:2470 app/templates/progress.html:190
 #: app/templates/weight.html:5
 msgid "Peso corporal"
 msgstr "Body weight"
 
-#: app/routes.py:2490
+#: app/routes.py:2493
 msgid "Elige el archivo CSV que exportaste."
 msgstr "Choose the CSV file you exported."
 
-#: app/routes.py:2501 app/templates/import.html:5
+#: app/routes.py:2504 app/templates/import.html:5
 msgid "Importar entrenos"
 msgstr "Import workouts"
 
-#: app/routes.py:2529
+#: app/routes.py:2532
 #, python-format
 msgid "Importados %(w)s entrenos y %(s)s series."
 msgstr "Imported %(w)s workouts and %(s)s sets."
 
-#: app/routes.py:2530
+#: app/routes.py:2533
 #, python-format
 msgid "%(n)s ya estaban y no se han duplicado."
 msgstr "%(n)s were already there and weren't duplicated."
 
-#: app/routes.py:2535
+#: app/routes.py:2538
 msgid "Historial importado"
 msgstr "History imported"
 
-#: app/routes.py:2536 app/templates/history.html:5
+#: app/routes.py:2539 app/templates/history.html:5
 #: app/templates/import_review.html:7
 #, python-format
 msgid "%(num)d entreno"
@@ -2557,82 +2557,82 @@ msgid_plural "%(num)d entrenos"
 msgstr[0] "%(num)d workout"
 msgstr[1] "%(num)d workouts"
 
-#: app/routes.py:2541 app/templates/import_review.html:5
+#: app/routes.py:2544 app/templates/import_review.html:5
 msgid "Revisar importación"
 msgstr "Review import"
 
-#: app/routes.py:2577
+#: app/routes.py:2580
 msgid "Escribe tu nombre de usuario exactamente igual para confirmar."
 msgstr "Type your username exactly to confirm."
 
-#: app/routes.py:2583
+#: app/routes.py:2586
 msgid "Tu cuenta y todos tus datos se han borrado."
 msgstr "Your account and all your data have been deleted."
 
-#: app/routes.py:2585 app/templates/delete_account.html:5
+#: app/routes.py:2588 app/templates/delete_account.html:5
 #: app/templates/privacy.html:36 app/templates/settings.html:157
 msgid "Borrar mi cuenta"
 msgstr "Delete my account"
 
-#: app/routes.py:2595
+#: app/routes.py:2598
 msgid "Guarda tu cuenta con un email para que podamos responderte."
 msgstr "Save your account with an email so we can reply to you."
 
-#: app/routes.py:2604
+#: app/routes.py:2607
 msgid "Escribe tu mensaje."
 msgstr "Write your message."
 
-#: app/routes.py:2606
+#: app/routes.py:2609
 msgid "Has enviado muchos mensajes hoy. Inténtalo mañana."
 msgstr "You've sent a lot of messages today. Try again tomorrow."
 
-#: app/routes.py:2613
+#: app/routes.py:2616
 msgid "Mensaje enviado. Te responderemos al email de tu cuenta."
 msgstr "Message sent. We'll reply to your account's email."
 
-#: app/routes.py:2615 app/templates/contact.html:4
+#: app/routes.py:2618 app/templates/contact.html:4
 #: app/templates/privacy.html:40 app/templates/settings.html:155
 msgid "Contacto"
 msgstr "Contact"
 
-#: app/routes.py:2658
+#: app/routes.py:2661
 msgid "No tienes acceso a ese registro de peso."
 msgstr "You don't have access to that weight entry."
 
-#: app/routes.py:2662
+#: app/routes.py:2665
 msgid "Registro de peso eliminado."
 msgstr "Weight entry deleted."
 
-#: app/routes.py:2696
+#: app/routes.py:2699
 #, python-format
 msgid "en %(n)s h"
 msgstr "in %(n)s h"
 
-#: app/routes.py:2699
+#: app/routes.py:2702
 #, python-format
 msgid "en %(n)s días"
 msgstr "in %(n)s days"
 
-#: app/routes.py:2717 app/templates/ai_analysis.html:4
+#: app/routes.py:2720 app/templates/ai_analysis.html:4
 #: app/templates/ai_analysis.html:61
 msgid "Análisis de IA"
 msgstr "AI analysis"
 
-#: app/routes.py:2748
+#: app/routes.py:2751
 msgid "Guarda tu cuenta (gratis) para usar el análisis con IA."
 msgstr "Save your account (free) to use the AI analysis."
 
-#: app/routes.py:2753
+#: app/routes.py:2756
 msgid ""
 "Ya has usado tus análisis de esta semana. Vuelve a intentarlo más "
 "adelante."
 msgstr "You've used your analyses for this week. Try again later."
 
-#: app/routes.py:2754
+#: app/routes.py:2757
 msgid "Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante."
 msgstr "You already generated an analysis this week. Try again later."
 
-#: app/routes.py:2764
+#: app/routes.py:2767
 #, python-format
 msgid ""
 "Necesitas al menos %(min)s entrenamientos registrados para generar un "
@@ -2641,111 +2641,111 @@ msgstr ""
 "You need at least %(min)s logged workouts to generate an analysis (you "
 "have %(n)s)."
 
-#: app/routes.py:2777
+#: app/routes.py:2780
 msgid ""
 "No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos "
 "minutos."
 msgstr "Couldn't generate the analysis right now. Try again in a few minutes."
 
-#: app/routes.py:2783
+#: app/routes.py:2786
 msgid "¡Análisis generado!"
 msgstr "Analysis generated!"
 
-#: app/routes.py:2850
+#: app/routes.py:2853
 msgid "Mis rutinas"
 msgstr "My routines"
 
-#: app/routes.py:2968 app/routes.py:3068 app/routes.py:3074 app/routes.py:3189
-#: app/routes.py:3242
+#: app/routes.py:2971 app/routes.py:3071 app/routes.py:3077 app/routes.py:3192
+#: app/routes.py:3245
 msgid "No tienes acceso a esta rutina."
 msgstr "You don't have access to this routine."
 
-#: app/routes.py:2982
+#: app/routes.py:2985
 msgid "No se pudo actualizar ese ejercicio."
 msgstr "Couldn't update that exercise."
 
-#: app/routes.py:2992
+#: app/routes.py:2995
 msgid "Ejercicio actualizado."
 msgstr "Exercise updated."
 
-#: app/routes.py:3058
+#: app/routes.py:3061
 msgid "Rutina creada. Añade ejercicios."
 msgstr "Routine created. Add exercises."
 
-#: app/routes.py:3060 app/routes.py:3561 app/templates/new_routine.html:4
+#: app/routes.py:3063 app/routes.py:3564 app/templates/new_routine.html:4
 #: app/templates/routines.html:10
 msgid "Nueva rutina"
 msgstr "New routine"
 
-#: app/routes.py:3078
+#: app/routes.py:3081
 msgid "Ejercicio eliminado de la rutina."
 msgstr "Exercise removed from the routine."
 
-#: app/routes.py:3112
+#: app/routes.py:3115
 msgid "Las series van de 1 a 15."
 msgstr "Sets go from 1 to 15."
 
-#: app/routes.py:3126
+#: app/routes.py:3129
 #, python-format
 msgid "El máximo de series va de %(n)s a 15."
 msgstr "Max sets go from %(n)s to 15."
 
-#: app/routes.py:3137
+#: app/routes.py:3140
 msgid "Las repeticiones tienen que ser números."
 msgstr "Reps have to be numbers."
 
-#: app/routes.py:3139
+#: app/routes.py:3142
 msgid "Repeticiones de 1 a 100, y el máximo no puede ser menor que el mínimo."
 msgstr "Reps from 1 to 100, and the max can't be lower than the min."
 
-#: app/routes.py:3144
+#: app/routes.py:3147
 msgid "Escribe las reps (máx. 16 caracteres), p. ej. 8-10."
 msgstr "Enter the reps (16 characters max), e.g. 8-10."
 
-#: app/routes.py:3149
+#: app/routes.py:3152
 msgid "Usa un número (ej. 2) o un rango (ej. 2-3)."
 msgstr "Use a number (e.g. 2) or a range (e.g. 2-3)."
 
-#: app/routes.py:3178
+#: app/routes.py:3181
 msgid "Elige un ejercicio."
 msgstr "Choose an exercise."
 
-#: app/routes.py:3204
+#: app/routes.py:3207
 msgid "Rutina eliminada."
 msgstr "Routine deleted."
 
-#: app/routes.py:3280
+#: app/routes.py:3283
 #, python-format
 msgid "¡Entrenamiento '%(name)s' iniciado!"
 msgstr "Workout '%(name)s' started!"
 
-#: app/routes.py:3472
+#: app/routes.py:3475
 msgid "Ejercicio no encontrado."
 msgstr "Exercise not found."
 
-#: app/routes.py:3558
+#: app/routes.py:3561
 msgid "Este entrenamiento no tiene series registradas."
 msgstr "This workout has no logged sets."
 
-#: app/routes.py:3577
+#: app/routes.py:3580
 #, python-format
 msgid "Rutina '%(name)s' creada a partir de este entrenamiento."
 msgstr "Routine '%(name)s' created from this workout."
 
-#: app/routes.py:4427 app/templates/index.html:107
+#: app/routes.py:4430 app/templates/index.html:107
 msgid "hoy"
 msgstr "today"
 
-#: app/routes.py:4429 app/templates/index.html:107
+#: app/routes.py:4432 app/templates/index.html:107
 msgid "ayer"
 msgstr "yesterday"
 
-#: app/routes.py:4431
+#: app/routes.py:4434
 #, python-format
 msgid "hace %(n)s días"
 msgstr "%(n)s days ago"
 
-#: app/routes.py:4433
+#: app/routes.py:4436
 #, python-format
 msgid "hace %(n)s semanas"
 msgstr "%(n)s weeks ago"
@@ -2893,7 +2893,7 @@ msgstr "Deadlift"
 msgid "Peso muerto rumano"
 msgstr "Romanian deadlift"
 
-#: app/strength_standards.py:102 app/templates/landing.html:95
+#: app/strength_standards.py:102 app/templates/landing.html:98
 msgid "Remo con barra"
 msgstr "Barbell row"
 
@@ -3300,8 +3300,8 @@ msgid "Aún no has desbloqueado logros."
 msgstr "You haven't unlocked any achievements yet."
 
 #: app/templates/base.html:85 app/templates/base.html:129
-#: app/templates/landing.html:21 app/templates/landing.html:174
-#: app/templates/landing.html:246
+#: app/templates/landing.html:21 app/templates/landing.html:177
+#: app/templates/landing.html:249
 msgid "Gyre"
 msgstr "Gyre"
 
@@ -3335,7 +3335,7 @@ msgstr "%(name)s in progress"
 msgid "Descanso: tocar para plegar o desplegar"
 msgstr "Rest: tap to collapse or expand"
 
-#: app/templates/base.html:212 app/templates/landing.html:114
+#: app/templates/base.html:212 app/templates/landing.html:117
 #: app/templates/routine_detail.html:77
 msgid "Descanso"
 msgstr "Rest"
@@ -4545,23 +4545,23 @@ msgstr ""
 "Log your sets in seconds, spot your records automatically and find out "
 "which muscles you're leaving behind. Free."
 
-#: app/templates/landing.html:25
-msgid "Empezar gratis"
-msgstr "Start for free"
+#: app/templates/landing.html:27
+msgid "Probar gratis"
+msgstr "Try it free"
 
-#: app/templates/landing.html:40
+#: app/templates/landing.html:43
 msgid "Gratis · Sin descargas · Pensada para el móvil"
 msgstr "Free · No downloads · Built for mobile"
 
-#: app/templates/landing.html:41
+#: app/templates/landing.html:44
 msgid "Deja de entrenar a ciegas."
 msgstr "Stop training blind."
 
-#: app/templates/landing.html:41
+#: app/templates/landing.html:44
 msgid "Mira cómo progresas."
 msgstr "See how you progress."
 
-#: app/templates/landing.html:43
+#: app/templates/landing.html:46
 msgid ""
 "Gyre apunta tus series en segundos, detecta tus récords solo y te dice "
 "qué músculos estás dejando atrás. Tu libreta del gimnasio, pero con "
@@ -4571,76 +4571,76 @@ msgstr ""
 "tells you which muscles you're leaving behind. Your gym notebook, but "
 "with a brain."
 
-#: app/templates/landing.html:51 app/templates/landing.html:231
+#: app/templates/landing.html:54 app/templates/landing.html:234
 msgid "Probar ahora, sin cuenta"
 msgstr "Try it now, no account"
 
-#: app/templates/landing.html:55 app/templates/landing.html:235
+#: app/templates/landing.html:58 app/templates/landing.html:238
 #: app/templates/login.html:10 app/templates/register.html:15
 msgid "Continuar con Google"
 msgstr "Continue with Google"
 
-#: app/templates/landing.html:58
+#: app/templates/landing.html:61
 msgid "Sin email ni contraseña: guarda la cuenta cuando quieras."
 msgstr "No email or password: save your account whenever you like."
 
-#: app/templates/landing.html:61
+#: app/templates/landing.html:64
 msgid "Sin tarjeta"
 msgstr "No card"
 
-#: app/templates/landing.html:62
+#: app/templates/landing.html:65
 msgid "Lista en 20 segundos"
 msgstr "Ready in 20 seconds"
 
-#: app/templates/landing.html:63
+#: app/templates/landing.html:66
 msgid "Se instala como una app"
 msgstr "Installs like an app"
 
-#: app/templates/landing.html:73
+#: app/templates/landing.html:76
 msgid "Torso A"
 msgstr "Upper A"
 
-#: app/templates/landing.html:80
+#: app/templates/landing.html:83
 msgid "Press banca"
 msgstr "Bench press"
 
-#: app/templates/landing.html:81
+#: app/templates/landing.html:84
 msgid "Última vez: 80 kg × 8"
 msgstr "Last time: 80 kg × 8"
 
-#: app/templates/landing.html:85
+#: app/templates/landing.html:88
 msgid "KG"
 msgstr "KG"
 
-#: app/templates/landing.html:85
+#: app/templates/landing.html:88
 msgid "REPS"
 msgstr "REPS"
 
-#: app/templates/landing.html:85 app/templates/settings.html:64
+#: app/templates/landing.html:88 app/templates/settings.html:64
 msgid "RIR"
 msgstr "RIR"
 
-#: app/templates/landing.html:96
+#: app/templates/landing.html:99
 msgid "0 de 4 series"
 msgstr "0 of 4 sets"
 
-#: app/templates/landing.html:108
+#: app/templates/landing.html:111
 msgid "Press banca · 1RM est. 104 kg"
 msgstr "Bench press · est. 1RM 104 kg"
 
-#: app/templates/landing.html:115
+#: app/templates/landing.html:118
 msgid "Arranca solo al marcar"
 msgstr "Starts on its own when you check a set"
 
-#: app/templates/landing.html:126
+#: app/templates/landing.html:129
 msgid "Todo en un sitio"
 msgstr "All in one place"
 
-#: app/templates/landing.html:127
+#: app/templates/landing.html:130
 msgid "Lo que una libreta no puede hacer por ti"
 msgstr "What a notebook can't do for you"
 
-#: app/templates/landing.html:128
+#: app/templates/landing.html:131
 msgid ""
 "Menos tiempo apuntando, más tiempo entrenando — y datos que de verdad te "
 "dicen si vas por buen camino."
@@ -4648,11 +4648,11 @@ msgstr ""
 "Less time logging, more time training — and data that actually tells you "
 "if you're on the right track."
 
-#: app/templates/landing.html:133
+#: app/templates/landing.html:136
 msgid "Una serie, un toque"
 msgstr "One set, one tap"
 
-#: app/templates/landing.html:134
+#: app/templates/landing.html:137
 msgid ""
 "Los pesos y repeticiones de la última sesión ya aparecen puestos. Pulsa ✓"
 " y a por la siguiente."
@@ -4660,11 +4660,11 @@ msgstr ""
 "The weights and reps from your last session are already filled in. Tap ✓ "
 "and on to the next."
 
-#: app/templates/landing.html:138
+#: app/templates/landing.html:141
 msgid "Récords automáticos"
 msgstr "Automatic records"
 
-#: app/templates/landing.html:139
+#: app/templates/landing.html:142
 msgid ""
 "Cada serie se compara con tu historial: 1RM estimado, PRs celebrados y "
 "aviso si llevas varias sesiones estancado."
@@ -4672,11 +4672,11 @@ msgstr ""
 "Every set is compared with your history: estimated 1RM, celebrated PRs "
 "and a warning if you've been stuck for several sessions."
 
-#: app/templates/landing.html:143
+#: app/templates/landing.html:146
 msgid "Mapa muscular real"
 msgstr "Real muscle map"
 
-#: app/templates/landing.html:144
+#: app/templates/landing.html:147
 msgid ""
 "Ve de un vistazo qué músculos has trabajado de verdad en las últimas "
 "semanas y cuáles estás olvidando."
@@ -4684,11 +4684,11 @@ msgstr ""
 "See at a glance which muscles you've actually trained in recent weeks and"
 " which ones you're forgetting."
 
-#: app/templates/landing.html:148
+#: app/templates/landing.html:151
 msgid "Un entrenador IA cada semana"
 msgstr "An AI coach every week"
 
-#: app/templates/landing.html:149
+#: app/templates/landing.html:152
 msgid ""
 "Un análisis de tus datos reales: qué va bien, qué ejercicio se ha "
 "estancado y qué cambiar la próxima semana."
@@ -4696,11 +4696,11 @@ msgstr ""
 "An analysis of your real data: what's going well, which exercise has "
 "stalled and what to change next week."
 
-#: app/templates/landing.html:153
+#: app/templates/landing.html:156
 msgid "Rutinas por bloques"
 msgstr "Routines in blocks"
 
-#: app/templates/landing.html:154
+#: app/templates/landing.html:157
 msgid ""
 "Organiza hipertrofia, fuerza y descarga con colores, y empieza cualquier "
 "rutina con un solo toque."
@@ -4708,11 +4708,11 @@ msgstr ""
 "Organize hypertrophy, strength and deload blocks with colors, and start "
 "any routine with a single tap."
 
-#: app/templates/landing.html:158
+#: app/templates/landing.html:161
 msgid "Descansos sin mirar el reloj"
 msgstr "Rest without watching the clock"
 
-#: app/templates/landing.html:159
+#: app/templates/landing.html:162
 msgid ""
 "El temporizador arranca solo al marcar la serie y te avisa cuando toca "
 "volver a la barra."
@@ -4720,63 +4720,63 @@ msgstr ""
 "The timer starts on its own when you check off a set and tells you when "
 "it's time to get back to the bar."
 
-#: app/templates/landing.html:169
+#: app/templates/landing.html:172
 msgid "¿Por qué cambiar?"
 msgstr "Why switch?"
 
-#: app/templates/landing.html:170
+#: app/templates/landing.html:173
 msgid "Tus notas del móvil vs. Gyre"
 msgstr "Your phone notes vs. Gyre"
 
-#: app/templates/landing.html:174
+#: app/templates/landing.html:177
 msgid "Notas"
 msgstr "Notes"
 
-#: app/templates/landing.html:177
+#: app/templates/landing.html:180
 msgid "Recuerda lo que levantaste la última vez"
 msgstr "Remembers what you lifted last time"
 
-#: app/templates/landing.html:178
+#: app/templates/landing.html:181
 msgid "Detecta tus récords y tu 1RM"
 msgstr "Spots your records and your 1RM"
 
-#: app/templates/landing.html:179
+#: app/templates/landing.html:182
 msgid "Te avisa cuando te estancas"
 msgstr "Warns you when you plateau"
 
-#: app/templates/landing.html:180
+#: app/templates/landing.html:183
 msgid "Temporizador de descanso automático"
 msgstr "Automatic rest timer"
 
-#: app/templates/landing.html:181
+#: app/templates/landing.html:184
 msgid "Qué músculos entrenas y cuáles no"
 msgstr "Which muscles you train and which you don't"
 
-#: app/templates/landing.html:182
+#: app/templates/landing.html:185
 msgid "Análisis semanal con IA"
 msgstr "Weekly AI analysis"
 
-#: app/templates/landing.html:198
+#: app/templates/landing.html:201
 msgid "Así de fácil"
 msgstr "That easy"
 
-#: app/templates/landing.html:199
+#: app/templates/landing.html:202
 msgid "Empieza hoy, en tu próximo entreno"
 msgstr "Start today, at your next workout"
 
-#: app/templates/landing.html:204
+#: app/templates/landing.html:207
 msgid "Crea tu cuenta"
 msgstr "Create your account"
 
-#: app/templates/landing.html:205
+#: app/templates/landing.html:208
 msgid "Con Google o con tu email, en 20 segundos. Sin tarjeta, sin letra pequeña."
 msgstr "With Google or your email, in 20 seconds. No card, no fine print."
 
-#: app/templates/landing.html:209
+#: app/templates/landing.html:212
 msgid "Monta tu rutina"
 msgstr "Build your routine"
 
-#: app/templates/landing.html:210
+#: app/templates/landing.html:213
 msgid ""
 "Elige entre más de 800 ejercicios con imágenes, o empieza un entreno "
 "libre sin preparar nada."
@@ -4784,11 +4784,11 @@ msgstr ""
 "Choose from over 800 exercises with images, or start a free workout with "
 "no setup."
 
-#: app/templates/landing.html:214
+#: app/templates/landing.html:217
 msgid "Entrena y progresa"
 msgstr "Train and progress"
 
-#: app/templates/landing.html:215
+#: app/templates/landing.html:218
 msgid ""
 "Marca tus series, deja que Gyre cuente los récords y mira cómo sube tu "
 "gráfica semana a semana."
@@ -4796,19 +4796,19 @@ msgstr ""
 "Check off your sets, let Gyre count the records and watch your chart go "
 "up week after week."
 
-#: app/templates/landing.html:225
+#: app/templates/landing.html:228
 msgid "Tu próximo récord empieza"
 msgstr "Your next record starts"
 
-#: app/templates/landing.html:225
+#: app/templates/landing.html:228
 msgid "en la siguiente serie."
 msgstr "with your next set."
 
-#: app/templates/landing.html:226
+#: app/templates/landing.html:229
 msgid "Pruébala en tu próximo entreno. Es gratis y funciona en cualquier móvil."
 msgstr "Try it at your next workout. It's free and works on any phone."
 
-#: app/templates/landing.html:238
+#: app/templates/landing.html:241
 msgid "O crea tu cuenta gratis"
 msgstr "Or create your free account"
 

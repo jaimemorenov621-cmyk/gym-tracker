@@ -635,8 +635,8 @@ def landing_stats():
     visits_human = visits_bot = visits_legacy = 0
     cta_clicks = google_clicks = guest_clicks = 0
     referrer_counts = defaultdict(int)
-    daily = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
-    by_source = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
+    daily = defaultdict(lambda: {"visits": 0, "trials": 0, "clicks": 0, "signups": 0})
+    by_source = defaultdict(lambda: {"visits": 0, "trials": 0, "clicks": 0, "signups": 0})
     by_language = defaultdict(lambda: {"visits": 0, "clicks": 0})
 
     for event_type, ts, referrer, user_agent, source, language in db.session.execute(events_q):
@@ -655,11 +655,13 @@ def landing_stats():
             by_language[language]["visits"] += 1
             key = (urlsplit(referrer).netloc if referrer else None) or "Directo / sin referrer"
             referrer_counts[key] += 1
-        elif event_type in ("cta_click", "google_click", "guest_start"):
+        elif event_type == "guest_start":  # "Probar sin cuenta": no es un clic de crear cuenta
+            guest_clicks += 1
+            daily[day]["trials"] += 1
+            by_source[source]["trials"] += 1
+        elif event_type in ("cta_click", "google_click"):
             if event_type == "cta_click":
                 cta_clicks += 1
-            elif event_type == "guest_start":
-                guest_clicks += 1
             else:
                 google_clicks += 1
             daily[day]["clicks"] += 1
@@ -684,7 +686,7 @@ def landing_stats():
         by_source[signup_source]["signups"] += 1
 
     visits = visits_human + visits_legacy
-    clicks = cta_clicks + google_clicks + guest_clicks
+    clicks = cta_clicks + google_clicks
     signups = signups_password + signups_google
     total_users = db.session.scalar(sa.select(sa.func.count()).select_from(User))
 
@@ -701,6 +703,7 @@ def landing_stats():
         cta_clicks=cta_clicks,
         google_clicks=google_clicks,
         guest_clicks=guest_clicks,
+        trial_rate=(100 * guest_clicks / visits) if visits else None,
         click_rate=(100 * clicks / visits) if visits else None,
         signups=signups,
         signups_password=signups_password,

@@ -22,7 +22,10 @@
             </a>
             <nav class="lp-header-nav">
                 <a class="lp-header-link" href="{{ url_for('login') }}">{{ _("Iniciar sesión") }}</a>
-                <a class="lp-btn lp-btn-primary lp-btn-sm" href="{{ url_for('landing_cta') }}">{{ _("Empezar gratis") }}</a>
+                <form class="lp-try-form" action="{{ url_for('try_without_account') }}" method="post">
+                    {{ guest_form.hidden_tag() }}
+                    <button type="submit" class="lp-btn lp-btn-primary lp-btn-sm">{{ _("Probar gratis") }}</button>
+                </form>
             </nav>
         </div>
     </header>

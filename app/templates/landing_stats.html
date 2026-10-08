@@ -23,10 +23,18 @@
             </span>
         </div>
         <div class="card card-elevated stats-tile">
+            <span class="stats-tile-value">{{ guest_clicks }}</span>
+            <span class="stats-tile-label">Probaron sin cuenta</span>
+            <span class="stats-tile-sub">
+                {{ guests - guests_saved }} siguen probando · {{ guests_saved }} guardaron la cuenta
+                {% if trial_rate is not none %}<br><strong>{{ '%.1f' % trial_rate }}%</strong> de las visitas{% endif %}
+            </span>
+        </div>
+        <div class="card card-elevated stats-tile">
             <span class="stats-tile-value">{{ clicks }}</span>
             <span class="stats-tile-label">Clics para crear cuenta</span>
             <span class="stats-tile-sub">
-                {{ guest_clicks }} "Probar sin cuenta" · {{ cta_clicks }} "Crear cuenta" · {{ google_clicks }} Google
+                {{ cta_clicks }} "Crear cuenta" · {{ google_clicks }} Google
                 {% if click_rate is not none %}<br><strong>{{ '%.1f' % click_rate }}%</strong> de las visitas{% endif %}
             </span>
         </div>
@@ -35,7 +43,7 @@
             <span class="stats-tile-label">Cuentas creadas</span>
             <span class="stats-tile-sub">
                 {{ signups_password }} con usuario · {{ signups_google }} con Google
-                {% if guests %}<br>{{ guests }} probaron sin cuenta · {{ guests_saved }} la guardaron{% endif %}
+                {% if guests_saved %}<br>{{ guests_saved }} de ellas venían de probar sin cuenta{% endif %}
                 {% if signup_rate is not none %}<br><strong>{{ '%.1f' % signup_rate }}%</strong> de las visitas{% endif %}
             </span>
         </div>
@@ -71,12 +79,13 @@
         <h3 style="margin-top:0;">Por canal</h3>
         {% if by_source %}
             <table class="stats-daily">
-                <thead><tr><th>Canal</th><th>Visitas</th><th>Clics</th><th>Cuentas</th></tr></thead>
+                <thead><tr><th>Canal</th><th>Visitas</th><th>Pruebas</th><th>Clics</th><th>Cuentas</th></tr></thead>
                 <tbody>
                     {% for source, d in by_source %}
                         <tr>
                             <td>{% if source %}<strong>{{ source }}</strong>{% else %}<span class="stats-muted">sin etiqueta</span>{% endif %}</td>
                             <td>{{ d.visits }}</td>
+                            <td>{{ d.trials }}</td>
                             <td>{{ d.clicks }}</td>
                             <td>{% if d.signups %}<strong>{{ d.signups }}</strong>{% else %}0{% endif %}</td>
                         </tr>
@@ -241,12 +250,13 @@
         <h3 style="margin-top:0;">Día a día</h3>
         {% if daily %}
             <table class="stats-daily">
-                <thead><tr><th>Día</th><th>Visitas</th><th>Clics</th><th>Cuentas</th></tr></thead>
+                <thead><tr><th>Día</th><th>Visitas</th><th>Pruebas</th><th>Clics</th><th>Cuentas</th></tr></thead>
                 <tbody>
                     {% for day, d in daily %}
                         <tr>
                             <td>{{ day.strftime('%d/%m') }}</td>
                             <td>{{ d.visits }}</td>
+                            <td>{{ d.trials }}</td>
                             <td>{{ d.clicks }}</td>
                             <td>{% if d.signups %}<strong>{{ d.signups }}</strong>{% else %}0{% endif %}</td>
                         </tr>
