@@ -64,13 +64,20 @@ class RegistrationForm(FlaskForm):
 
     def validate_username(self, username):
         user = db.session.scalar(sa.select(User).where(User.username == username.data))
-        if user is not None:
+        if user is not None and not _is_self(user):
             raise ValidationError(_l("Ese usuario ya existe, prueba con otro."))
 
     def validate_email(self, email):
         user = db.session.scalar(sa.select(User).where(User.email == email.data))
-        if user is not None:
+        if user is not None and not _is_self(user):
             raise ValidationError(_l("Ya hay una cuenta con ese email. ¿Quieres iniciar sesión?"))
+
+
+def _is_self(user):
+    """El invitado que guarda su cuenta no choca consigo mismo."""
+    from flask_login import current_user
+
+    return current_user.is_authenticated and user.id == current_user.id
 
 
 class SetEntryForm(FlaskForm):

@@ -168,6 +168,12 @@
         </nav>
     {% endif %}
 
+    {% if current_user.is_authenticated and current_user.is_guest and request.endpoint not in ("register", "workout_detail", "new_workout", "login") %}
+        <a class="guest-bar" href="{{ url_for('register') }}">
+            <span>{{ _("Estás probando sin cuenta.") }}</span> <strong class="nowrap">{{ _("Guardar mi progreso") }} {{ macros.icon('chevron-right', 14) }}</strong>
+        </a>
+    {% endif %}
+
     {% if active_workout and request.endpoint not in ("new_workout", "workout_detail", "index") %}
     <a href="{{ url_for('workout_detail', workout_id=active_workout.id) }}" class="active-toast">
         {{ _("%(name)s en curso", name=active_workout.note or _("Entrenamiento")) }}
@@ -197,7 +203,7 @@
        arrastrar a otro sitio. #}
     <div id="restTimerBox" class="rest-toast" style="display:none;" role="timer" aria-live="off">
         <div class="rt-main" role="button" tabindex="0" aria-label="{{ _('Descanso: tocar para plegar o desplegar') }}">
-            <svg class="rt-ring" width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+            <svg class="rt-ring" width="34" height="34" viewBox="0 0 26 26" aria-hidden="true">
                 <circle class="rt-ring-track" cx="13" cy="13" r="10.5" fill="none" stroke-width="3.5"/>
                 <circle class="rt-ring-fill" id="restRingFill" cx="13" cy="13" r="10.5" fill="none" stroke-width="3.5"
                         stroke-dasharray="66" stroke-dashoffset="0"/>

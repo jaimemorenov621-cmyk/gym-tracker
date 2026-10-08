@@ -37,7 +37,9 @@ class User(UserMixin, db.Model):
     created_at: so.Mapped[Optional[datetime]] = so.mapped_column(
         default=lambda: datetime.now(timezone.utc), index=True
     )
-    signup_method: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10))  # "password" | "google"
+    # "password" | "google" | "demo" | "guest" (probando sin cuenta) |
+    # "guest_pw" / "guest_g" (probó sin cuenta y luego la guardó).
+    signup_method: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10))
     # Canal de la última landing visitada con ?ref= (cookie gyre_ref), p.ej. "mediavida".
     signup_source: so.Mapped[Optional[str]] = so.mapped_column(sa.String(40))
     # Días de la semana en que suele entrenar, como dígitos 0=lunes..6=domingo
@@ -80,6 +82,11 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return f"<User {self.username}>"
+
+    @property
+    def is_guest(self):
+        """Probando sin cuenta: sin email real ni contraseña hasta que la guarde."""
+        return self.signup_method == "guest"
 
 
 @login.user_loader

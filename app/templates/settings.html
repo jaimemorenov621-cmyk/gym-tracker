@@ -155,6 +155,7 @@
         <a href="{{ url_for('contact') }}"><span class="settings-list-icon">{{ macros.icon('mail', 18) }}</span><span>{{ _("Contacto") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
         <a href="{{ url_for('export_account') }}"><span class="settings-list-icon">{{ macros.icon('download', 18) }}</span><span>{{ _("Descargar mis datos") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
         <a href="{{ url_for('delete_account') }}" class="is-danger-soft"><span class="settings-list-icon">{{ macros.icon('trash', 18) }}</span><span>{{ _("Borrar mi cuenta") }}</span>{{ macros.icon('chevron-right', 18) }}</a>
-        <a href="{{ url_for('logout') }}" class="is-danger"><span class="settings-list-icon">{{ macros.icon('log-out', 18) }}</span><span>{{ _("Cerrar sesión") }}</span></a>
+        <a href="{{ url_for('logout') }}" class="is-danger"{% if current_user.is_guest %}
+           onclick="event.preventDefault(); const href = this.href; customConfirm({{ _('Estás probando sin cuenta: si cierras sesión no podrás volver a entrar y perderás lo apuntado. ¿Cerrar sesión igualmente?')|tojson|forceescape }}, {{ _('Cerrar sesión')|tojson|forceescape }}).then(ok => { if (ok) location.href = href; });"{% endif %}><span class="settings-list-icon">{{ macros.icon('log-out', 18) }}</span><span>{{ _("Cerrar sesión") }}</span></a>
     </nav>
 {% endblock %}

@@ -388,7 +388,7 @@ textarea {
 .flash.flash-fade { opacity: 0; }
 
 
-/* Descanso: píldora compacta (≈44 px de alto) encima de la barra inferior.
+/* Descanso: píldora compacta (≈52 px de alto) encima de la barra inferior.
    .is-compact = solo anillo y tiempo. */
 .rest-toast {
     position: fixed;
@@ -397,7 +397,7 @@ textarea {
     background: var(--surface);
     border: 1.5px solid var(--accent);
     color: var(--color-brand-deep);
-    padding: 4px 4px 4px 10px;
+    padding: 5px 5px 5px 10px;
     border-radius: 999px;
     box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.22);
     z-index: 1002;
@@ -412,8 +412,8 @@ textarea {
 .rt-main {
     display: flex;
     align-items: center;
-    gap: 6px;
-    min-height: 34px;
+    gap: 7px;
+    min-height: 40px;
     cursor: pointer;
 }
 .rt-ring { flex-shrink: 0; display: block; }
@@ -428,7 +428,7 @@ textarea {
     .rt-ring-fill { transition: stroke-dashoffset 1s linear; }
 }
 .rest-toast .rt-time {
-    font-size: 1.05rem;
+    font-size: 1.35rem;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.01em;
@@ -436,14 +436,14 @@ textarea {
 .rest-toast .rt-adjust { display: flex; gap: 2px; }
 .rest-toast .rt-adjust button {
     margin: 0;
-    min-width: 36px;
-    height: 34px;
-    padding: 0 6px;
+    min-width: 42px;
+    height: 40px;
+    padding: 0 8px;
     border: 0;
     border-radius: 999px;
     background: var(--color-surface-hover);
     color: var(--color-brand-dark);
-    font-size: 0.78rem;
+    font-size: 0.88rem;
     font-weight: 700;
     box-shadow: none;
     display: inline-flex;
@@ -451,7 +451,7 @@ textarea {
     justify-content: center;
 }
 .rest-toast .rt-adjust .rt-stop { color: var(--color-text-muted); }
-.rest-toast.is-compact { padding-right: 12px; }
+.rest-toast.is-compact { padding-right: 14px; }
 .rest-toast.is-compact .rt-adjust { display: none; }
 .visually-hidden {
     position: absolute !important;
@@ -1193,7 +1193,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     .active-toast::before { width: 7px; height: 7px; }
     .rest-toast { bottom: calc(80px + env(safe-area-inset-bottom)); right: 12px; }
     /* Con el aviso "en curso" abajo a la izquierda, el descanso sube una fila. */
-    body:has(.active-toast) .rest-toast { bottom: calc(124px + env(safe-area-inset-bottom)); }
+    body:has(.active-toast) .rest-toast { bottom: calc(126px + env(safe-area-inset-bottom)); }
 }
 
 .bottom-nav-item {
@@ -4505,3 +4505,28 @@ button.is-pending::after, input[type="submit"].is-pending::after, .active-toast.
     box-shadow: none;
 }
 .chart-range button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ===== Probar sin cuenta ===== */
+.lp-try-form { display: contents; }
+.lp-try-form button.lp-btn { font: inherit; font-weight: 700; margin: 0; cursor: pointer; border: 0; }
+.lp-alt-cta { margin: 14px 0 0; color: rgba(255, 255, 255, 0.72); font-size: 0.9rem; }
+.lp-alt-cta a { color: #fff; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.lp-alt-cta-center { text-align: center; }
+@media (max-width: 600px) { .lp-hero-copy .lp-alt-cta { text-align: center; } }
+.guest-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px 6px;
+    margin: 0 auto 12px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: rgba(var(--accent-rgb), 0.1);
+    border: 1px solid rgba(var(--accent-rgb), 0.25);
+    color: var(--color-text);
+    font-size: 0.85rem;
+    text-decoration: none;
+    text-align: center;
+}
+.guest-bar strong { color: var(--color-brand-dark); }

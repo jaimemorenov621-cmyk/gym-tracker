@@ -4,8 +4,13 @@
 {% block content %}
     <div class="auth-card">
         <img src="{{ url_for('static', filename='icons/logo-mark.png') }}" alt="" class="auth-logo">
-        <h1>{{ _("Crea tu cuenta gratis") }}</h1>
-        <p class="auth-subtitle">{{ _("En 20 segundos. Sin tarjeta.") }}</p>
+        {% if guest %}
+            <h1>{{ _("Guarda tu cuenta") }}</h1>
+            <p class="auth-subtitle">{{ _("Todo lo que has apuntado se queda. Así podrás entrar desde cualquier móvil.") }}</p>
+        {% else %}
+            <h1>{{ _("Crea tu cuenta gratis") }}</h1>
+            <p class="auth-subtitle">{{ _("En 20 segundos. Sin tarjeta.") }}</p>
+        {% endif %}
 
         <a class="btn-google auth-google" href="{{ url_for('login_google') }}">{{ macros.icon('google', 18) }} {{ _('Continuar con Google') }}</a>
         <div class="auth-divider"><span>{{ _("o con usuario y contraseña") }}</span></div>
@@ -24,9 +29,14 @@
                 {% for error in field.errors %}<span class="auth-error">{{ error }}</span>{% endfor %}
             </label>
             {% endfor %}
-            {{ form.submit(class="auth-submit") }}
+            {% if guest %}
+                <button type="submit" class="auth-submit">{{ _("Guardar mi cuenta") }}</button>
+            {% else %}
+                {{ form.submit(class="auth-submit") }}
+            {% endif %}
         </form>
 
         <p class="auth-switch">{{ _("¿Ya tienes cuenta?") }} <a href="{{ url_for('login') }}">{{ _("Inicia sesión") }}</a></p>
+        {% if guest %}<p class="auth-switch">{{ _("Si entras en otra cuenta, lo apuntado sin cuenta no se pasa a ella.") }}</p>{% endif %}
     </div>
 {% endblock %}

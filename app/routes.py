@@ -9,6 +9,7 @@ import functools
 import json
 import os
 import math
+import secrets
 import re
 import unicodedata
 from typing import NamedTuple, Optional
@@ -53,6 +54,7 @@ from app.models import (
     ExerciseAlias,
     PersonalBasic,
     AthleteCard,
+    DailyActivity,
 )
 from app.muscle_svg_data import BODY_PARTS, AUXILIARY_SLUGS
 from app import achievements, usage, datacache
@@ -440,7 +442,7 @@ def landing():
     # etiqueta es "sin etiqueta" aunque la cookie recuerde un canal anterior.
     ref = _clean_ref(request.args.get("ref"))
     _log_landing_event("visit", source=ref)
-    resp = make_response(render_template("landing.html"))
+    resp = make_response(render_template("landing.html", guest_form=EmptyForm()))
     if request.args.get("no_contar") == "1":
         resp.set_cookie("no_contar", "1", max_age=60 * 60 * 24 * 365 * 5)
     if ref:
@@ -452,6 +454,54 @@ def landing():
 def landing_cta():
     _log_landing_event("cta_click", source=_current_ref())
     return redirect(url_for("register"))
+
+
+GUEST_RETENTION = timedelta(days=30)
+
+
+def _purge_stale_guests(limit=20):
+    """Pruebas sin cuenta abandonadas (ni guardadas ni abiertas en 30 días):
+    se borran con todos sus datos. Se hace al crear otra, sin tareas aparte."""
+    cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - GUEST_RETENTION
+    last_open = (sa.select(sa.func.max(DailyActivity.day))
+                 .where(DailyActivity.user_id == User.id).scalar_subquery())
+    stale = db.session.scalars(
+        sa.select(User.id).where(
+            User.signup_method == "guest", User.created_at < cutoff,
+            sa.or_(last_open.is_(None), last_open < cutoff.date()),
+        ).limit(limit)
+    ).all()
+    for uid in stale:
+        progression.delete_user_data(uid)
+    return len(stale)
+
+
+@app.route("/probar", methods=["POST"])
+def try_without_account():
+    """Probar Gyre sin crear cuenta: una cuenta de invitado de verdad (sus
+    series se guardan) que luego se convierte en cuenta normal sin perder
+    nada (registro o Google). POST con CSRF: un robot que solo sigue enlaces
+    no crea cuentas."""
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+    if not EmptyForm().validate_on_submit():
+        return redirect(url_for("landing"))
+    _log_landing_event("guest_start", source=_current_ref())
+    try:
+        _purge_stale_guests()
+    except Exception:
+        db.session.rollback()
+        app.logger.exception("Error borrando pruebas sin cuenta antiguas")
+    username = f"invitado_{secrets.token_hex(3)}"
+    while db.session.scalar(sa.select(User.id).where(User.username == username)) is not None:
+        username = f"invitado_{secrets.token_hex(4)}"
+    user = User(username=username, email=f"{username}-{secrets.token_hex(6)}@invitado.invalid",
+                signup_method="guest", signup_source=_current_ref())
+    db.session.add(user)
+    db.session.commit()
+    login_user(user, remember=True)
+    flash(gettext("Estás probando Gyre sin cuenta. Cuando quieras, guárdala y no perderás nada."))
+    return redirect(url_for("index"))
 
 
 @app.route("/landing/google")
@@ -583,7 +633,7 @@ def landing_stats():
         users_q = users_q.where(User.created_at >= start)
 
     visits_human = visits_bot = visits_legacy = 0
-    cta_clicks = google_clicks = 0
+    cta_clicks = google_clicks = guest_clicks = 0
     referrer_counts = defaultdict(int)
     daily = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
     by_source = defaultdict(lambda: {"visits": 0, "clicks": 0, "signups": 0})
@@ -605,21 +655,28 @@ def landing_stats():
             by_language[language]["visits"] += 1
             key = (urlsplit(referrer).netloc if referrer else None) or "Directo / sin referrer"
             referrer_counts[key] += 1
-        elif event_type in ("cta_click", "google_click"):
+        elif event_type in ("cta_click", "google_click", "guest_start"):
             if event_type == "cta_click":
                 cta_clicks += 1
+            elif event_type == "guest_start":
+                guest_clicks += 1
             else:
                 google_clicks += 1
             daily[day]["clicks"] += 1
             by_source[source]["clicks"] += 1
             by_language[language]["clicks"] += 1
 
-    signups_password = signups_google = 0
+    signups_password = signups_google = guests = guests_saved = 0
     new_accounts = []
     for created_at, method, signup_source, username, workouts in db.session.execute(users_q):
         new_accounts.append({"username": username, "created_at": to_local(created_at), "method": method,
                              "source": signup_source, "workouts": workouts})
-        if method == "google":
+        if method and method.startswith("guest"):
+            guests += 1
+            if method == "guest":
+                continue  # probando: aún no es una cuenta creada
+            guests_saved += 1
+        if method in ("google", "guest_g"):
             signups_google += 1
         else:
             signups_password += 1
@@ -627,7 +684,7 @@ def landing_stats():
         by_source[signup_source]["signups"] += 1
 
     visits = visits_human + visits_legacy
-    clicks = cta_clicks + google_clicks
+    clicks = cta_clicks + google_clicks + guest_clicks
     signups = signups_password + signups_google
     total_users = db.session.scalar(sa.select(sa.func.count()).select_from(User))
 
@@ -643,12 +700,15 @@ def landing_stats():
         clicks=clicks,
         cta_clicks=cta_clicks,
         google_clicks=google_clicks,
+        guest_clicks=guest_clicks,
         click_rate=(100 * clicks / visits) if visits else None,
         signups=signups,
         signups_password=signups_password,
         signups_google=signups_google,
         signup_rate=(100 * signups / visits) if visits else None,
         new_accounts=new_accounts,
+        guests=guests,
+        guests_saved=guests_saved,
         total_users=total_users,
         referrer_counts=dict(sorted(referrer_counts.items(), key=lambda kv: -kv[1])),
         daily=sorted(daily.items(), reverse=True)[:60],
@@ -1087,7 +1147,7 @@ def update_notes():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and not current_user.is_guest:
         return redirect(url_for("index"))
     form = LoginForm()
     if form.validate_on_submit():
@@ -1133,7 +1193,7 @@ def _unique_username_from_email(email):
 
 @app.route("/login/google")
 def login_google():
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and not current_user.is_guest:
         return redirect(url_for("index"))
     redirect_uri = url_for("login_google_callback", _external=True)
     return oauth.google.authorize_redirect(redirect_uri)
@@ -1141,7 +1201,7 @@ def login_google():
 
 @app.route("/login/google/callback")
 def login_google_callback():
-    if current_user.is_authenticated:
+    if current_user.is_authenticated and not current_user.is_guest:
         return redirect(url_for("index"))
     token = oauth.google.authorize_access_token()
     userinfo = token.get("userinfo") or oauth.google.userinfo(token=token)
@@ -1149,6 +1209,18 @@ def login_google_callback():
     email = userinfo["email"]
 
     user = db.session.scalar(sa.select(User).where(User.google_sub == google_sub))
+    guest = current_user._get_current_object() if current_user.is_authenticated else None
+    if user is None and guest is not None and db.session.scalar(sa.select(User.id).where(User.email == email)) is None:
+        # Invitado que guarda su cuenta con Google: la misma cuenta, con todo
+        # lo que ya apuntó.
+        guest.username = _unique_username_from_email(email)
+        guest.email = email
+        guest.google_sub = google_sub
+        guest.signup_method = "guest_g"
+        db.session.commit()
+        login_user(guest, remember=True)
+        flash(gettext("¡Cuenta guardada! Ya puedes entrar con Google desde cualquier móvil."))
+        return redirect(url_for("index"))
     if user is None:
         # Vincula automáticamente si ya existe una cuenta con ese email
         # (registrada antes con usuario/contraseña) -- Google ya verificó
@@ -1177,9 +1249,21 @@ def login_google_callback():
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
-    if current_user.is_authenticated:
+    guest = current_user.is_authenticated and current_user.is_guest
+    if current_user.is_authenticated and not guest:
         return redirect(url_for("index"))
     form = RegistrationForm()
+    if form.validate_on_submit() and guest:
+        # Guardar la cuenta de prueba: la misma cuenta, con todo lo apuntado.
+        user = current_user._get_current_object()
+        user.username = form.username.data
+        user.email = form.email.data
+        user.signup_method = "guest_pw"
+        user.set_password(form.password.data)
+        db.session.commit()
+        login_user(user, remember=True)
+        flash(gettext("¡Cuenta guardada! Ya puedes entrar con tu usuario desde cualquier móvil."))
+        return redirect(url_for("index"))
     if form.validate_on_submit():
         user = User(
             username=form.username.data,
@@ -1195,7 +1279,10 @@ def register():
         login_user(user, remember=True)
         flash(gettext("¡Bienvenido a Gyre! Empieza un entreno o crea tu primera rutina."))
         return redirect(url_for("index"))
-    return render_template("register.html", title=gettext("Crear cuenta"), form=form)
+    if guest and request.method == "GET":
+        form.username.data = None  # que elija uno suyo, no "invitado_…"
+    return render_template("register.html", title=gettext("Guardar mi cuenta") if guest else gettext("Crear cuenta"),
+                           form=form, guest=guest)
 
 
 ACTIVE_WORKOUT_WINDOW = timedelta(hours=6)
@@ -2504,6 +2591,9 @@ def contact():
     """Escribir al responsable de la app sin publicar un email."""
     form = EmptyForm()
     body = (request.form.get("body") or "").strip()
+    if current_user.is_guest:
+        flash(gettext("Guarda tu cuenta con un email para que podamos responderte."))
+        return redirect(url_for("register"))
     if form.validate_on_submit():
         since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=1)
         sent_today = db.session.scalar(
@@ -2654,6 +2744,9 @@ def ai_analysis_blocking(user_id, allowance, now=None):
 @app.route("/ai/analyze", methods=["POST"])
 @login_required
 def request_ai_analysis():
+    if current_user.is_guest:
+        flash(gettext("Guarda tu cuenta (gratis) para usar el análisis con IA."))
+        return redirect(url_for("register"))
     checkin_form = AiCheckinForm()
     allowance = perks.ai_per_week(perks.level_of(current_user))
     if ai_analysis_blocking(current_user.id, allowance) is not None:

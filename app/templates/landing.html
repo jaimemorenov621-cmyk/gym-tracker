@@ -42,14 +42,21 @@
             <p class="lp-lead">
                 {{ _("Gyre apunta tus series en segundos, detecta tus récords solo y te dice qué músculos estás dejando atrás. Tu libreta del gimnasio, pero con cerebro.") }}
             </p>
+            {# Lo principal es probarla: sin email ni contraseña (cuenta de
+               invitado que luego se guarda sin perder nada). #}
             <div class="lp-cta-row">
-                <a class="lp-btn lp-btn-primary lp-btn-lg" href="{{ url_for('landing_cta') }}">
-                    {{ _('Crear cuenta gratis') }} {{ macros.icon('chevron-right', 18) }}
-                </a>
+                <form class="lp-try-form" action="{{ url_for('try_without_account') }}" method="post">
+                    {{ guest_form.hidden_tag() }}
+                    <button type="submit" class="lp-btn lp-btn-primary lp-btn-lg">
+                        {{ _('Probar ahora, sin cuenta') }} {{ macros.icon('chevron-right', 18) }}
+                    </button>
+                </form>
                 <a class="lp-btn lp-btn-google lp-btn-lg" href="{{ url_for('landing_google') }}">
                     {{ macros.icon('google', 18) }} {{ _('Continuar con Google') }}
                 </a>
             </div>
+            <p class="lp-alt-cta">{{ _('Sin email ni contraseña: guarda la cuenta cuando quieras.') }}
+                <a href="{{ url_for('landing_cta') }}">{{ _('Crear cuenta gratis') }}</a></p>
             <ul class="lp-microcopy">
                 <li>{{ macros.icon('check', 14) }} {{ _('Sin tarjeta') }}</li>
                 <li>{{ macros.icon('check', 14) }} {{ _('Lista en 20 segundos') }}</li>
@@ -218,13 +225,17 @@
         <h2>{{ _("Tu próximo récord empieza") }}<br>{{ _("en la siguiente serie.") }}</h2>
         <p>{{ _("Pruébala en tu próximo entreno. Es gratis y funciona en cualquier móvil.") }}</p>
         <div class="lp-cta-row lp-cta-center">
-            <a class="lp-btn lp-btn-white lp-btn-lg" href="{{ url_for('landing_cta') }}">
-                {{ _('Crear cuenta gratis') }} {{ macros.icon('chevron-right', 18) }}
-            </a>
+            <form class="lp-try-form" action="{{ url_for('try_without_account') }}" method="post">
+                {{ guest_form.hidden_tag() }}
+                <button type="submit" class="lp-btn lp-btn-white lp-btn-lg">
+                    {{ _('Probar ahora, sin cuenta') }} {{ macros.icon('chevron-right', 18) }}
+                </button>
+            </form>
             <a class="lp-btn lp-btn-ghost lp-btn-lg" href="{{ url_for('landing_google') }}">
                 {{ macros.icon('google', 18) }} {{ _('Continuar con Google') }}
             </a>
         </div>
+        <p class="lp-alt-cta lp-alt-cta-center"><a href="{{ url_for('landing_cta') }}">{{ _('O crea tu cuenta gratis') }}</a></p>
     </div>
 </section>
 
