@@ -502,6 +502,7 @@
         let currentTimerExercise = {{ (just_added or '')|tojson }};
         let restTotalSeconds = parseInt(localStorage.getItem('restTotalSeconds')) || 0;
         const hasActiveWorkout = {{ 'true' if active_workout else 'false' }};
+        const activeWorkoutId = {{ active_workout.id if active_workout else 'null' }};
         const restSoundEnabled = {{ current_user.rest_sound_enabled|tojson if current_user.is_authenticated else 'true' }};
         const restVibrationEnabled = {{ current_user.rest_vibration_enabled|tojson if current_user.is_authenticated else 'true' }};
         const restWorker = ('Worker' in window) ? new Worker("{{ url_for('static', filename='rest_timer_worker.js') }}") : null;
@@ -670,11 +671,19 @@
                 box.style.bottom = 'auto';
             }
 
+            // Si se arrastra, la posición vale solo para ese entrenamiento: en el
+            // siguiente vuelve a la de por defecto del CSS (abajo a la derecha,
+            // encima de la barra inferior), no a donde se dejó la última vez.
+            const POS_KEY = 'restTimerPos3';
+            try { localStorage.removeItem('restTimerPos2'); } catch (e) {}  // antigua, sin entrenamiento
             window.restoreRestTimerPosition = function () {
-                const saved = localStorage.getItem('restTimerPos2');  // la de la versión grande ya no vale
-                if (!saved) return;
+                if (!activeWorkoutId) return;
                 try {
-                    const pos = JSON.parse(saved);
+                    const pos = JSON.parse(localStorage.getItem(POS_KEY));
+                    if (!pos || pos.workout !== activeWorkoutId) {
+                        localStorage.removeItem(POS_KEY);
+                        return;
+                    }
                     if (typeof pos.left === 'number' && typeof pos.top === 'number') {
                         applyPosition(pos.left, pos.top);
                     }
@@ -722,8 +731,11 @@
                     if (e.type === 'pointerup' && downOnMain) toggleCompact();
                     return;
                 }
+                if (!activeWorkoutId) return;
                 const rect = box.getBoundingClientRect();
-                localStorage.setItem('restTimerPos2', JSON.stringify({left: rect.left, top: rect.top}));
+                try {
+                    localStorage.setItem(POS_KEY, JSON.stringify({workout: activeWorkoutId, left: rect.left, top: rect.top}));
+                } catch (e) {}
             }
             box.addEventListener('pointerup', endDrag);
             box.addEventListener('pointercancel', endDrag);
