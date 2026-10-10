@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Gym Tracker: a Flask app (server-rendered Jinja templates, no JS framework/build step) for logging workouts, tracking per-exercise progress/PRs, and managing reusable routines. UI text and flash messages are in Spanish.
 
+## Workflow
+
+Always commit and push finished changes without asking, and also push them to `main` (fast-forward/merge the working branch into `main` and push) without asking: the owner tests on their phone against the deployed app, which is built from `main`. Run the tests first and don't push a red suite.
+
 ## Commands
 
 Activate the venv first (Windows): `venv\Scripts\activate` (PowerShell: `venv\Scripts\Activate.ps1`).
