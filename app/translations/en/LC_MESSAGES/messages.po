@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-08 23:08+0200\n"
+"POT-Creation-Date: 2026-10-10 16:18+0000\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1878,11 +1878,11 @@ msgstr "Equipment (optional)"
 msgid "Crear y usar"
 msgstr "Create and use"
 
-#: app/i18n.py:91 app/routes.py:3516
+#: app/i18n.py:91 app/routes.py:3505
 msgid "El nombre es obligatorio."
 msgstr "Name is required."
 
-#: app/i18n.py:92 app/routes.py:3518
+#: app/i18n.py:92 app/routes.py:3507
 msgid "Elige al menos un músculo primario."
 msgstr "Choose at least one primary muscle."
 
@@ -1973,7 +1973,8 @@ msgstr "Share your record"
 
 #: app/i18n.py:113 app/templates/_macros.html:105
 #: app/templates/import_review.html:39 app/templates/index.html:211
-#: app/templates/workout_detail.html:288 app/templates/workout_detail.html:312
+#: app/templates/progress.html:168 app/templates/workout_detail.html:288
+#: app/templates/workout_detail.html:312
 msgid "Cerrar"
 msgstr "Close"
 
@@ -2350,7 +2351,7 @@ msgstr "%(day)s workout"
 msgid "No se pudo empezar el entreno. Inténtalo de nuevo."
 msgstr "Couldn't start the workout. Please try again."
 
-#: app/routes.py:1337 app/routes.py:3250
+#: app/routes.py:1337 app/routes.py:3238
 msgid "Ya tienes un entreno en curso — termínalo antes de empezar otro."
 msgstr ""
 "You already have a workout in progress — finish it before starting "
@@ -2361,7 +2362,7 @@ msgid "El nombre no puede estar vacío."
 msgstr "The name can't be empty."
 
 #: app/routes.py:1366 app/routes.py:1627 app/routes.py:1786 app/routes.py:1889
-#: app/routes.py:3548
+#: app/routes.py:3537
 msgid "No tienes acceso a este entrenamiento."
 msgstr "You don't have access to this workout."
 
@@ -2522,7 +2523,7 @@ msgstr "Settings"
 msgid "Peso registrado."
 msgstr "Weight logged."
 
-#: app/routes.py:2470 app/templates/progress.html:190
+#: app/routes.py:2470 app/templates/progress.html:273
 #: app/templates/weight.html:5
 msgid "Peso corporal"
 msgstr "Body weight"
@@ -2656,7 +2657,7 @@ msgid "Mis rutinas"
 msgstr "My routines"
 
 #: app/routes.py:2971 app/routes.py:3071 app/routes.py:3077 app/routes.py:3192
-#: app/routes.py:3245
+#: app/routes.py:3233
 msgid "No tienes acceso a esta rutina."
 msgstr "You don't have access to this routine."
 
@@ -2672,7 +2673,7 @@ msgstr "Exercise updated."
 msgid "Rutina creada. Añade ejercicios."
 msgstr "Routine created. Add exercises."
 
-#: app/routes.py:3063 app/routes.py:3564 app/templates/new_routine.html:4
+#: app/routes.py:3063 app/routes.py:3553 app/templates/new_routine.html:4
 #: app/templates/routines.html:10
 msgid "Nueva rutina"
 msgstr "New routine"
@@ -2714,38 +2715,38 @@ msgstr "Choose an exercise."
 msgid "Rutina eliminada."
 msgstr "Routine deleted."
 
-#: app/routes.py:3283
+#: app/routes.py:3272
 #, python-format
 msgid "¡Entrenamiento '%(name)s' iniciado!"
 msgstr "Workout '%(name)s' started!"
 
-#: app/routes.py:3475
+#: app/routes.py:3464
 msgid "Ejercicio no encontrado."
 msgstr "Exercise not found."
 
-#: app/routes.py:3561
+#: app/routes.py:3550
 msgid "Este entrenamiento no tiene series registradas."
 msgstr "This workout has no logged sets."
 
-#: app/routes.py:3580
+#: app/routes.py:3569
 #, python-format
 msgid "Rutina '%(name)s' creada a partir de este entrenamiento."
 msgstr "Routine '%(name)s' created from this workout."
 
-#: app/routes.py:4430 app/templates/index.html:107
+#: app/routes.py:4419 app/templates/index.html:107
 msgid "hoy"
 msgstr "today"
 
-#: app/routes.py:4432 app/templates/index.html:107
+#: app/routes.py:4421 app/templates/index.html:107
 msgid "ayer"
 msgstr "yesterday"
 
-#: app/routes.py:4434
+#: app/routes.py:4423
 #, python-format
 msgid "hace %(n)s días"
 msgstr "%(n)s days ago"
 
-#: app/routes.py:4436
+#: app/routes.py:4425
 #, python-format
 msgid "hace %(n)s semanas"
 msgstr "%(n)s weeks ago"
@@ -3405,19 +3406,19 @@ msgstr "Saved ✓"
 msgid "No se pudo guardar. Revisa la conexión."
 msgstr "Couldn't save. Check your connection."
 
-#: app/templates/base.html:556
+#: app/templates/base.html:557
 msgid "¡Descanso terminado!"
 msgstr "Rest over!"
 
-#: app/templates/base.html:556
+#: app/templates/base.html:557
 msgid "Quedan"
 msgstr "Remaining"
 
-#: app/templates/base.html:557
+#: app/templates/base.html:558
 msgid "⏱ Descanso terminado"
 msgstr "⏱ Rest over"
 
-#: app/templates/base.html:557
+#: app/templates/base.html:558
 msgid "⏱ Descanso en curso"
 msgstr "⏱ Resting"
 
@@ -4076,7 +4077,7 @@ msgstr[1] ""
 msgid "Importar"
 msgstr "Import"
 
-#: app/templates/import_review.html:42 app/templates/progress.html:205
+#: app/templates/import_review.html:42 app/templates/progress.html:288
 msgid "Buscar ejercicio…"
 msgstr "Search exercise…"
 
@@ -4287,7 +4288,7 @@ msgid_plural "%(num)d ejercicios sin músculo en el catálogo no cuentan aquí."
 msgstr[0] "%(num)d exercise with no muscle in the catalog doesn't count here."
 msgstr[1] "%(num)d exercises with no muscle in the catalog don't count here."
 
-#: app/templates/index.html:112 app/templates/progress.html:135
+#: app/templates/index.html:112 app/templates/progress.html:218
 msgid "Asignar músculos"
 msgstr "Assign muscles"
 
@@ -5135,7 +5136,7 @@ msgstr ""
 "exercise, they're separate histories: pick the one you use now (you'll "
 "see how many sessions each has)."
 
-#: app/templates/personal_basics.html:21 app/templates/progress.html:234
+#: app/templates/personal_basics.html:21 app/templates/progress.html:317
 #, python-format
 msgid "%(num)d sesión"
 msgid_plural "%(num)d sesiones"
@@ -5487,66 +5488,128 @@ msgstr "Below"
 msgid "Sin series"
 msgstr "No sets"
 
-#: app/templates/progress.html:119
+#: app/templates/progress.html:114
+msgid "Toca un músculo para ver de qué series sale su volumen."
+msgstr "Tap a muscle to see which sets its volume comes from."
+
+#: app/templates/progress.html:120
 #, python-format
 msgid "%(n)s serie"
 msgid_plural "%(n)s series"
 msgstr[0] "%(n)s set"
 msgstr[1] "%(n)s sets"
 
-#: app/templates/progress.html:127
+#: app/templates/progress.html:128
 #, python-format
 msgid "media %(n)s/sem"
 msgstr "avg %(n)s/wk"
 
-#: app/templates/progress.html:134
+#: app/templates/progress.html:136
+#, python-format
+msgid "%(n)s serie dura"
+msgid_plural "%(n)s series duras"
+msgstr[0] "%(n)s hard set"
+msgstr[1] "%(n)s hard sets"
+
+#: app/templates/progress.html:136
+msgid "en los últimos 7 días"
+msgstr "in the last 7 days"
+
+#: app/templates/progress.html:136
+#, python-format
+msgid "rango %(low)s-%(high)s"
+msgstr "range %(low)s-%(high)s"
+
+#: app/templates/progress.html:142
+msgid "principal"
+msgstr "primary"
+
+#: app/templates/progress.html:142
+msgid "secundario"
+msgstr "secondary"
+
+#: app/templates/progress.html:149
+msgid "No cuentan:"
+msgstr "Not counted:"
+
+#: app/templates/progress.html:150
+#, python-format
+msgid "%(n)s de calentamiento"
+msgid_plural "%(n)s de calentamiento"
+msgstr[0] "%(n)s warm-up"
+msgstr[1] "%(n)s warm-up"
+
+#: app/templates/progress.html:151
+#, python-format
+msgid "%(n)s con RIR > 4 (RPE < 6)"
+msgid_plural "%(n)s con RIR > 4 (RPE < 6)"
+msgstr[0] "%(n)s at RIR > 4 (RPE < 6)"
+msgstr[1] "%(n)s at RIR > 4 (RPE < 6)"
+
+#: app/templates/progress.html:158
+msgid "Ninguna serie de este músculo en los últimos 7 días."
+msgstr "No sets for this muscle in the last 7 days."
+
+#: app/templates/progress.html:160
+msgid ""
+"Cuenta cada serie dura completada (no de calentamiento, con RIR 4 o menos"
+" o RPE 6 o más; sin esfuerzo anotado también cuenta): vale 1 si el "
+"músculo es principal en el ejercicio y 0,5 si es secundario, según el "
+"catálogo."
+msgstr ""
+"Each completed hard set counts (not a warm-up, at RIR 4 or less or RPE 6 "
+"or more; sets with no effort logged count too): 1 if the muscle is "
+"primary in the exercise and 0.5 if it is secondary, according to the "
+"catalog."
+
+#: app/templates/progress.html:217
 #, python-format
 msgid "%(n)s serie de ejercicios sin músculo en el catálogo no cuenta."
 msgid_plural "%(n)s series de ejercicios sin músculo en el catálogo no cuentan."
 msgstr[0] "%(n)s set from exercises with no muscle in the catalog doesn't count."
 msgstr[1] "%(n)s sets from exercises with no muscle in the catalog don't count."
 
-#: app/templates/progress.html:136
+#: app/templates/progress.html:219
 #, python-format
 msgid "%(n)s serie sin RIR/RPE anotado cuenta como dura."
 msgid_plural "%(n)s series sin RIR/RPE anotado cuentan como dura."
 msgstr[0] "%(n)s set with no RIR/RPE logged counts as hard."
 msgstr[1] "%(n)s sets with no RIR/RPE logged count as hard."
 
-#: app/templates/progress.html:140
+#: app/templates/progress.html:223
 msgid "Sin series duras en las últimas 4 semanas."
 msgstr "No hard sets in the last 4 weeks."
 
-#: app/templates/progress.html:145
+#: app/templates/progress.html:228
 msgid "Tu punto dulce estimado"
 msgstr "Your estimated sweet spot"
 
-#: app/templates/progress.html:150
+#: app/templates/progress.html:233
 #, python-format
 msgid "%(low)s-%(high)s series/semana"
 msgstr "%(low)s-%(high)s sets/week"
 
-#: app/templates/progress.html:151
+#: app/templates/progress.html:234
 #, python-format
 msgid "a RIR ≈ %(n)s"
 msgstr "at RIR ≈ %(n)s"
 
-#: app/templates/progress.html:152
+#: app/templates/progress.html:235
 #, python-format
 msgid "progreso medio %(pct)s %% por sesión"
 msgstr "average progress %(pct)s %% per session"
 
-#: app/templates/progress.html:153
+#: app/templates/progress.html:236
 #, python-format
 msgid "por encima de %(n)s progresaste menos"
 msgstr "above %(n)s you progressed less"
 
-#: app/templates/progress.html:154
+#: app/templates/progress.html:237
 #, python-format
 msgid "(confianza %(level)s, %(n)s mediciones)"
 msgstr "(%(level)s confidence, %(n)s measurements)"
 
-#: app/templates/progress.html:160
+#: app/templates/progress.html:243
 msgid ""
 "Con unas semanas más de datos, la app estimará tu propio rango para cada "
 "músculo."
@@ -5554,11 +5617,11 @@ msgstr ""
 "With a few more weeks of data, the app will estimate your own range for "
 "each muscle."
 
-#: app/templates/progress.html:163
+#: app/templates/progress.html:246
 msgid "¿Cómo aprende la app tu rango?"
 msgstr "How does the app learn your range?"
 
-#: app/templates/progress.html:165
+#: app/templates/progress.html:248
 msgid ""
 "Cada persona tolera y aprovecha un volumen distinto. Cada vez que repites"
 " un ejercicio, la app mira cuánto cambió tu 1RM estimado frente a la vez "
@@ -5575,7 +5638,7 @@ msgstr ""
 "sweet spot is the band where you progressed most, with the average RIR "
 "you trained at there."
 
-#: app/templates/progress.html:168
+#: app/templates/progress.html:251
 #, python-format
 msgid ""
 "No cuenta las semanas de descarga (menos del 60 %% de tu volumen de las 3"
@@ -5588,15 +5651,15 @@ msgstr ""
 "rises because fatigue goes away, and that would make it look like very "
 "few sets work better for you."
 
-#: app/templates/progress.html:171
+#: app/templates/progress.html:254
 msgid "Necesita al menos 12 mediciones y 2 tramos con 4 o más. Es una"
 msgstr "It needs at least 12 measurements and 2 bands with 4 or more. It's an"
 
-#: app/templates/progress.html:172
+#: app/templates/progress.html:255
 msgid "estimación"
 msgstr "estimate"
 
-#: app/templates/progress.html:172
+#: app/templates/progress.html:255
 msgid ""
 ": el progreso también depende del sueño o la comida, y el 1RM mide "
 "fuerza, no tamaño muscular. Por eso se muestra la confianza, se recalcula"
@@ -5608,12 +5671,12 @@ msgstr ""
 "your last 26 weeks and it's only informative: the volume colors always "
 "use the 10-20 range."
 
-#: app/templates/progress.html:176
+#: app/templates/progress.html:259
 #, python-format
 msgid "¿De dónde sale el rango de %(low)s-%(high)s series?"
 msgstr "Where does the %(low)s-%(high)s set range come from?"
 
-#: app/templates/progress.html:178
+#: app/templates/progress.html:261
 #, python-format
 msgid ""
 "Un metaanálisis de Schoenfeld, Ogborn y Krieger (2017) encontró que más "
@@ -5630,12 +5693,12 @@ msgstr ""
 "adds less. That's why %(low)s-%(high)s sets is the most cited practical "
 "range:"
 
-#: app/templates/progress.html:179
+#: app/templates/progress.html:262
 #, python-format
 msgid "pasar de %(high)s no es malo"
 msgstr "going over %(high)s isn't bad"
 
-#: app/templates/progress.html:179
+#: app/templates/progress.html:262
 msgid ""
 ", solo rinde menos por serie. Es una referencia para ganar músculo; para "
 "fuerza máxima el volumen extra aporta todavía menos."
@@ -5643,11 +5706,11 @@ msgstr ""
 ", it just pays off less per set. It's a reference for building muscle; "
 "for maximal strength extra volume adds even less."
 
-#: app/templates/progress.html:182
+#: app/templates/progress.html:265
 msgid "Cómo contamos."
 msgstr "How we count."
 
-#: app/templates/progress.html:182
+#: app/templates/progress.html:265
 msgid ""
 "Una serie dura es una serie hecha, con peso, que no es de calentamiento y"
 " con RIR 4 o menos (RPE 6 o más); si no anotaste el esfuerzo, cuenta. "
@@ -5661,46 +5724,46 @@ msgstr ""
 "secondary ones (as in Pelland et al.), according to the exercise catalog."
 " It's not a measure of recovery or fatigue."
 
-#: app/templates/progress.html:193
+#: app/templates/progress.html:276
 #, python-format
 msgid "Último registro: %(when)s"
 msgstr "Last entry: %(when)s"
 
-#: app/templates/progress.html:195 app/templates/workout_detail.html:335
+#: app/templates/progress.html:278 app/templates/workout_detail.html:335
 msgid "Sin registrar"
 msgstr "Not logged"
 
-#: app/templates/progress.html:196
+#: app/templates/progress.html:279
 msgid "Apunta tu peso para ver su evolución"
 msgstr "Log your weight to see how it evolves"
 
-#: app/templates/progress.html:204
+#: app/templates/progress.html:287
 msgid "Tus ejercicios"
 msgstr "Your exercises"
 
-#: app/templates/progress.html:205
+#: app/templates/progress.html:288
 msgid "Buscar ejercicio"
 msgstr "Search exercise"
 
-#: app/templates/progress.html:222
+#: app/templates/progress.html:305
 #, python-format
 msgid "récord %(when)s"
 msgstr "record %(when)s"
 
-#: app/templates/progress.html:228
+#: app/templates/progress.html:311
 #, python-format
 msgid "Sin récord en las últimas %(n)s sesiones"
 msgstr "No record in the last %(n)s sessions"
 
-#: app/templates/progress.html:228 app/templates/rango.html:69
+#: app/templates/progress.html:311 app/templates/rango.html:69
 msgid "Estancado"
 msgstr "Stalled"
 
-#: app/templates/progress.html:241
+#: app/templates/progress.html:324
 msgid "Ningún ejercicio coincide."
 msgstr "No exercise matches."
 
-#: app/templates/progress.html:242
+#: app/templates/progress.html:325
 msgid ""
 "1RM estimado de tu última sesión. La tendencia compara con hace hasta 60 "
 "días."
@@ -5708,11 +5771,11 @@ msgstr ""
 "Estimated 1RM from your last session. The trend compares with up to 60 "
 "days ago."
 
-#: app/templates/progress.html:259
+#: app/templates/progress.html:342
 msgid "Aún no hay progreso que mostrar."
 msgstr "No progress to show yet."
 
-#: app/templates/progress.html:260
+#: app/templates/progress.html:343
 msgid ""
 "Marca series como hechas en un entreno y aquí verás cada ejercicio con su"
 " 1RM, su tendencia y tus récords."
@@ -5720,7 +5783,7 @@ msgstr ""
 "Mark sets as done in a workout and here you'll see each exercise with its"
 " 1RM, its trend and your records."
 
-#: app/templates/progress.html:261
+#: app/templates/progress.html:344
 msgid "Ir a entrenar"
 msgstr "Go train"
 

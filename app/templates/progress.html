@@ -111,9 +111,10 @@
                 <span><i class="vol-dot high"></i>{{ _("Te pasas") }}</span>
                 <span><i class="vol-dot none"></i>{{ _("Sin series") }}</span>
             </div>
+            <p class="vol-tap-hint">{{ _("Toca un músculo para ver de qué series sale su volumen.") }}</p>
             <ul class="vol-list">
                 {% for g in volume['items'] %}
-                    <li>
+                    <li role="button" tabindex="0" data-vol-group="{{ g.group }}" aria-haspopup="dialog">
                         <div class="vol-row-top">
                             <span>{{ g.label }}</span>
                             <b class="vol-{{ g.status }}">{{ ngettext('%(n)s serie', '%(n)s series', g.last7, n=g.last7|num) }}</b>
@@ -129,6 +130,88 @@
                     </li>
                 {% endfor %}
             </ul>
+            {# Desglose de cada músculo: se copia al panel inferior al tocarlo. #}
+            {% for g in volume['items'] %}
+                <template id="vol-detail-{{ g.group }}" data-title="{{ g.label }}">
+                    <p class="vol-detail-total"><b class="vol-{{ g.status }}">{{ ngettext('%(n)s serie dura', '%(n)s series duras', g.last7, n=g.last7|num) }}</b> {{ _("en los últimos 7 días") }} · {{ _("rango %(low)s-%(high)s", low=g.low, high=g.high) }}</p>
+                    {% if g.breakdown %}
+                        <ul class="vol-detail-list">
+                            {% for e in g.breakdown %}
+                                <li>
+                                    <div class="vol-detail-head">
+                                        <span>{{ e.exercise|title }}<small>{{ _("principal") if e.primary else _("secundario") }}</small></span>
+                                        <b>{{ e.n }} × {{ e.weight|num }} = {{ (e.n * e.weight)|num }}</b>
+                                    </div>
+                                    {% for sess in e.sessions %}
+                                        <p class="vol-detail-sets"><span>{{ sess.day|ucfirst }}:</span> {{ sess.sets|join(', ') }}</p>
+                                    {% endfor %}
+                                    {% if e.warmup or e.easy %}
+                                        <p class="vol-detail-skip">{{ _("No cuentan:") }}
+                                            {% if e.warmup %}{{ ngettext('%(n)s de calentamiento', '%(n)s de calentamiento', e.warmup, n=e.warmup) }}{% endif %}{% if e.warmup and e.easy %}, {% endif %}
+                                            {% if e.easy %}{{ ngettext('%(n)s con RIR > 4 (RPE < 6)', '%(n)s con RIR > 4 (RPE < 6)', e.easy, n=e.easy) }}{% endif %}
+                                        </p>
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="progress-footnote">{{ _("Ninguna serie de este músculo en los últimos 7 días.") }}</p>
+                    {% endif %}
+                    <p class="progress-footnote">{{ _("Cuenta cada serie dura completada (no de calentamiento, con RIR 4 o menos o RPE 6 o más; sin esfuerzo anotado también cuenta): vale 1 si el músculo es principal en el ejercicio y 0,5 si es secundario, según el catálogo.") }}</p>
+                </template>
+            {% endfor %}
+            <div class="sheet-backdrop" id="volDetailBackdrop"></div>
+            <div class="bottom-sheet vol-detail-sheet" id="volDetailSheet" role="dialog" aria-modal="true" aria-labelledby="volDetailTitle">
+                <div class="bottom-sheet-grabber" aria-hidden="true"></div>
+                <div class="bottom-sheet-header">
+                    <h3 id="volDetailTitle" class="bottom-sheet-title"></h3>
+                    <button type="button" class="sheet-close-btn" id="volDetailClose" aria-label="{{ _('Cerrar') }}">{{ macros.icon('close', 20) }}</button>
+                </div>
+                <div class="bottom-sheet-body" id="volDetailBody"></div>
+            </div>
+            <script>
+                (function () {
+                    const sheet = document.getElementById('volDetailSheet');
+                    const backdrop = document.getElementById('volDetailBackdrop');
+                    const body = document.getElementById('volDetailBody');
+                    let opener = null;
+                    function open(group, from) {
+                        const tpl = document.getElementById('vol-detail-' + group);
+                        if (!tpl) return;
+                        opener = from || null;
+                        document.getElementById('volDetailTitle').textContent = tpl.dataset.title;
+                        body.replaceChildren(tpl.content.cloneNode(true));
+                        body.scrollTop = 0;
+                        sheet.classList.add('open');
+                        backdrop.classList.add('open');
+                        document.getElementById('volDetailClose').focus();
+                    }
+                    function close() {
+                        sheet.classList.remove('open');
+                        backdrop.classList.remove('open');
+                        if (opener) opener.focus();
+                    }
+                    backdrop.addEventListener('click', close);
+                    document.getElementById('volDetailClose').addEventListener('click', close);
+                    document.addEventListener('keydown', function (e) {
+                        if (e.key === 'Escape' && sheet.classList.contains('open')) close();
+                    });
+                    document.querySelectorAll('[data-vol-group]').forEach(function (li) {
+                        li.addEventListener('click', function () { open(li.dataset.volGroup, li); });
+                        li.addEventListener('keydown', function (e) {
+                            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(li.dataset.volGroup, li); }
+                        });
+                    });
+                    // El mapa también: cada zona lleva la clase mm-<grupo>.
+                    document.querySelectorAll('.vol-map .mm-figure').forEach(function (svg) {
+                        svg.addEventListener('click', function (e) {
+                            const el = e.target.closest('[class*="mm-"]');
+                            const m = el && el.getAttribute('class').match(/\bmm-([a-z_]+)/);
+                            if (m && m[1] !== 'neutral') open(m[1]);
+                        });
+                    });
+                })();
+            </script>
             {% if volume.unmapped or volume.no_effort %}
                 <p class="progress-footnote">
                     {% if volume.unmapped %}{{ ngettext('%(n)s serie de ejercicios sin músculo en el catálogo no cuenta.', '%(n)s series de ejercicios sin músculo en el catálogo no cuentan.', volume.unmapped, n=volume.unmapped|num) }}

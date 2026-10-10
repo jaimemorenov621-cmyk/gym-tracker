@@ -3844,6 +3844,28 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 .vol-bar i.vol-none { background: transparent; }
 .vol-list small { font-size: 0.72rem; color: var(--color-text-muted); }
 @media (max-width: 360px) { .vol-list { grid-template-columns: 1fr; } }
+/* Desglose al tocar un músculo (lista o mapa): panel inferior. */
+.vol-tap-hint { margin: 4px 0 0; font-size: 0.75rem; color: var(--color-text-muted); text-align: center; }
+.vol-list li[data-vol-group] { cursor: pointer; border-radius: 6px; -webkit-tap-highlight-color: transparent; }
+.vol-list li[data-vol-group]:active { background: var(--color-surface-hover); }
+.vol-list li[data-vol-group]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vol-map .mm-figure path:not(.mm-neutral) { cursor: pointer; }
+.vol-detail-sheet .bottom-sheet-body { padding: 0 16px 16px; }
+.vol-detail-total { margin: 4px 0 10px; font-size: 0.9rem; }
+.vol-detail-total b.vol-low { color: #8a5a00; }
+.vol-detail-total b.vol-ok { color: var(--color-success-text); }
+.vol-detail-total b.vol-high { color: #c62828; }
+:root[data-theme="dark"] .vol-detail-total b.vol-low { color: #ffd27a; }
+:root[data-theme="dark"] .vol-detail-total b.vol-ok { color: #5cf0b4; }
+:root[data-theme="dark"] .vol-detail-total b.vol-high { color: #ff8a8a; }
+.vol-detail-list { list-style: none; margin: 0; padding: 0; }
+.vol-detail-list li { padding: 10px 0; border-top: 1px solid var(--border-subtle); }
+.vol-detail-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 0.9rem; }
+.vol-detail-head span { min-width: 0; }
+.vol-detail-head small { margin-left: 6px; font-size: 0.72rem; color: var(--color-text-muted); }
+.vol-detail-head b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vol-detail-sets, .vol-detail-skip { margin: 4px 0 0; font-size: 0.78rem; color: var(--color-text-muted); }
+.vol-detail-sets span { color: var(--color-text); font-weight: 600; }
 
 /* ===== Colores de acento (ventaja por nivel, app/perks.py) =====
    Rellenos con texto blanco >= 4,5:1 en el color principal. */

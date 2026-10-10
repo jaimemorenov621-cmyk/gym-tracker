@@ -3225,18 +3225,6 @@ def sets_label(ex):
     return f"{ex.target_sets}-{ex.target_sets_max}" if ex.target_sets_max else str(ex.target_sets)
 
 
-def _parse_single_int(value):
-    """Convierte un objetivo de RIR/RPE en un entero 0-10 solo si es un
-    número simple (ej. "2") -- un rango (ej. "2-3") u otro texto no
-    parseable devuelve None, para no adivinar qué extremo usar."""
-    if value is None:
-        return None
-    try:
-        return max(0, min(10, int(value)))
-    except (TypeError, ValueError):
-        return None
-
-
 @app.route("/routines/<int:routine_id>/start", methods=["POST"])
 @login_required
 def start_routine(routine_id):
@@ -3260,6 +3248,9 @@ def start_routine(routine_id):
     # la rutina), nunca se retipea, así que no hay riesgo de que no coincida
     # con el plan. Peso/reps se dejan a 0 (a rellenar) -- no se adivinan
     # valores; la columna "Anterior" ya da la referencia de la sesión pasada.
+    # El RIR/RPE tampoco se copia del objetivo de la rutina: el chip muestra
+    # en gris el de la sesión anterior (y se guarda ese al marcar la serie),
+    # y grabar el objetivo lo daba por hecho aunque no se tocara.
     routine_exercises = db.session.scalars(
         sa.select(RoutineExercise)
         .where(RoutineExercise.routine_id == routine.id)
@@ -3272,8 +3263,6 @@ def start_routine(routine_id):
                     exercise=re_.exercise,
                     weight=0.0,
                     reps=0,
-                    rir=_parse_single_int(re_.rir),
-                    rpe=_parse_single_int(re_.rpe),
                     set_type="normal",
                     workout=workout,
                 )

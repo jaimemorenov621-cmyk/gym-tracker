@@ -117,6 +117,33 @@ class RangeTests(_RoutineFixtures):
         self.assertIn('value="10" placeholder="máx" data-field="reps_max"', html)
 
 
+class StartRoutineEffortTests(_RoutineFixtures):
+    def test_sets_take_last_session_effort_not_routine_target(self):
+        """El objetivo de la rutina (RIR 1) no se graba en las series: el chip
+        enseña en gris el RIR de la sesión anterior (3) y es el que se guarda."""
+        from datetime import datetime, timedelta, timezone
+        from app.models import SetEntry, Workout
+        with app.app_context():
+            db.session.get(RoutineExercise, self.exid).rir = "1"
+            old = Workout(user_id=self.uid, performance_rating=4,
+                          timestamp=datetime.now(timezone.utc) - timedelta(days=3))
+            db.session.add(old)
+            db.session.flush()
+            db.session.add(SetEntry(workout_id=old.id, exercise="sentadilla", weight=100, reps=5,
+                                    rir=3, completed=True))
+            db.session.commit()
+        self.login(self.uid)
+        resp = self.client.post(f"/routines/{self.rid}/start")
+        with app.app_context():
+            new = db.session.scalars(sa.select(Workout).order_by(Workout.id.desc())).first()
+            efforts = db.session.scalars(sa.select(SetEntry.rir).where(SetEntry.workout_id == new.id)).all()
+        self.assertEqual(efforts, [None, None, None])
+        html = self.client.get(resp.headers["Location"]).get_data(as_text=True)
+        self.assertIn("effort-chip-placeholder", html)
+        self.assertIn("openEffortPicker(", html)
+        self.assertRegex(html, r'effort-chip-placeholder"[^>]*>3</button>')
+
+
 class ReplaceTests(_RoutineFixtures):
     def test_replace_keeps_plan(self):
         self.login(self.uid)

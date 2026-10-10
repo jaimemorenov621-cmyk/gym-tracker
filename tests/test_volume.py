@@ -101,6 +101,35 @@ class WeeklyVolumeTests(DbTestCase):
         self.assertEqual(r["unmapped"], 4)
         self.assertEqual(r["no_effort"], 6)  # 4 del remo + 2 del curl
 
+    def test_breakdown_explains_each_muscle(self):
+        """Lo que se ve al tocar un músculo: de qué ejercicios y series sale."""
+        self.sets("press de banca", 2, days_ago=1, rir=2)
+        self.sets("press de banca", 1, days_ago=1, rir=6)                     # fácil: no cuenta
+        self.sets("press de banca", 1, days_ago=2, set_type="calentamiento")  # no cuenta
+        self.sets("press de banca", 3, days_ago=9)                            # fuera de los 7 días
+        _, g = self.report()
+        (bench,) = g["pecho"]["breakdown"]
+        self.assertEqual((bench["exercise"], bench["primary"], bench["weight"], bench["n"]),
+                         ("press de banca", True, 1.0, 2))
+        self.assertEqual((bench["easy"], bench["warmup"]), (1, 1))
+        self.assertEqual([s["sets"] for s in bench["sessions"]], [["60kg×8 · RIR 2", "60kg×8 · RIR 2"]])
+        (secondary,) = g["hombros"]["breakdown"]
+        self.assertEqual((secondary["primary"], secondary["n"], g["hombros"]["last7"]), (False, 2, 1.0))
+        # El total del desglose es el mismo que el de la barra.
+        for item in g.values():
+            self.assertEqual(sum(e["n"] * e["weight"] for e in item["breakdown"]), item["last7"])
+
+    def test_progress_page_has_tappable_breakdown(self):
+        from app.usage import local_today
+        self.TODAY = local_today()  # la página usa la fecha real
+        self.sets("press de banca", 2, days_ago=0)
+        self.login(self.uid)
+        html = self.client.get("/progress").get_data(as_text=True)
+        self.assertIn('data-vol-group="pecho"', html)
+        self.assertIn('id="vol-detail-pecho"', html)
+        self.assertIn("2 × 1 = 2", html)
+        self.assertIn("2 × 0,5 = 1", html)
+
     def test_progress_page_shows_the_card_with_the_sources(self):
         self.sets("press de banca", 12, days_ago=0)
         self.login(self.uid)

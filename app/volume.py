@@ -232,9 +232,20 @@ def _groups_for(exercise_name):
     return list(weights.items())
 
 
+def _detail_for(detail, group, exercise, weight):
+    if exercise not in detail[group]:
+        detail[group][exercise] = {
+            "exercise": exercise, "weight": weight, "primary": weight == 1.0,
+            "n": 0, "sessions": [], "warmup": 0, "easy": 0,
+        }
+    return detail[group][exercise]
+
+
 def weekly_volume(user_id, today=None, personal=None):
     from app.progression import MUSCLE_GROUP_LABELS
-    from app.routes import MUSCLE_GROUPS, prefetch_catalog_exercises, to_local
+    from app.routes import (
+        MUSCLE_GROUPS, fmt_num, is_real_set, prefetch_catalog_exercises, relative_day, to_local,
+    )
     from app.usage import local_today
 
     today = today or local_today()
@@ -242,7 +253,7 @@ def weekly_volume(user_id, today=None, personal=None):
     since = datetime.combine(first_day - timedelta(days=1), datetime.min.time())
     rows = db.session.execute(
         sa.select(
-            Workout.timestamp, SetEntry.exercise, SetEntry.weight, SetEntry.reps,
+            Workout.timestamp, SetEntry.id, SetEntry.exercise, SetEntry.weight, SetEntry.reps,
             SetEntry.rir, SetEntry.rpe, SetEntry.set_type, SetEntry.completed,
         )
         .join(Workout, Workout.id == SetEntry.workout_id)
@@ -254,9 +265,20 @@ def weekly_volume(user_id, today=None, personal=None):
     total = defaultdict(float)
     unmapped = no_effort = hard_sets = 0
     cache = {}
-    for r in rows:
+    # Desglose de los últimos 7 días por grupo y ejercicio (lo que se ve al
+    # tocar un músculo): series que cuentan, por sesión, y las que no.
+    detail = defaultdict(dict)
+    for r in sorted(rows, key=lambda r: (r.timestamp, -r.id), reverse=True):  # sesiones recientes primero, series en orden
         d = to_local(r.timestamp).date()
-        if not (first_day <= d <= today) or not is_hard_set(r):
+        if not (first_day <= d <= today):
+            continue
+        if not is_hard_set(r):
+            if (today - d).days < 7 and is_real_set(r):
+                if r.exercise not in cache:
+                    cache[r.exercise] = _groups_for(r.exercise)
+                reason = "warmup" if (r.set_type or "normal") == "calentamiento" else "easy"
+                for group, weight in cache[r.exercise]:
+                    _detail_for(detail, group, r.exercise, weight)[reason] += 1
             continue
         hard_sets += 1
         if r.rir is None and r.rpe is None:
@@ -272,6 +294,13 @@ def weekly_volume(user_id, today=None, personal=None):
             total[group] += weight
             if recent:
                 last7[group] += weight
+                ex = _detail_for(detail, group, r.exercise, weight)
+                ex["n"] += 1
+                day = relative_day(r.timestamp)
+                if not ex["sessions"] or ex["sessions"][-1]["day"] != day:
+                    ex["sessions"].append({"day": day, "sets": []})
+                effort = f" · RIR {r.rir}" if r.rir is not None else (f" · RPE {fmt_num(r.rpe)}" if r.rpe is not None else "")
+                ex["sessions"][-1]["sets"].append(f"{fmt_num(r.weight, 2)}kg×{r.reps}{effort}")
 
     if personal is None:
         personal = personal_ranges(user_id, today=today)
@@ -291,6 +320,10 @@ def weekly_volume(user_id, today=None, personal=None):
             "high": high,
             "personal": own,
             "status": status_for(sets7, low, high),
+            "breakdown": sorted(
+                detail.get(group, {}).values(),
+                key=lambda e: (-e["n"] * e["weight"], -(e["warmup"] + e["easy"]), e["exercise"]),
+            ),
             # Barra de 0 a 25 series, con la banda del rango (personal o 10-20).
             "bar_pct": round(min(sets7, 25) / 25 * 100),
             "band_left": round(min(low, 25) / 25 * 100),

@@ -19,27 +19,7 @@ os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 
 from app import app, db
 from app.models import SetEntry, User, Workout
-from app.routes import _parse_single_int, get_exercise_sessions, qualifying_sessions
-
-
-class ParseSingleIntTests(unittest.TestCase):
-    def test_none_returns_none(self):
-        self.assertIsNone(_parse_single_int(None))
-
-    def test_simple_number(self):
-        self.assertEqual(_parse_single_int("2"), 2)
-
-    def test_range_returns_none(self):
-        self.assertIsNone(_parse_single_int("2-3"))
-
-    def test_clamped_above_ten(self):
-        self.assertEqual(_parse_single_int("50"), 10)
-
-    def test_clamped_below_zero(self):
-        self.assertEqual(_parse_single_int("-5"), 0)
-
-    def test_non_numeric_text(self):
-        self.assertIsNone(_parse_single_int("aprox 2"))
+from app.routes import get_exercise_sessions, qualifying_sessions
 
 
 class QualifyingSessionsTests(unittest.TestCase):
