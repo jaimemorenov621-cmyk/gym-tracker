@@ -4,6 +4,10 @@
 # Antes: 1 proceso, 1 hilo y 30 s de tope. Una petición lenta (el análisis de
 # IA puede tardar más de 30 s) bloqueaba la app entera para todos y, al pasar
 # de 30 s, gunicorn la mataba a medias (error en vez del análisis).
-workers = 1      # plan gratuito de Render: 512 MB, un solo proceso
-threads = 4      # trabajador gthread: una petición lenta no bloquea a las demás
+workers = 1      # plan gratuito de Render: 512 MB y 0,1 CPU, un solo proceso
+# Hilos = peticiones EN CURSO a la vez (no usuarios: cada petición dura
+# décimas de segundo). Ayudan mientras se espera a la base de datos o a la IA;
+# el cálculo puro no va más rápido con más hilos (GIL y 0,1 CPU). 8 cabe de
+# sobra en el pool de SQLAlchemy (5 + 10 de desborde).
+threads = 8
 timeout = 120    # margen para la IA (su cliente corta antes, a los 100 s)
