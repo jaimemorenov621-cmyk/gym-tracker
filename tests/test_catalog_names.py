@@ -100,3 +100,58 @@ class ApplyTests(DbTestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LanguageIndependentNameTests(DbTestCase):
+    """El mismo ejercicio del catálogo se guarda igual en los dos idiomas y
+    se muestra en el de la app; lo guardado antes en inglés se une."""
+
+    def setUp(self):
+        super().setUp()
+        self.uid = self.make_user("atleta")
+        self.admin = self.make_user(ADMIN_USERNAME)
+        with app.app_context():
+            db.session.add(Exercise(id="Bench", name="Barbell Bench Press", name_es="Press de banca",
+                                    primary_muscles="chest"))
+            w = Workout(user_id=self.uid)
+            db.session.add(w)
+            db.session.commit()
+            self.wid = w.id
+
+    def set_language(self, lang):
+        from app.models import User
+        with app.app_context():
+            db.session.get(User, self.uid).language = lang
+            db.session.commit()
+
+    def test_english_ui_stores_the_same_name_and_shows_english(self):
+        self.set_language("en")
+        self.login(self.uid)
+        self.client.post(f"/workout/{self.wid}/add_exercise", data={"exercise": "Barbell Bench Press"})
+        with app.app_context():
+            self.assertEqual(db.session.scalar(sa.select(SetEntry.exercise)), "press de banca")
+        html = self.client.get(f"/workout/{self.wid}").get_data(as_text=True)
+        self.assertIn("Barbell Bench Press", html)
+        self.set_language("es")
+        self.assertIn("Press De Banca", self.client.get(f"/workout/{self.wid}").get_data(as_text=True))
+
+    def test_merge_history_saved_in_english(self):
+        from datetime import datetime, timedelta, timezone
+        with app.app_context():
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
+            for days, name, kg in ((10, "press de banca", 100), (5, "barbell bench press", 90), (1, "barbell bench press", 105)):
+                w = Workout(user_id=self.uid, timestamp=now - timedelta(days=days), performance_rating=3)
+                db.session.add(w)
+                db.session.flush()
+                # Por separado, cada sesión era récord de su historial (también la de 90 kg).
+                db.session.add(SetEntry(workout_id=w.id, exercise=name, weight=kg, reps=5, completed=True,
+                                        is_pr=True))
+            db.session.commit()
+        self.login(self.admin)
+        self.assertIn("Barbell Bench Press", self.client.get("/landing/catalog-names").get_data(as_text=True))
+        self.client.post("/landing/catalog-names", data={"action": "merge_english"})
+        with app.app_context():
+            rows = db.session.execute(sa.select(SetEntry.exercise, SetEntry.weight, SetEntry.is_pr)
+                                      .order_by(SetEntry.weight)).all()
+        self.assertEqual({r.exercise for r in rows}, {"press de banca"})
+        self.assertEqual([(r.weight, r.is_pr) for r in rows], [(90, False), (100, True), (105, True)])

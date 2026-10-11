@@ -52,7 +52,7 @@
                     <li>
                         <a href="{{ url_for('exercise_progress', name=b.exercise) }}">
                             <span class="pbasics-main">
-                                <strong>{{ b.exercise|title }}</strong>
+                                <strong>{{ b.exercise|exercise_title }}</strong>
                                 <small>
                                     {% if b.stats %}{{ _('Mejor 1RM %(kg)s kg', kg=b.stats.best_1rm|num) }}{% if b.stats.last_pr %} · {{ _('último récord %(when)s', when=b.stats.last_pr|relative_day) }}{% endif %}{% else %}{{ _("Sin series válidas todavía") }}{% endif %}
                                 </small>

@@ -49,3 +49,4 @@ app.jinja_env.globals["i18n_enabled"] = i18n.enabled
 app.jinja_env.globals["get_locale"] = get_locale
 app.jinja_env.globals["js_translations"] = i18n.js_translations
 app.jinja_env.globals["catalog_display_name"] = routes.catalog_display_name
+app.jinja_env.filters["exercise_title"] = routes.exercise_title  # nombre en el idioma de la app

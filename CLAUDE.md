@@ -71,7 +71,7 @@ Spanish source strings, English catalog in `app/translations/en/LC_MESSAGES/` (t
 
 ### Key conventions
 
-- Exercise names are always normalized with `.strip().lower()` before being stored or queried against `SetEntry.exercise` / `ExerciseNote.exercise`, and titlecased (`.title()`) for display.
+- Exercise names are always normalized with `.strip().lower()` before being stored or queried against `SetEntry.exercise` / `ExerciseNote.exercise`. Catalog exercises are stored by `catalog_key()` (Spanish name, or English if none) in **any** UI language (`canonicalize_exercise_name`), and shown with the `exercise_title` Jinja filter / `exercise_title()` in Python, which translates catalog names to the app language and titlecases. Never display a stored name with plain `|title`. History saved in English before this rule is merged from `/landing/catalog-names` (`catalog_names.merge_english`, recomputes PR badges).
 - Progress/PR logic (`exercise_progress` route) estimates 1RM via Epley's formula using "effective reps" (`effective_reps`/`estimated_1rm` in `app/routes.py`), which adds RIR or converts RPE to extra reps before applying the formula — do this consistently if you add related features.
 - Renaming a catalog exercise (`/exercise/<name>/translate`) rewrites every user's history: admin only (`is_admin()`).
 - Ownership checks are manual per-route (`if workout.author != current_user`), not enforced via query filtering — follow the existing pattern (flash + redirect for page routes, `jsonify({"ok": False}), 403` for API routes) when adding new routes.

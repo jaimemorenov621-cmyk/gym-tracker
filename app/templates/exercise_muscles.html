@@ -14,7 +14,7 @@
                 {% for m in missing %}
                     <li>
                         <span class="alias-name">
-                            <strong>{{ m.name|title }}</strong>
+                            <strong>{{ m.name|exercise_title }}</strong>
                             <small>{% if m.sets %}{{ ngettext('%(num)d serie', '%(num)d series', m.sets) }}{% else %}{{ _("solo en rutinas") }}{% endif %}</small>
                         </span>
                         <button type="button" class="btn-outline alias-assign"
@@ -34,7 +34,7 @@
                 {% for alias, ex in aliases %}
                     <li>
                         <span class="alias-name">
-                            <strong>{{ alias.name|title }}</strong>
+                            <strong>{{ alias.name|exercise_title }}</strong>
                             <small>→ {{ catalog_display_name(ex)|title }}</small>
                         </span>
                         <button type="button" class="btn-outline alias-remove" onclick="removeAlias({{ alias.id }}, this)">{{ _("Quitar") }}</button>

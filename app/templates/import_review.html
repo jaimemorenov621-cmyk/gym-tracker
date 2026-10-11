@@ -16,7 +16,7 @@
                     <input type="hidden" id="map-{{ i }}" name="map-{{ i }}" value="{{ suggestion }}">
                     <button type="button" class="import-choice import-pick{% if not suggestion %} is-empty{% elif suggestion in own_names %} is-own{% endif %}"
                             data-index="{{ i }}" data-source="{{ name }}" data-muscle="{{ muscle or '' }}" aria-label="{{ _('Elegir ejercicio para %(name)s', name=name) }}">
-                        <span class="import-choice-name">{{ suggestion|title if suggestion else _('Elegir ejercicio') }}</span>
+                        <span class="import-choice-name">{{ suggestion|exercise_title if suggestion else _('Elegir ejercicio') }}</span>
                         <small class="import-choice-state">{% if not suggestion %}{{ _("Sin elegir: no se importará") }}{% elif suggestion in own_names %}{{ _("Ya lo tienes: se une a tu historial") }}{% else %}{{ _("Del catálogo") }}{% endif %}</small>
                     </button>
                 </li>
@@ -55,7 +55,7 @@
                 <h4>{{ _("Tus ejercicios que no están en el catálogo") }}</h4>
                 <ul id="importPickerOwn">
                     {% for ex, count in own_custom %}
-                        <li><button type="button" data-name="{{ ex }}"><span>{{ ex|title }}</span><small>{{ ngettext('%(num)d serie guardada', '%(num)d series guardadas', count) }}</small></button></li>
+                        <li><button type="button" data-name="{{ ex }}"><span>{{ ex|exercise_title }}</span><small>{{ ngettext('%(num)d serie guardada', '%(num)d series guardadas', count) }}</small></button></li>
                     {% endfor %}
                 </ul>
                 <p class="import-picker-empty" id="importPickerOwnEmpty" hidden>{{ _("Ninguno coincide.") }}</p>

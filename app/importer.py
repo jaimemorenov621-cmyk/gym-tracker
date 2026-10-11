@@ -202,7 +202,7 @@ def suggest_names(user_id, names):
 
     Devuelve (propuestas, [(nombre tuyo, series)], nombres válidos)."""
     from app.models import Exercise
-    from app.routes import catalog_display_name
+    from app.routes import catalog_key
 
     own_counts = db.session.execute(
         sa.select(SetEntry.exercise, sa.func.count()).join(Workout, Workout.id == SetEntry.workout_id)
@@ -213,9 +213,9 @@ def suggest_names(user_id, names):
     catalog_by_core = {}
     valid = {ex for ex, _ in own_counts}
     for e in db.session.scalars(sa.select(Exercise)):
-        display = catalog_display_name(e).strip().lower()
+        display = catalog_key(e)  # se guarda con el nombre de guardado; se muestra en el idioma de la app
         valid.update(n.strip().lower() for n in (e.name, e.name_es) if n)
-        for n in (catalog_display_name(e), e.name_es, e.name):  # el nombre que se ve, primero
+        for n in (e.name_es, e.name):
             if n:
                 catalog_by_core.setdefault(_core(n), display)
     out = {name: own_by_core.get(_core(name)) or catalog_by_core.get(_core(name)) or "" for name in names}
@@ -254,6 +254,10 @@ def apply_import(user, draft, mapping, skip_same_day=True):
     existing = db.session.scalars(sa.select(Workout.timestamp).where(Workout.user_id == user.id)).all()
     existing_minutes = {int(ts.timestamp() // 60) for ts in existing}
     existing_days = {_local_day(ts) for ts in existing}
+    from app.routes import canonicalize_exercise_name
+
+    # Del catálogo, el nombre de guardado aunque se eligiera en inglés.
+    canonical = {k: canonicalize_exercise_name(v)[:64] for k, v in mapping.items() if (v or "").strip()}
     created_sets, workouts, duplicates, names_used = [], 0, 0, set()
     for item in draft["workouts"]:
         start = datetime.fromisoformat(item["start"])
@@ -273,7 +277,7 @@ def apply_import(user, draft, mapping, skip_same_day=True):
         workouts += 1
         existing_minutes.add(minute)
         for s in sets:
-            name = mapping[s["exercise"]].strip().lower()[:64]
+            name = canonical[s["exercise"]]
             names_used.add(name)
             rir, rpe = _effort(s["rpe"], user.effort_scale)
             created_sets.append({"workout_id": w.id, "exercise": name, "weight": s["weight"], "reps": s["reps"],
@@ -287,7 +291,7 @@ def apply_import(user, draft, mapping, skip_same_day=True):
     # tuvieras (nunca se borra nada) y sin repetir líneas que ya estén.
     notes = {n.exercise: n for n in db.session.scalars(sa.select(ExerciseNote).where(ExerciseNote.user_id == user.id))}
     for csv_name, note in draft.get("notes", {}).items():
-        name = (mapping.get(csv_name) or "").strip().lower()[:64]
+        name = canonical.get(csv_name, "")
         if not name or name not in names_used:
             continue
         current = notes.get(name)

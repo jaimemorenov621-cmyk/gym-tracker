@@ -32,7 +32,7 @@
                     {% for e in exercises %}
                         <li><label>
                             <input type="checkbox" name="lift" value="{{ e.exercise }}"{% if e.exercise in chosen_lifts %} checked{% endif %}>
-                            <span class="pbasics-pick-name"><strong>{{ e.exercise|title }}</strong><small>{{ _("1RM est. %(kg)s kg", kg=e.best_1rm|num(0)) }} · {{ e.last_trained|relative_day }}</small></span>
+                            <span class="pbasics-pick-name"><strong>{{ e.exercise|exercise_title }}</strong><small>{{ _("1RM est. %(kg)s kg", kg=e.best_1rm|num(0)) }} · {{ e.last_trained|relative_day }}</small></span>
                         </label></li>
                     {% endfor %}
                 </ul>

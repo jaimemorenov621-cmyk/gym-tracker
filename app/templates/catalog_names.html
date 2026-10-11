@@ -8,6 +8,26 @@
         Al aplicar, las series, rutinas, notas y básicos de todos los usuarios pasan al nombre nuevo, así que el
         historial sigue unido. Desmarca los que hayas corregido tú y prefieras conservar.
     </p>
+    {% if english %}
+        <div class="card card-elevated">
+            <h3 style="margin-top:0;">Historial guardado en inglés</h3>
+            <p class="stats-footnote" style="margin-top:0;">
+                Con la app en inglés, las series se guardaban con el nombre inglés y el mismo ejercicio quedaba partido
+                en dos historiales. Ahora siempre se guarda un único nombre y se traduce al mostrarlo. Esto une lo que ya
+                estaba partido ({{ english|length }} ejercicios, {{ english|sum(attribute='sets') }} series) y recalcula
+                las medallas de récord.
+            </p>
+            <ul class="stats-footnote">
+                {% for c in english[:15] %}<li>{{ c.english }} → {{ c.key }} ({{ c.sets }} series)</li>{% endfor %}
+                {% if english|length > 15 %}<li>… y {{ english|length - 15 }} más</li>{% endif %}
+            </ul>
+            <form method="post">
+                {{ empty_form.hidden_tag() }}
+                <input type="hidden" name="action" value="merge_english">
+                <button type="submit" class="btn">Unir historiales</button>
+            </form>
+        </div>
+    {% endif %}
     {% if changes %}
         {% set used = changes|selectattr('used')|list %}
         <form method="post">

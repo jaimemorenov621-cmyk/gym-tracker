@@ -35,7 +35,7 @@
             {% for s in summary.prs %}
                 <div class="finish-pr-row">
                     <div>
-                        <strong>{{ s.exercise|title }}</strong>
+                        <strong>{{ s.exercise|exercise_title }}</strong>
                         <small>{{ ('%g' % s.weight).replace('.', ',') }} kg × {{ s.reps }}</small>
                     </div>
                     <button type="button" class="btn-outline finish-pr-share" onclick="openShareCard({{ s.id }})">{{ _("Compartir") }}</button>

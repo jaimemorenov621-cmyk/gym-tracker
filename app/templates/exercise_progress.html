@@ -9,7 +9,7 @@
         {% else %}
             {{ macros.exercise_icon_fallback(64, 10) }}
         {% endif %}
-        {{ exercise|title }}
+        {{ exercise|exercise_title }}
     </h1>
 
     {% if stats %}
@@ -44,7 +44,7 @@
 
     {% if stagnation %}
         <div class="card card-elevated" style="border-left:4px solid #c62828;">
-            ⚠️ <strong>{{ _("Posible estancamiento:") }}</strong> {{ _("no has batido tu récord en las últimas %(n)s sesiones de %(exercise)s.", n=threshold, exercise=exercise|title) }}
+            ⚠️ <strong>{{ _("Posible estancamiento:") }}</strong> {{ _("no has batido tu récord en las últimas %(n)s sesiones de %(exercise)s.", n=threshold, exercise=exercise|exercise_title) }}
         </div>
     {% endif %}
     {% if improvement %}

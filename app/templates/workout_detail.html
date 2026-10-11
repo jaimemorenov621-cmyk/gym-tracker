@@ -115,7 +115,7 @@
                 {# Nombre a la izquierda y cifras a la derecha, siempre en la misma
                    fila; al completar las series del plan, el nombre se tacha. #}
                 <div class="plan-row{% if p.done >= p.target_sets %} is-done{% endif %}">
-                    <span class="plan-name">{{ p.exercise|title }}</span>
+                    <span class="plan-name">{{ p.exercise|exercise_title }}</span>
                     <span class="plan-pills">
                         <span class="pill">{{ p.sets_label }}x{{ p.target_reps }}{% if p.rir is not none %} @RIR{{ p.rir }}{% elif p.rpe is not none %} @RPE{{ p.rpe }}{% endif %}</span>
                         <span class="pill{% if p.done >= p.target_sets %} pill-success{% endif %}"
@@ -150,7 +150,7 @@
                     {% else %}
                         {{ macros.exercise_icon_fallback(56, 8) }}
                     {% endif %}
-                    <a class="btn-outline" href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|title }}</a>
+                    <a class="btn-outline" href="{{ url_for('exercise_progress', name=exercise) }}">{{ exercise|exercise_title }}</a>
                 </h3>
                 <span style="display:flex; align-items:center; gap:6px;">
                     <a class="rest-badge" href="{{ url_for('exercise_notes', name=exercise) }}">
@@ -195,7 +195,7 @@
                         {% if effort_scale != 'none' %}
                         {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
                         {% set effort_ghost = (effort_val == '' and p and p.effort is not none and p.effort_scale == effort_scale) %}
-                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', {{ (exercise|title ~ ' · ' ~ _('Serie %(n)s', n=loop.index))|tojson|forceescape }})">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
+                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', {{ (exercise|exercise_title ~ ' · ' ~ _('Serie %(n)s', n=loop.index))|tojson|forceescape }})">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
                         {% endif %}
                         {% set st = s.set_type if s.set_type in type_short else 'normal' %}
                         <td>

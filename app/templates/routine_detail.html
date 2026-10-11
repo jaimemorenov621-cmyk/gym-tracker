@@ -44,12 +44,12 @@
                     {% else %}
                         {{ macros.exercise_icon_fallback(40, 10) }}
                     {% endif %}
-                    <a class="routine-ex-name" href="{{ url_for('exercise_progress', name=ex.exercise) }}">{{ ex.exercise|title }}</a>
-                    <button type="button" class="btn-icon" title="{{ _('Reemplazar ejercicio') }}" aria-label="{{ _('Reemplazar %(name)s', name=ex.exercise|title) }}"
+                    <a class="routine-ex-name" href="{{ url_for('exercise_progress', name=ex.exercise) }}">{{ ex.exercise|exercise_title }}</a>
+                    <button type="button" class="btn-icon" title="{{ _('Reemplazar ejercicio') }}" aria-label="{{ _('Reemplazar %(name)s', name=ex.exercise|exercise_title) }}"
                         onclick="openExercisePicker('{{ url_for('replace_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}')">{{ macros.icon('repeat') }}</button>
                     <form action="{{ url_for('delete_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}" method="post" class="routine-ex-delete">
                         {{ empty_form.hidden_tag() }}
-                        <button type="submit" class="btn-icon" title="{{ _('Quitar de la rutina') }}" aria-label="{{ _('Quitar %(name)s de la rutina', name=ex.exercise|title) }}">{{ macros.icon('trash') }}</button>
+                        <button type="submit" class="btn-icon" title="{{ _('Quitar de la rutina') }}" aria-label="{{ _('Quitar %(name)s de la rutina', name=ex.exercise|exercise_title) }}">{{ macros.icon('trash') }}</button>
                     </form>
                 </div>
                 <div class="routine-ex-plan">

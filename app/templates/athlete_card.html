@@ -33,7 +33,7 @@
                     <li>
                         {% if l.rank %}{{ macros.rank_emblem(l.rank.key, 34, l.rank.division) }}{% endif %}
                         <span class="ac-lift-main">
-                            <strong>{{ l.exercise|title }}</strong>
+                            <strong>{{ l.exercise|exercise_title }}</strong>
                             <small>{% if l.rank %}{{ l.rank.label }} · {% endif %}{{ l.date|relative_day }}</small>
                         </span>
                         {% if v.show_kg %}

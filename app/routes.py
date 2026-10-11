@@ -585,13 +585,18 @@ def catalog_names_admin():
     if request.method == "POST":
         if not EmptyForm().validate_on_submit():
             return redirect(url_for("catalog_names_admin"))
-        renamed, moved = catalog_names.apply(request.form.getlist("ids"))
+        if request.form.get("action") == "merge_english":
+            merged, moved = catalog_names.merge_english()
+            flash(f"{merged} ejercicios unidos; {moved} series guardadas en inglés pasan a su nombre de guardado.")
+        else:
+            renamed, moved = catalog_names.apply(request.form.getlist("ids"))
+            flash(f"{renamed} ejercicios renombrados; {moved} series movidas a su nombre nuevo.")
         db.session.commit()
         datacache.clear()
-        flash(f"{renamed} ejercicios renombrados; {moved} series movidas a su nombre nuevo.")
         return redirect(url_for("catalog_names_admin"))
     return render_template("catalog_names.html", title="Nombres del catálogo",
-                           changes=catalog_names.plan(), empty_form=EmptyForm())
+                           changes=catalog_names.plan(), english=catalog_names.english_plan(),
+                           empty_form=EmptyForm())
 
 
 @app.route("/landing/demo/<int:user_id>/delete", methods=["POST"])
@@ -989,8 +994,9 @@ def group_workouts_by_week(workouts):
         sets = sets_by_workout.get(w.id, [])
         names = []
         for s in sets:
-            if s.exercise.title() not in names:
-                names.append(s.exercise.title())
+            label = exercise_title(s.exercise)
+            if label not in names:
+                names.append(label)
         volume = sum(s.weight * s.reps for s in sets)
 
         current_group["workouts"].append(
@@ -1643,7 +1649,7 @@ def api_share_set(set_id):
             "designs": perks.unlocked(perks.SHARE_DESIGNS, level),
             "badge": badge,
             "rank_key": rank_key,
-            "exercise": entry.exercise.title(),
+            "exercise": exercise_title(entry.exercise),
             "weight": f"{entry.weight:g}",
             "reps": entry.reps,
             "e1rm": round(e1rm),
@@ -1993,7 +1999,7 @@ def exercise_progress(name):
 
     return render_template(
         "exercise_progress.html",
-        title=name.title(),
+        title=exercise_title(name),
         exercise=name,
         sessions=list(reversed(display_sessions)),
         stagnation=stagnation,
@@ -2445,7 +2451,7 @@ def exercise_notes(name):
         form.notes.data = note.notes
     return render_template(
         "exercise_notes.html",
-        title=gettext("Notas de %(name)s", name=name.title()),
+        title=gettext("Notas de %(name)s", name=exercise_title(name)),
         form=form,
         exercise=name,
     )
@@ -2884,7 +2890,7 @@ def routines():
         routines_info.append(
             {
                 "routine": r,
-                "exercise_names": [e.exercise.title() for e in exercises],
+                "exercise_names": [exercise_title(e.exercise) for e in exercises],
                 "last_trained": last_workout.timestamp if last_workout else None,
                 "last_day": last_day,
                 "last_date": (
@@ -3577,7 +3583,7 @@ def api_search_exercises():
         for item, e in zip(items, results):
             used = used_names(e)
             item["sets"] = sum(c for c, _ in used)
-            item["value"] = used[0][1] if used else item["name"].strip().lower()
+            item["value"] = used[0][1] if used else catalog_key(e)
     return jsonify(items)
 
 
@@ -4263,7 +4269,7 @@ def build_progress_summary():
         rpes = [st.rpe for st in completed_sets if st.rpe is not None]
         exercises.append(
             {
-                "name": name.title(),
+                "name": exercise_title(name),
                 "sessions": n_sessions,
                 "best_1rm": round(max(s["best_1rm"] for s in qualifying), 1),
                 "stagnation": stagnation,
@@ -4661,14 +4667,36 @@ def catalog_display_name(exercise):
     return exercise.name_es or exercise.name
 
 
+def catalog_key(exercise):
+    """Nombre con el que se GUARDA un ejercicio del catálogo: el mismo en
+    cualquier idioma (el español, o el inglés si no tiene), para que cambiar
+    el idioma de la app no parta el historial en dos ejercicios."""
+    return (exercise.name_es or exercise.name).strip().lower()
+
+
 def canonicalize_exercise_name(name):
-    """Si `name` coincide (ignorando acentos/mayúsculas) con el catálogo, devuelve la
-    forma canónica del catálogo en vez del texto tal cual lo escribió el usuario."""
+    """Si `name` coincide (ignorando acentos/mayúsculas) con el catálogo, en
+    español o en inglés, devuelve su nombre de guardado (catalog_key) en vez
+    del texto tal cual lo escribió el usuario."""
     name = name.strip().lower()
     match = find_catalog_exercise(name, use_alias=False)
     if match:
-        return catalog_display_name(match).strip().lower()
+        return catalog_key(match)
     return name
+
+
+def exercise_label(name):
+    """Nombre para MOSTRAR un ejercicio guardado: si es del catálogo, en el
+    idioma de la app (Press de banca / Barbell Bench Press...); si no, tal
+    cual lo escribió el usuario. Filtro Jinja `exercise_title` (con .title())."""
+    if not name:
+        return name or ""
+    match = find_catalog_exercise(name, use_alias=False)
+    return catalog_display_name(match) if match else name
+
+
+def exercise_title(name):
+    return exercise_label(name).title()
 
 
 def get_exercise_image(name):

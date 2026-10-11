@@ -26,7 +26,7 @@
                         <div>
                             <h3>{{ _("Más suben") }}</h3>
                             {% for m in ups[:3] %}
-                                <a href="{{ url_for('exercise_progress', name=m.exercise) }}"><span>{{ m.exercise|title }}</span><b class="up">+{{ m.pct|num }} %</b></a>
+                                <a href="{{ url_for('exercise_progress', name=m.exercise) }}"><span>{{ m.exercise|exercise_title }}</span><b class="up">+{{ m.pct|num }} %</b></a>
                             {% endfor %}
                         </div>
                     {% endif %}
@@ -34,7 +34,7 @@
                         <div>
                             <h3>{{ _("Bajan") }}</h3>
                             {% for m in downs[:3] %}
-                                <a href="{{ url_for('exercise_progress', name=m.exercise) }}"><span>{{ m.exercise|title }}</span><b class="down">{{ m.pct|num }} %</b></a>
+                                <a href="{{ url_for('exercise_progress', name=m.exercise) }}"><span>{{ m.exercise|exercise_title }}</span><b class="down">{{ m.pct|num }} %</b></a>
                             {% endfor %}
                         </div>
                     {% endif %}
@@ -139,7 +139,7 @@
                             {% for e in g.breakdown %}
                                 <li>
                                     <div class="vol-detail-head">
-                                        <span>{{ e.exercise|title }}<small>{{ _("principal") if e.primary else _("secundario") }}</small></span>
+                                        <span>{{ e.exercise|exercise_title }}<small>{{ _("principal") if e.primary else _("secundario") }}</small></span>
                                         <b>{{ e.n }} × {{ e.weight|num }} = {{ (e.n * e.weight)|num }}</b>
                                     </div>
                                     {% for sess in e.sessions %}
@@ -299,7 +299,7 @@
                             {{ macros.exercise_icon_fallback(44, 10) }}
                         {% endif %}
                         <span class="progress-main">
-                            <strong>{{ it.exercise|title }}</strong>
+                            <strong>{{ it.exercise|exercise_title }}</strong>
                             <small>
                                 {{ it.last_trained|relative_day|ucfirst }}
                                 {% if it.last_pr and it.sessions > 1 %} · 🏅 {{ _('récord %(when)s', when=it.last_pr|relative_day) }}{% endif %}

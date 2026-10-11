@@ -16,7 +16,7 @@
                         <label>
                             <input type="checkbox" name="exercise" value="{{ it.exercise }}"{% if it.checked %} checked{% endif %}>
                             <span class="pbasics-pick-name">
-                                <strong>{{ it.exercise|title }}</strong>
+                                <strong>{{ it.exercise|exercise_title }}</strong>
                                 <small>
                                     {% if it.stats %}{{ ngettext('%(num)d sesión', '%(num)d sesiones', it.stats.sessions) }} · {{ it.stats.last_trained|relative_day }}{% endif %}
                                     {% if it.counts_as %} · {{ _('cuenta como %(lift)s', lift=it.counts_as|lower) }}{% endif %}

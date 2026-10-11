@@ -85,4 +85,56 @@ def apply(ids):
     for ex in exercises:
         ex.name_es = names[ex.id]
     _clear_catalog_cache()
+    recompute_prs(new_key for _tmp, new_key in moves)  # por si unió el historial con uno propio igual
     return len(exercises), moved
+
+
+# ------------------------------------------------- historial guardado en inglés
+# Antes, con la app en inglés las series se guardaban con el nombre inglés del
+# catálogo ("bench press") y en español con el español ("press de banca"): dos
+# historiales para el mismo ejercicio. Ahora siempre se guarda catalog_key()
+# y se traduce al mostrarlo; esto une lo que ya estaba partido.
+def english_plan():
+    """[{id, english, key, sets}] de ejercicios con series guardadas con su
+    nombre inglés que deberían estar con su nombre de guardado."""
+    from app.routes import catalog_key
+
+    used = _used_names()
+    exercises = db.session.scalars(sa.select(Exercise)).all()
+    keys = {catalog_key(ex) for ex in exercises}
+    out = []
+    for ex in exercises:
+        english, key = _key(ex.name), catalog_key(ex)
+        # Si el nombre inglés de uno es el de guardado de otro, es ambiguo: se deja.
+        if english != key and english in used and english not in keys:
+            out.append({"id": ex.id, "english": ex.name, "key": key, "sets": used[english]})
+    out.sort(key=lambda c: -c["sets"])
+    return out
+
+
+def merge_english():
+    """Une el historial guardado en inglés al nombre de guardado. Devuelve
+    (ejercicios, series movidas). No hace commit."""
+    from app.routes import rename_exercise_everywhere
+
+    plan_rows = english_plan()
+    moved = sum(rename_exercise_everywhere(_key(c["english"]), c["key"]) for c in plan_rows)
+    recompute_prs(c["key"] for c in plan_rows)
+    return len(plan_rows), moved
+
+
+def recompute_prs(names):
+    """Al juntar dos historiales, la medalla de récord de cada sesión se
+    recalcula sobre el historial unido (si no, quedaban récords de más)."""
+    from app.models import Workout
+    from app.routes import apply_pr_flags_for_session, get_exercise_sessions
+
+    for name in set(names):
+        users = db.session.scalars(
+            sa.select(Workout.user_id).join(SetEntry, SetEntry.workout_id == Workout.id)
+            .where(SetEntry.exercise == name).distinct()
+        ).all()
+        for user_id in users:
+            sessions, _, _ = get_exercise_sessions(name, user_id=user_id)
+            for session in sessions:
+                apply_pr_flags_for_session(session)
