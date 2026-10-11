@@ -731,6 +731,7 @@
                     if (e.type === 'pointerup' && downOnMain) toggleCompact();
                     return;
                 }
+                undocked = null;  // arrastrado con un panel abierto: se queda donde lo dejes
                 if (!activeWorkoutId) return;
                 const rect = box.getBoundingClientRect();
                 try {
@@ -739,6 +740,49 @@
             }
             box.addEventListener('pointerup', endDrag);
             box.addEventListener('pointercancel', endDrag);
+
+            // Con un panel inferior abierto (RIR/RPE, tipo de serie, elegir
+            // ejercicio...) el temporizador taparía sus botones: sube justo
+            // encima del panel, sobre la zona oscurecida, y al cerrarlo vuelve
+            // a donde estaba. offsetHeight no depende de la animación de entrada.
+            const POS_PROPS = ['left', 'top', 'right', 'bottom'];
+            let undocked = null;
+            function dockAboveSheets() {
+                const open = Array.from(document.querySelectorAll('.bottom-sheet.open'));
+                if (!open.length) {
+                    if (undocked) POS_PROPS.forEach(function (k) { box.style[k] = undocked[k]; });
+                    undocked = null;
+                    return;
+                }
+                if (!undocked) undocked = Object.fromEntries(POS_PROPS.map(function (k) { return [k, box.style[k]]; }));
+                const sheetHeight = Math.max.apply(null, open.map(function (el) { return el.offsetHeight; }));
+                const gap = 10;
+                box.style.left = 'auto';
+                box.style.right = '12px';
+                if (sheetHeight + gap + box.offsetHeight + 8 > window.innerHeight) {
+                    box.style.top = 'calc(8px + env(safe-area-inset-top))';
+                    box.style.bottom = 'auto';
+                } else {
+                    box.style.top = 'auto';
+                    box.style.bottom = (sheetHeight + gap) + 'px';
+                }
+            }
+            const sheetObserver = new MutationObserver(dockAboveSheets);
+            function watchSheets() {
+                document.querySelectorAll('.bottom-sheet').forEach(function (el) {
+                    if (el.dataset.restWatch) return;
+                    el.dataset.restWatch = '1';
+                    sheetObserver.observe(el, { attributes: true, attributeFilter: ['class'] });
+                });
+            }
+            document.addEventListener('DOMContentLoaded', watchSheets);
+            watchSheets();
+
+            // Mientras se ve, la página gana espacio al final para que lo último
+            // (la última serie, "Terminar") se pueda sacar siempre de debajo.
+            new MutationObserver(function () {
+                document.body.classList.toggle('has-rest-timer', box.style.display === 'flex');
+            }).observe(box, { attributes: true, attributeFilter: ['style'] });
         })();
 
         function celebrate(count) {

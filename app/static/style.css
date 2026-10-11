@@ -408,6 +408,7 @@ textarea {
     user-select: none;
 }
 .rest-toast.rest-toast-dragging { cursor: grabbing; }
+body.has-rest-timer { padding-bottom: 84px; }
 .rest-toast button { touch-action: auto; }
 .rt-main {
     display: flex;
@@ -1192,6 +1193,7 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
     }
     .active-toast::before { width: 7px; height: 7px; }
     .rest-toast { bottom: calc(80px + env(safe-area-inset-bottom)); right: 12px; }
+    body.has-rest-timer { padding-bottom: calc(76px + 64px); }
     /* Con el aviso "en curso" abajo a la izquierda, el descanso sube una fila. */
     body:has(.active-toast) .rest-toast { bottom: calc(126px + env(safe-area-inset-bottom)); }
 }
