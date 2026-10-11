@@ -4595,3 +4595,14 @@ button.is-pending::after, input[type="submit"].is-pending::after, .active-toast.
 @media (prefers-reduced-motion: reduce) { .skeleton-line { animation: none; } }
 .level-streak-tiers, .level-streak-now { display: block; margin-top: 3px; font-size: 0.75rem; color: var(--color-text-muted); }
 .level-streak-now { color: var(--color-brand-deep); font-weight: 700; }
+/* Admin: errores del servidor (/landing/stats). */
+.server-error { border-top: 1px solid var(--border-subtle); padding: 8px 0; }
+.server-error summary { cursor: pointer; font-size: 0.85rem; }
+.server-error small { color: var(--color-text-muted); word-break: break-word; }
+.server-error pre { max-height: 320px; overflow: auto; font-size: 0.7rem; white-space: pre-wrap; word-break: break-word; background: var(--color-surface-hover); padding: 8px; border-radius: 8px; }
+/* Solo admin: servidor frente a red en cada página (base.html). */
+.timing-badge {
+    position: fixed; left: 8px; top: calc(8px + env(safe-area-inset-top)); z-index: 1003;
+    padding: 3px 8px; border-radius: 999px; font-size: 0.68rem; font-variant-numeric: tabular-nums;
+    background: rgba(20, 12, 40, 0.72); color: #fff; pointer-events: auto; cursor: pointer;
+}

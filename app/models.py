@@ -510,3 +510,18 @@ class ImportDraft(db.Model):
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True, unique=True)
     payload: so.Mapped[str] = so.mapped_column(sa.Text)
     created_at: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+
+
+class ErrorLog(db.Model):
+    """Últimos errores del servidor (500) con su traza, para verlos en
+    /landing/stats sin acceso a los registros de Render. Se guardan los 50
+    más recientes (app/errorlog.py)."""
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    created_at: so.Mapped[datetime] = so.mapped_column(
+        index=True, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
+    method: so.Mapped[str] = so.mapped_column(sa.String(8))
+    path: so.Mapped[str] = so.mapped_column(sa.String(255))
+    user_id: so.Mapped[Optional[int]] = so.mapped_column(index=True)
+    error: so.Mapped[str] = so.mapped_column(sa.String(255))
+    traceback: so.Mapped[str] = so.mapped_column(sa.Text)

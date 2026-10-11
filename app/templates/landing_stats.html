@@ -126,6 +126,21 @@
         {% endif %}
     </div>
 
+    <div class="card card-elevated" style="margin-top:16px;" id="errores">
+        <h3 style="margin-top:0;">Errores del servidor</h3>
+        <p class="stats-footnote" style="margin-top:0;">Los «Internal Server Error» recientes, con su traza (se guardan los 50 últimos). Útil para arreglarlos sin mirar los registros de Render.</p>
+        {% if server_errors %}
+            {% for e in server_errors %}
+                <details class="server-error">
+                    <summary><b>{{ e.created_at|relative_day }}</b> {{ to_local(e.created_at).strftime('%H:%M') }} · {{ e.method }} {{ e.path }}{% if e.user_id %} · usuario {{ e.user_id }}{% endif %}<br><small>{{ e.error }}</small></summary>
+                    <pre>{{ e.traceback }}</pre>
+                </details>
+            {% endfor %}
+        {% else %}
+            <p><em>Ningún error registrado.</em></p>
+        {% endif %}
+    </div>
+
     <div class="card card-elevated" style="margin-top:16px;">
         <h3 style="margin-top:0;">Catálogo de ejercicios</h3>
         <p class="stats-footnote" style="margin-top:0;">Nombres en español revisados a mano, con vista previa antes de aplicarlos.</p>

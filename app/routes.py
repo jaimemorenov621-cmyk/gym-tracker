@@ -10,6 +10,7 @@ import json
 import os
 import math
 import secrets
+import time
 import re
 import unicodedata
 from typing import NamedTuple, Optional
@@ -93,6 +94,22 @@ def _version_static_urls(endpoint, values):
                 _static_versions[filename] = None
         if _static_versions[filename]:
             values["v"] = _static_versions[filename]
+
+
+@app.before_request
+def _start_timer():
+    g._t0 = time.perf_counter()
+
+
+@app.after_request
+def _server_timing(response):
+    """Server-Timing: cuánto tardó el servidor en esta petición. El admin lo
+    ve en un indicador (base.html) junto al tiempo de red, para distinguir
+    si la lentitud es del servidor o de la conexión (VPN, cobertura)."""
+    t0 = g.get("_t0")
+    if t0 is not None:
+        response.headers["Server-Timing"] = f"app;dur={(time.perf_counter() - t0) * 1000:.0f}"
+    return response
 
 
 @app.after_request
@@ -721,8 +738,11 @@ def landing_stats():
     signups = signups_password + signups_google
     total_users = db.session.scalar(sa.select(sa.func.count()).select_from(User))
 
+    from app import errorlog
+
     return render_template(
         "landing_stats.html",
+        server_errors=errorlog.recent(),
         title="Estadísticas de la landing",
         period_key=period_key,
         period_label=period_label,
@@ -3499,6 +3519,11 @@ def inject_level_perks():
 
 
 @app.context_processor
+def inject_timing_badge():
+    return {"show_timing": is_admin()}
+
+
+@app.context_processor
 def inject_active_workout():
     if current_user.is_authenticated:
         return {"active_workout": get_active_workout(current_user.id)}
@@ -4465,7 +4490,9 @@ def generate_ai_analysis(how_you_feel=None):
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY no configurada")
 
-    client = OpenAI(api_key=api_key)
+    # Por defecto el cliente espera hasta 10 min y reintenta 2 veces: pasaba
+    # del tope de gunicorn y la petición moría con un error. Corta antes.
+    client = OpenAI(api_key=api_key, timeout=100, max_retries=0)
     response = client.responses.create(
         model="gpt-5.6-luna",
         instructions=(

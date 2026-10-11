@@ -835,5 +835,29 @@
             navigator.serviceWorker.register('/sw.js');
         }
     </script>
+    {% if show_timing %}
+    {# Solo admin: tiempo del servidor (cabecera Server-Timing) frente al de la
+       red, para saber si la lentitud es de la app o de la conexión (VPN...). #}
+    <script>
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                const nav = performance.getEntriesByType('navigation')[0];
+                if (!nav) return;
+                const st = (nav.serverTiming || []).find(t => t.name === 'app');
+                const ttfb = Math.round(nav.responseStart - nav.requestStart);
+                const connect = Math.round(nav.requestStart - nav.startTime);
+                const server = st ? Math.round(st.duration) : null;
+                const el = document.createElement('div');
+                el.className = 'timing-badge';
+                el.title = 'Toca para ocultar';
+                el.textContent = (server !== null ? 'Servidor ' + server + ' ms · Red ' + Math.max(0, ttfb - server) + ' ms'
+                                                  : 'Respuesta ' + ttfb + ' ms')
+                    + (connect > 50 ? ' · Conexión ' + connect + ' ms' : '');
+                el.addEventListener('click', function () { el.remove(); });
+                document.body.appendChild(el);
+            }, 0);
+        });
+    </script>
+    {% endif %}
 </body>
 </html>

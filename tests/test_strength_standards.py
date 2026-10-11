@@ -91,6 +91,18 @@ class LiftDetectionTests(unittest.TestCase):
         self.assertIn("smith_row", std.BASIC_SOURCES["row"])
 
 
+class LightAndTechniqueTests(unittest.TestCase):
+    def test_light_or_technique_sets_never_count_for_rank(self):
+        for name in ("Sentadilla ligera", "Press de banca técnica", "Peso muerto (técnica)", "Press banca suave",
+                     "Sentadilla fácil", "Peso muerto aproximación", "Press de banca back off", "Sentadilla backoff",
+                     "Press banca recuperación", "Sentadilla barra vacía", "Press banca RPE bajo", "Peso muerto lig.",
+                     "Sentadilla tec", "Press banca rampa", "Bench press easy", "Squat technique"):
+            self.assertIsNone(std.lift_of(name), name)
+        # Palabras parecidas dentro de otra no la cazan; una pausa sí es el levantamiento.
+        self.assertEqual(std.lift_of("Sentadilla con pausa"), "squat")
+        self.assertEqual(std.lift_of("Press de banca"), "bench")
+
+
 class ThresholdTests(unittest.TestCase):
     def kg(self, *lb):
         return [v * LB for v in lb]

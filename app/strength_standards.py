@@ -292,7 +292,13 @@ _COMMON_EXCLUDE = (
     "isometric", "parcial", "partial", "larsen", "pies arriba", "feet up",
     "una mano", "rapid",  # "a una mano" (= one arm), "rápida" (= speed)
     "estiramiento", "stretch", "leverage",
+    # Más formas de decir "esto no va en serio" (ligera/técnica ya estaban arriba).
+    "suave", "facil", "easy", "aproximacion", "approach", "back off", "backoff", "back-off",
+    "recuperacion", "recovery", "barra vacia", "empty bar", "rpe bajo", "low rpe", "rampa", "ramp",
+    "practica", "practice", "drill", "explosiv",
 )
+# Abreviaturas: solo como palabra suelta ("lig.", "tec"), para no cazar otras.
+_COMMON_EXCLUDE_WORDS = re.compile(r"\b(lig|tec|tecn|tech)\b")
 _LIFT_EXCLUDE = {
     "bench": ("inclinad", "incline", "declinad", "decline", "agarre cerrado", "agarre estrecho", "close",
               "suelo", "floor", "tabla", "board", "pin", "spoto", "guillotina", "guillotine",
@@ -353,6 +359,8 @@ def lift_of(exercise_name):
     variantes con otra carga; None si no. "banca" a secas cuenta como
     banca, pero no como parte de otro nombre ("fondos en banca")."""
     name = _strip(exercise_name or "").strip()
+    if _COMMON_EXCLUDE_WORDS.search(name):
+        return None
     if name == "banca":
         return "bench"
     variant = _variant_of(name)

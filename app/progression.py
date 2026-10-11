@@ -50,6 +50,7 @@ from app.models import (
     BodyWeightEntry,
     DailyActivity,
     DailyCheckin,
+    ErrorLog,
     ExerciseAlias,
     ExerciseFavorite,
     ExerciseNote,
@@ -677,6 +678,7 @@ def _user_tables(user_id):
         (UserAchievement, UserAchievement.user_id == user_id),
         (DailyActivity, DailyActivity.user_id == user_id),
         (DailyCheckin, DailyCheckin.user_id == user_id),
+        (ErrorLog, ErrorLog.user_id == user_id),
         (ContactMessage, ContactMessage.user_id == user_id),
         (ImportDraft, ImportDraft.user_id == user_id),
     ]
@@ -706,6 +708,8 @@ def export_user_data(user_id):
     user = db.session.get(User, user_id)
     data = {"user": plain(user)}
     for model, cond in reversed(_user_tables(user_id)):
+        if model is ErrorLog:  # trazas internas del servidor, no datos suyos: solo se borran
+            continue
         data[model.__tablename__] = [plain(o) for o in db.session.scalars(sa.select(model).where(cond))]
     return data
 
