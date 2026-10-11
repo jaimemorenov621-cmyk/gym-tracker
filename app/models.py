@@ -107,6 +107,9 @@ class Workout(db.Model):
     # usuario (arrastrar en workout_detail.html). None -> orden por defecto
     # (primera aparición del SetEntry más antiguo de cada ejercicio).
     exercise_order: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
+    # Biseries: JSON {ejercicio: nº de grupo}; los del mismo grupo se hacen
+    # seguidos (app/supersets.py). None -> ninguna.
+    supersets: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
     routine_id: so.Mapped[Optional[int]] = so.mapped_column(
         sa.ForeignKey("routine.id"), index=True
     )
@@ -225,6 +228,8 @@ class RoutineExercise(db.Model):
     rir: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
     rpe: so.Mapped[Optional[str]] = so.mapped_column(sa.String(16))
     order_index: so.Mapped[int] = so.mapped_column(default=0)
+    # Biserie: los ejercicios de la rutina con el mismo número van juntos.
+    superset_group: so.Mapped[Optional[int]] = so.mapped_column()
     routine_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Routine.id), index=True)
 
     routine: so.Mapped[Routine] = so.relationship(back_populates="exercises")

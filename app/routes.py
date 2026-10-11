@@ -64,6 +64,7 @@ from app import strength_standards as standards
 from app import progression
 from app import volume as volume_mod
 from app import perks
+from app import supersets as supersets_mod
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
@@ -1417,6 +1418,8 @@ def replace_workout_exercise(workout_id):
             order = [name for name in order if name != new_name]
             order[order.index(old_name)] = new_name
             workout.exercise_order = json.dumps(order)
+    if new_name != old_name:
+        supersets_mod.rename(workout, old_name, new_name)
 
     db.session.commit()
     return jsonify({"ok": True, "exercise": new_name})
@@ -1437,8 +1440,29 @@ def delete_workout_exercise(workout_id):
     ).all()
     for s in sets:
         db.session.delete(s)
+    supersets_mod.remove(workout, exercise)
     db.session.commit()
     return jsonify({"ok": True})
+
+
+@app.route("/workout/<int:workout_id>/exercise/superset", methods=["POST"])
+@login_required
+def toggle_workout_superset(workout_id):
+    """Une el ejercicio con el siguiente en una biserie, o los separa."""
+    workout = db.get_or_404(Workout, workout_id)
+    if workout.author != current_user:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    exercise = (data.get("exercise") or "").strip().lower()
+    sets = db.session.scalars(workout.sets.select().order_by(SetEntry.id)).all()
+    order, groups = workout_display_order(workout, sets)
+    if exercise not in order:
+        return jsonify({"ok": False}), 400
+    order, groups = supersets_mod.toggle_with_next(order, groups, exercise)
+    workout.exercise_order = json.dumps(order)
+    supersets_mod.save(workout, groups)
+    db.session.commit()
+    return jsonify({"ok": True, "linked": supersets_mod.linked_with_next(order, groups, exercise)})
 
 
 @app.route("/workout/<int:workout_id>/exercise/reorder", methods=["POST"])
@@ -1451,6 +1475,7 @@ def reorder_workout_exercises(workout_id):
     order = data.get("order", [])
     if not isinstance(order, list) or not all(isinstance(x, str) for x in order):
         return jsonify({"ok": False}), 400
+    order, _groups = supersets_mod.normalize(order, supersets_mod.load(workout))  # biseries, juntas
     workout.exercise_order = json.dumps(order)
     db.session.commit()
     return jsonify({"ok": True})
@@ -1619,6 +1644,26 @@ def api_delete_set(set_id):
     return jsonify({"ok": True})
 
 
+def workout_display_order(workout, sets):
+    """(ejercicios en el orden en que se muestran, {ejercicio: biserie}).
+    Orden: el elegido a mano (exercise_order) y, para lo que no esté ahí, la
+    primera serie de cada ejercicio; los de una biserie, siempre juntos."""
+    order = []
+    for s in sets:
+        if s.exercise not in order:
+            order.append(s.exercise)
+    if workout.exercise_order:
+        try:
+            custom_order = json.loads(workout.exercise_order)
+        except (ValueError, TypeError):
+            custom_order = []
+        known = set(order)
+        ordered = [name for name in custom_order if name in known]
+        ordered += [name for name in order if name not in ordered]
+        order = ordered
+    return supersets_mod.normalize(order, supersets_mod.load(workout))
+
+
 @app.route("/workout/<int:workout_id>")
 @login_required
 def workout_detail(workout_id):
@@ -1629,22 +1674,10 @@ def workout_detail(workout_id):
 
     sets = db.session.scalars(workout.sets.select().order_by(SetEntry.id)).all()
     grouped_sets = {}
-    exercise_order = []
     for s in sets:
-        if s.exercise not in grouped_sets:
-            grouped_sets[s.exercise] = []
-            exercise_order.append(s.exercise)
-        grouped_sets[s.exercise].append(s)
-
-    if workout.exercise_order:
-        try:
-            custom_order = json.loads(workout.exercise_order)
-        except (ValueError, TypeError):
-            custom_order = []
-        known = set(exercise_order)
-        ordered = [name for name in custom_order if name in known]
-        ordered += [name for name in exercise_order if name not in ordered]
-        exercise_order = ordered
+        grouped_sets.setdefault(s.exercise, []).append(s)
+    exercise_order, superset_groups = workout_display_order(workout, sets)
+    superset_info = supersets_mod.display_info(exercise_order, superset_groups)
 
     exercise_notes_map = {}
     if grouped_sets:
@@ -1710,6 +1743,7 @@ def workout_detail(workout_id):
         workout=workout,
         grouped_sets=grouped_sets,
         exercise_order=exercise_order,
+        superset_info=superset_info,
         empty_form=empty_form,
         effort_scale=current_user.effort_scale,
         exercise_notes_map=exercise_notes_map,
@@ -2320,6 +2354,8 @@ def rename_exercise_everywhere(old, new):
         sa.update(RoutineExercise).where(RoutineExercise.exercise == old).values(exercise=new)
         .execution_options(synchronize_session=False)
     )
+    for workout in db.session.scalars(sa.select(Workout).where(Workout.supersets.contains(json.dumps(old)))):
+        supersets_mod.rename(workout, old, new)
     # Básicos personales: si el usuario ya tenía el nombre nuevo, sobra el viejo.
     for basic in db.session.scalars(sa.select(PersonalBasic).where(PersonalBasic.exercise == old)).all():
         if db.session.scalar(sa.select(PersonalBasic.id).where(
@@ -3018,6 +3054,10 @@ def routine_detail(routine_id):
         .where(RoutineExercise.routine_id == routine.id)
         .order_by(RoutineExercise.order_index)
     ).all()
+    order, groups = routine_superset_order(exercises)
+    by_id = {e.id: e for e in exercises}
+    exercises = [by_id[i] for i in order]
+    superset_info = supersets_mod.display_info(order, groups)
 
     exercise_notes_map = {}
     if exercises:
@@ -3037,6 +3077,7 @@ def routine_detail(routine_id):
         title=routine.name,
         routine=routine,
         exercises=exercises,
+        superset_info=superset_info,
         form=form,
         empty_form=empty_form,
         exercise_notes_map=exercise_notes_map,
@@ -3077,6 +3118,10 @@ def delete_routine_exercise(routine_id, ex_id):
         flash(gettext("No tienes acceso a esta rutina."))
         return redirect(url_for("routines"))
     db.session.delete(ex)
+    db.session.flush()
+    apply_routine_supersets(db.session.scalars(
+        sa.select(RoutineExercise).where(RoutineExercise.routine_id == routine.id)
+    ).all())  # una biserie que se queda en un ejercicio deja de serlo
     db.session.commit()
     flash(gettext("Ejercicio eliminado de la rutina."))
     return redirect(url_for("routine_detail", routine_id=routine.id))
@@ -3256,6 +3301,9 @@ def start_routine(routine_id):
         .where(RoutineExercise.routine_id == routine.id)
         .order_by(RoutineExercise.order_index)
     ).all()
+    supersets_mod.save(workout, {
+        re_.exercise: re_.superset_group for re_ in routine_exercises if re_.superset_group is not None
+    })
     for re_ in routine_exercises:
         for _ in range(re_.target_sets_max or re_.target_sets):  # las que sobren se borran al terminar
             db.session.add(
@@ -3322,8 +3370,47 @@ def reorder_routine(routine_id):
     for index, ex_id in enumerate(order):
         if ex_id in exercises:
             exercises[ex_id].order_index = index
+    apply_routine_supersets(list(exercises.values()))
     db.session.commit()
     return jsonify({"ok": True})
+
+
+def routine_superset_order(exercises):
+    """(ids en el orden en que se muestran, {id: biserie}) de los
+    RoutineExercise de una rutina: las biseries, siempre juntas."""
+    ordered = sorted(exercises, key=lambda e: (e.order_index, e.id))
+    return supersets_mod.normalize(
+        [e.id for e in ordered],
+        {e.id: e.superset_group for e in ordered if e.superset_group is not None},
+    )
+
+
+def apply_routine_supersets(exercises, order=None, groups=None):
+    """Guarda en las filas el orden y los grupos (normalizados)."""
+    if order is None:
+        order, groups = routine_superset_order(exercises)
+    by_id = {e.id: e for e in exercises}
+    for index, ex_id in enumerate(order):
+        by_id[ex_id].order_index = index
+        by_id[ex_id].superset_group = groups.get(ex_id)
+
+
+@app.route("/routines/<int:routine_id>/exercise/<int:ex_id>/superset", methods=["POST"])
+@login_required
+def toggle_routine_superset(routine_id, ex_id):
+    """Une el ejercicio de la rutina con el siguiente en una biserie, o los separa."""
+    owned = _own_routine_exercise(routine_id, ex_id)
+    if owned is None:
+        return jsonify({"ok": False}), 403
+    routine, _ex = owned
+    exercises = db.session.scalars(
+        sa.select(RoutineExercise).where(RoutineExercise.routine_id == routine.id)
+    ).all()
+    order, groups = routine_superset_order(exercises)
+    order, groups = supersets_mod.toggle_with_next(order, groups, ex_id)
+    apply_routine_supersets(exercises, order, groups)
+    db.session.commit()
+    return jsonify({"ok": True, "linked": supersets_mod.linked_with_next(order, groups, ex_id)})
 
 
 @app.route("/routines/reorder", methods=["POST"])
@@ -3538,13 +3625,10 @@ def save_as_routine(workout_id):
         return redirect(url_for("index"))
 
     sets = db.session.scalars(workout.sets.select().order_by(SetEntry.id)).all()
-    exercise_order = []
+    exercise_order, groups = workout_display_order(workout, sets)
     exercise_counts = {}
     for s in sets:
-        if s.exercise not in exercise_counts:
-            exercise_order.append(s.exercise)
-            exercise_counts[s.exercise] = 0
-        exercise_counts[s.exercise] += 1
+        exercise_counts[s.exercise] = exercise_counts.get(s.exercise, 0) + 1
 
     if not exercise_order:
         flash(gettext("Este entrenamiento no tiene series registradas."))
@@ -3561,6 +3645,7 @@ def save_as_routine(workout_id):
             target_sets=exercise_counts[exercise],
             target_reps=str(first_set.reps),
             order_index=i,
+            superset_group=groups.get(exercise),
             routine_id=routine.id,
         )
         db.session.add(ex)

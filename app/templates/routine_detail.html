@@ -30,8 +30,12 @@
     <ul id="exerciseList" class="routine-ex-list">
         {% for ex in exercises %}
             {% set effort = ex.rir if ex.rir is not none else (ex.rpe if ex.rpe is not none else '') %}
-            <li class="card card-elevated routine-ex" id="rex-{{ ex.id }}" data-id="{{ ex.id }}"
+            {% set ss = superset_info.get(ex.id) %}
+            <li class="card card-elevated routine-ex{% if ss %} ss-member{% if ss.first %} ss-first{% endif %}{% if ss.last %} ss-last{% endif %}{% endif %}" id="rex-{{ ex.id }}" data-id="{{ ex.id }}"
                 data-url="{{ url_for('update_routine_exercise', routine_id=routine.id, ex_id=ex.id) }}">
+                {% if ss %}
+                    <div class="ss-tag">{{ macros.icon('link', 13) }} {{ ss.label }} {{ ss.letter }} · {{ ss.pos }}/{{ ss.size }}</div>
+                {% endif %}
                 <div class="routine-ex-head">
                     <span class="drag-handle" title="{{ _('Mantén pulsado y arrastra para ordenar') }}">{{ macros.icon('grip', 18) }}</span>
                     {% set img = get_exercise_image(ex.exercise) %}
@@ -78,6 +82,11 @@
                         {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) if n and n.default_rest_seconds else '2min' }}
                     </a>
                 </div>
+                <button type="button" class="ss-link-btn{% if ss and ss.linked_next %} is-linked{% endif %}"
+                        data-superset-url="{{ url_for('toggle_routine_superset', routine_id=routine.id, ex_id=ex.id) }}">
+                    {{ macros.icon('link', 15) }}
+                    <span>{% if ss and ss.linked_next %}{{ _("Separar del siguiente") }}{% else %}{{ _("Biserie con el siguiente") }}{% endif %}</span>
+                </button>
             </li>
         {% endfor %}
     </ul>
@@ -149,6 +158,23 @@
         });
     </script>
 
+    <script>
+        // Biseries: une con el ejercicio de debajo (o los separa) y recarga.
+        document.querySelectorAll('[data-superset-url]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (btn.dataset.pending) return;
+                btn.dataset.pending = '1';
+                fetchWithTimeout(btn.dataset.supersetUrl, {method: 'POST'}).then(r => r.json()).then(function (data) {
+                    if (!data.ok) throw new Error();
+                    location.reload();
+                }).catch(function () {
+                    delete btn.dataset.pending;
+                    showPickerErrorToast({{ _('No se pudo guardar. Revisa la conexión.')|tojson }});
+                });
+            });
+        });
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         const list = document.getElementById('exerciseList');
@@ -164,6 +190,8 @@
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({order: order})
+                    }).then(function (r) {
+                        if (r.ok && list.querySelector('.ss-member')) location.reload();  // las biseries se vuelven a juntar
                     });
                 }
             });
