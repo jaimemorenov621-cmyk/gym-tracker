@@ -16,7 +16,8 @@ from app.models import Exercise, ExerciseNote, Routine, RoutineExercise, SetEntr
 class RenameTests(DbTestCase):
     def setUp(self):
         super().setUp()
-        self.a = self.make_user("a")
+        from app.routes import ADMIN_USERNAME
+        self.a = self.make_user(ADMIN_USERNAME)  # solo el admin cambia el catálogo
         self.b = self.make_user("b")
         with app.app_context():
             db.session.add(Exercise(id="Lat_Pulldown", name="Lat Pulldown", name_es="Jalón al pecho",
@@ -62,6 +63,16 @@ class RenameTests(DbTestCase):
             for u in (self.a, self.b):
                 self.assertGreater(db.session.scalar(sa.select(User.xp_seq).where(User.id == u)), seq[u])
             self.assertEqual(db.session.scalar(sa.select(User.xp_seq).where(User.id == c)), seq_c)
+
+    def test_only_admin_can_rename_catalog(self):
+        """Renombra para todos los usuarios: un usuario normal (o invitado) no puede."""
+        self.login(self.b)
+        self.client.post("/exercise/jalón al pecho/translate", data={"name_es": "Lo que yo quiera"})
+        self.assertEqual(self.count(SetEntry, "jalón al pecho"), 6)
+        with app.app_context():
+            self.assertEqual(db.session.get(Exercise, "Lat_Pulldown").name_es, "Jalón al pecho")
+        html = self.client.get("/exercise/jalón al pecho").get_data(as_text=True)
+        self.assertNotIn("/translate", html)
 
     def test_too_long_name_is_rejected(self):
         self.client.post("/exercise/jalón al pecho/translate", data={"name_es": "x" * 70})

@@ -1985,6 +1985,7 @@ def exercise_progress(name):
         exercise_note=note,
         catalog_exercise=catalog_exercise,
         translation_form=translation_form,
+        can_rename_catalog=is_admin(),
     )
 
 
@@ -2312,6 +2313,10 @@ def personal_basics():
 @login_required
 def update_exercise_translation(name):
     name = name.strip().lower()
+    # Cambia el catálogo y el historial de TODOS los usuarios: solo el admin.
+    if not is_admin():
+        flash(gettext("Solo el administrador puede cambiar los nombres del catálogo."))
+        return redirect(url_for("exercise_progress", name=name))
     catalog_exercise = find_catalog_exercise(name, use_alias=False)
     if not catalog_exercise:
         flash(gettext("No se encontró este ejercicio en el catálogo."))

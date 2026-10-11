@@ -53,8 +53,9 @@
         </div>
     {% endif %}
 
-    {# Nombre en español del catálogo: solo tiene sentido con la app en español. #}
-    {% if catalog_exercise and get_locale().language == 'es' %}
+    {# Nombre en español del catálogo: solo tiene sentido con la app en español,
+       y solo el admin (lo cambia para todos los usuarios). #}
+    {% if catalog_exercise and can_rename_catalog and get_locale().language == 'es' %}
         <div class="card card-elevated">
             <h3 style="margin-top:0;">{{ _("🌐 Nombre en español") }}</h3>
             <form action="{{ url_for('update_exercise_translation', name=exercise) }}" method="post" style="display:flex; gap:8px;">
