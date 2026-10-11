@@ -128,6 +128,8 @@ def _server_timing(response):
         response.headers["Server-Timing"] = (
             f"app;dur={(time.perf_counter() - t0) * 1000:.0f}, "
             f'db;dur={g.get("_db_ms", 0.0):.0f};desc="{g.get("_db_n", 0)}"'
+            # Qué se recalculó (no estaba en caché) y cuánto tardó, en ms.
+            + (f', calc;desc="{", ".join(g._recomputed)}"' if g.get("_recomputed") else "")
         )
     return response
 
@@ -147,12 +149,17 @@ def _cache_versioned_static(response):
 
 def check_achievements():
     """Evalúa los logros tras una acción que puede desbloquear alguno. Nunca
-    rompe la acción principal: si algo falla, se registra y se sigue."""
+    rompe la acción principal: si algo falla, se registra (también en
+    Errores del servidor, /landing/stats) y se sigue."""
+    t0 = time.perf_counter()
     try:
         achievements.evaluate(current_user)
-    except Exception:
+    except Exception as exc:
         db.session.rollback()
         app.logger.exception("Error evaluando logros")
+        from app import errorlog
+        errorlog.record(exc)
+    datacache.note_recompute("logros", t0)
 
 
 @app.route("/logros")
@@ -347,6 +354,11 @@ def healthz():
     # duerma la app. No toca la base de datos a propósito: así Neon sí puede
     # suspenderse (su plan gratis tiene horas de cómputo limitadas) y el ping
     # tampoco cuenta como visita en las estadísticas de la landing.
+    # /healthz?db=1 sí la despierta (SELECT 1): para programar el ping solo en
+    # las horas de uso y que la primera consulta no espere a que arranque Neon
+    # sin gastar sus horas gratis el resto del día.
+    if request.args.get("db"):
+        db.session.execute(sa.text("SELECT 1"))
     return "ok", 200, {"Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store"}
 
 

@@ -4605,4 +4605,5 @@ button.is-pending::after, input[type="submit"].is-pending::after, .active-toast.
     position: fixed; left: 8px; top: calc(8px + env(safe-area-inset-top)); z-index: 1003;
     padding: 3px 8px; border-radius: 999px; font-size: 0.68rem; font-variant-numeric: tabular-nums;
     background: rgba(20, 12, 40, 0.72); color: #fff; pointer-events: auto; cursor: pointer;
+    white-space: pre-line; max-width: calc(100vw - 16px);
 }

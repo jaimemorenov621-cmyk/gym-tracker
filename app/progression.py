@@ -380,7 +380,11 @@ def current_xp(user_id):
     ).one()
     if is_cache_fresh(row):
         return row.xp_total
-    report, _ = refresh_xp(user_id)
+    import time as _time
+    from app.datacache import note_recompute
+    t0 = _time.perf_counter()
+    report, stored = refresh_xp(user_id)
+    note_recompute("xp" if stored else "xp(sin guardar)", t0)
     return report.total
 
 

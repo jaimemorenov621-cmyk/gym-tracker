@@ -82,10 +82,20 @@ def cached(name, user_id, compute, *extra):
         if hit is not None and hit[0] == version and now - hit[1] < TTL_SECONDS:
             _cache.move_to_end(key)
             return hit[2]
+    t0 = time.perf_counter()
     value = compute()
+    note_recompute(name, t0)
     with _lock:
         _cache[key] = (version, now, value)
         _cache.move_to_end(key)
         while len(_cache) > MAX_ENTRIES:
             _cache.popitem(last=False)
     return value
+
+
+def note_recompute(label, t0):
+    """Apunta que en esta petición se recalculó `label` (y cuánto tardó) para
+    el indicador de tiempos del admin (cabecera Server-Timing "calc")."""
+    if has_request_context():
+        g.setdefault("_recomputed", []).append(f"{label} {(time.perf_counter() - t0) * 1000:.0f}")
+

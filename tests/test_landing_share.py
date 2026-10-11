@@ -110,6 +110,11 @@ class RefTrackingTests(DbTestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data, b"ok")
         self.assertEqual(self._sources("visit"), [])
+        self.assertIn('db;dur=0;desc="0"', resp.headers["Server-Timing"])  # sin ?db no toca la base
+        resp = self.client.get("/healthz?db=1")  # despierta la base para las horas de uso
+        self.assertEqual((resp.status_code, resp.data), (200, b"ok"))
+        self.assertIn('desc="1"', resp.headers["Server-Timing"])
+        self.assertEqual(self._sources("visit"), [])
 
 
 class ShareSetTests(DbTestCase):
