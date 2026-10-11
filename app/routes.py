@@ -1,20 +1,23 @@
-from flask import render_template, flash, redirect, url_for, request, jsonify, make_response, g, session
+from flask import render_template, flash, redirect, url_for, request, jsonify, make_response, g, session, has_request_context
 from flask_babel import gettext, get_locale, lazy_gettext, lazy_pgettext, ngettext
 from flask_login import current_user, login_user, logout_user, login_required
 from markupsafe import Markup, escape
 from urllib.parse import urlsplit
 from collections import defaultdict
 import colorsys
+from dataclasses import dataclass
 import functools
 import json
 import os
 import math
 import secrets
 import time
+import threading
 import re
 import unicodedata
 from typing import NamedTuple, Optional
 import sqlalchemy as sa
+import sqlalchemy.orm as so
 from openai import OpenAI
 from app import app, db, oauth
 from app.forms import (
@@ -101,14 +104,31 @@ def _start_timer():
     g._t0 = time.perf_counter()
 
 
+@sa.event.listens_for(sa.engine.Engine, "before_cursor_execute")
+def _db_timer_start(conn, cursor, statement, parameters, context, executemany):
+    context._gyre_t0 = time.perf_counter()
+
+
+@sa.event.listens_for(sa.engine.Engine, "after_cursor_execute")
+def _db_timer_stop(conn, cursor, statement, parameters, context, executemany):
+    t0 = getattr(context, "_gyre_t0", None)
+    if t0 is not None and has_request_context():
+        g._db_ms = g.get("_db_ms", 0.0) + (time.perf_counter() - t0) * 1000
+        g._db_n = g.get("_db_n", 0) + 1
+
+
 @app.after_request
 def _server_timing(response):
-    """Server-Timing: cuánto tardó el servidor en esta petición. El admin lo
-    ve en un indicador (base.html) junto al tiempo de red, para distinguir
-    si la lentitud es del servidor o de la conexión (VPN, cobertura)."""
+    """Server-Timing: cuánto tardó el servidor en esta petición y cuánto de
+    eso fue la base de datos (y cuántas consultas). El admin lo ve en un
+    indicador (base.html) junto al tiempo de red, para distinguir si la
+    lentitud es del servidor, de Neon o de la conexión (VPN, cobertura)."""
     t0 = g.get("_t0")
     if t0 is not None:
-        response.headers["Server-Timing"] = f"app;dur={(time.perf_counter() - t0) * 1000:.0f}"
+        response.headers["Server-Timing"] = (
+            f"app;dur={(time.perf_counter() - t0) * 1000:.0f}, "
+            f'db;dur={g.get("_db_ms", 0.0):.0f};desc="{g.get("_db_n", 0)}"'
+        )
     return response
 
 
@@ -1347,17 +1367,28 @@ def get_active_workout(user_id):
     """Entreno sin terminar (sin valoración) empezado en las últimas 6 h.
     Única definición de "entreno en curso": la usan el aviso global, Inicio
     y los guardas que impiden empezar dos a la vez."""
-    cutoff = datetime.now(timezone.utc) - ACTIVE_WORKOUT_WINDOW
-    return db.session.scalar(
-        sa.select(Workout)
-        .where(
-            Workout.user_id == user_id,
-            Workout.performance_rating.is_(None),
-            Workout.ended_at.is_(None),  # uno importado tiene hora de fin aunque no tenga valoración
-            Workout.timestamp >= cutoff,
+    # Memorizado por petición (se pedía hasta 3 veces por página: el aviso
+    # global, Inicio...); cualquier commit lo olvida (_forget_active_workout).
+    memo = g.setdefault("_active_workout", {}) if has_request_context() else {}
+    if user_id not in memo:
+        cutoff = datetime.now(timezone.utc) - ACTIVE_WORKOUT_WINDOW
+        memo[user_id] = db.session.scalar(
+            sa.select(Workout)
+            .where(
+                Workout.user_id == user_id,
+                Workout.performance_rating.is_(None),
+                Workout.ended_at.is_(None),  # uno importado tiene hora de fin aunque no tenga valoración
+                Workout.timestamp >= cutoff,
+            )
+            .order_by(Workout.timestamp.desc())
         )
-        .order_by(Workout.timestamp.desc())
-    )
+    return memo[user_id]
+
+
+@sa.event.listens_for(so.Session, "after_commit")
+def _forget_active_workout(session):
+    if has_request_context():
+        g.pop("_active_workout", None)
 
 
 WEEKDAY_NAMES = [lazy_gettext("lunes"), lazy_gettext("martes"), lazy_gettext("miércoles"), lazy_gettext("jueves"),
@@ -2379,10 +2410,11 @@ def update_exercise_translation(name):
     if not is_admin():
         flash(gettext("Solo el administrador puede cambiar los nombres del catálogo."))
         return redirect(url_for("exercise_progress", name=name))
-    catalog_exercise = find_catalog_exercise(name, use_alias=False)
-    if not catalog_exercise:
+    found = find_catalog_exercise(name, use_alias=False)
+    if not found:
         flash(gettext("No se encontró este ejercicio en el catálogo."))
         return redirect(url_for("exercise_progress", name=name))
+    catalog_exercise = db.session.get(Exercise, found.id)  # la fila, para poder cambiarla
     form = ExerciseTranslationForm()
     if form.validate_on_submit():
         old_key = (catalog_exercise.name_es or catalog_exercise.name).strip().lower()
@@ -4624,80 +4656,100 @@ def _alias_user_id():
     return None
 
 
+@dataclass(frozen=True)
+class CatalogEntry:
+    """Copia de solo lectura de un ejercicio del catálogo (ver _catalog_index).
+    Para modificar el catálogo hay que pedir la fila: db.session.get(Exercise, id)."""
+    id: str
+    name: str
+    name_es: Optional[str]
+    category: Optional[str]
+    primary_muscles: Optional[str]
+    secondary_muscles: Optional[str]
+    equipment: Optional[str]
+    image_url: Optional[str]
+
+
+# El catálogo (~900 ejercicios) casi nunca cambia y se consulta en cada página
+# (nombre en el idioma de la app, imagen, músculos): se guarda en memoria del
+# proceso. Antes era una consulta a Neon por ejercicio mostrado (16 en Inicio).
+_CATALOG = {"loaded_at": None, "by_key": {}, "by_id": {}}
+_CATALOG_LOCK = threading.Lock()
+CATALOG_TTL_SECONDS = 3600  # red de seguridad; quien lo cambie llama a _clear_catalog_cache()
+
+
+def _catalog_index():
+    now = time.monotonic()
+    loaded = _CATALOG["loaded_at"]
+    if loaded is None or now - loaded > CATALOG_TTL_SECONDS:
+        with _CATALOG_LOCK:
+            if _CATALOG["loaded_at"] is None or now - _CATALOG["loaded_at"] > CATALOG_TTL_SECONDS:
+                by_key, by_id = {}, {}
+                rows = db.session.execute(sa.select(
+                    Exercise.id, Exercise.name, Exercise.name_es, Exercise.category, Exercise.primary_muscles,
+                    Exercise.secondary_muscles, Exercise.equipment, Exercise.image_url,
+                    Exercise.name_normalized, Exercise.name_es_normalized,
+                ).order_by(Exercise.id)).all()
+                for r in rows:
+                    entry = CatalogEntry(r.id, r.name, r.name_es, r.category, r.primary_muscles,
+                                         r.secondary_muscles, r.equipment, r.image_url)
+                    by_id[r.id] = entry
+                    for key in (r.name_normalized, r.name_es_normalized):
+                        if key:
+                            by_key.setdefault(key, entry)
+                _CATALOG.update(loaded_at=time.monotonic(), by_key=by_key, by_id=by_id)
+    return _CATALOG
+
+
 def find_catalog_exercise(name, use_alias=True):
-    """Ejercicio del catálogo cuyo nombre (inglés o español) coincide con
-    `name` ignorando mayúsculas y acentos. Una sola consulta indexada sobre
-    name_normalized/name_es_normalized (antes eran dos: un ILIKE exacto que
-    esta ya cubre). Memorizada por petición en flask.g: una misma página
-    preguntaba por el mismo ejercicio hasta 24 veces (imagen, mapa
-    muscular...), y cada consulta es un viaje a Neon en producción.
+    """Ejercicio del catálogo (CatalogEntry) cuyo nombre (inglés o español)
+    coincide con `name` ignorando mayúsculas y acentos; si no, el que el
+    usuario le asignó (ExerciseAlias). Sin consultas para el catálogo (está
+    en memoria) y como mucho una por petición para los alias.
     Cuidado: quien modifique el catálogo debe llamar a
     _clear_catalog_cache() (ver api_create_exercise y la traducción)."""
     if not name:
         return None
     target = _strip_accents(name.strip())
-    cache = g.setdefault("_catalog_cache", {})
-    if target not in cache:
-        cache[target] = db.session.scalar(
-            sa.select(Exercise)
-            .where(sa.or_(Exercise.name_normalized == target, Exercise.name_es_normalized == target))
-            .limit(1)
-        )
-    if cache[target] is not None or not use_alias:
-        return cache[target]
+    catalog = _catalog_index()
+    found = catalog["by_key"].get(target)
+    if found is not None or not use_alias:
+        return found
     # Sin coincidencia exacta: ¿lo asignó el usuario a un ejercicio del
-    # catálogo? (ExerciseAlias). Nunca para renombrar, solo para saber
-    # músculos, imagen, etc.
-    uid = _alias_user_id()
-    if uid is None:
-        return None
-    aliases = g.setdefault("_alias_cache", {})
-    if target not in aliases:
-        aliases[target] = db.session.scalar(
-            sa.select(Exercise)
-            .join(ExerciseAlias, ExerciseAlias.exercise_id == Exercise.id)
-            .where(ExerciseAlias.user_id == uid, ExerciseAlias.name == target)
-        )
-    return aliases[target]
+    # catálogo? Nunca para renombrar, solo para saber músculos, imagen, etc.
+    aliases = _user_aliases()
+    return catalog["by_id"].get(aliases.get(target)) if aliases else None
+
+
+def _user_aliases():
+    """{alias normalizado: id del catálogo} del usuario, una consulta por petición."""
+    if "_alias_cache" not in g:
+        uid = _alias_user_id()
+        g._alias_cache = dict(db.session.execute(
+            sa.select(ExerciseAlias.name, ExerciseAlias.exercise_id).where(ExerciseAlias.user_id == uid)
+        ).all()) if uid is not None else {}
+    return g._alias_cache
 
 
 def _clear_catalog_cache():
-    g.pop("_catalog_cache", None)
-    g.pop("_alias_cache", None)
+    _CATALOG["loaded_at"] = None
+    if has_request_context():
+        g.pop("_alias_cache", None)
+
+
+@sa.event.listens_for(Exercise, "after_insert")
+@sa.event.listens_for(Exercise, "after_update")
+@sa.event.listens_for(Exercise, "after_delete")
+def _catalog_changed(mapper, connection, target):
+    """Cualquier cambio del catálogo por el ORM (importar, crear un
+    ejercicio, renombrar) invalida la copia en memoria."""
+    _CATALOG["loaded_at"] = None
 
 
 def prefetch_catalog_exercises(names):
-    """Rellena de golpe la caché de find_catalog_exercise() para varios
-    nombres: UNA consulta en vez de una por ejercicio (la mayoría de los
-    ejercicios propios no están en el catálogo y cada "no está" también
-    costaba una consulta)."""
-    cache = g.setdefault("_catalog_cache", {})
-    targets = {_strip_accents(n.strip()) for n in names if n} - set(cache)
-    if not targets:
-        return
-    for ex in db.session.scalars(
-        sa.select(Exercise).where(
-            sa.or_(Exercise.name_normalized.in_(targets), Exercise.name_es_normalized.in_(targets))
-        )
-    ):
-        for key in (ex.name_normalized, ex.name_es_normalized):
-            if key in targets and key not in cache:
-                cache[key] = ex
-    for t in targets:
-        cache.setdefault(t, None)
-    # Y los alias del usuario para lo que no está en el catálogo (otra consulta).
-    uid = _alias_user_id()
-    missing = {t for t in targets if cache[t] is None}
-    if uid is not None and missing:
-        aliases = g.setdefault("_alias_cache", {})
-        for alias, ex in db.session.execute(
-            sa.select(ExerciseAlias.name, Exercise)
-            .join(Exercise, Exercise.id == ExerciseAlias.exercise_id)
-            .where(ExerciseAlias.user_id == uid, ExerciseAlias.name.in_(missing))
-        ):
-            aliases[alias] = ex
-        for t in missing:
-            aliases.setdefault(t, None)
+    """Antes rellenaba de golpe la caché por petición; con el catálogo en
+    memoria ya no hace falta. Se mantiene para no tocar a quien la llama."""
+    _catalog_index()
 
 
 def catalog_display_name(exercise):

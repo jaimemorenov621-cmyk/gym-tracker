@@ -43,6 +43,8 @@ class DbTestCase(unittest.TestCase):
         from app import datacache
 
         datacache.clear()  # los ids se repiten entre tests
+        from app.routes import _clear_catalog_cache
+        _clear_catalog_cache()  # el catálogo en memoria es de otro test
         self.client = app.test_client()
 
     def tearDown(self):
