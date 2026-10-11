@@ -2889,7 +2889,9 @@ def request_ai_analysis():
         # si esto falla no se gasta el cupo semanal (no se guarda nada) y el
         # usuario ve el mismo aviso de "vuelve a intentarlo" que un fallo de
         # la API, en vez de una tarjeta rota con JSON crudo sin renderizar.
-    except Exception:
+    except Exception as exc:
+        from app import errorlog
+        errorlog.record(exc)  # sin saldo en OpenAI, tiempo agotado...: visible en /landing/stats
         flash(gettext("No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos minutos."))
         return redirect(url_for("ai_analysis"))
 

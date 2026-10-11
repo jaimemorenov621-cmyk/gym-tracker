@@ -128,7 +128,7 @@
 
     <div class="card card-elevated" style="margin-top:16px;" id="errores">
         <h3 style="margin-top:0;">Errores del servidor</h3>
-        <p class="stats-footnote" style="margin-top:0;">Los «Internal Server Error» recientes, con su traza (se guardan los 50 últimos). Útil para arreglarlos sin mirar los registros de Render.</p>
+        <p class="stats-footnote" style="margin-top:0;">Los «Internal Server Error» recientes y los fallos del análisis de IA (sin saldo en OpenAI, tiempo agotado...), con su traza (se guardan los 50 últimos). Útil para arreglarlos sin mirar los registros de Render.</p>
         {% if server_errors %}
             {% for e in server_errors %}
                 <details class="server-error">

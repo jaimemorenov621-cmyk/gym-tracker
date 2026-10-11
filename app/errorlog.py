@@ -18,6 +18,13 @@ from app.models import ErrorLog
 KEEP = 50
 
 
+def record(exception):
+    """Guarda un error que la app ya ha controlado (p. ej. la IA no respondió
+    o no queda saldo en OpenAI): el usuario ve un aviso, pero el admin
+    necesita saber por qué falló."""
+    _record(None, exception)
+
+
 def _record(sender, exception, **extra):
     try:
         user_id = current_user.id if current_user and current_user.is_authenticated else None
