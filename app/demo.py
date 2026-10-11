@@ -35,17 +35,17 @@ EXERCISES = {
     "row": ("remo con barra", "barbell row", 100, 4, 6, True),
     "ohp": ("press militar", "overhead press", 72, 3, 8, True),
     "pullup": ("dominadas", "pull-ups", 30, 3, 6, True),          # lastre (0 = solo el peso)
-    "curl": ("curl de bíceps con barra", "barbell curl", 55, 3, 10, False),
+    "curl": ("curl con barra", "barbell curl", 55, 3, 10, False),
     "lateral": ("elevaciones laterales", "lateral raise", 22, 3, 14, False),
-    "squat": ("sentadilla", "squat", 150, 4, 5, True),
+    "squat": ("sentadilla con barra", "squat", 150, 4, 5, True),
     "rdl": ("peso muerto rumano", "romanian deadlift", 140, 3, 8, True),
-    "legpress": ("prensa", "leg press", 260, 3, 10, False),
-    "legcurl": ("curl femoral", "leg curl", 75, 3, 12, False),
+    "legpress": ("prensa de piernas", "leg press", 260, 3, 10, False),
+    "legcurl": ("curl femoral tumbado", "leg curl", 75, 3, 12, False),
     "incline": ("press inclinado con mancuernas", "incline dumbbell press", 38, 3, 10, False),
     "pulldown": ("jalón al pecho", "lat pulldown", 90, 3, 10, False),
     "deadlift": ("peso muerto", "deadlift", 190, 3, 4, True),
-    "hipthrust": ("hip thrust", "hip thrust", 170, 3, 8, False),
-    "lunge": ("zancadas", "lunges", 60, 3, 10, False),
+    "hipthrust": ("hip thrust con barra", "hip thrust", 170, 3, 8, False),
+    "lunge": ("zancadas con barra", "lunges", 60, 3, 10, False),
     "pushdown": ("extensión de tríceps en polea", "tricep pushdown", 45, 3, 12, False),
 }
 ROUTINES = [

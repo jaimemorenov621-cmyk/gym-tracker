@@ -1,0 +1,88 @@
+"""Nombres en español del catálogo, revisados a mano.
+
+Los nombres de app/data/exercise_names_es.json sustituyen a los que puso
+Google Translate al importar el catálogo (import_exercises.py). Se aplican
+desde /landing/catalog-names (solo admin), con vista previa.
+
+Las series guardan el ejercicio por su NOMBRE, así que renombrar mueve el
+historial de todos los usuarios (rename_exercise_everywhere). Se hace en dos
+fases (nombre viejo -> temporal -> nuevo) para que, si el nombre nuevo de A
+es el que hoy tiene B, las series de A y B no se mezclen. Solo se mueve
+historial de los nombres que alguien usa; el resto solo cambia en el catálogo.
+
+Los nombres nuevos se validaron para que la detección de levantamientos del
+rango (strength_standards.lift_of) dé lo mismo que con el nombre inglés.
+"""
+import json
+import os
+
+import sqlalchemy as sa
+
+from app import db
+from app.models import Exercise, ExerciseNote, PersonalBasic, RoutineExercise, SetEntry
+
+DATA_FILE = os.path.join(os.path.dirname(__file__), "data", "exercise_names_es.json")
+
+
+def curated():
+    """{id del catálogo: nombre en español}."""
+    with open(DATA_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _key(name):
+    return (name or "").strip().lower()
+
+
+def _used_names():
+    """{nombre guardado: nº de series} de todo lo que guarda ejercicios por nombre."""
+    used = dict(db.session.execute(
+        sa.select(SetEntry.exercise, sa.func.count()).group_by(SetEntry.exercise)
+    ).all())
+    for model in (RoutineExercise, ExerciseNote, PersonalBasic):
+        for name in db.session.scalars(sa.select(model.exercise).distinct()):
+            used.setdefault(name, 0)
+    return used
+
+
+def plan():
+    """Cambios pendientes: [{id, english, old, new, sets, used}], primero los
+    que alguien usa (más series primero)."""
+    names = curated()
+    used = _used_names()
+    changes = []
+    for ex in db.session.scalars(sa.select(Exercise).where(Exercise.id.in_(names))):
+        new = names[ex.id]
+        if (ex.name_es or "") == new:
+            continue
+        old_key = _key(ex.name_es or ex.name)
+        changes.append({
+            "id": ex.id, "english": ex.name, "old": ex.name_es, "new": new,
+            "sets": used.get(old_key, 0), "used": old_key in used,
+        })
+    changes.sort(key=lambda c: (not c["used"], -c["sets"], c["new"]))
+    return changes
+
+
+def apply(ids):
+    """Aplica los nombres revisados a los ejercicios `ids`. Devuelve
+    (ejercicios renombrados, series movidas). No hace commit."""
+    from app.routes import _clear_catalog_cache, rename_exercise_everywhere
+
+    names = curated()
+    wanted = set(ids) & set(names)
+    used = _used_names()
+    exercises = [ex for ex in db.session.scalars(sa.select(Exercise).where(Exercise.id.in_(wanted)))
+                 if (ex.name_es or "") != names[ex.id]]
+    moves = []  # (temporal, nombre nuevo)
+    for n, ex in enumerate(exercises):
+        old_key, new_key = _key(ex.name_es or ex.name), _key(names[ex.id])
+        if old_key in used and old_key != new_key:
+            tmp = f"__catalogo_{n}__"
+            rename_exercise_everywhere(old_key, tmp)
+            moves.append((tmp, new_key))
+    moved = sum(rename_exercise_everywhere(tmp, new_key) for tmp, new_key in moves)
+    for ex in exercises:
+        ex.name_es = names[ex.id]
+    _clear_catalog_cache()
+    return len(exercises), moved

@@ -4582,3 +4582,7 @@ button.is-pending::after, input[type="submit"].is-pending::after, .active-toast.
     background: rgba(var(--accent-rgb), 0.12); color: var(--color-brand-deep);
 }
 .routine-ex .ss-tag { margin-left: 34px; }
+/* Admin: nombres del catálogo (texto a la izquierda, no cifras). */
+.catalog-names { margin: 12px 0; }
+.catalog-names th, .catalog-names td { text-align: left; vertical-align: top; }
+.catalog-names td small { color: var(--color-text-muted); }

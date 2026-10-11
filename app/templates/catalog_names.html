@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+    {# Solo admin (sin traducir, como /landing/stats). #}
+    <p class="page-back"><a href="{{ url_for('landing_stats') }}">← Estadísticas</a></p>
+    <h1 class="page-title">Nombres del catálogo</h1>
+    <p class="stats-footnote">
+        Nombres en español revisados a mano (app/data/exercise_names_es.json) en lugar de los de Google Translate.
+        Al aplicar, las series, rutinas, notas y básicos de todos los usuarios pasan al nombre nuevo, así que el
+        historial sigue unido. Desmarca los que hayas corregido tú y prefieras conservar.
+    </p>
+    {% if changes %}
+        {% set used = changes|selectattr('used')|list %}
+        <form method="post">
+            {{ empty_form.hidden_tag() }}
+            <p><b>{{ changes|length }}</b> cambios pendientes · <b>{{ used|length }}</b> con historial
+                ({{ used|sum(attribute='sets') }} series).</p>
+            <button type="submit" class="btn">Aplicar los marcados</button>
+            <table class="stats-daily catalog-names">
+                <thead><tr><th></th><th>Ahora</th><th>Nuevo</th><th>Series</th></tr></thead>
+                <tbody>
+                    {% for c in changes %}
+                        <tr>
+                            <td><input type="checkbox" name="ids" value="{{ c.id }}" checked aria-label="Aplicar {{ c.new }}"></td>
+                            <td>{{ c.old or '—' }}<br><small>{{ c.english }}</small></td>
+                            <td><b>{{ c.new }}</b></td>
+                            <td>{{ c.sets if c.used else '' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="submit" class="btn">Aplicar los marcados</button>
+        </form>
+    {% else %}
+        <p>Todos los nombres del catálogo están al día.</p>
+    {% endif %}
+{% endblock %}

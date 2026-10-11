@@ -572,6 +572,28 @@ def create_demo_account():
     return redirect(url_for("landing_stats") + "#demo")
 
 
+@app.route("/landing/catalog-names", methods=["GET", "POST"])
+@login_required
+def catalog_names_admin():
+    """Nombres en español del catálogo revisados a mano (app/catalog_names.py):
+    vista previa y aplicar los marcados."""
+    from app import catalog_names
+
+    if not is_admin():
+        flash(gettext("No tienes acceso a esta página."))
+        return redirect(url_for("index"))
+    if request.method == "POST":
+        if not EmptyForm().validate_on_submit():
+            return redirect(url_for("catalog_names_admin"))
+        renamed, moved = catalog_names.apply(request.form.getlist("ids"))
+        db.session.commit()
+        datacache.clear()
+        flash(f"{renamed} ejercicios renombrados; {moved} series movidas a su nombre nuevo.")
+        return redirect(url_for("catalog_names_admin"))
+    return render_template("catalog_names.html", title="Nombres del catálogo",
+                           changes=catalog_names.plan(), empty_form=EmptyForm())
+
+
 @app.route("/landing/demo/<int:user_id>/delete", methods=["POST"])
 @login_required
 def delete_demo_account(user_id):
@@ -2361,6 +2383,16 @@ def rename_exercise_everywhere(old, new):
     )
     for workout in db.session.scalars(sa.select(Workout).where(Workout.supersets.contains(json.dumps(old)))):
         supersets_mod.rename(workout, old, new)
+    # Orden elegido a mano en un entreno: si no, el renombrado caía al final.
+    for workout in db.session.scalars(sa.select(Workout).where(Workout.exercise_order.contains(json.dumps(old)))):
+        try:
+            order = json.loads(workout.exercise_order)
+        except (ValueError, TypeError):
+            continue
+        if old in order:
+            order = [name for name in order if name != new]
+            order[order.index(old)] = new
+            workout.exercise_order = json.dumps(order)
     # Básicos personales: si el usuario ya tenía el nombre nuevo, sobra el viejo.
     for basic in db.session.scalars(sa.select(PersonalBasic).where(PersonalBasic.exercise == old)).all():
         if db.session.scalar(sa.select(PersonalBasic.id).where(

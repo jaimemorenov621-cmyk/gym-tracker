@@ -35,6 +35,7 @@ DOTS (puntuación de powerlifting que corrige por peso corporal): fórmula de
 Tim Konertz (BVDK, 2019). Coeficientes verificados en el código de
 OpenPowerlifting (crates/coefficients/src/dots.rs).
 """
+import re
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
@@ -289,24 +290,31 @@ _COMMON_EXCLUDE = (
     "ligero", "ligera", "tecnic", "light", "technique", "tempo", "calentamiento", "warm",
     "descarga", "deload", "activacion", "movilidad", "velocidad", "speed", "dinamic",
     "isometric", "parcial", "partial", "larsen", "pies arriba", "feet up",
+    "una mano", "rapid",  # "a una mano" (= one arm), "rápida" (= speed)
+    "estiramiento", "stretch", "leverage",
 )
 _LIFT_EXCLUDE = {
     "bench": ("inclinad", "incline", "declinad", "decline", "agarre cerrado", "agarre estrecho", "close",
-              "suelo", "floor", "tabla", "board", "pin", "spoto", "guillotina", "guillotine"),
+              "suelo", "floor", "tabla", "board", "pin", "spoto", "guillotina", "guillotine",
+              "supin", "reverse", "invers"),
     "squat": ("bulgara", "bulgarian", "hack", "goblet", "frontal", "front", "zercher", "overhead",
               "por encima", "split", "zancada", "lunge", "pistol", "sissy", "caja", "box", "banco",
               "bench", "salto", "jump", "peso corporal", "bodyweight", "sin peso", "prensa", "press",
-              "sumo", "cinturon", "belt"),
+              "sumo", "cinturon", "belt", "cajon", "envion", "jerk", "frankenstein", "jefferson",
+              "silla", "chair", "rodillas", "kneeling", "deslizante", "plate mover", "sit squat"),
     "deadlift": ("rumano", "romanian", "rigida", "stiff", "piernas rectas", "straight", "deficit",
                  "rack", "bloque", "block", "trap", "hexagonal", "parcial", "partial", "snatch",
-                 "arranque"),
+                 "arranque", "arrancada", "cargada", "clean", "polea", "cable", "rickshaw",
+                 "coche", "car deadlift", "eje grueso", "axle", "lateral", "side"),
     "press": ("sentado", "seated", "arnold", "push press", "tras nuca", "behind", "nuca"),
     "row": ("polea", "cable", "barra t", "en t", "t-bar", "t bar", "seal", "menton", "upright", "invertido",
-            "inverted", "australian"),
+            "inverted", "australian", "tumbado", "lying"),
     "pullup": ("asistida", "assisted", "negativa", "negative", "invertida", "australian", "jalon",
-               "supin", "chin up", "chin-up", "chinup"),  # las supinas tienen otra tabla
+               "supin", "chin up", "chin-up", "chinup",  # las supinas tienen otra tabla
+               "mixto", "mixed", "lado a lado", "side to side", "escapular", "scapular",
+               "tras nuca", "behind", "rear", "rocky"),
     "pulldown": ("brazos rectos", "straight arm", "straight-arm", "tras nuca", "behind", "pullover",
-                 "estrech", "cerrad", "close", "supin", "neutr", "triangulo", "v-bar", "v bar"),
+                 "estrech", "cerrad", "close", "supin", "underhand", "neutr", "triangulo", "v-bar", "v bar"),
 }
 
 
@@ -334,7 +342,7 @@ def _variant_of(name):
         allowed = _SMITH_WORDS + ("maquina", "machine")
         excl = tuple(w for w in _COMMON_EXCLUDE if w not in allowed) + _LIFT_EXCLUDE["row"] + ("alto", "high", "una mano")
         return None if any(w in name for w in excl) else "smith_row"
-    if any(w in name for w in _RDL_WORDS):
+    if any(w in name for w in _RDL_WORDS[:-1]) or re.search(r"\brdl\b", name):  # no "hurdle"
         excl = _COMMON_EXCLUDE + ("deficit", "bloque", "block", "trap", "hexagonal", "parcial", "partial", "sumo")
         return None if any(w in name for w in excl) else "rdl"
     return ""
