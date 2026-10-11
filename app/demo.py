@@ -76,7 +76,9 @@ def seed_demo(username, weeks=52, strength=1.0, lang="es", friend=None, seed=7, 
     today = now.date()
     start_day = today - timedelta(weeks=weeks)
     start_day -= timedelta(days=start_day.weekday())  # lunes
-    name = (lambda k: EXERCISES[k][0]) if lang == "es" else (lambda k: EXERCISES[k][1])
+    # Se guarda siempre el mismo nombre (el español) en cualquier idioma: la
+    # app lo traduce al mostrarlo (routes.catalog_key / exercise_title).
+    name = lambda k: EXERCISES[k][0]  # noqa: E731
 
     password = password or secrets.token_urlsafe(9)
     user = User(username=username, email=f"{username.lower()}@demo.gyre.invalid", sex="hombre", height_cm=178,

@@ -30,6 +30,15 @@ class DataFileTests(unittest.TestCase):
         self.assertEqual(len({norm(n) for n in self.names.values()}), len(self.names))
         self.assertTrue(all(0 < len(n) <= 64 for n in self.names.values()))  # SetEntry.exercise es String(64)
 
+    def test_english_names_unique_and_same_lift_as_spanish(self):
+        english = catalog_names.curated_en()
+        self.assertEqual(set(english), set(self.names))
+        self.assertEqual(len({n.lower() for n in english.values()}), len(english))
+        for ex_id, name in english.items():
+            self.assertLessEqual(len(name), 120)
+            self.assertEqual(lift_of(name), lift_of(self.names[ex_id]), (name, self.names[ex_id]))
+        self.assertEqual(english["Barbell_Bench_Press_-_Medium_Grip"], "Bench Press")
+
     def test_main_lifts_keep_counting_for_rank(self):
         expected = {
             "Barbell_Bench_Press_-_Medium_Grip": "bench", "Barbell_Squat": "squat", "Barbell_Deadlift": "deadlift",

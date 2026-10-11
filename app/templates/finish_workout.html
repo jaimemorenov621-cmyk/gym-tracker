@@ -55,6 +55,7 @@
                     {%- if x.workout %}{% set _unused = bits.append(_('entreno +%(xp)s', xp=x.workout)) %}{% endif -%}
                     {%- if x.sets_n %}{% set _unused = bits.append(ngettext('%(num)d serie +%(xp)s', '%(num)d series +%(xp)s', x.sets_n, xp=x.sets)) %}{% endif -%}
                     {%- if x.prs_n %}{% set _unused = bits.append(ngettext('%(num)d récord +%(xp)s', '%(num)d récords +%(xp)s', x.prs_n, xp=x.prs)) %}{% endif -%}
+                    {%- if x.streak %}{% set _unused = bits.append(ngettext('racha de %(num)d día +%(pct)s %% → +%(xp)s', 'racha de %(num)d días +%(pct)s %% → +%(xp)s', x.streak_days, pct=x.streak_pct, xp=x.streak)) %}{% endif -%}
                     {%- if xp_preview.bonus %}{% set _unused = bits.append(_('semana cumplida +%(xp)s', xp=xp_preview.bonus)) %}{% endif -%}
                     {{ bits|join(' · ') if bits else _('Sin XP en este entreno') }}
                 </span>

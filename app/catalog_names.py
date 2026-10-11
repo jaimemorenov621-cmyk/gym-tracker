@@ -1,8 +1,9 @@
-"""Nombres en español del catálogo, revisados a mano.
+"""Nombres del catálogo (español e inglés), revisados a mano.
 
-Los nombres de app/data/exercise_names_es.json sustituyen a los que puso
-Google Translate al importar el catálogo (import_exercises.py). Se aplican
-desde /landing/catalog-names (solo admin), con vista previa.
+Los de app/data/exercise_names_es.json sustituyen a los que puso Google
+Translate al importar el catálogo (import_exercises.py), y los de
+exercise_names_en.json a los originales del dataset, que también sonaban
+raros. Se aplican desde /landing/catalog-names (solo admin), con vista previa.
 
 Las series guardan el ejercicio por su NOMBRE, así que renombrar mueve el
 historial de todos los usuarios (rename_exercise_everywhere). Se hace en dos
@@ -22,11 +23,19 @@ from app import db
 from app.models import Exercise, ExerciseNote, PersonalBasic, RoutineExercise, SetEntry
 
 DATA_FILE = os.path.join(os.path.dirname(__file__), "data", "exercise_names_es.json")
+DATA_FILE_EN = os.path.join(os.path.dirname(__file__), "data", "exercise_names_en.json")
 
 
 def curated():
     """{id del catálogo: nombre en español}."""
     with open(DATA_FILE, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def curated_en():
+    """{id del catálogo: nombre en inglés} revisado (el original del dataset
+    tenía nombres raros: "Butt Lift (Bridge)", "Bicycling, Stationary"...)."""
+    with open(DATA_FILE_EN, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -46,34 +55,37 @@ def _used_names():
 
 
 def plan():
-    """Cambios pendientes: [{id, english, old, new, sets, used}], primero los
-    que alguien usa (más series primero)."""
-    names = curated()
+    """Cambios pendientes: [{id, old_es, new_es, old_en, new_en, sets, used}]
+    (español o inglés distintos del revisado), primero los que alguien usa."""
+    names, names_en = curated(), curated_en()
     used = _used_names()
     changes = []
     for ex in db.session.scalars(sa.select(Exercise).where(Exercise.id.in_(names))):
-        new = names[ex.id]
-        if (ex.name_es or "") == new:
+        new_es, new_en = names[ex.id], names_en.get(ex.id, ex.name)
+        if (ex.name_es or "") == new_es and ex.name == new_en:
             continue
         old_key = _key(ex.name_es or ex.name)
         changes.append({
-            "id": ex.id, "english": ex.name, "old": ex.name_es, "new": new,
+            "id": ex.id, "old_es": ex.name_es, "new_es": new_es, "old_en": ex.name, "new_en": new_en,
             "sets": used.get(old_key, 0), "used": old_key in used,
         })
-    changes.sort(key=lambda c: (not c["used"], -c["sets"], c["new"]))
+    changes.sort(key=lambda c: (not c["used"], -c["sets"], c["new_es"]))
     return changes
 
 
 def apply(ids):
-    """Aplica los nombres revisados a los ejercicios `ids`. Devuelve
-    (ejercicios renombrados, series movidas). No hace commit."""
+    """Aplica los nombres revisados (español e inglés) a los ejercicios `ids`.
+    Devuelve (ejercicios renombrados, series movidas). No hace commit."""
     from app.routes import _clear_catalog_cache, rename_exercise_everywhere
 
-    names = curated()
+    # Lo guardado con el nombre inglés ANTIGUO se une antes de cambiarlo: si
+    # no, esas series dejarían de casar con el catálogo.
+    _merged, moved = merge_english()
+    names, names_en = curated(), curated_en()
     wanted = set(ids) & set(names)
     used = _used_names()
     exercises = [ex for ex in db.session.scalars(sa.select(Exercise).where(Exercise.id.in_(wanted)))
-                 if (ex.name_es or "") != names[ex.id]]
+                 if (ex.name_es or "") != names[ex.id] or ex.name != names_en.get(ex.id, ex.name)]
     moves = []  # (temporal, nombre nuevo)
     for n, ex in enumerate(exercises):
         old_key, new_key = _key(ex.name_es or ex.name), _key(names[ex.id])
@@ -81,9 +93,10 @@ def apply(ids):
             tmp = f"__catalogo_{n}__"
             rename_exercise_everywhere(old_key, tmp)
             moves.append((tmp, new_key))
-    moved = sum(rename_exercise_everywhere(tmp, new_key) for tmp, new_key in moves)
+    moved += sum(rename_exercise_everywhere(tmp, new_key) for tmp, new_key in moves)
     for ex in exercises:
         ex.name_es = names[ex.id]
+        ex.name = names_en.get(ex.id, ex.name)
     _clear_catalog_cache()
     recompute_prs(new_key for _tmp, new_key in moves)  # por si unió el historial con uno propio igual
     return len(exercises), moved

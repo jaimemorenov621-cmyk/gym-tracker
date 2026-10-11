@@ -144,14 +144,16 @@ class SocialTests(DbTestCase):
                 self.lift(uid, lift, kg, 5)
                 self.lift(uid, lift, kg, 3)
         self.login(self.ana)
-        html = self.client.get("/rango").get_data(as_text=True)
-        self.assertIn("Con tus amigos", html)
+        page = self.client.get("/rango").get_data(as_text=True)
+        self.assertIn("Con tus amigos", page)
+        self.assertIn("/rango/amigos", page)  # con amigos, los rankings se piden aparte
+        html = self.client.get("/rango/amigos").get_data(as_text=True)
         self.assertIn(">bea<", html.replace(" ", ""))
         self.assertNotIn("carl", html)  # no es amigo
         self.login(self.bea)
         self.client.post("/rango/tarjeta", data={})  # todo apagado: fuera de los rankings
         self.login(self.ana)
-        self.assertNotIn(f"/atleta/{self.bea}\"", self.client.get("/rango").get_data(as_text=True))
+        self.assertNotIn(f"/atleta/{self.bea}\"", self.client.get("/rango/amigos").get_data(as_text=True))
 
     def test_unconfirmed_big_jump_does_not_count_in_rankings(self):
         self.lift(self.ana, "press de banca", 80, 30)

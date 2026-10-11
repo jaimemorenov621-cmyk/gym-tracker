@@ -69,12 +69,18 @@ from app.models import (
 # ------------------------------------------------------------------ reglas
 # Cambiar cualquier regla = subir XP_RULES_VERSION (todas las cachés se
 # recalculan solas) y actualizar la página /nivel.
-XP_RULES_VERSION = 2  # v2: las series de más de 30 repeticiones no cuentan para récords
+XP_RULES_VERSION = 3  # v2: series de más de 30 reps sin récord; v3: bonus de racha
 XP_WORKOUT = 100            # entreno válido
 XP_SET = 5                  # serie de XP
 XP_PR = 25                  # récord real
 XP_WEEK_PER_MINIMUM = 40    # semana con el mínimo cumplido: 40 × mínimo
 XP_CHECKIN = 10             # check-in de recuperación
+# Bonus de racha: % extra sobre el XP de entreno + series según los días de
+# racha que llevabas al empezar ese entreno (los de Inicio: días entrenados
+# en semanas seguidas cumpliendo tu mínimo). No multiplica récords, check-ins
+# ni la semana cumplida. Los días solo suben entrenando y ya hay tope de días
+# con XP por semana: premia la constancia, no entrenar sin descanso.
+STREAK_TIERS = ((100, 50), (60, 40), (30, 30), (14, 20), (7, 10))  # (días de racha, % extra)
 MAX_SETS_PER_DAY = 25
 MAX_PRS_PER_DAY = 3
 MAX_WORKOUT_DAYS_PER_WEEK = 6
@@ -187,8 +193,49 @@ def _minimum_for(goals, week_start):
 
 
 def _new_week():
-    return {"workout": 0, "sets": 0, "prs": 0, "bonus": 0, "checkins": 0, "total": 0,
+    return {"workout": 0, "sets": 0, "prs": 0, "streak": 0, "bonus": 0, "checkins": 0, "total": 0,
             "days": set(), "workout_days": 0, "minimum": None, "capped": []}
+
+
+def streak_pct(days):
+    """% de bonus de racha para `days` días de racha."""
+    return next((pct for need, pct in STREAK_TIERS if days >= need), 0)
+
+
+def _streak_days_before(inputs, include_workout=None, exclude_workout=None):
+    """Función d -> días de racha que llevabas al empezar el día d, con el
+    mismo criterio que la racha de Inicio (routes.compute_smart_streak): los
+    días entrenados de las semanas anteriores seguidas que cumplieron el
+    mínimo, más los de esta semana antes de d (la semana en curso no corta)."""
+    from app.routes import is_real_set, to_local
+
+    trained = set()
+    for w in inputs.workouts:
+        if w.id == exclude_workout or not (w.finished or w.id == include_workout):
+            continue
+        if any(is_real_set(s) and (s.set_type or "normal") != "calentamiento" for s in w.sets):
+            trained.add(to_local(w.ts).date())
+    per_week = defaultdict(list)
+    for d in trained:
+        per_week[d - timedelta(days=d.weekday())].append(d)
+    chain = {}  # lunes -> días de racha acumulados ANTES de esa semana
+    last, carried = None, 0
+    if per_week:
+        week, last = min(per_week), max(per_week)
+        while week <= last:
+            chain[week] = carried
+            n = len(per_week.get(week, ()))
+            carried = carried + n if n >= _minimum_for(inputs.goals, week) else 0
+            week += timedelta(days=7)
+
+    def before(d):
+        week = d - timedelta(days=d.weekday())
+        if last is not None and week > last:
+            # Semana sin entrenos aún: la racha sigue si la anterior fue la
+            # última entrenada (y cumplió); si en medio hubo una vacía, se cortó.
+            return carried if week == last + timedelta(days=7) else 0
+        return chain.get(week, 0) + sum(1 for x in per_week.get(week, ()) if x < d)
+    return before
 
 
 def compute_xp(inputs, include_workout=None, exclude_workout=None):
@@ -198,6 +245,7 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
     from app.routes import estimated_1rm, is_real_set, to_local
 
     best = {}  # ejercicio -> mejor 1RM estimado de sesiones ANTERIORES
+    streak_before = _streak_days_before(inputs, include_workout, exclude_workout)
     days = defaultdict(lambda: {"workout": False, "sets": 0, "prs": 0})
     weeks = defaultdict(_new_week)
     by_workout = {}
@@ -208,7 +256,8 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
         d = to_local(w.ts).date()
         week = weeks[d - timedelta(days=d.weekday())]
         day = days[d]
-        info = {"workout": 0, "sets_n": 0, "sets": 0, "prs_n": 0, "prs": 0, "total": 0, "notes": []}
+        info = {"workout": 0, "sets_n": 0, "sets": 0, "prs_n": 0, "prs": 0, "streak_days": 0, "streak_pct": 0,
+                "streak": 0, "total": 0, "notes": []}
 
         work, session_best, trained = [], {}, False
         for s in w.sets:
@@ -257,8 +306,11 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
         for ex, e in session_best.items():
             best[ex] = max(best.get(ex, 0.0), e)
 
-        info["total"] = info["workout"] + info["sets"] + info["prs"]
-        for key in ("workout", "sets", "prs"):
+        info["streak_days"] = streak_before(d)
+        info["streak_pct"] = streak_pct(info["streak_days"])
+        info["streak"] = round((info["workout"] + info["sets"]) * info["streak_pct"] / 100)
+        info["total"] = info["workout"] + info["sets"] + info["prs"] + info["streak"]
+        for key in ("workout", "sets", "prs", "streak"):
             week[key] += info[key]
         by_workout[w.id] = info
 
@@ -270,7 +322,7 @@ def compute_xp(inputs, include_workout=None, exclude_workout=None):
         week["minimum"] = _minimum_for(inputs.goals, week_start)
         if len(week["days"]) >= week["minimum"]:
             week["bonus"] = XP_WEEK_PER_MINIMUM * week["minimum"]
-        week["total"] = week["workout"] + week["sets"] + week["prs"] + week["bonus"] + week["checkins"]
+        week["total"] = week["workout"] + week["sets"] + week["prs"] + week["streak"] + week["bonus"] + week["checkins"]
         week["capped"] = sorted(set(week["capped"]))
         total += week["total"]
     return XpReport(total, dict(sorted(weeks.items(), reverse=True)), by_workout)
@@ -350,6 +402,14 @@ def level_up_notice(user_id, total):
     )
     db.session.commit()
     return notice
+
+
+def current_streak_bonus(user_id):
+    """(días de racha ahora, % de bonus que tendría tu próximo entreno)."""
+    from app.usage import local_today
+
+    days = _streak_days_before(load_xp_inputs(user_id))(local_today() + timedelta(days=1))
+    return days, streak_pct(days)
 
 
 def workout_xp_preview(user_id, workout_id):

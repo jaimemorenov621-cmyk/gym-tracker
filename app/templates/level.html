@@ -61,6 +61,12 @@
                     <td>+{{ p.XP_PR }}</td><td>{{ _('%(n)s al día', n=p.MAX_PRS_PER_DAY) }}</td>
                 </tr>
                 <tr>
+                    <td><b>{{ _("Bonus de racha") }}</b>{{ _(": %% extra sobre el XP de entreno y series según los días de racha que llevas al empezar el entreno") }}
+                        <small class="level-streak-tiers">{% for need, pct in p.STREAK_TIERS|reverse %}<span class="nowrap">{{ _('%(d)s días: +%(pct)s %%', d=need, pct=pct) }}</span>{{ ' · ' if not loop.last }}{% endfor %}</small>
+                        <small class="level-streak-now">{{ ngettext('Ahora: %(num)d día de racha → +%(pct)s %%', 'Ahora: %(num)d días de racha → +%(pct)s %%', streak_days, pct=streak_bonus) }}</small></td>
+                    <td>{{ _('hasta +%(pct)s %%', pct=p.STREAK_TIERS[0][1]) }}</td><td>{{ _("por entreno") }}</td>
+                </tr>
+                <tr>
                     <td><b>{{ _("Semana cumplida") }}</b>{{ _(": entrenas al menos tu mínimo semanal (el de la racha)") }}</td>
                     <td>{{ _('+%(n)s × mínimo', n=p.XP_WEEK_PER_MINIMUM) }}</td><td>{{ _("1 por semana") }}</td>
                 </tr>
@@ -72,6 +78,7 @@
         </table>
         <ul class="level-notes">
             <li><b>{{ _("No dan XP") }}</b>{{ _(": los logros (ya tienen su sitio), los estándares de fuerza (dependen de tu peso corporal y el XP subiría o bajaría al pesarte), pesarte ni abrir la app.") }}</li>
+            <li><b>{{ _("La racha premia la constancia, no entrenar sin descanso") }}</b>{{ _(": sus días solo suben entrenando, se mantiene semana a semana cumpliendo tu mínimo (descansar dentro de la semana no la corta) y sigue el tope de días con XP por semana. No multiplica récords, check-ins ni la semana cumplida.") }}</li>
             <li><b>{{ _("Descansar no resta.") }}</b> {{ _("Un día sin entreno da como mucho el check-in.") }}</li>
             <li><b>{{ _("Se limita el farmeo barato") }}</b>{{ _(": los topes evitan sumar XP con series sueltas o casi sin carga. Los pesos son los que apuntas tú, así que no se puede impedir del todo; el XP no da premios ni rankings.") }}</li>
             <li><b>{{ _("El XP sale de tus datos") }}</b>{{ _(": si borras un entreno o corriges una serie, se recalcula (y puede bajar).") }}</li>
@@ -90,7 +97,7 @@
                             <b>{{ w.total|num }} XP{% if w.capped %}<span class="level-capped" title="{{ _('Topes aplicados: %(caps)s', caps=w.capped|join(', ')) }}">*</span>{% endif %}</b>
                         </div>
                         <div class="level-week-parts">
-                            {{ _('Entrenos %(w)s · Series %(s)s · Récords %(p)s · Semana cumplida %(b)s · Check-in %(c)s', w=w.workout, s=w.sets, p=w.prs, b=w.bonus, c=w.checkins) }}
+                            {{ _('Entrenos %(w)s · Series %(s)s · Récords %(p)s · Racha %(r)s · Semana cumplida %(b)s · Check-in %(c)s', w=w.workout, s=w.sets, p=w.prs, r=w.streak, b=w.bonus, c=w.checkins) }}
                         </div>
                     </li>
                 {% endfor %}

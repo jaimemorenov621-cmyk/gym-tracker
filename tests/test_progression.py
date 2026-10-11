@@ -111,6 +111,31 @@ class RuleTests(unittest.TestCase):
         r = self.total(inputs(farm, checkins=checkins, goals=[(date(2026, 1, 1), 7)]))
         self.assertEqual(r.total, 105 + 280 + 70)  # ≤ 455 a la semana
 
+    def test_streak_bonus_grows_with_streak_days(self):
+        # Lunes, miércoles y viernes: el 7.º día de racha llega el miércoles de la 3.ª semana.
+        data = inputs([w(i + 1, week * 7 + day, [s()] * 4) for i, (week, day) in
+                       enumerate((wk, d) for wk in range(3) for d in (0, 2, 4))])
+        r = self.total(data)
+        self.assertEqual([r.by_workout[i]["streak_days"] for i in (1, 4, 7, 8)], [0, 3, 6, 7])
+        self.assertEqual(r.by_workout[7]["streak"], 0)
+        self.assertEqual((r.by_workout[8]["streak_pct"], r.by_workout[8]["streak"]), (10, 12))  # 10 % de 100 + 4×5
+        self.assertEqual(r.total, sum(wk["total"] for wk in r.weeks.values()))
+        self.assertEqual([xp.streak_pct(d) for d in (6, 7, 14, 30, 60, 100, 400)], [0, 10, 20, 30, 40, 50, 50])
+        # El primer día de una semana nueva sigue la racha de la anterior (fallo previo: daba 0).
+        with app.app_context():
+            before = xp._streak_days_before(data)
+        monday4 = (MONDAY + timedelta(days=21)).date()
+        self.assertEqual(before(monday4), 9)
+        self.assertEqual(before(monday4 + timedelta(days=7)), 0)  # semana 4 sin entrenar: cortada
+
+    def test_a_week_below_the_minimum_resets_the_streak(self):
+        goals = [(date(2026, 1, 1), 3)]
+        days = [0, 2, 4, 7, 9, 11, 14, 16, 21, 23, 25]  # la 3.ª semana solo 2 días (mínimo 3)
+        r = self.total(inputs([w(i + 1, d, [s()] * 4) for i, d in enumerate(days)], goals=goals))
+        self.assertEqual(r.by_workout[8]["streak_days"], 7)   # semana 3, miércoles: 6 + 1
+        self.assertEqual(r.by_workout[9]["streak_days"], 0)   # semana 4: la 3.ª no cumplió
+        self.assertEqual(r.by_workout[9]["streak"], 0)
+
     def test_levels(self):
         self.assertEqual(xp.xp_to_reach(1), 0)
         self.assertEqual(xp.xp_to_reach(2), 500)

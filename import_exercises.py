@@ -4,7 +4,7 @@ import urllib.request
 
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 from app import app, db
-from app.catalog_names import curated
+from app.catalog_names import curated, curated_en
 from app.models import Exercise
 
 JSON_URL = "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json"
@@ -14,6 +14,7 @@ IMAGE_BASE = "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercise
 # se traducían con Google Translate y salían nombres raros; un ejercicio que
 # no esté en el archivo se queda sin nombre en español (se ve el inglés).
 NAMES_ES = curated()
+NAMES_EN = curated_en()  # el inglés también, revisado (el del dataset sonaba raro)
 
 
 with app.app_context():
@@ -40,7 +41,7 @@ with app.app_context():
 
             exercise = Exercise(
                 id=item["id"],
-                name=item["name"],
+                name=NAMES_EN.get(item["id"], item["name"]),
                 name_es=name_es,
                 category=item.get("category"),
                 primary_muscles=", ".join(item.get("primaryMuscles", [])),

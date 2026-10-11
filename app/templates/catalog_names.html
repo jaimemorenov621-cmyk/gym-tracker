@@ -4,7 +4,8 @@
     <p class="page-back"><a href="{{ url_for('landing_stats') }}">← Estadísticas</a></p>
     <h1 class="page-title">Nombres del catálogo</h1>
     <p class="stats-footnote">
-        Nombres en español revisados a mano (app/data/exercise_names_es.json) en lugar de los de Google Translate.
+        Nombres revisados a mano: en español (app/data/exercise_names_es.json) en lugar de los de Google Translate, y en
+        inglés (exercise_names_en.json) en lugar de los originales del dataset.
         Al aplicar, las series, rutinas, notas y básicos de todos los usuarios pasan al nombre nuevo, así que el
         historial sigue unido. Desmarca los que hayas corregido tú y prefieras conservar.
     </p>
@@ -40,9 +41,9 @@
                 <tbody>
                     {% for c in changes %}
                         <tr>
-                            <td><input type="checkbox" name="ids" value="{{ c.id }}" checked aria-label="Aplicar {{ c.new }}"></td>
-                            <td>{{ c.old or '—' }}<br><small>{{ c.english }}</small></td>
-                            <td><b>{{ c.new }}</b></td>
+                            <td><input type="checkbox" name="ids" value="{{ c.id }}" checked aria-label="Aplicar {{ c.new_es }}"></td>
+                            <td>{{ c.old_es or '—' }}<br><small>{{ c.old_en }}</small></td>
+                            <td><b>{{ c.new_es }}</b><br><small>{{ c.new_en }}{% if c.new_en == c.old_en %} (igual){% endif %}</small></td>
                             <td>{{ c.sets if c.used else '' }}</td>
                         </tr>
                     {% endfor %}

@@ -29,7 +29,10 @@ from flask_babel import get_locale
 from app import db
 
 MAX_ENTRIES = 512
-TTL_SECONDS = 600
+# La validez la da la versión (cambia en cuanto cambian los datos); el TTL
+# solo cubre cambios sin rastro (SQL a mano). Con 10 min, casi cada visita
+# a Rango o Progreso recalculaba todo aunque nada hubiera cambiado.
+TTL_SECONDS = 6 * 3600
 
 _lock = threading.Lock()
 _cache = OrderedDict()

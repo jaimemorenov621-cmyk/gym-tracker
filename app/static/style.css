@@ -4586,3 +4586,12 @@ button.is-pending::after, input[type="submit"].is-pending::after, .active-toast.
 .catalog-names { margin: 12px 0; }
 .catalog-names th, .catalog-names td { text-align: left; vertical-align: top; }
 .catalog-names td small { color: var(--color-text-muted); }
+/* Rankings de amigos mientras llegan (/rango/amigos). */
+.ranking-loading { display: grid; gap: 10px; padding: 8px 0 4px; }
+.skeleton-line { display: block; height: 34px; border-radius: 10px; background: var(--color-surface-active); animation: skeleton-pulse 1.2s ease-in-out infinite; }
+.skeleton-line:nth-child(2) { width: 88%; }
+.skeleton-line:nth-child(3) { width: 72%; }
+@keyframes skeleton-pulse { 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .skeleton-line { animation: none; } }
+.level-streak-tiers, .level-streak-now { display: block; margin-top: 3px; font-size: 0.75rem; color: var(--color-text-muted); }
+.level-streak-now { color: var(--color-brand-deep); font-weight: 700; }

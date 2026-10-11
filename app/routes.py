@@ -211,10 +211,13 @@ def level_page():
     report = datacache.cached("xp_report", uid, lambda: progression.compute_xp(progression.load_xp_inputs(uid)))
     weeks = list(report.weeks.items())[:12]
     xp = progression.level_for(progression.current_xp(uid))
+    streak_days, streak_bonus = datacache.cached("streak_bonus", uid, lambda: progression.current_streak_bonus(uid))
     return render_template(
         "level.html",
         title=gettext("Nivel"),
         xp=xp,
+        streak_days=streak_days,
+        streak_bonus=streak_bonus,
         perk_rows=perks.perk_list(xp["level"]),
         weeks=weeks,
         profile=cached_profile(current_user),
@@ -2052,12 +2055,16 @@ def rank_page():
     """Pestaña Rango: tu emblema, el rango de cada básico (estándares), tu
     nivel y tus logros."""
     profile = cached_profile(current_user)
+    friend_count = len(social.friend_ids(current_user.id))
     return render_template(
         "rango.html",
         title=gettext("Rango"),
         profile=profile,
         personal_basics=personal_basics_data(current_user, profile),
-        rankings=friends_rankings(current_user),
+        friend_count=friend_count,
+        # Con amigos, los rankings leen el historial de cada uno: se piden
+        # aparte (/rango/amigos) para que la pestaña se abra sin esperarlos.
+        rankings={"friends": 0} if not friend_count else None,
         standards=standards,
         next_label=standards.next_rank_label(profile["global_rank"]),
         xp=progression.level_for(progression.current_xp(current_user.id)),
@@ -2066,6 +2073,13 @@ def rank_page():
         ),
         achievements_total=len(achievements.ACHIEVEMENTS),
     )
+
+
+@app.route("/rango/amigos")
+@login_required
+def rank_friends():
+    """Trozo de HTML con los rankings de amigos (lo pide la pestaña Rango)."""
+    return render_template("_rankings.html", rankings=friends_rankings(current_user), standards=standards)
 
 
 # ------------------------------------------------------------ amigos
