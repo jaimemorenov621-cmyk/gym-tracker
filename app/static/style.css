@@ -4607,3 +4607,16 @@ button.is-pending::after, input[type="submit"].is-pending::after, .active-toast.
     background: rgba(20, 12, 40, 0.72); color: #fff; pointer-events: auto; cursor: pointer;
     white-space: pre-line; max-width: calc(100vw - 16px);
 }
+
+/* Pulsación "pop" (base.html): al apoyar el dedo se encoge y al soltar
+   rebota hinchándose un poco. Va por JS porque :active casi no se ve con un
+   toque rápido en el móvil. */
+@media (prefers-reduced-motion: no-preference) {
+    .tap-down { transform: scale(0.94) !important; transition: transform 0.08s ease !important; }
+    .tap-pop { animation: tap-pop 0.28s cubic-bezier(0.3, 1.6, 0.5, 1) !important; }
+}
+@keyframes tap-pop {
+    0% { transform: scale(0.94); }
+    55% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+}

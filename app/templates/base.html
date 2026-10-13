@@ -834,6 +834,35 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }
+        // Pulsación "pop" en botones (ver .tap-down / .tap-pop en style.css).
+        // La casilla de serie hecha tiene su propia animación y no entra.
+        (function () {
+            if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const SEL = 'button, .btn, .btn-outline, .btn-icon, .btn-nav, .btn-inline, .bottom-nav-item, .pill, '
+                + '.rest-badge, .add-exercise-tile, .delete-tile, .ss-link-btn, .home-cta a, a.card-link';
+            const SKIP = '.set-check-btn, .drag-handle, [data-no-pop], .sortable-chosen';
+            let pressed = null;
+            document.addEventListener('pointerdown', function (e) {
+                const el = e.target.closest && e.target.closest(SEL);
+                if (!el || el.matches(SKIP) || el.disabled) return;
+                pressed = el;
+                el.classList.remove('tap-pop');
+                el.classList.add('tap-down');
+            }, { passive: true });
+            function release() {
+                if (!pressed) return;
+                const el = pressed;
+                pressed = null;
+                el.classList.remove('tap-down');
+                void el.offsetWidth;  // reinicia la animación si se pulsa seguido
+                el.classList.add('tap-pop');
+                el.addEventListener('animationend', function () { el.classList.remove('tap-pop'); }, { once: true });
+            }
+            document.addEventListener('pointerup', release, { passive: true });
+            document.addEventListener('pointercancel', function () {
+                if (pressed) { pressed.classList.remove('tap-down'); pressed = null; }
+            }, { passive: true });
+        })();
     </script>
     {% if show_timing %}
     {# Solo admin: tiempo del servidor (cabecera Server-Timing) frente al de la
