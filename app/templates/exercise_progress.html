@@ -202,23 +202,124 @@
     {% endif %}
 
     <h2 class="section-title">{{ _("Historial") }}</h2>
+    {% if sessions %}<p class="progress-footnote session-edit-hint">{{ _("¿Apuntaste algo en el ejercicio equivocado? Toca ⋮ para moverlo o borrarlo, o toca una serie para borrar solo esa.") }}</p>{% endif %}
     {% for s in sessions %}
+        {% set wid = s.sets[0].workout_id %}
+        {% set day = to_local(s.timestamp).strftime('%d/%m/%Y') %}
         <div class="card card-elevated session-card{% if s.is_pr %} session-card-pr{% endif %}">
             <div class="session-card-head">
-                <strong>{{ to_local(s.timestamp).strftime('%d/%m/%Y') }}</strong>
+                <strong>{{ day }}</strong>
                 <span>{{ to_local(s.timestamp).strftime('%H:%M') }}</span>
                 {% if s.is_pr %}<span class="session-pr-badge">{{ _("🏅 Récord") }}</span>{% endif %}
                 <span class="session-1rm">1RM {{ s.best_1rm|num }} kg</span>
+                <button type="button" class="session-menu-btn" data-workout="{{ wid }}" data-day="{{ day }}" data-count="{{ s.sets|length }}"
+                        data-url="{{ url_for('workout_detail', workout_id=wid) }}" aria-label="{{ _('Opciones de la sesión del %(day)s', day=day) }}">{{ macros.icon('menu-dots', 18) }}</button>
             </div>
             <div class="session-sets">
                 {% for e in s.sets if e.completed and e.weight > 0 and e.reps > 0 %}
-                    <span class="session-set{% if e.id == s.best_set.id %} best{% endif %}">
+                    <button type="button" class="session-set{% if e.id == s.best_set.id %} best{% endif %}" data-set="{{ e.id }}" data-day="{{ day }}">
                         {{ e.weight|num(2) }} kg × {{ e.reps }}{% if e.rir is not none %} <small>RIR {{ e.rir }}</small>{% elif e.rpe is not none %} <small>RPE {{ e.rpe }}</small>{% endif %}
-                    </span>
+                    </button>
                 {% endfor %}
             </div>
         </div>
     {% else %}
         <p class="progress-footnote">{{ _("Todavía no hay sesiones con series marcadas como hechas.") }}</p>
     {% endfor %}
+
+    {% if sessions %}
+    <div class="sheet-backdrop" id="sessionSheetBackdrop"></div>
+    <div class="bottom-sheet session-sheet" id="sessionSheet" role="dialog" aria-modal="true" aria-labelledby="sessionSheetTitle">
+        <div class="bottom-sheet-grabber" aria-hidden="true"></div>
+        <div class="bottom-sheet-header">
+            <h3 id="sessionSheetTitle" class="bottom-sheet-title"></h3>
+            <button type="button" class="sheet-close-btn" id="sessionSheetClose" aria-label="{{ _('Cerrar') }}">{{ macros.icon('close', 20) }}</button>
+        </div>
+        <div class="set-type-options">
+            <a class="set-type-option" id="sessionOpen" href="#">
+                <span class="session-sheet-icon" aria-hidden="true">{{ macros.icon('calendar', 20) }}</span>
+                <span class="set-type-option-text"><strong>{{ _("Ver el entreno") }}</strong><small>{{ _("Ábrelo para corregir pesos, repeticiones o series.") }}</small></span>
+            </a>
+            <button type="button" class="set-type-option" id="sessionMove">
+                <span class="session-sheet-icon" aria-hidden="true">{{ macros.icon('repeat', 20) }}</span>
+                <span class="set-type-option-text"><strong>{{ _("Mover a otro ejercicio") }}</strong><small id="sessionMoveDesc"></small></span>
+            </button>
+            <button type="button" class="set-type-option session-sheet-danger" id="sessionDelete">
+                <span class="session-sheet-icon" aria-hidden="true">{{ macros.icon('trash', 20) }}</span>
+                <span class="set-type-option-text"><strong>{{ _("Borrar esta sesión") }}</strong><small id="sessionDeleteDesc"></small></span>
+            </button>
+        </div>
+    </div>
+    {{ macros.exercise_picker_sheet() }}
+    <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
+    <script>
+        (function () {
+            const EXERCISE = {{ exercise|tojson }};
+            const TXT = {
+                title: {{ _("Sesión del {day}")|tojson }},
+                moveDesc: {{ _("Pasa sus {n} series al ejercicio correcto. Los récords de los dos se recalculan.")|tojson }},
+                deleteDesc: {{ _("Borra sus {n} series de este ejercicio; el resto del entreno no cambia.")|tojson }},
+                confirmSession: {{ _("¿Borrar las {n} series de este ejercicio del {day}? No se puede deshacer.")|tojson }},
+                confirmSet: {{ _("¿Borrar la serie {set} del {day}?")|tojson }},
+                moving: {{ _("Moviendo a {name}…")|tojson }},
+                moveError: {{ _("No se pudo mover la sesión.")|tojson }},
+                deleteError: {{ _("No se pudo borrar. Revisa la conexión.")|tojson }}
+            };
+            const sheet = document.getElementById('sessionSheet');
+            const backdrop = document.getElementById('sessionSheetBackdrop');
+            let current = null;
+
+            function openSheet(btn) {
+                current = btn.dataset;
+                document.getElementById('sessionSheetTitle').textContent = TXT.title.replace('{day}', current.day);
+                document.getElementById('sessionMoveDesc').textContent = TXT.moveDesc.replace('{n}', current.count);
+                document.getElementById('sessionDeleteDesc').textContent = TXT.deleteDesc.replace('{n}', current.count);
+                document.getElementById('sessionOpen').href = current.url;
+                sheet.classList.add('open');
+                backdrop.classList.add('open');
+            }
+            function closeSheet() {
+                sheet.classList.remove('open');
+                backdrop.classList.remove('open');
+            }
+            function post(url, body) {
+                gyreBusy(true);
+                return fetchWithTimeout(url, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body || {})
+                }).then(r => r.json()).then(function (data) {
+                    if (!data.ok) throw new Error();
+                    window.location.reload();
+                }).catch(function () {
+                    gyreBusy(false);
+                    gyreToast(TXT.deleteError, true);
+                });
+            }
+
+            document.querySelectorAll('.session-menu-btn').forEach(b => b.addEventListener('click', () => openSheet(b)));
+            backdrop.addEventListener('click', closeSheet);
+            document.getElementById('sessionSheetClose').addEventListener('click', closeSheet);
+            document.getElementById('sessionMove').addEventListener('click', function () {
+                const wid = current.workout;
+                closeSheet();
+                openExercisePicker('/workout/' + wid + '/exercise/replace', {old_exercise: EXERCISE},
+                                   {busy: TXT.moving, error: TXT.moveError});
+            });
+            document.getElementById('sessionDelete').addEventListener('click', function () {
+                const data = current;
+                closeSheet();
+                customConfirm(TXT.confirmSession.replace('{n}', data.count).replace('{day}', data.day)).then(function (ok) {
+                    if (ok) post('/workout/' + data.workout + '/exercise/delete', {exercise: EXERCISE});
+                });
+            });
+            document.querySelectorAll('.session-set[data-set]').forEach(function (chip) {
+                chip.addEventListener('click', function () {
+                    const label = chip.textContent.replace(/\s+/g, ' ').trim();
+                    customConfirm(TXT.confirmSet.replace('{set}', label).replace('{day}', chip.dataset.day)).then(function (ok) {
+                        if (ok) post('/set/' + chip.dataset.set + '/delete');
+                    });
+                });
+            });
+        })();
+    </script>
+    {% endif %}
 {% endblock %}

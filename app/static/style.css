@@ -3086,6 +3086,17 @@ a.progress-row:active { background: var(--color-surface-active); }
 .session-set { padding: 5px 10px; border-radius: 10px; background: var(--surface-3); font-size: 0.85rem; font-weight: 600; }
 .session-set small { color: var(--color-text-soft); font-weight: 500; }
 .session-set.best { background: var(--color-surface-active); color: var(--color-brand-dark); }
+.session-card-head { align-items: center; }
+button.session-set { border: 0; font-family: inherit; color: inherit; cursor: pointer; line-height: inherit; }
+button.session-set.best { color: var(--color-brand-dark); }
+.session-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: -6px -6px -6px 0;
+    border: 0; border-radius: 10px; background: transparent; color: var(--color-text-muted); cursor: pointer; }
+.session-menu-btn:hover { background: var(--surface-3); }
+.session-edit-hint { margin: -4px 0 10px; }
+.session-sheet a.set-type-option { text-decoration: none; color: inherit; }
+.session-sheet-icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex-shrink: 0;
+    border-radius: 10px; background: var(--surface-3); color: var(--accent); }
+.session-sheet-danger .session-sheet-icon, .session-sheet-danger strong { color: var(--color-danger, #c62828); }
 @media (max-width: 340px) {
     .exercise-stats { grid-template-columns: repeat(2, 1fr); }
 }

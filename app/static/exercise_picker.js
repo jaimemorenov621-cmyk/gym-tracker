@@ -4,6 +4,7 @@ let lastSearchQuery = '';
 let pickerErrorTimeout;
 let pickerReplaceUrl = null;
 let pickerReplaceExtra = null;
+let pickerReplaceTexts = null;
 const MUSCLE_OPTIONS = [
     ['shoulders', T('Hombros')],
     ['neck', T('Cuello')],
@@ -191,10 +192,11 @@ function selectExercise(name) {
         // Se ve al momento que está en marcha (barra de arriba + aviso), aunque
         // el servidor o la cobertura tarden.
         if (window.gyreBusy) gyreBusy(true);
-        if (window.gyreToast) gyreToast(T('Reemplazando por {name}…').replace('{name}', name));
+        const texts = pickerReplaceTexts || {};
+        if (window.gyreToast) gyreToast((texts.busy || T('Reemplazando por {name}…')).replace('{name}', name));
         const failed = function () {
             if (window.gyreBusy) gyreBusy(false);
-            showPickerErrorToast(T('No se pudo reemplazar el ejercicio.'));
+            showPickerErrorToast(texts.error || T('No se pudo reemplazar el ejercicio.'));
         };
         (window.fetchWithTimeout || fetch)(pickerReplaceUrl, {
             method: 'POST',
@@ -242,9 +244,12 @@ function resetExercisePickerResults() {
         });
 }
 
-function openExercisePicker(replaceUrl, replaceExtra) {
+// texts (opcional): {busy, error} propios en vez de "Reemplazando…" (p. ej.
+// al mover una sesión desde el historial); `busy` admite {name}.
+function openExercisePicker(replaceUrl, replaceExtra, texts) {
     pickerReplaceUrl = replaceUrl || null;
     pickerReplaceExtra = replaceExtra || null;
+    pickerReplaceTexts = texts || null;
     document.getElementById('exercisePickerBackdrop').classList.add('open');
     document.getElementById('exercisePickerSheet').classList.add('open');
     document.body.style.overflow = 'hidden';

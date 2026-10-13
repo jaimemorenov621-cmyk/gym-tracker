@@ -1486,18 +1486,9 @@ def add_exercise_to_workout(workout_id):
     return redirect(url_for("workout_detail", workout_id=workout.id))
 
 
-@app.route("/workout/<int:workout_id>/exercise/replace", methods=["POST"])
-@login_required
-def replace_workout_exercise(workout_id):
-    workout = db.get_or_404(Workout, workout_id)
-    if workout.author != current_user:
-        return jsonify({"ok": False}), 403
-    data = request.get_json(silent=True) or {}
-    old_name = (data.get("old_exercise") or "").strip().lower()
-    new_name = (data.get("exercise") or "").strip()
-    if not old_name or not new_name:
-        return jsonify({"ok": False}), 400
-    new_name = canonicalize_exercise_name(new_name)
+def move_exercise_in_workout(workout, old_name, new_name):
+    """Pasa las series de `old_name` de un entreno a `new_name` (ejercicio
+    equivocado o reemplazo), con su orden y su biserie. Sin commit."""
     sets = db.session.scalars(
         workout.sets.select().where(SetEntry.exercise == old_name)
     ).all()
@@ -1519,6 +1510,32 @@ def replace_workout_exercise(workout_id):
     if new_name != old_name:
         supersets_mod.rename(workout, old_name, new_name)
 
+
+def recompute_exercise_prs(user_id, *names):
+    """Tras mover o borrar series, la medalla de récord de TODAS las sesiones
+    de esos ejercicios se recalcula: quitar un récord puede convertir en
+    récord una sesión posterior. Sin commit."""
+    for name in dict.fromkeys(names):
+        sessions, _, _ = get_exercise_sessions(name, user_id=user_id)
+        for session in sessions:
+            apply_pr_flags_for_session(session)
+
+
+@app.route("/workout/<int:workout_id>/exercise/replace", methods=["POST"])
+@login_required
+def replace_workout_exercise(workout_id):
+    workout = db.get_or_404(Workout, workout_id)
+    if workout.author != current_user:
+        return jsonify({"ok": False}), 403
+    data = request.get_json(silent=True) or {}
+    old_name = (data.get("old_exercise") or "").strip().lower()
+    new_name = (data.get("exercise") or "").strip()
+    if not old_name or not new_name:
+        return jsonify({"ok": False}), 400
+    new_name = canonicalize_exercise_name(new_name)
+    move_exercise_in_workout(workout, old_name, new_name)
+    db.session.flush()
+    recompute_exercise_prs(workout.user_id, old_name, new_name)
     db.session.commit()
     return jsonify({"ok": True, "exercise": new_name})
 
@@ -1539,6 +1556,8 @@ def delete_workout_exercise(workout_id):
     for s in sets:
         db.session.delete(s)
     supersets_mod.remove(workout, exercise)
+    db.session.flush()
+    recompute_exercise_prs(workout.user_id, exercise)
     db.session.commit()
     return jsonify({"ok": True})
 
@@ -1785,7 +1804,11 @@ def api_delete_set(set_id):
     entry = db.get_or_404(SetEntry, set_id)
     if entry.workout.author != current_user:
         return jsonify({"ok": False}), 403
+    counted, exercise, user_id = entry.completed, entry.exercise, entry.workout.user_id
     db.session.delete(entry)
+    if counted:  # una serie sin hacer no cuenta para ningún récord
+        db.session.flush()
+        recompute_exercise_prs(user_id, exercise)
     db.session.commit()
     return jsonify({"ok": True})
 
