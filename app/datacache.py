@@ -95,7 +95,10 @@ def cached(name, user_id, compute, *extra):
             break
         # Otro hilo (p. ej. el precálculo al terminar un entreno) ya lo está
         # calculando con estos mismos datos: se espera en vez de repetirlo.
+        # La espera también sale en el indicador del admin ("… espera N").
+        t_wait = time.perf_counter()
         running.wait(INFLIGHT_WAIT_SECONDS)
+        note_recompute(f"{name} espera", t_wait)
     else:
         owner = False
     t0 = time.perf_counter()

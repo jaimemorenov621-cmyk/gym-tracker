@@ -31,10 +31,15 @@ class InflightTests(DbTestCase):
             t.start()
             time.sleep(0.05)  # el primero ya está calculando
             with app.test_request_context():
+                from flask import g
                 results.append(datacache.cached("x", uid, slow))
+                noted = list(g.get("_recomputed", []))
             t.join()
         self.assertEqual(results, ["hecho", "hecho"])
         self.assertEqual(len(calls), 1)
+        # La espera sale en el indicador del admin: si no, ese tiempo no tenía explicación.
+        self.assertEqual(len(noted), 1)
+        self.assertTrue(noted[0].startswith("x espera "), noted)
 
 
 class mock_version:
