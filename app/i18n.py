@@ -120,6 +120,15 @@ JS_STRINGS = [
     N_("No se pudo preparar la tarjeta."),
     N_("¡Nuevo récord!"),
     N_("🏅 Nuevo récord en {name}: {kg} kg × {reps} (1RM est. {e1rm} kg). Lo apunto todo con Gyre 👉 {url}"),
+    N_("Comparte tu rango"),
+    N_("Comparte tu logro"),
+    N_("Tarjeta de rango: {name}"),
+    N_("Tarjeta del logro {name}"),
+    N_("MI RANGO DE FUERZA"),
+    N_("LOGRO DESBLOQUEADO"),
+    N_("🎖️ Mi rango de fuerza: {rank}. Lo apunto todo con Gyre 👉 {url}"),
+    N_("🎖️ Mi rango de fuerza en {name}: {rank}. Lo apunto todo con Gyre 👉 {url}"),
+    N_("{emoji} Logro desbloqueado: {name}. Lo apunto todo con Gyre 👉 {url}"),
 ]
 
 

@@ -1,6 +1,8 @@
-// Tarjeta "Nuevo récord" para compartir en historias (Instagram, WhatsApp...).
-// Se dibuja en un <canvas> en el propio navegador (sin servidor de imágenes)
-// con los datos de GET /set/<id>/share, y se comparte con la Web Share API
+// Tarjetas para compartir en historias (Instagram, WhatsApp...): récord
+// (GET /set/<id>/share), rango (GET /share/rank/<global|lift>) y logro
+// (GET /share/achievement/<code>); d.kind dice cuál. Se dibujan en un
+// <canvas> en el propio navegador (sin servidor de imágenes) y se comparten
+// con la Web Share API
 // (archivo PNG + texto con enlace ?ref=compartir); si el navegador no puede
 // compartir archivos (escritorio), se descarga.
 
@@ -100,66 +102,7 @@
         if ('letterSpacing' in ctx) ctx.letterSpacing = px + 'px';
     }
 
-    async function drawCard(d, design) {
-        design = design || CLASSIC;
-        const canvas = document.createElement('canvas');
-        canvas.width = W;
-        canvas.height = H;
-        const ctx = canvas.getContext('2d');
-        if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
-        const logo = await loadLogo();
-
-        // Fondo: mismo lenguaje que la landing (oscuro + brillos morado/verde).
-        const bg = ctx.createLinearGradient(0, 0, 0, H);
-        bg.addColorStop(0, design.bg[0]);
-        bg.addColorStop(1, design.bg[1]);
-        ctx.fillStyle = bg;
-        ctx.fillRect(0, 0, W, H);
-        [[880, 260, 760, design.glows[0]], [140, 1700, 700, design.glows[1]]].forEach(function (g) {
-            const rg = ctx.createRadialGradient(g[0], g[1], 0, g[0], g[1], g[2]);
-            rg.addColorStop(0, g[3]);
-            rg.addColorStop(1, 'rgba(0, 0, 0, 0)');
-            ctx.fillStyle = rg;
-            ctx.fillRect(0, 0, W, H);
-        });
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'alphabetic';
-
-        // Marca arriba: logo + "Gyre".
-        ctx.font = '800 68px ' + FONT;
-        const brandW = ctx.measureText('Gyre').width;
-        const logoSize = logo ? 92 : 0, gap = logo ? 22 : 0;
-        const startX = (W - (logoSize + gap + brandW)) / 2;
-        if (logo) ctx.drawImage(logo, startX, 150, logoSize, logoSize);
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'left';
-        ctx.fillText('Gyre', startX + logoSize + gap, 218);
-        ctx.textAlign = 'center';
-
-        // Insignia de nivel (y rango con su emblema), ventaja a partir del nivel 10.
-        if (d.badge) {
-            const emblem = d.rank_key ? await loadImage('/static/ranks/' + d.rank_key + '-512.webp') : null;
-            const es_ = emblem ? 84 : 0;
-            ctx.font = '800 38px ' + FONT;
-            setSpacing(ctx, 4);
-            const tw = ctx.measureText(d.badge).width;
-            const bw = tw + 64 + (emblem ? es_ - 10 : 0);
-            const bx = (W - bw) / 2;
-            roundRect(ctx, bx, 282, bw, 70, 35);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
-            ctx.fill();
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = design.kicker;
-            ctx.stroke();
-            if (emblem) ctx.drawImage(emblem, bx + 6, 275, es_, es_);
-            ctx.fillStyle = design.kicker;
-            ctx.textAlign = 'left';
-            ctx.fillText(d.badge, bx + 32 + (emblem ? es_ - 10 : 0), 330);
-            ctx.textAlign = 'center';
-            setSpacing(ctx, 0);
-        }
-
+    function drawRecord(ctx, d, design) {
         // Centrado vertical del bloque central: sin la píldora de mejora y
         // con el nombre en una sola línea queda más bajo, así no deja un
         // hueco grande encima de la fecha.
@@ -222,6 +165,142 @@
         }
 
         ctx.translate(0, -off);
+    }
+
+    // Texto en una línea que se encoge hasta caber (mínimo `min` px).
+    function fitText(ctx, text, weight, size, maxWidth, min) {
+        ctx.font = weight + ' ' + size + 'px ' + FONT;
+        while (ctx.measureText(text).width > maxWidth && size > min) {
+            size -= 6;
+            ctx.font = weight + ' ' + size + 'px ' + FONT;
+        }
+        return size;
+    }
+
+    function gradientText(ctx, text, y, design) {
+        const mw = ctx.measureText(text).width;
+        const grad = ctx.createLinearGradient((W - mw) / 2, 0, (W + mw) / 2, 0);
+        grad.addColorStop(0, design.metric[0]);
+        grad.addColorStop(0.55, design.metric[1]);
+        grad.addColorStop(1, design.metric[2]);
+        ctx.fillStyle = grad;
+        ctx.fillText(text, W / 2, y);
+    }
+
+    function kicker(ctx, text, y, design) {
+        ctx.font = '800 44px ' + FONT;
+        setSpacing(ctx, 8);
+        ctx.fillStyle = design.kicker;
+        ctx.fillText(text, W / 2, y);
+        setSpacing(ctx, 0);
+    }
+
+    // Rango: el emblema grande, el rango y de qué es (global o un básico).
+    async function drawRank(ctx, d, design) {
+        const emblem = d.emblem ? await loadImage('/static/ranks/' + d.emblem + '-512.webp') : null;
+        if (emblem) ctx.drawImage(emblem, (W - 600) / 2, 400, 600, 600);
+        kicker(ctx, T('MI RANGO DE FUERZA'), 1090, design);
+        fitText(ctx, d.label, '800', 160, 900, 96);
+        gradientText(ctx, d.label, 1270, design);
+        fitText(ctx, d.subtitle, '800', 70, 940, 44);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(d.subtitle, W / 2, 1385);
+        if (d.detail) {
+            fitText(ctx, d.detail, '600', 48, 940, 32);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.78)';
+            ctx.fillText(d.detail, W / 2, 1470);
+        }
+    }
+
+    // Logro: su emoji, el título y la descripción.
+    function drawAchievement(ctx, d, design) {
+        ctx.font = '260px ' + FONT;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(d.emoji, W / 2, 780);
+        kicker(ctx, T('LOGRO DESBLOQUEADO'), 920, design);
+        const name = fitName(ctx, d.title);
+        ctx.fillStyle = '#ffffff';
+        let y = 1070;
+        name.lines.forEach(function (line) { ctx.fillText(line, W / 2, y); y += Math.round(name.size * 1.18); });
+        ctx.font = '500 50px ' + FONT;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        y += 40;
+        wrapLines(ctx, d.desc || '', 900, 3).forEach(function (line) { ctx.fillText(line, W / 2, y); y += 68; });
+        if (d.category) {
+            ctx.font = '700 40px ' + FONT;
+            const tw = ctx.measureText(d.category).width;
+            const pw = tw + 72, ph = 80, px = (W - pw) / 2, py = y + 30;
+            roundRect(ctx, px, py, pw, ph, 40);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fill();
+            ctx.fillStyle = design.kicker;
+            ctx.fillText(d.category, W / 2, py + 54);
+        }
+    }
+
+    async function drawCard(d, design) {
+        design = design || CLASSIC;
+        const canvas = document.createElement('canvas');
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        if (document.fonts && document.fonts.ready) { try { await document.fonts.ready; } catch (e) {} }
+        const logo = await loadLogo();
+
+        // Fondo: mismo lenguaje que la landing (oscuro + brillos morado/verde).
+        const bg = ctx.createLinearGradient(0, 0, 0, H);
+        bg.addColorStop(0, design.bg[0]);
+        bg.addColorStop(1, design.bg[1]);
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+        [[880, 260, 760, design.glows[0]], [140, 1700, 700, design.glows[1]]].forEach(function (g) {
+            const rg = ctx.createRadialGradient(g[0], g[1], 0, g[0], g[1], g[2]);
+            rg.addColorStop(0, g[3]);
+            rg.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = rg;
+            ctx.fillRect(0, 0, W, H);
+        });
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+
+        // Marca arriba: logo + "Gyre".
+        ctx.font = '800 68px ' + FONT;
+        const brandW = ctx.measureText('Gyre').width;
+        const logoSize = logo ? 92 : 0, gap = logo ? 22 : 0;
+        const startX = (W - (logoSize + gap + brandW)) / 2;
+        if (logo) ctx.drawImage(logo, startX, 150, logoSize, logoSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'left';
+        ctx.fillText('Gyre', startX + logoSize + gap, 218);
+        ctx.textAlign = 'center';
+
+        // Insignia de nivel (y rango con su emblema), ventaja a partir del nivel 10.
+        if (d.badge) {
+            const emblem = d.rank_key ? await loadImage('/static/ranks/' + d.rank_key + '-512.webp') : null;
+            const es_ = emblem ? 84 : 0;
+            ctx.font = '800 38px ' + FONT;
+            setSpacing(ctx, 4);
+            const tw = ctx.measureText(d.badge).width;
+            const bw = tw + 64 + (emblem ? es_ - 10 : 0);
+            const bx = (W - bw) / 2;
+            roundRect(ctx, bx, 282, bw, 70, 35);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = design.kicker;
+            ctx.stroke();
+            if (emblem) ctx.drawImage(emblem, bx + 6, 275, es_, es_);
+            ctx.fillStyle = design.kicker;
+            ctx.textAlign = 'left';
+            ctx.fillText(d.badge, bx + 32 + (emblem ? es_ - 10 : 0), 330);
+            ctx.textAlign = 'center';
+            setSpacing(ctx, 0);
+        }
+
+        if (d.kind === 'rank') await drawRank(ctx, d, design);
+        else if (d.kind === 'achievement') drawAchievement(ctx, d, design);
+        else drawRecord(ctx, d, design);
 
         // Fecha y pie con el enlace.
         ctx.font = '600 42px ' + FONT;
@@ -254,7 +333,7 @@
         sheet.innerHTML =
             '<div class="bottom-sheet-grabber" aria-hidden="true"></div>' +
             '<div class="bottom-sheet-header">' +
-            '<h3 class="bottom-sheet-title">' + T('Comparte tu récord') + '</h3>' +
+            '<h3 class="bottom-sheet-title share-card-title">' + T('Comparte tu récord') + '</h3>' +
             '<button type="button" class="sheet-close-btn" aria-label="' + T('Cerrar') + '">' +
             '<svg class="icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
             '</button></div>' +
@@ -278,7 +357,11 @@
         currentBlob = await drawCard(currentData, design);
         if (currentUrl) URL.revokeObjectURL(currentUrl);
         currentUrl = URL.createObjectURL(currentBlob);
-        preview.innerHTML = '<img src="' + currentUrl + '" alt="' + T('Tarjeta de récord de {name}').replace('{name}', currentData.exercise.replace(/"/g, '')) + '">';
+        const img = document.createElement('img');
+        img.src = currentUrl;
+        img.alt = cardAlt(currentData);
+        preview.innerHTML = '';
+        preview.appendChild(img);
         sheet.querySelectorAll('.share-design').forEach(function (b) {
             const on = b.dataset.key === design.key;
             b.classList.toggle('selected', on);
@@ -314,9 +397,22 @@
         document.body.style.overflow = '';
     }
 
-    async function openShareCard(setId) {
+    const TITLES = {record: 'Comparte tu récord', rank: 'Comparte tu rango', achievement: 'Comparte tu logro'};
+
+    function cardAlt(d) {
+        if (d.kind === 'rank') return T('Tarjeta de rango: {name}').replace('{name}', d.label + ' · ' + d.subtitle);
+        if (d.kind === 'achievement') return T('Tarjeta del logro {name}').replace('{name}', d.title);
+        return T('Tarjeta de récord de {name}').replace('{name}', d.exercise);
+    }
+
+    // openShareCard(idDeSerie) para un récord, u openShareCard({kind:
+    // 'rank'|'achievement', key}) para un rango o un logro.
+    async function openShareCard(arg) {
         hidePrShareToast();
+        const kind = (arg && typeof arg === 'object') ? arg.kind : 'record';
+        const url = kind === 'record' ? '/set/' + arg + '/share' : '/share/' + kind + '/' + encodeURIComponent(arg.key);
         const sheet = ensureSheet();
+        sheet.querySelector('.share-card-title').textContent = T(TITLES[kind] || TITLES.record);
         const preview = sheet.querySelector('.share-card-preview');
         preview.innerHTML = '<span class="share-card-loading">' + T('Preparando tarjeta…') + '</span>';
         sheet.querySelectorAll('.share-card-actions button').forEach(function (b) { b.disabled = true; });
@@ -325,7 +421,7 @@
         document.body.style.overflow = 'hidden';
 
         try {
-            const res = await fetch('/set/' + setId + '/share');
+            const res = await fetch(url);
             const data = await res.json();
             if (!data.ok) throw new Error(data.error || T('No se pudo preparar la tarjeta.'));
             currentData = data;
@@ -339,6 +435,18 @@
     }
 
     function shareText(d) {
+        if (d.kind === 'rank' && d.global) {
+            return T('🎖️ Mi rango de fuerza: {rank}. Lo apunto todo con Gyre 👉 {url}')
+                .replace('{rank}', d.label).replace('{url}', d.share_url);
+        }
+        if (d.kind === 'rank') {
+            return T('🎖️ Mi rango de fuerza en {name}: {rank}. Lo apunto todo con Gyre 👉 {url}')
+                .replace('{name}', d.subtitle).replace('{rank}', d.label).replace('{url}', d.share_url);
+        }
+        if (d.kind === 'achievement') {
+            return T('{emoji} Logro desbloqueado: {name}. Lo apunto todo con Gyre 👉 {url}')
+                .replace('{emoji}', d.emoji).replace('{name}', d.title).replace('{url}', d.share_url);
+        }
         return T('🏅 Nuevo récord en {name}: {kg} kg × {reps} (1RM est. {e1rm} kg). Lo apunto todo con Gyre 👉 {url}')
             .replace('{name}', d.exercise).replace('{kg}', es(d.weight)).replace('{reps}', d.reps)
             .replace('{e1rm}', d.e1rm).replace('{url}', d.share_url);
@@ -346,7 +454,7 @@
 
     async function shareCurrent() {
         if (!currentBlob) return;
-        const file = new File([currentBlob], 'gyre-record.png', { type: 'image/png' });
+        const file = new File([currentBlob], fileName(currentData), { type: 'image/png' });
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
             try {
                 await navigator.share({ files: [file], text: shareText(currentData) });
@@ -358,11 +466,15 @@
         }
     }
 
+    function fileName(d) {
+        return 'gyre-' + ({rank: 'rango', achievement: 'logro'}[d && d.kind] || 'record') + '.png';
+    }
+
     function downloadCurrent() {
         if (!currentUrl) return;
         const a = document.createElement('a');
         a.href = currentUrl;
-        a.download = 'gyre-record.png';
+        a.download = fileName(currentData);
         document.body.appendChild(a);
         a.click();
         a.remove();

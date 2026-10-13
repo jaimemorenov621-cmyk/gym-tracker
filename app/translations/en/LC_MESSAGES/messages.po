@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-13 19:43+0000\n"
+"POT-Creation-Date: 2026-10-13 19:49+0000\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -41,6 +41,7 @@ msgid "Volumen"
 msgstr "Volume"
 
 #: app/achievements.py:40 app/templates/_rankings.html:9
+#: app/templates/share_gallery.html:23
 msgid "Récords"
 msgstr "Records"
 
@@ -1878,11 +1879,11 @@ msgstr "Equipment (optional)"
 msgid "Crear y usar"
 msgstr "Create and use"
 
-#: app/i18n.py:91 app/routes.py:3837
+#: app/i18n.py:91 app/routes.py:3929
 msgid "El nombre es obligatorio."
 msgstr "Name is required."
 
-#: app/i18n.py:92 app/routes.py:3839
+#: app/i18n.py:92 app/routes.py:3931
 msgid "Elige al menos un músculo primario."
 msgstr "Choose at least one primary muscle."
 
@@ -1987,7 +1988,8 @@ msgstr "Preparing card…"
 msgid "Diseño de la tarjeta"
 msgstr "Card design"
 
-#: app/i18n.py:116 app/templates/finish_workout.html:41
+#: app/i18n.py:116 app/templates/achievements.html:52
+#: app/templates/finish_workout.html:41
 msgid "Compartir"
 msgstr "Share"
 
@@ -2021,6 +2023,47 @@ msgid ""
 msgstr ""
 "🏅 New record on {name}: {kg} kg × {reps} (est. 1RM {e1rm} kg). I log "
 "everything with Gyre 👉 {url}"
+
+#: app/i18n.py:123
+msgid "Comparte tu rango"
+msgstr "Share your rank"
+
+#: app/i18n.py:124
+msgid "Comparte tu logro"
+msgstr "Share your achievement"
+
+#: app/i18n.py:125
+#, python-brace-format
+msgid "Tarjeta de rango: {name}"
+msgstr "Rank card: {name}"
+
+#: app/i18n.py:126
+#, python-brace-format
+msgid "Tarjeta del logro {name}"
+msgstr "Achievement card: {name}"
+
+#: app/i18n.py:127
+msgid "MI RANGO DE FUERZA"
+msgstr "MY STRENGTH RANK"
+
+#: app/i18n.py:128
+msgid "LOGRO DESBLOQUEADO"
+msgstr "ACHIEVEMENT UNLOCKED"
+
+#: app/i18n.py:129
+#, python-brace-format
+msgid "🎖️ Mi rango de fuerza: {rank}. Lo apunto todo con Gyre 👉 {url}"
+msgstr "🎖️ My strength rank: {rank}. I log everything with Gyre 👉 {url}"
+
+#: app/i18n.py:130
+#, python-brace-format
+msgid "🎖️ Mi rango de fuerza en {name}: {rank}. Lo apunto todo con Gyre 👉 {url}"
+msgstr "🎖️ My strength rank in {name}: {rank}. I log everything with Gyre 👉 {url}"
+
+#: app/i18n.py:131
+#, python-brace-format
+msgid "{emoji} Logro desbloqueado: {name}. Lo apunto todo con Gyre 👉 {url}"
+msgstr "{emoji} Achievement unlocked: {name}. I log everything with Gyre 👉 {url}"
 
 #: app/importer.py:101
 msgid "El archivo es demasiado grande (máximo 10 MB)."
@@ -2150,7 +2193,7 @@ msgstr "Calves"
 
 #: app/routes.py:183 app/templates/achievements.html:4
 #: app/templates/index.html:305 app/templates/rango.html:89
-#: app/templates/settings.html:152
+#: app/templates/settings.html:152 app/templates/share_gallery.html:39
 msgid "Logros"
 msgstr "Achievements"
 
@@ -2196,7 +2239,7 @@ msgstr ""
 msgid "No tienes acceso a esta página."
 msgstr "You don't have access to this page."
 
-#: app/routes.py:881 app/routes.py:2944
+#: app/routes.py:881 app/routes.py:3036
 msgid "mañana"
 msgstr "tomorrow"
 
@@ -2279,7 +2322,7 @@ msgstr "History"
 msgid "Inicio"
 msgstr "Home"
 
-#: app/routes.py:1235 app/routes.py:2607
+#: app/routes.py:1235 app/routes.py:2699
 msgid "Notas guardadas."
 msgstr "Notes saved."
 
@@ -2352,7 +2395,7 @@ msgstr "%(day)s workout"
 msgid "No se pudo empezar el entreno. Inténtalo de nuevo."
 msgstr "Couldn't start the workout. Please try again."
 
-#: app/routes.py:1436 app/routes.py:3499
+#: app/routes.py:1436 app/routes.py:3591
 msgid "Ya tienes un entreno en curso — termínalo antes de empezar otro."
 msgstr ""
 "You already have a workout in progress — finish it before starting "
@@ -2362,8 +2405,8 @@ msgstr ""
 msgid "El nombre no puede estar vacío."
 msgstr "The name can't be empty."
 
-#: app/routes.py:1465 app/routes.py:1841 app/routes.py:1991 app/routes.py:2102
-#: app/routes.py:3869
+#: app/routes.py:1465 app/routes.py:1933 app/routes.py:2083 app/routes.py:2194
+#: app/routes.py:3961
 msgid "No tienes acceso a este entrenamiento."
 msgstr "You don't have access to this workout."
 
@@ -2371,39 +2414,78 @@ msgstr "You don't have access to this workout."
 msgid "Marca la serie como hecha para compartirla."
 msgstr "Mark the set as done to share it."
 
-#: app/routes.py:1781
+#: app/routes.py:1800
 #, python-format
 msgid "NIVEL %(n)s"
 msgstr "LEVEL %(n)s"
 
-#: app/routes.py:1913 app/templates/_workout_history.html:7
+#: app/routes.py:1819
+msgid "Rango global"
+msgstr "Global rank"
+
+#: app/routes.py:1820
+#, python-format
+msgid "Media de %(num)d básico"
+msgid_plural "Media de %(num)d básicos"
+msgstr[0] "Average of %(num)d basic"
+msgstr[1] "Average of %(num)d basics"
+
+#: app/routes.py:1826 app/templates/rango.html:192
+#, python-format
+msgid "1RM estimado: tu peso %(kg)s kg"
+msgstr "Estimated 1RM: your weight %(kg)s kg"
+
+#: app/routes.py:1828 app/templates/rango.html:193 app/templates/rango.html:195
+#, python-format
+msgid "1RM estimado %(kg)s kg"
+msgstr "Estimated 1RM %(kg)s kg"
+
+#: app/routes.py:1830 app/templates/rango.html:193
+#, python-format
+msgid "%(x)s× tu peso"
+msgstr "%(x)s× your weight"
+
+#: app/routes.py:1839
+msgid "Ahora mismo no tienes ese rango."
+msgstr "You don't have that rank right now."
+
+#: app/routes.py:1852
+msgid "Todavía no tienes este logro."
+msgstr "You haven't unlocked this achievement yet."
+
+#: app/routes.py:1889 app/templates/rango.html:94
+#: app/templates/share_gallery.html:5
+msgid "Mis tarjetas"
+msgstr "My cards"
+
+#: app/routes.py:2005 app/templates/_workout_history.html:7
 #: app/templates/base.html:179 app/templates/finish_workout.html:9
 #: app/templates/settings.html:58 app/templates/workout_detail.html:7
 msgid "Entrenamiento"
 msgstr "Workout"
 
-#: app/routes.py:2003
+#: app/routes.py:2095
 msgid ""
 "No puedes finalizar un entrenamiento sin ninguna serie con repeticiones "
 "registradas."
 msgstr "You can't finish a workout without any set with reps logged."
 
-#: app/routes.py:2026
+#: app/routes.py:2118
 #, python-format
 msgid "Entrenamiento guardado. Se eliminó %(num)d serie vacía sin rellenar."
 msgid_plural "Entrenamiento guardado. Se eliminaron %(num)d series vacías sin rellenar."
 msgstr[0] "Workout saved. %(num)d empty set was removed."
 msgstr[1] "Workout saved. %(num)d empty sets were removed."
 
-#: app/routes.py:2029
+#: app/routes.py:2121
 msgid "Entrenamiento guardado."
 msgstr "Workout saved."
 
-#: app/routes.py:2036
+#: app/routes.py:2128
 msgid "Entreno"
 msgstr "Workout"
 
-#: app/routes.py:2038 app/templates/exercise_muscles.html:18
+#: app/routes.py:2130 app/templates/exercise_muscles.html:18
 #: app/templates/import_review.html:7 app/templates/import_review.html:15
 #, python-format
 msgid "%(num)d serie"
@@ -2411,153 +2493,153 @@ msgid_plural "%(num)d series"
 msgstr[0] "%(num)d set"
 msgstr[1] "%(num)d sets"
 
-#: app/routes.py:2040 app/templates/_rankings.html:24
+#: app/routes.py:2132 app/templates/_rankings.html:24
 #, python-format
 msgid "%(num)d récord"
 msgid_plural "%(num)d récords"
 msgstr[0] "%(num)d record"
 msgstr[1] "%(num)d records"
 
-#: app/routes.py:2042 app/templates/level.html:70
+#: app/routes.py:2134 app/templates/level.html:70
 msgid "Semana cumplida"
 msgstr "Week completed"
 
-#: app/routes.py:2043
+#: app/routes.py:2135
 msgid "Entreno terminado"
 msgstr "Workout finished"
 
-#: app/routes.py:2083 app/templates/landing.html:103
+#: app/routes.py:2175 app/templates/landing.html:103
 #: app/templates/workout_detail.html:435
 msgid "Terminar entreno"
 msgstr "Finish workout"
 
-#: app/routes.py:2109
+#: app/routes.py:2201
 msgid "Entrenamiento eliminado."
 msgstr "Workout deleted."
 
-#: app/routes.py:2187 app/templates/_rankings.html:8
+#: app/routes.py:2279 app/templates/_rankings.html:8
 #: app/templates/base.html:136 app/templates/base.html:162
 #: app/templates/progress.html:4
 msgid "Progreso"
 msgstr "Progress"
 
-#: app/routes.py:2209 app/templates/_rankings.html:11
+#: app/routes.py:2301 app/templates/_rankings.html:11
 #: app/templates/base.html:137 app/templates/base.html:166
 #: app/templates/rango.html:4
 msgid "Rango"
 msgstr "Rank"
 
-#: app/routes.py:2322 app/templates/friends.html:5 app/templates/rango.html:98
+#: app/routes.py:2414 app/templates/friends.html:5 app/templates/rango.html:103
 msgid "Amigos"
 msgstr "Friends"
 
-#: app/routes.py:2345
+#: app/routes.py:2437
 msgid "Ese enlace de invitación no es válido."
 msgstr "That invite link isn't valid."
 
-#: app/routes.py:2345
+#: app/routes.py:2437
 msgid "Ese es tu propio enlace de invitación."
 msgstr "That's your own invite link."
 
-#: app/routes.py:2347
+#: app/routes.py:2439
 msgid "Invitación"
 msgstr "Invite"
 
-#: app/routes.py:2372
+#: app/routes.py:2464
 msgid "Solo puedes ver la tarjeta de tus amigos."
 msgstr "You can only see your friends' cards."
 
-#: app/routes.py:2400
+#: app/routes.py:2492
 msgid "Tarjeta guardada."
 msgstr "Card saved."
 
-#: app/routes.py:2403 app/routes.py:2485
+#: app/routes.py:2495 app/routes.py:2577
 msgid "La sesión ha caducado: recarga la página."
 msgstr "Your session expired: reload the page."
 
-#: app/routes.py:2408
+#: app/routes.py:2500
 msgid "Tu tarjeta"
 msgstr "Your card"
 
-#: app/routes.py:2473
+#: app/routes.py:2565
 #, python-format
 msgid "Como mucho %(n)s básicos: se han guardado los %(n)s primeros."
 msgstr "%(n)s basics at most: the first %(n)s were saved."
 
-#: app/routes.py:2498 app/templates/personal_basics.html:5
+#: app/routes.py:2590 app/templates/personal_basics.html:5
 #: app/templates/rango.html:46
 msgid "Tus básicos"
 msgstr "Your basics"
 
-#: app/routes.py:2508
+#: app/routes.py:2600
 msgid "Solo el administrador puede cambiar los nombres del catálogo."
 msgstr "Only the administrator can change catalog names."
 
-#: app/routes.py:2512
+#: app/routes.py:2604
 msgid "No se encontró este ejercicio en el catálogo."
 msgstr "This exercise wasn't found in the catalog."
 
-#: app/routes.py:2521
+#: app/routes.py:2613
 msgid "Ese nombre es demasiado largo (máximo 64 caracteres)."
 msgstr "That name is too long (64 characters max)."
 
-#: app/routes.py:2527
+#: app/routes.py:2619
 msgid "Nombre en español guardado."
 msgstr "Spanish name saved."
 
-#: app/routes.py:2527
+#: app/routes.py:2619
 #, python-format
 msgid "Se actualizó en %(num)d serie para que siga contando."
 msgid_plural "Se actualizó en %(num)d series para que sigan contando."
 msgstr[0] "Updated in %(num)d set so it keeps counting."
 msgstr[1] "Updated in %(num)d sets so they keep counting."
 
-#: app/routes.py:2617
+#: app/routes.py:2709
 #, python-format
 msgid "Notas de %(name)s"
 msgstr "%(name)s notes"
 
-#: app/routes.py:2675
+#: app/routes.py:2767
 msgid "Configuración guardada."
 msgstr "Settings saved."
 
-#: app/routes.py:2689 app/templates/_macros.html:19 app/templates/base.html:141
+#: app/routes.py:2781 app/templates/_macros.html:19 app/templates/base.html:141
 #: app/templates/settings.html:4
 msgid "Configuración"
 msgstr "Settings"
 
-#: app/routes.py:2700
+#: app/routes.py:2792
 msgid "Peso registrado."
 msgstr "Weight logged."
 
-#: app/routes.py:2712 app/templates/progress.html:273
+#: app/routes.py:2804 app/templates/progress.html:273
 #: app/templates/weight.html:5
 msgid "Peso corporal"
 msgstr "Body weight"
 
-#: app/routes.py:2735
+#: app/routes.py:2827
 msgid "Elige el archivo CSV que exportaste."
 msgstr "Choose the CSV file you exported."
 
-#: app/routes.py:2746 app/templates/import.html:5
+#: app/routes.py:2838 app/templates/import.html:5
 msgid "Importar entrenos"
 msgstr "Import workouts"
 
-#: app/routes.py:2774
+#: app/routes.py:2866
 #, python-format
 msgid "Importados %(w)s entrenos y %(s)s series."
 msgstr "Imported %(w)s workouts and %(s)s sets."
 
-#: app/routes.py:2775
+#: app/routes.py:2867
 #, python-format
 msgid "%(n)s ya estaban y no se han duplicado."
 msgstr "%(n)s were already there and weren't duplicated."
 
-#: app/routes.py:2780
+#: app/routes.py:2872
 msgid "Historial importado"
 msgstr "History imported"
 
-#: app/routes.py:2781 app/templates/history.html:5
+#: app/routes.py:2873 app/templates/history.html:5
 #: app/templates/import_review.html:7
 #, python-format
 msgid "%(num)d entreno"
@@ -2565,82 +2647,82 @@ msgid_plural "%(num)d entrenos"
 msgstr[0] "%(num)d workout"
 msgstr[1] "%(num)d workouts"
 
-#: app/routes.py:2786 app/templates/import_review.html:5
+#: app/routes.py:2878 app/templates/import_review.html:5
 msgid "Revisar importación"
 msgstr "Review import"
 
-#: app/routes.py:2822
+#: app/routes.py:2914
 msgid "Escribe tu nombre de usuario exactamente igual para confirmar."
 msgstr "Type your username exactly to confirm."
 
-#: app/routes.py:2828
+#: app/routes.py:2920
 msgid "Tu cuenta y todos tus datos se han borrado."
 msgstr "Your account and all your data have been deleted."
 
-#: app/routes.py:2830 app/templates/delete_account.html:5
+#: app/routes.py:2922 app/templates/delete_account.html:5
 #: app/templates/privacy.html:36 app/templates/settings.html:157
 msgid "Borrar mi cuenta"
 msgstr "Delete my account"
 
-#: app/routes.py:2840
+#: app/routes.py:2932
 msgid "Guarda tu cuenta con un email para que podamos responderte."
 msgstr "Save your account with an email so we can reply to you."
 
-#: app/routes.py:2849
+#: app/routes.py:2941
 msgid "Escribe tu mensaje."
 msgstr "Write your message."
 
-#: app/routes.py:2851
+#: app/routes.py:2943
 msgid "Has enviado muchos mensajes hoy. Inténtalo mañana."
 msgstr "You've sent a lot of messages today. Try again tomorrow."
 
-#: app/routes.py:2858
+#: app/routes.py:2950
 msgid "Mensaje enviado. Te responderemos al email de tu cuenta."
 msgstr "Message sent. We'll reply to your account's email."
 
-#: app/routes.py:2860 app/templates/contact.html:4
+#: app/routes.py:2952 app/templates/contact.html:4
 #: app/templates/privacy.html:40 app/templates/settings.html:155
 msgid "Contacto"
 msgstr "Contact"
 
-#: app/routes.py:2903
+#: app/routes.py:2995
 msgid "No tienes acceso a ese registro de peso."
 msgstr "You don't have access to that weight entry."
 
-#: app/routes.py:2907
+#: app/routes.py:2999
 msgid "Registro de peso eliminado."
 msgstr "Weight entry deleted."
 
-#: app/routes.py:2941
+#: app/routes.py:3033
 #, python-format
 msgid "en %(n)s h"
 msgstr "in %(n)s h"
 
-#: app/routes.py:2944
+#: app/routes.py:3036
 #, python-format
 msgid "en %(n)s días"
 msgstr "in %(n)s days"
 
-#: app/routes.py:2962 app/templates/ai_analysis.html:4
+#: app/routes.py:3054 app/templates/ai_analysis.html:4
 #: app/templates/ai_analysis.html:61
 msgid "Análisis de IA"
 msgstr "AI analysis"
 
-#: app/routes.py:2993
+#: app/routes.py:3085
 msgid "Guarda tu cuenta (gratis) para usar el análisis con IA."
 msgstr "Save your account (free) to use the AI analysis."
 
-#: app/routes.py:2998
+#: app/routes.py:3090
 msgid ""
 "Ya has usado tus análisis de esta semana. Vuelve a intentarlo más "
 "adelante."
 msgstr "You've used your analyses for this week. Try again later."
 
-#: app/routes.py:2999
+#: app/routes.py:3091
 msgid "Ya generaste un análisis esta semana. Vuelve a intentarlo más adelante."
 msgstr "You already generated an analysis this week. Try again later."
 
-#: app/routes.py:3009
+#: app/routes.py:3101
 #, python-format
 msgid ""
 "Necesitas al menos %(min)s entrenamientos registrados para generar un "
@@ -2649,111 +2731,111 @@ msgstr ""
 "You need at least %(min)s logged workouts to generate an analysis (you "
 "have %(n)s)."
 
-#: app/routes.py:3024
+#: app/routes.py:3116
 msgid ""
 "No se pudo generar el análisis ahora mismo. Inténtalo de nuevo en unos "
 "minutos."
 msgstr "Couldn't generate the analysis right now. Try again in a few minutes."
 
-#: app/routes.py:3030
+#: app/routes.py:3122
 msgid "¡Análisis generado!"
 msgstr "Analysis generated!"
 
-#: app/routes.py:3097
+#: app/routes.py:3189
 msgid "Mis rutinas"
 msgstr "My routines"
 
-#: app/routes.py:3215 app/routes.py:3328 app/routes.py:3334 app/routes.py:3453
-#: app/routes.py:3494
+#: app/routes.py:3307 app/routes.py:3420 app/routes.py:3426 app/routes.py:3545
+#: app/routes.py:3586
 msgid "No tienes acceso a esta rutina."
 msgstr "You don't have access to this routine."
 
-#: app/routes.py:3229
+#: app/routes.py:3321
 msgid "No se pudo actualizar ese ejercicio."
 msgstr "Couldn't update that exercise."
 
-#: app/routes.py:3239
+#: app/routes.py:3331
 msgid "Ejercicio actualizado."
 msgstr "Exercise updated."
 
-#: app/routes.py:3318
+#: app/routes.py:3410
 msgid "Rutina creada. Añade ejercicios."
 msgstr "Routine created. Add exercises."
 
-#: app/routes.py:3320 app/routes.py:3883 app/templates/new_routine.html:4
+#: app/routes.py:3412 app/routes.py:3975 app/templates/new_routine.html:4
 #: app/templates/routines.html:10
 msgid "Nueva rutina"
 msgstr "New routine"
 
-#: app/routes.py:3342
+#: app/routes.py:3434
 msgid "Ejercicio eliminado de la rutina."
 msgstr "Exercise removed from the routine."
 
-#: app/routes.py:3376
+#: app/routes.py:3468
 msgid "Las series van de 1 a 15."
 msgstr "Sets go from 1 to 15."
 
-#: app/routes.py:3390
+#: app/routes.py:3482
 #, python-format
 msgid "El máximo de series va de %(n)s a 15."
 msgstr "Max sets go from %(n)s to 15."
 
-#: app/routes.py:3401
+#: app/routes.py:3493
 msgid "Las repeticiones tienen que ser números."
 msgstr "Reps have to be numbers."
 
-#: app/routes.py:3403
+#: app/routes.py:3495
 msgid "Repeticiones de 1 a 100, y el máximo no puede ser menor que el mínimo."
 msgstr "Reps from 1 to 100, and the max can't be lower than the min."
 
-#: app/routes.py:3408
+#: app/routes.py:3500
 msgid "Escribe las reps (máx. 16 caracteres), p. ej. 8-10."
 msgstr "Enter the reps (16 characters max), e.g. 8-10."
 
-#: app/routes.py:3413
+#: app/routes.py:3505
 msgid "Usa un número (ej. 2) o un rango (ej. 2-3)."
 msgstr "Use a number (e.g. 2) or a range (e.g. 2-3)."
 
-#: app/routes.py:3442
+#: app/routes.py:3534
 msgid "Elige un ejercicio."
 msgstr "Choose an exercise."
 
-#: app/routes.py:3468
+#: app/routes.py:3560
 msgid "Rutina eliminada."
 msgstr "Routine deleted."
 
-#: app/routes.py:3540
+#: app/routes.py:3632
 #, python-format
 msgid "¡Entrenamiento '%(name)s' iniciado!"
 msgstr "Workout '%(name)s' started!"
 
-#: app/routes.py:3796
+#: app/routes.py:3888
 msgid "Ejercicio no encontrado."
 msgstr "Exercise not found."
 
-#: app/routes.py:3880
+#: app/routes.py:3972
 msgid "Este entrenamiento no tiene series registradas."
 msgstr "This workout has no logged sets."
 
-#: app/routes.py:3902
+#: app/routes.py:3994
 #, python-format
 msgid "Rutina '%(name)s' creada a partir de este entrenamiento."
 msgstr "Routine '%(name)s' created from this workout."
 
-#: app/routes.py:4754 app/templates/index.html:107
+#: app/routes.py:4846 app/templates/index.html:107
 msgid "hoy"
 msgstr "today"
 
-#: app/routes.py:4756 app/templates/index.html:107
+#: app/routes.py:4848 app/templates/index.html:107
 msgid "ayer"
 msgstr "yesterday"
 
-#: app/routes.py:4758
+#: app/routes.py:4850
 #, python-format
 msgid "hace %(n)s días"
 msgstr "%(n)s days ago"
 
-#: app/routes.py:4760
+#: app/routes.py:4852
 #, python-format
 msgid "hace %(n)s semanas"
 msgstr "%(n)s weeks ago"
@@ -3192,6 +3274,11 @@ msgstr "Categories"
 msgid "Logro secreto. Sigue entrenando…"
 msgstr "Secret achievement. Keep training…"
 
+#: app/templates/achievements.html:52
+#, python-format
+msgid "Compartir «%(name)s»"
+msgstr "Share “%(name)s”"
+
 #: app/templates/ai_analysis.html:15
 msgid "💪 Fortalezas"
 msgstr "💪 Strengths"
@@ -3285,11 +3372,11 @@ msgid "oculto para tus amigos"
 msgstr "hidden from your friends"
 
 #: app/templates/athlete_card.html:5 app/templates/friends.html:4
-#: app/templates/personal_basics.html:4
+#: app/templates/personal_basics.html:4 app/templates/share_gallery.html:4
 msgid "← Rango"
 msgstr "← Rank"
 
-#: app/templates/athlete_card.html:17 app/templates/rango.html:180
+#: app/templates/athlete_card.html:17 app/templates/rango.html:185
 msgid "Sin rango"
 msgstr "No rank"
 
@@ -3400,7 +3487,7 @@ msgstr "up to %(n)s"
 msgid "Aún no tienes récords."
 msgstr "You don't have any records yet."
 
-#: app/templates/athlete_card_edit.html:56
+#: app/templates/athlete_card_edit.html:56 app/templates/share_gallery.html:51
 msgid "Aún no has desbloqueado logros."
 msgstr "You haven't unlocked any achievements yet."
 
@@ -5010,7 +5097,7 @@ msgstr "Strength rank"
 msgid "Falta: %(what)s"
 msgstr "Missing: %(what)s"
 
-#: app/templates/level.html:20 app/templates/rango.html:152
+#: app/templates/level.html:20 app/templates/rango.html:157
 msgid " y "
 msgstr " and "
 
@@ -6107,35 +6194,39 @@ msgstr ""
 msgid "%(xp)s XP para el %(next)s"
 msgstr "%(xp)s XP to level %(next)s"
 
-#: app/templates/rango.html:97
+#: app/templates/rango.html:94
+msgid "Comparte tus rangos, récords y logros"
+msgstr "Share your ranks, records and achievements"
+
+#: app/templates/rango.html:102
 msgid "Con tus amigos"
 msgstr "With your friends"
 
-#: app/templates/rango.html:98
+#: app/templates/rango.html:103
 msgid "Invitar"
 msgstr "Invite"
 
-#: app/templates/rango.html:107
+#: app/templates/rango.html:112
 msgid "Mi tarjeta de atleta"
 msgstr "My athlete card"
 
-#: app/templates/rango.html:136
+#: app/templates/rango.html:141
 msgid ""
 "No se pudieron cargar los rankings. Recarga la página para intentarlo de "
 "nuevo."
 msgstr "Could not load the rankings. Reload the page to try again."
 
-#: app/templates/rango.html:145
+#: app/templates/rango.html:150
 msgid "Por levantamiento"
 msgstr "By lift"
 
-#: app/templates/rango.html:146
+#: app/templates/rango.html:151
 msgid ""
 "Tu fuerza actual frente a estándares de referencia (Kilgore y "
 "StrengthLevel)"
 msgstr "Your current strength vs reference standards (Kilgore and StrengthLevel)"
 
-#: app/templates/rango.html:152
+#: app/templates/rango.html:157
 #, python-format
 msgid ""
 "Para darte un rango falta: %(what)s. Las tablas son distintas para "
@@ -6144,15 +6235,15 @@ msgstr ""
 "To give you a rank we need: %(what)s. The tables are different for men "
 "and women and depend on body weight."
 
-#: app/templates/rango.html:154
+#: app/templates/rango.html:159
 msgid "Indicar mi sexo"
 msgstr "Set my sex"
 
-#: app/templates/rango.html:155
+#: app/templates/rango.html:160
 msgid "Registrar mi peso"
 msgstr "Log my weight"
 
-#: app/templates/rango.html:160
+#: app/templates/rango.html:165
 #, python-format
 msgid ""
 "El rango global es la media de tus básicos con un 1RM válido de los "
@@ -6163,14 +6254,14 @@ msgstr ""
 "last %(days)s days (at least %(min)s are needed; you have %(n)s now). No "
 "recent data: %(lifts)s."
 
-#: app/templates/rango.html:164
+#: app/templates/rango.html:169
 #, python-format
 msgid ""
 "Rango global con %(n)s de %(total)s básicos. Sin datos recientes: "
 "%(lifts)s."
 msgstr "Global rank from %(n)s of %(total)s basics. No recent data: %(lifts)s."
 
-#: app/templates/rango.html:167
+#: app/templates/rango.html:172
 msgid ""
 "va un nivel entero (por ejemplo, de Intermedio a Avanzado) por detrás de "
 "tu media: es lo que más subiría tu rango global."
@@ -6178,73 +6269,58 @@ msgstr ""
 "is a whole level (for example, from Intermediate to Advanced) behind your"
 " average: it's what would raise your global rank the most."
 
-#: app/templates/rango.html:184
+#: app/templates/rango.html:189
 msgid "Sin series válidas todavía."
 msgstr "No valid sets yet."
 
-#: app/templates/rango.html:187
-#, python-format
-msgid "1RM estimado: tu peso %(kg)s kg"
-msgstr "Estimated 1RM: your weight %(kg)s kg"
-
-#: app/templates/rango.html:188 app/templates/rango.html:190
-#, python-format
-msgid "1RM estimado %(kg)s kg"
-msgstr "Estimated 1RM %(kg)s kg"
-
-#: app/templates/rango.html:188
-#, python-format
-msgid "%(x)s× tu peso"
-msgstr "%(x)s× your weight"
-
-#: app/templates/rango.html:189
+#: app/templates/rango.html:194
 #, python-format
 msgid "Sin series válidas en los últimos %(days)s días (mejor 1RM: %(kg)s kg)"
 msgstr "No valid sets in the last %(days)s days (best 1RM: %(kg)s kg)"
 
-#: app/templates/rango.html:191
+#: app/templates/rango.html:196
 msgid "· nivel"
 msgstr "· level"
 
-#: app/templates/rango.html:195
+#: app/templates/rango.html:200
 #, python-format
 msgid "tu peso %(kg)s kg"
 msgstr "your weight %(kg)s kg"
 
-#: app/templates/rango.html:195
+#: app/templates/rango.html:200
 #, python-format
 msgid "%(kg)s kg con tu peso actual"
 msgstr "%(kg)s kg at your current weight"
 
-#: app/templates/rango.html:195
+#: app/templates/rango.html:200
 #, python-format
 msgid "te faltan %(kg)s kg"
 msgstr "%(kg)s kg to go"
 
-#: app/templates/rango.html:196
+#: app/templates/rango.html:201
 msgid "Tabla:"
 msgstr "Table:"
 
-#: app/templates/rango.html:196
+#: app/templates/rango.html:201
 #, python-format
 msgid "StrengthLevel, la de %(lift)s (aproximada: no hay una propia)"
 msgstr "StrengthLevel, the %(lift)s one (approximate: there's no specific one)"
 
-#: app/templates/rango.html:198
+#: app/templates/rango.html:203
 msgid "Rango máximo."
 msgstr "Top rank."
 
-#: app/templates/rango.html:201
+#: app/templates/rango.html:206
 #, python-format
 msgid "Mejor rango que has tenido: %(rank)s"
 msgstr "Best rank you've had: %(rank)s"
 
-#: app/templates/rango.html:209
+#: app/templates/rango.html:214
 #, python-format
 msgid "DOTS estimado: %(n)s"
 msgstr "Estimated DOTS: %(n)s"
 
-#: app/templates/rango.html:209
+#: app/templates/rango.html:214
 msgid ""
 "· suma de tus 1RM estimados de banca, sentadilla y peso muerto, corregida"
 " por tu peso corporal."
@@ -6252,11 +6328,11 @@ msgstr ""
 "· the sum of your estimated bench, squat and deadlift 1RMs, adjusted for "
 "your body weight."
 
-#: app/templates/rango.html:213
+#: app/templates/rango.html:218
 msgid "¿Cómo funciona el rango?"
 msgstr "How does the rank work?"
 
-#: app/templates/rango.html:215
+#: app/templates/rango.html:220
 msgid ""
 "El rango sale de los mismos estándares de Kilgore, pero en continuo: cada"
 " tramo entre dos niveles es un rango con tres divisiones (I, II y III). "
@@ -6266,20 +6342,20 @@ msgstr ""
 "scale: each band between two levels is a rank with three divisions (I, II"
 " and III). It uses your"
 
-#: app/templates/rango.html:215
+#: app/templates/rango.html:220
 #, python-format
 msgid "mejor 1RM estimado de los últimos %(days)s días"
 msgstr "best estimated 1RM from the last %(days)s days"
 
-#: app/templates/rango.html:215
+#: app/templates/rango.html:220
 msgid "y tu peso actual, así que"
 msgstr "and your current weight, so it"
 
-#: app/templates/rango.html:215
+#: app/templates/rango.html:220
 msgid "puede bajar"
 msgstr "can go down"
 
-#: app/templates/rango.html:215
+#: app/templates/rango.html:220
 msgid ""
 "si dejas de entrenar un levantamiento o pierdes fuerza; tu mejor rango "
 "histórico queda guardado aparte. El"
@@ -6287,11 +6363,11 @@ msgstr ""
 "if you stop training a lift or lose strength; your best historical rank "
 "is kept separately. The"
 
-#: app/templates/rango.html:215
+#: app/templates/rango.html:220
 msgid "rango global"
 msgstr "global rank"
 
-#: app/templates/rango.html:215
+#: app/templates/rango.html:220
 msgid ""
 "es la media de tus básicos (banca, sentadilla, peso muerto, press "
 "militar, remo con barra y el mejor de dominadas o jalón) con datos de los"
@@ -6303,19 +6379,19 @@ msgstr ""
 "last 90 days; at least 3 are needed. Any improvement in any of them "
 "raises it."
 
-#: app/templates/rango.html:224
+#: app/templates/rango.html:229
 msgid "Remo, dominadas y jalón: otra fuente"
 msgstr "Row, pull-ups and lat pulldown: another source"
 
-#: app/templates/rango.html:226
+#: app/templates/rango.html:231
 msgid "Kilgore no tiene tablas para estos tres, así que salen de"
 msgstr "Kilgore has no tables for these three, so they come from"
 
-#: app/templates/rango.html:226
+#: app/templates/rango.html:231
 msgid "StrengthLevel"
 msgstr "StrengthLevel"
 
-#: app/templates/rango.html:226
+#: app/templates/rango.html:231
 #, python-format
 msgid ""
 ": cientos de miles de levantamientos que registran sus usuarios (datos "
@@ -6331,23 +6407,23 @@ msgstr ""
 "Intermediate 50 %%, Advanced 80 %% and Elite 95 %%. It's not exactly the "
 "same criterion as Kilgore, although it uses the same level names."
 
-#: app/templates/rango.html:229
+#: app/templates/rango.html:234
 msgid "En"
 msgstr "For"
 
-#: app/templates/rango.html:229
+#: app/templates/rango.html:234
 msgid "dominadas"
 msgstr "pull-ups"
 
-#: app/templates/rango.html:229
+#: app/templates/rango.html:234
 msgid ", el peso que apuntes es el"
 msgstr ", the weight you log is the"
 
-#: app/templates/rango.html:229
+#: app/templates/rango.html:234
 msgid "lastre"
 msgstr "added load"
 
-#: app/templates/rango.html:229
+#: app/templates/rango.html:234
 msgid ""
 "(0 = solo tu peso corporal) y se compara tu peso más el lastre. Por eso "
 "necesitan tu peso corporal registrado. Las dominadas asistidas no "
@@ -6357,19 +6433,19 @@ msgstr ""
 "That's why they need your body weight logged. Assisted pull-ups don't "
 "count."
 
-#: app/templates/rango.html:233
+#: app/templates/rango.html:238
 msgid "¿De dónde salen estos niveles?"
 msgstr "Where do these levels come from?"
 
-#: app/templates/rango.html:235
+#: app/templates/rango.html:240
 msgid "De los estándares de rendimiento de"
 msgstr "From the performance standards of"
 
-#: app/templates/rango.html:235
+#: app/templates/rango.html:240
 msgid "Lon Kilgore (ExRx.net)"
 msgstr "Lon Kilgore (ExRx.net)"
 
-#: app/templates/rango.html:236
+#: app/templates/rango.html:241
 msgid ""
 "para adultos de 18 a 39 años: 1RM sin equipo de ayuda (cinturón sí), "
 "basados en unos 70 años de clasificaciones de halterofilia y "
@@ -6379,11 +6455,11 @@ msgstr ""
 "based on about 70 years of weightlifting and powerlifting "
 "classifications. They're not a general-population norm."
 
-#: app/templates/rango.html:244
+#: app/templates/rango.html:249
 msgid "Cómo lo aplicamos."
 msgstr "How we apply it."
 
-#: app/templates/rango.html:244
+#: app/templates/rango.html:249
 msgid ""
 "Usamos tu 1RM estimado con series de hasta 10 repeticiones efectivas (más"
 " allá la estimación es poco fiable), solo del levantamiento con barra: "
@@ -6403,11 +6479,11 @@ msgstr ""
 "specific one (approximate). The tables go by body-weight classes and we "
 "interpolate between two classes. The"
 
-#: app/templates/rango.html:244
+#: app/templates/rango.html:249
 msgid "nivel alcanzado"
 msgstr "level reached"
 
-#: app/templates/rango.html:244
+#: app/templates/rango.html:249
 msgid ""
 "es el mejor de todas tus sesiones, cada una con el peso que tenías "
 "entonces, así que pesarte hoy no te quita un nivel. El"
@@ -6415,11 +6491,11 @@ msgstr ""
 "is the best of all your sessions, each with the weight you had then, so "
 "weighing in today doesn't take a level away. The"
 
-#: app/templates/rango.html:244
+#: app/templates/rango.html:249
 msgid "nivel global"
 msgstr "global level"
 
-#: app/templates/rango.html:244
+#: app/templates/rango.html:249
 msgid ""
 "es el menor de banca, sentadilla y peso muerto. Los estándares suponen la"
 " técnica de la fuente:"
@@ -6427,11 +6503,11 @@ msgstr ""
 "is the lowest of bench, squat and deadlift. The standards assume the "
 "source's technique:"
 
-#: app/templates/rango.html:252
+#: app/templates/rango.html:257
 msgid "DOTS"
 msgstr "DOTS"
 
-#: app/templates/rango.html:252
+#: app/templates/rango.html:257
 msgid ""
 "(Konertz, 2019) es la puntuación que usan muchas federaciones de "
 "powerlifting para comparar totales de personas de distinto peso; aquí se "
@@ -6789,6 +6865,40 @@ msgstr ""
 #: app/templates/settings.html:159
 msgid "Cerrar sesión"
 msgstr "Log out"
+
+#: app/templates/share_gallery.html:6
+msgid ""
+"Tus rangos, récords y logros, listos para compartir o descargar cuando "
+"quieras. Toca uno para ver su tarjeta."
+msgstr ""
+"Your ranks, records and achievements, ready to share or download whenever"
+" you like. Tap one to see its card."
+
+#: app/templates/share_gallery.html:8
+msgid "Rangos"
+msgstr "Ranks"
+
+#: app/templates/share_gallery.html:20
+msgid "Aún no tienes ningún rango: entrena algún básico y registra tu peso."
+msgstr "You don't have any rank yet: train a basic lift and log your body weight."
+
+#: app/templates/share_gallery.html:20
+msgid "Ver Rango"
+msgstr "See Rank"
+
+#: app/templates/share_gallery.html:25
+msgid "Tu mejor marca vigente de cada ejercicio."
+msgstr "Your current best for each exercise."
+
+#: app/templates/share_gallery.html:36
+msgid ""
+"Todavía no tienes récords: aparecen al superar tu mejor marca de un "
+"ejercicio."
+msgstr "No records yet: they appear when you beat your best on an exercise."
+
+#: app/templates/share_gallery.html:51
+msgid "Ver logros"
+msgstr "See achievements"
 
 #: app/templates/weight.html:10
 msgid "Registrar peso de hoy"

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% import "_macros.html" as macros %}
+{% block content %}
+    <p class="page-back"><a href="{{ url_for('rank_page') }}">{{ _("← Rango") }}</a></p>
+    {{ macros.tab_title(_('Mis tarjetas'), 'share') }}
+    <p class="progress-footnote">{{ _("Tus rangos, récords y logros, listos para compartir o descargar cuando quieras. Toca uno para ver su tarjeta.") }}</p>
+
+    <h2 class="section-title">{{ _("Rangos") }}</h2>
+    {% if ranks %}
+        <div class="card-gallery">
+            {% for key, card in ranks %}
+                <button type="button" class="gallery-item" data-kind="rank" data-key="{{ key }}">
+                    <span class="gallery-visual">{{ macros.rank_emblem(card.rank.key, 44, card.rank.division) }}</span>
+                    <span class="gallery-text"><strong>{{ card.rank.label }}</strong><small>{{ card.subtitle }}</small></span>
+                    <span class="gallery-share" aria-hidden="true">{{ macros.icon('share', 18) }}</span>
+                </button>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="progress-footnote">{{ _("Aún no tienes ningún rango: entrena algún básico y registra tu peso.") }} <a href="{{ url_for('rank_page') }}">{{ _("Ver Rango") }}</a></p>
+    {% endif %}
+
+    <h2 class="section-title">{{ _("Récords") }}</h2>
+    {% if records %}
+        <p class="progress-footnote">{{ _("Tu mejor marca vigente de cada ejercicio.") }}</p>
+        <div class="card-gallery">
+            {% for r in records %}
+                <button type="button" class="gallery-item" data-kind="record" data-key="{{ r.id }}">
+                    <span class="gallery-visual gallery-emoji">🏅</span>
+                    <span class="gallery-text"><strong>{{ r.exercise|exercise_title }}</strong><small>{{ r.weight|num(2) }} kg × {{ r.reps }} · {{ r.timestamp|relative_day|ucfirst }}</small></span>
+                    <span class="gallery-share" aria-hidden="true">{{ macros.icon('share', 18) }}</span>
+                </button>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="progress-footnote">{{ _("Todavía no tienes récords: aparecen al superar tu mejor marca de un ejercicio.") }}</p>
+    {% endif %}
+
+    <h2 class="section-title">{{ _("Logros") }}</h2>
+    {% if earned %}
+        <div class="card-gallery">
+            {% for a, at in earned %}
+                <button type="button" class="gallery-item" data-kind="achievement" data-key="{{ a.code }}">
+                    <span class="gallery-visual gallery-emoji">{{ a.emoji }}</span>
+                    <span class="gallery-text"><strong>{{ a.title }}</strong><small>{{ at|relative_day|ucfirst }}</small></span>
+                    <span class="gallery-share" aria-hidden="true">{{ macros.icon('share', 18) }}</span>
+                </button>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="progress-footnote">{{ _("Aún no has desbloqueado logros.") }} <a href="{{ url_for('achievements_page') }}">{{ _("Ver logros") }}</a></p>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='share_card.js') }}"></script>
+    <script>
+        document.querySelectorAll('.gallery-item').forEach(function (b) {
+            b.addEventListener('click', function () {
+                openShareCard(b.dataset.kind === 'record' ? b.dataset.key : {kind: b.dataset.kind, key: b.dataset.key});
+            });
+        });
+    </script>
+{% endblock %}

@@ -1773,19 +1773,10 @@ def api_share_set(set_id):
             previous_best = max(previous_best or 0, s["best_1rm"])
 
     e1rm = estimated_1rm(entry, latest_bodyweight(current_user.id))
-    # Ventajas por nivel: diseños desbloqueados e insignia de nivel/rango.
-    level = perks.level_of(current_user)
-    badge = rank_key = None
-    if level >= perks.BADGE_LEVEL:
-        rank = cached_profile(current_user)["global_rank"]
-        badge = gettext("NIVEL %(n)s", n=level) + (f" · {rank['label'].upper()}" if rank else "")
-        rank_key = (rank["key"] if rank["key"] == "titan" else f"{rank['key']}-{rank['division']}") if rank else None
     return jsonify(
         {
-            "ok": True,
-            "designs": perks.unlocked(perks.SHARE_DESIGNS, level),
-            "badge": badge,
-            "rank_key": rank_key,
+            **share_common(),
+            "kind": "record",
             "exercise": exercise_title(entry.exercise),
             "weight": f"{entry.weight:g}",
             "reps": entry.reps,
@@ -1793,9 +1784,110 @@ def api_share_set(set_id):
             "improvement": round(e1rm - previous_best, 1) if previous_best else None,
             "is_pr": bool(entry.is_pr),
             "date": to_local(entry.workout.timestamp).strftime("%d/%m/%Y"),
-            "share_url": url_for("landing", ref="compartir", _external=True),
         }
     )
+
+
+def share_common(with_rank=True):
+    """Lo que comparten todas las tarjetas (app/static/share_card.js):
+    diseños desbloqueados e insignia de nivel/rango (ventajas por nivel) y
+    el enlace. La tarjeta de rango lleva la insignia sin el rango (ya es
+    todo el contenido)."""
+    level = perks.level_of(current_user)
+    badge = rank_key = None
+    if level >= perks.BADGE_LEVEL:
+        rank = cached_profile(current_user)["global_rank"] if with_rank else None
+        badge = gettext("NIVEL %(n)s", n=level) + (f" · {rank['label'].upper()}" if rank else "")
+        rank_key = rank["file"] if rank else None
+    return {
+        "ok": True,
+        "designs": perks.unlocked(perks.SHARE_DESIGNS, level),
+        "badge": badge,
+        "rank_key": rank_key,
+        "share_url": url_for("landing", ref="compartir", _external=True),
+    }
+
+
+def rank_card_data(profile, key):
+    """Datos de la tarjeta de un rango: "global" o un levantamiento con rango
+    actual. None si no lo hay."""
+    today = usage.local_today().strftime("%d/%m/%Y")
+    if key == "global":
+        rank = profile["global_rank"]
+        if not rank:
+            return None
+        return {"rank": rank, "subtitle": gettext("Rango global"), "date": today,
+                "detail": ngettext("Media de %(num)d básico", "Media de %(num)d básicos", profile["basics_counted"])}
+    info = profile["lifts"].get(key)
+    if not info or not info.get("rank"):
+        return None
+    if key == "pullup":
+        extra = info["rank_e1rm"]
+        detail = gettext("1RM estimado: tu peso %(kg)s kg", kg=("+" if extra >= 0 else "−") + fmt_num(abs(extra)))
+    else:
+        detail = gettext("1RM estimado %(kg)s kg", kg=fmt_num(info["rank_e1rm"]))
+        if profile["latest_bw"]:
+            detail += " · " + gettext("%(x)s× tu peso", x=fmt_num(info["rank_e1rm"] / profile["latest_bw"], 2))
+    return {"rank": info["rank"], "subtitle": str(standards.LIFT_LABELS[key]), "detail": detail, "date": today}
+
+
+@app.route("/share/rank/<key>")
+@login_required
+def api_share_rank(key):
+    card = rank_card_data(cached_profile(current_user), key)
+    if card is None:
+        return jsonify({"ok": False, "error": gettext("Ahora mismo no tienes ese rango.")}), 404
+    rank = card.pop("rank")
+    return jsonify({**share_common(with_rank=False), **card, "kind": "rank", "global": key == "global",
+                    "label": rank["label"], "emblem": rank["file"]})
+
+
+@app.route("/share/achievement/<code>")
+@login_required
+def api_share_achievement(code):
+    a = achievements.BY_CODE.get(code)
+    ua = db.session.scalar(sa.select(UserAchievement).where(
+        UserAchievement.user_id == current_user.id, UserAchievement.code == code)) if a else None
+    if ua is None:
+        return jsonify({"ok": False, "error": gettext("Todavía no tienes este logro.")}), 404
+    category = next((str(name) for key, name, _e in achievements.CATEGORIES if key == a.category), "")
+    return jsonify({**share_common(), "kind": "achievement", "emoji": a.emoji, "title": str(a.title),
+                    "desc": str(a.desc), "category": category,
+                    "date": to_local(ua.unlocked_at).strftime("%d/%m/%Y")})
+
+
+@app.route("/tarjetas")
+@login_required
+def share_gallery():
+    """Mis tarjetas: todo lo que se puede compartir en cualquier momento, no
+    solo al batir el récord o conseguir el logro."""
+    profile = cached_profile(current_user)
+    ranks = [("global", rank_card_data(profile, "global"))] + [
+        (lift, rank_card_data(profile, lift)) for lift in standards.LIFTS]
+    ranks = [(key, card) for key, card in ranks if card]
+    # Récord vigente de cada ejercicio: su última serie con medalla (cada
+    # récord supera a todos los anteriores). Última por fecha del entreno,
+    # no por id: un entreno importado puede ser más antiguo que su id.
+    ranked = (
+        sa.select(SetEntry.id, SetEntry.exercise, SetEntry.weight, SetEntry.reps, Workout.timestamp,
+                  sa.func.row_number().over(partition_by=SetEntry.exercise,
+                                            order_by=(Workout.timestamp.desc(), SetEntry.id.desc())).label("n"))
+        .join(Workout, SetEntry.workout_id == Workout.id)
+        .where(Workout.user_id == current_user.id, SetEntry.is_pr.is_(True))
+        .subquery()
+    )
+    records = db.session.execute(
+        sa.select(ranked.c.id, ranked.c.exercise, ranked.c.weight, ranked.c.reps, ranked.c.timestamp)
+        .where(ranked.c.n == 1).order_by(ranked.c.timestamp.desc())
+    ).all()
+    unlocked = db.session.execute(
+        sa.select(UserAchievement.code, UserAchievement.unlocked_at)
+        .where(UserAchievement.user_id == current_user.id)
+        .order_by(UserAchievement.unlocked_at.desc())
+    ).all()
+    earned = [(achievements.BY_CODE[code], at) for code, at in unlocked if code in achievements.BY_CODE]
+    return render_template("share_gallery.html", title=gettext("Mis tarjetas"),
+                           ranks=ranks, records=records, earned=earned)
 
 
 @app.route("/set/<int:set_id>/delete", methods=["POST"])

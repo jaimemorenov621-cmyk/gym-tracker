@@ -89,6 +89,11 @@
             <span><small>{{ _("Logros") }}</small><b>{{ _('%(n)s de %(total)s', n=achievements_unlocked, total=achievements_total) }}</b></span>
             {{ macros.icon('chevron-right', 18) }}
         </a>
+        <a class="rank-link is-wide" href="{{ url_for('share_gallery') }}">
+            <span class="rank-link-badge is-share">{{ macros.icon('share', 18) }}</span>
+            <span><small>{{ _("Mis tarjetas") }}</small><b>{{ _("Comparte tus rangos, récords y logros") }}</b></span>
+            {{ macros.icon('chevron-right', 18) }}
+        </a>
     </div>
 
     {# Rankings con tus amigos (app/social.py). #}

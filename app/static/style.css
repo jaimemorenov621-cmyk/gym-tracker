@@ -3091,7 +3091,6 @@ button.session-set { border: 0; font-family: inherit; color: inherit; cursor: po
 button.session-set.best { color: var(--color-brand-dark); }
 .session-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: -6px -6px -6px 0;
     border: 0; border-radius: 10px; background: transparent; color: var(--color-text-muted); cursor: pointer; }
-.session-menu-btn:hover { background: var(--surface-3); }
 .session-edit-hint { margin: -4px 0 10px; }
 .session-sheet a.set-type-option { text-decoration: none; color: inherit; }
 .session-sheet-icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex-shrink: 0;
@@ -3995,6 +3994,30 @@ a.rank-link > span:nth-child(2) { display: flex; flex-direction: column; flex: 1
 a.rank-link small { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); }
 .rank-link-badge { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 800; flex-shrink: 0; }
 .rank-link-badge.is-trophy { background: #f5b301; }
+.rank-link-badge.is-share { background: #22c98c; }
+a.rank-link.is-wide { grid-column: 1 / -1; }
+/* Mis tarjetas (/tarjetas) */
+.card-gallery { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.gallery-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border-radius: 14px; text-align: left;
+    border: 1px solid var(--border-subtle); background: var(--surface); color: var(--color-text); font-family: inherit; cursor: pointer; }
+.gallery-visual { display: grid; place-items: center; width: 48px; height: 48px; flex-shrink: 0; }
+.gallery-emoji { font-size: 1.9rem; border-radius: 12px; background: var(--surface-3); }
+.gallery-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.gallery-text strong { font-size: 0.98rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gallery-text small { font-size: 0.8rem; color: var(--color-text-muted); }
+.gallery-share { color: var(--accent); flex-shrink: 0; }
+/* Botones con aspecto propio: sin el margen ni el degradado al pasar el ratón de los botones genéricos. */
+.gallery-item, button.session-set, .session-menu-btn, .achv-share { margin: 0; box-shadow: none; }
+.session-menu-btn { margin: -6px -6px -6px 0; }
+@media (hover: hover) {
+    .gallery-item:hover { background: var(--color-surface-hover); color: var(--color-text); box-shadow: none; }
+    button.session-set:hover { background: var(--color-surface-hover); color: inherit; box-shadow: none; }
+    button.session-set.best:hover { color: var(--color-brand-dark); }
+    .session-menu-btn:hover { background: var(--surface-3); color: var(--color-text); box-shadow: none; }
+    .achv-share:hover { background: rgba(var(--accent-rgb), 0.1); color: var(--accent); box-shadow: none; }
+}
+.achv-share { display: inline-flex; align-self: flex-start; width: auto; align-items: center; gap: 5px; margin-top: 6px; padding: 4px 10px; border-radius: 999px;
+    border: 1px solid rgba(var(--accent-rgb), 0.35); background: transparent; color: var(--accent); font: inherit; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
 @media (prefers-reduced-motion: no-preference) {
     .rank-hero-emblem .rank-emblem { animation: rank-float 4s ease-in-out infinite; }
     .rank-hero-glow { animation: rank-glow 2.8s ease-in-out infinite; }

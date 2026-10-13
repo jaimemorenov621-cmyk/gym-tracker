@@ -49,6 +49,7 @@
                         <p>{{ _('Logro secreto. Sigue entrenando…') if hidden else it.a.desc }}</p>
                         {% if it.unlocked %}
                             <small class="achv-date">✓ {{ it.unlocked_at|relative_day|ucfirst }}</small>
+                            <button type="button" class="achv-share" data-code="{{ it.a.code }}" aria-label="{{ _('Compartir «%(name)s»', name=it.a.title) }}">{{ macros.icon('share', 15) }} {{ _("Compartir") }}</button>
                         {% elif it.target and not hidden %}
                             <div class="achv-bar"><span style="width: {{ it.pct }}%"></span></div>
                             <small>{{ it.progress }}</small>
@@ -59,7 +60,11 @@
         </section>
     {% endfor %}
 
+    <script src="{{ url_for('static', filename='share_card.js') }}"></script>
     <script>
+        document.querySelectorAll('.achv-share').forEach(function (b) {
+            b.addEventListener('click', function () { openShareCard({kind: 'achievement', key: b.dataset.code}); });
+        });
         // Filtro por categoría (todo se pinta en el servidor; esto solo oculta).
         document.querySelectorAll('.achv-tab').forEach(function (tab) {
             tab.addEventListener('click', function () {
