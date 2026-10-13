@@ -110,6 +110,9 @@ class Workout(db.Model):
     # Biseries: JSON {ejercicio: nº de grupo}; los del mismo grupo se hacen
     # seguidos (app/supersets.py). None -> ninguna.
     supersets: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
+    # Tiempos propios de cada biserie: JSON {ejercicio: [transición, descanso]}
+    # en segundos, en todos los de un grupo (app/supersets.py).
+    superset_timers: so.Mapped[Optional[str]] = so.mapped_column(sa.Text)
     routine_id: so.Mapped[Optional[int]] = so.mapped_column(
         sa.ForeignKey("routine.id"), index=True
     )
@@ -230,6 +233,10 @@ class RoutineExercise(db.Model):
     order_index: so.Mapped[int] = so.mapped_column(default=0)
     # Biserie: los ejercicios de la rutina con el mismo número van juntos.
     superset_group: so.Mapped[Optional[int]] = so.mapped_column()
+    # Tiempos de su biserie (s): transición entre ejercicios y descanso al
+    # acabar la ronda; None = por defecto (15 s / el descanso del último).
+    superset_transition: so.Mapped[Optional[int]] = so.mapped_column()
+    superset_rest: so.Mapped[Optional[int]] = so.mapped_column()
     routine_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(Routine.id), index=True)
 
     routine: so.Mapped[Routine] = so.relationship(back_populates="exercises")

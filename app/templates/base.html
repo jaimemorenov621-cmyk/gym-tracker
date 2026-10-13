@@ -588,13 +588,15 @@
             if (restWorker) restWorker.postMessage({ type: 'start', endTime: newEnd });
         }
 
-        function startRestTimer(totalSeconds) {
+        // opts.persist = false: no guarda este tiempo como descanso del
+        // ejercicio (los tiempos de una biserie son de la biserie).
+        function startRestTimer(totalSeconds, opts) {
             if (totalSeconds <= 0) return;
             unlockAudio();
             document.getElementById('restTimerBox').style.display = 'flex';
             document.getElementById('restExerciseName').textContent = currentTimerExercise ? '— ' + currentTimerExercise : '';
 
-            if (currentTimerExercise) {
+            if (currentTimerExercise && !(opts && opts.persist === false)) {
                 fetch('/exercise/' + encodeURIComponent(currentTimerExercise) + '/rest_default', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -650,9 +652,9 @@
             closeRestNotification();
         }
 
-        function triggerRestTimer(exercise, seconds) {
+        function triggerRestTimer(exercise, seconds, opts) {
             currentTimerExercise = exercise;
-            startRestTimer(seconds);
+            startRestTimer(seconds, opts);
         }
 
         (function setupDraggableRestTimer() {

@@ -110,7 +110,48 @@ def display_info(order, groups):
     return info
 
 
+# ------------------------------------------------------------- tiempos
+DEFAULT_TRANSITION = 15     # s para cambiar de ejercicio dentro de la ronda
+MAX_TRANSITION = 180
+MAX_REST = 900
+
+
+def group_timers(order, groups, timers):
+    """{grupo: (transición, descanso)} con el primer valor puesto en
+    cualquiera de sus ejercicios (None = sin elegir)."""
+    out = {}
+    for key in order:
+        gid = groups.get(key)
+        if gid is None:
+            continue
+        t, r = (timers.get(key) or (None, None))
+        cur = out.get(gid, (None, None))
+        out[gid] = (cur[0] if cur[0] is not None else t, cur[1] if cur[1] is not None else r)
+    return out
+
+
+def clean_seconds(value, maximum):
+    """Entero 0..maximum, o None si no es un número."""
+    try:
+        return max(0, min(maximum, int(value)))
+    except (TypeError, ValueError):
+        return None
+
+
 # ------------------------------------------------------------- entrenos
+def load_timers(workout):
+    """{ejercicio: [transición, descanso]} de un Workout."""
+    try:
+        data = json.loads(workout.superset_timers) if workout.superset_timers else {}
+    except (ValueError, TypeError):
+        return {}
+    return {k: v for k, v in data.items() if isinstance(v, list) and len(v) == 2} if isinstance(data, dict) else {}
+
+
+def save_timers(workout, timers):
+    workout.superset_timers = json.dumps(timers) if timers else None
+
+
 def load(workout):
     """{ejercicio: grupo} de un Workout (vacío si no hay o está roto)."""
     try:
@@ -128,10 +169,13 @@ def rename(workout, old, new):
     """Tras cambiar el nombre de un ejercicio en el entreno. Si el nuevo ya
     estaba (fusión), conserva el grupo del viejo si lo tenía."""
     groups = load(workout)
-    if old not in groups:
-        return
-    groups[new] = groups.pop(old)
-    save(workout, groups)
+    if old in groups:
+        groups[new] = groups.pop(old)
+        save(workout, groups)
+    timers = load_timers(workout)
+    if old in timers:
+        timers[new] = timers.pop(old)
+        save_timers(workout, timers)
 
 
 def remove(workout, name):
@@ -140,3 +184,7 @@ def remove(workout, name):
         groups.pop(name)
         _, groups = normalize(list(groups), groups)
         save(workout, groups)
+    timers = load_timers(workout)
+    if name in timers:
+        timers.pop(name)
+        save_timers(workout, timers)

@@ -115,3 +115,83 @@ de la barra inferior) en un cuadro de color, para que se lea como título. #}
     <div class="bottom-sheet-body" id="exercisePickerResults"></div>
 </div>
 {% endmacro %}
+
+{# Tiempos de una biserie (transición entre ejercicios y descanso de la
+   ronda). openSupersetTimers(url, extra, título, t, r) lo abre; guarda por
+   POST JSON {transition, rest, ...extra} y recarga. #}
+{% macro superset_timer_sheet() %}
+<div class="sheet-backdrop" id="ssTimerBackdrop"></div>
+<div class="bottom-sheet ss-timer-sheet" id="ssTimerSheet" role="dialog" aria-modal="true" aria-labelledby="ssTimerTitle">
+    <div class="bottom-sheet-grabber" aria-hidden="true"></div>
+    <div class="bottom-sheet-header">
+        <h3 id="ssTimerTitle" class="bottom-sheet-title"></h3>
+        <button type="button" class="sheet-close-btn" id="ssTimerClose" aria-label="{{ _('Cerrar') }}">{{ icon('close', 20) }}</button>
+    </div>
+    <div class="ss-timer-body">
+        <div class="ss-timer-row">
+            <div><b>{{ _("Transición") }}</b><small>{{ _("Al terminar una serie, para pasar al siguiente ejercicio de la biserie. 0 = sin temporizador.") }}</small></div>
+            <div class="ss-stepper" data-field="transition" data-step="5" data-max="180">
+                <button type="button" data-delta="-1" aria-label="{{ _('Menos') }}">−</button><output></output><button type="button" data-delta="1" aria-label="{{ _('Más') }}">+</button>
+            </div>
+        </div>
+        <div class="ss-timer-row">
+            <div><b>{{ _("Descanso de la ronda") }}</b><small>{{ _("Al terminar la serie del último ejercicio. No cambia el descanso de cada ejercicio por separado.") }}</small></div>
+            <div class="ss-stepper" data-field="rest" data-step="15" data-max="900">
+                <button type="button" data-delta="-1" aria-label="{{ _('Menos') }}">−</button><output></output><button type="button" data-delta="1" aria-label="{{ _('Más') }}">+</button>
+            </div>
+        </div>
+        <button type="button" class="btn" id="ssTimerSave">{{ _("Guardar") }}</button>
+    </div>
+</div>
+<script>
+    (function () {
+        const sheet = document.getElementById('ssTimerSheet');
+        const backdrop = document.getElementById('ssTimerBackdrop');
+        const values = {};
+        let target = null;
+        function fmt(sec) {
+            const m = Math.floor(sec / 60), s = sec % 60;
+            return m ? (m + ':' + String(s).padStart(2, '0')) : (s + ' s');
+        }
+        function render() {
+            sheet.querySelectorAll('.ss-stepper').forEach(function (st) {
+                st.querySelector('output').textContent = fmt(values[st.dataset.field]);
+            });
+        }
+        sheet.querySelectorAll('.ss-stepper').forEach(function (st) {
+            st.querySelectorAll('button').forEach(function (b) {
+                b.addEventListener('click', function () {
+                    const f = st.dataset.field, step = +st.dataset.step;
+                    values[f] = Math.max(0, Math.min(+st.dataset.max, values[f] + step * +b.dataset.delta));
+                    render();
+                });
+            });
+        });
+        function close() { sheet.classList.remove('open'); backdrop.classList.remove('open'); }
+        backdrop.addEventListener('click', close);
+        document.getElementById('ssTimerClose').addEventListener('click', close);
+        window.openSupersetTimers = function (url, extra, title, transition, rest) {
+            target = {url: url, extra: extra || {}};
+            values.transition = transition; values.rest = rest;
+            document.getElementById('ssTimerTitle').textContent = title;
+            render();
+            sheet.classList.add('open'); backdrop.classList.add('open');
+        };
+        document.getElementById('ssTimerSave').addEventListener('click', function () {
+            const btn = this;
+            if (btn.dataset.pending) return;
+            btn.dataset.pending = '1';
+            fetchWithTimeout(target.url, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(Object.assign({transition: values.transition, rest: values.rest}, target.extra))
+            }).then(r => r.json()).then(function (data) {
+                if (!data.ok) throw new Error();
+                location.reload();
+            }).catch(function () {
+                delete btn.dataset.pending;
+                gyreToast({{ _('No se pudo guardar. Revisa la conexión.')|tojson }}, true);
+            });
+        });
+    })();
+</script>
+{% endmacro %}

@@ -1543,6 +1543,52 @@ def delete_workout_exercise(workout_id):
     return jsonify({"ok": True})
 
 
+def add_superset_timers(info, order, groups, timers, rest_for):
+    """Añade a display_info los tiempos de cada biserie: transición (por
+    defecto 15 s) y descanso de la ronda (por defecto, el del último
+    ejercicio del grupo). `rest_for(nombre)` da el descanso de un ejercicio."""
+    per_group = supersets_mod.group_timers(order, groups, timers)
+    last = {}
+    for key in order:
+        if groups.get(key) is not None:
+            last[groups[key]] = key
+    for key, item in info.items():
+        t, r = per_group.get(item["gid"], (None, None))
+        item["transition"] = supersets_mod.DEFAULT_TRANSITION if t is None else t
+        item["rest"] = r if r is not None else (rest_for.get(last[item["gid"]], 120)
+                                                if isinstance(rest_for, dict) else rest_for(last[item["gid"]]))
+        item["rest_custom"] = r is not None
+
+
+def _timer_payload():
+    data = request.get_json(silent=True) or {}
+    t = supersets_mod.clean_seconds(data.get("transition"), supersets_mod.MAX_TRANSITION)
+    r = supersets_mod.clean_seconds(data.get("rest"), supersets_mod.MAX_REST)
+    return data, t, r
+
+
+@app.route("/workout/<int:workout_id>/superset/timers", methods=["POST"])
+@login_required
+def workout_superset_timers(workout_id):
+    """Transición y descanso de la biserie del ejercicio (en este entreno)."""
+    workout = db.get_or_404(Workout, workout_id)
+    if workout.author != current_user:
+        return jsonify({"ok": False}), 403
+    data, t, r = _timer_payload()
+    exercise = (data.get("exercise") or "").strip().lower()
+    sets = db.session.scalars(workout.sets.select().order_by(SetEntry.id)).all()
+    order, groups = workout_display_order(workout, sets)
+    if t is None or r is None or groups.get(exercise) is None:
+        return jsonify({"ok": False}), 400
+    timers = supersets_mod.load_timers(workout)
+    for key in order:
+        if groups.get(key) == groups[exercise]:
+            timers[key] = [t, r]
+    supersets_mod.save_timers(workout, timers)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
 @app.route("/workout/<int:workout_id>/exercise/superset", methods=["POST"])
 @login_required
 def toggle_workout_superset(workout_id):
@@ -1559,6 +1605,8 @@ def toggle_workout_superset(workout_id):
     order, groups = supersets_mod.toggle_with_next(order, groups, exercise)
     workout.exercise_order = json.dumps(order)
     supersets_mod.save(workout, groups)
+    timers = supersets_mod.load_timers(workout)
+    supersets_mod.save_timers(workout, {k: v for k, v in timers.items() if k in groups})
     db.session.commit()
     return jsonify({"ok": True, "linked": supersets_mod.linked_with_next(order, groups, exercise)})
 
@@ -1834,6 +1882,8 @@ def workout_detail(workout_id):
         )
         for name in exercise_order
     }
+    add_superset_timers(superset_info, exercise_order, superset_groups,
+                        supersets_mod.load_timers(workout), rest_seconds_map)
     prefetch_catalog_exercises(exercise_order)
     return render_template(
         "workout_detail.html",
@@ -3205,6 +3255,14 @@ def routine_detail(routine_id):
         ).all()
         exercise_notes_map = {n.exercise: n for n in notes_rows}
 
+    by_id = {e.id: e for e in exercises}
+
+    def rest_of(ex_id):
+        note = exercise_notes_map.get(by_id[ex_id].exercise)
+        return note.default_rest_seconds if note and note.default_rest_seconds else 120
+    add_superset_timers(superset_info, order, groups,
+                        {e.id: [e.superset_transition, e.superset_rest] for e in exercises}, rest_of)
+
     empty_form = EmptyForm()
     prefetch_catalog_exercises(e.exercise for e in exercises)
     return render_template(
@@ -3439,6 +3497,10 @@ def start_routine(routine_id):
     supersets_mod.save(workout, {
         re_.exercise: re_.superset_group for re_ in routine_exercises if re_.superset_group is not None
     })
+    supersets_mod.save_timers(workout, {
+        re_.exercise: [re_.superset_transition, re_.superset_rest] for re_ in routine_exercises
+        if re_.superset_group is not None and (re_.superset_transition is not None or re_.superset_rest is not None)
+    })
     for re_ in routine_exercises:
         for _ in range(re_.target_sets_max or re_.target_sets):  # las que sobren se borran al terminar
             db.session.add(
@@ -3528,6 +3590,26 @@ def apply_routine_supersets(exercises, order=None, groups=None):
     for index, ex_id in enumerate(order):
         by_id[ex_id].order_index = index
         by_id[ex_id].superset_group = groups.get(ex_id)
+        if groups.get(ex_id) is None:  # fuera de una biserie, sin sus tiempos
+            by_id[ex_id].superset_transition = by_id[ex_id].superset_rest = None
+
+
+@app.route("/routines/<int:routine_id>/exercise/<int:ex_id>/superset/timers", methods=["POST"])
+@login_required
+def routine_superset_timers(routine_id, ex_id):
+    """Transición y descanso de la biserie del ejercicio (en la rutina)."""
+    owned = _own_routine_exercise(routine_id, ex_id)
+    if owned is None:
+        return jsonify({"ok": False}), 403
+    routine, ex = owned
+    _data, t, r = _timer_payload()
+    if t is None or r is None or ex.superset_group is None:
+        return jsonify({"ok": False}), 400
+    for row in db.session.scalars(sa.select(RoutineExercise).where(
+            RoutineExercise.routine_id == routine.id, RoutineExercise.superset_group == ex.superset_group)):
+        row.superset_transition, row.superset_rest = t, r
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @app.route("/routines/<int:routine_id>/exercise/<int:ex_id>/superset", methods=["POST"])
@@ -3766,6 +3848,7 @@ def save_as_routine(workout_id):
 
     sets = db.session.scalars(workout.sets.select().order_by(SetEntry.id)).all()
     exercise_order, groups = workout_display_order(workout, sets)
+    timers = supersets_mod.load_timers(workout)
     exercise_counts = {}
     for s in sets:
         exercise_counts[s.exercise] = exercise_counts.get(s.exercise, 0) + 1
@@ -3786,6 +3869,8 @@ def save_as_routine(workout_id):
             target_reps=str(first_set.reps),
             order_index=i,
             superset_group=groups.get(exercise),
+            superset_transition=timers.get(exercise, [None, None])[0] if groups.get(exercise) else None,
+            superset_rest=timers.get(exercise, [None, None])[1] if groups.get(exercise) else None,
             routine_id=routine.id,
         )
         db.session.add(ex)

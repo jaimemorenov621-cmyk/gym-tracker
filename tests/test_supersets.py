@@ -111,6 +111,28 @@ class WorkoutRouteTests(DbTestCase):
                              [("press de banca", None), ("remo con barra", 1), ("curl", 1)])
 
 
+    def test_superset_timers_default_set_and_kept(self):
+        self.login(self.uid)
+        self.toggle("press de banca")  # press + remo
+        html = self.client.get(f"/workout/{self.wid}").get_data(as_text=True)
+        self.assertIn('data-ss-transition="15"', html)          # por defecto 15 s
+        self.assertIn('data-ss-rest="120"', html)               # el descanso del último (por defecto 2 min)
+        resp = self.client.post(f"/workout/{self.wid}/superset/timers",
+                                json={"exercise": "remo con barra", "transition": 20, "rest": 90})
+        self.assertTrue(resp.get_json()["ok"])
+        with app.app_context():
+            w = db.session.get(Workout, self.wid)
+            self.assertEqual(supersets.load_timers(w), {"press de banca": [20, 90], "remo con barra": [20, 90]})
+        html = self.client.get(f"/workout/{self.wid}").get_data(as_text=True)
+        self.assertIn('data-ss-transition="20" data-ss-rest="90"', html)
+        # Sin biserie no hay tiempos que guardar; al separarla se olvidan.
+        self.assertEqual(self.client.post(f"/workout/{self.wid}/superset/timers",
+                                          json={"exercise": "curl", "transition": 5, "rest": 60}).status_code, 400)
+        self.toggle("press de banca")
+        with app.app_context():
+            self.assertEqual(supersets.load_timers(db.session.get(Workout, self.wid)), {})
+
+
 class RoutineRouteTests(DbTestCase):
     def setUp(self):
         super().setUp()
@@ -143,6 +165,24 @@ class RoutineRouteTests(DbTestCase):
         with app.app_context():
             w = db.session.scalars(sa.select(Workout)).one()
             self.assertEqual(supersets.load(w), {"press de banca": 1, "remo con barra": 1})
+
+    def test_routine_timers_go_to_the_workout(self):
+        self.login(self.uid)
+        self.client.post(f"/routines/{self.rid}/exercise/{self.ids[0]}/superset")
+        resp = self.client.post(f"/routines/{self.rid}/exercise/{self.ids[1]}/superset/timers",
+                                json={"transition": 10, "rest": 75})
+        self.assertTrue(resp.get_json()["ok"])
+        with app.app_context():
+            rows = db.session.scalars(sa.select(RoutineExercise).order_by(RoutineExercise.order_index)).all()
+            self.assertEqual([(r.superset_transition, r.superset_rest) for r in rows], [(10, 75), (10, 75), (None, None)])
+        self.client.post(f"/routines/{self.rid}/start")
+        with app.app_context():
+            w = db.session.scalars(sa.select(Workout)).one()
+            self.assertEqual(supersets.load_timers(w), {"press de banca": [10, 75], "remo con barra": [10, 75]})
+        other = self.make_user("otro")
+        self.login(other)
+        self.assertEqual(self.client.post(f"/routines/{self.rid}/exercise/{self.ids[0]}/superset/timers",
+                                          json={"transition": 1, "rest": 1}).status_code, 403)
 
     def test_reorder_and_delete(self):
         self.login(self.uid)

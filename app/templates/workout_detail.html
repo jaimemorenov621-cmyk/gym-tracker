@@ -137,9 +137,13 @@
         {% set group = grouped_sets[exercise] %}
         {% set n = exercise_notes_map.get(exercise) %}
         {% set ss = superset_info.get(exercise) %}
-        <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}{% if ss %} ss-member{% if ss.first %} ss-first{% endif %}{% if ss.last %} ss-last{% endif %}{% endif %}" data-exercise="{{ exercise }}"{% if ss %} data-superset="{{ ss.gid }}"{% endif %} id="ex-{{ exercise|replace(' ', '-') }}">
+        <div class="card card-elevated{% if group and group|length > 0 and group|selectattr('completed')|list|length == group|length %} exercise-card-complete{% endif %}{% if ss %} ss-member{% if ss.first %} ss-first{% endif %}{% if ss.last %} ss-last{% endif %}{% endif %}" data-exercise="{{ exercise }}"{% if ss %} data-superset="{{ ss.gid }}" data-ss-transition="{{ ss.transition }}" data-ss-rest="{{ ss.rest }}"{% endif %} id="ex-{{ exercise|replace(' ', '-') }}">
             {% if ss %}
-                <div class="ss-tag">{{ macros.icon('link', 13) }} {{ ss.label }} {{ ss.letter }} · {{ ss.pos }}/{{ ss.size }}</div>
+                <button type="button" class="ss-tag" title="{{ _('Tiempos de la biserie') }}"
+                        onclick="openSupersetTimers({{ url_for('workout_superset_timers', workout_id=workout.id)|tojson|forceescape }}, {exercise: {{ exercise|tojson|forceescape }}}, {{ (ss.label ~ ' ' ~ ss.letter)|tojson|forceescape }}, {{ ss.transition }}, {{ ss.rest }})">
+                    {{ macros.icon('link', 13) }} {{ ss.label }} {{ ss.letter }} · {{ ss.pos }}/{{ ss.size }}
+                    <span class="ss-tag-times">{{ macros.icon('stopwatch', 12) }} {{ format_rest(ss.transition) if ss.transition else '—' }} · {{ format_rest(ss.rest) }}</span>
+                </button>
             {% endif %}
             <div class="exercise-header">
                 <h3>
@@ -309,6 +313,7 @@
         <span id="selectedExerciseChip" class="exercise-chip"></span>
     </form>
     {{ macros.exercise_picker_sheet() }}
+    {{ macros.superset_timer_sheet() }}
     <script src="{{ url_for('static', filename='exercise_picker.js') }}"></script>
     <script src="{{ url_for('static', filename='share_card.js') }}"></script>
     <script src="{{ url_for('static', filename='rank_fx.js') }}"></script>
@@ -810,9 +815,21 @@
                     row.classList.add('set-row-sweep');
                     setTimeout(() => row.classList.remove('set-row-sweep'), 380);
                 }
+                // Biserie: transición corta si falta otro ejercicio de la ronda;
+                // al acabarla, el descanso de la biserie. Ninguno toca el
+                // descanso guardado de cada ejercicio por separado.
+                const ssCard = document.querySelector('#workoutExercisesList > .card[data-exercise="' + CSS.escape(exercise) + '"]');
                 const nextInSuperset = supersetNext(exercise);
-                if (nextInSuperset) {
-                    gyreToast({{ _('Biserie: ahora {name}')|tojson }}.replace('{name}', nextInSuperset));
+                if (ssCard && ssCard.dataset.superset) {
+                    if (nextInSuperset) {
+                        gyreToast({{ _('Biserie: ahora {name}')|tojson }}.replace('{name}', nextInSuperset));
+                        const t = parseInt(ssCard.dataset.ssTransition, 10) || 0;
+                        if (t > 0) triggerRestTimer('→ ' + nextInSuperset, t, {persist: false});
+                    } else {
+                        const title = ssCard.querySelector('.exercise-header a.btn-outline');
+                        triggerRestTimer(title ? title.textContent.trim() : exercise,
+                                         parseInt(ssCard.dataset.ssRest, 10) || 120, {persist: false});
+                    }
                 } else {
                     triggerRestTimer(exercise, restSecondsMap[exercise] || 120);
                 }
