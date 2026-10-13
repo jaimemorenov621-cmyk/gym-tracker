@@ -1087,6 +1087,9 @@ def history():
 @app.route("/index")
 @login_required
 def index():
+    # XP primero: si hay que recalcularlo, guarda (commit) y eso caducaría
+    # los objetos ya cargados más abajo (cada uno se volvería a pedir).
+    xp_total = progression.current_xp(current_user.id)
     workouts = db.session.scalars(
         current_user.workouts.select().order_by(Workout.timestamp.desc())
     ).all()
@@ -1140,8 +1143,11 @@ def index():
     if calendar_weeks:
         calendar_weeks[0]["new_month"] = False
 
-    weight_entries = db.session.scalars(
-        sa.select(BodyWeightEntry)
+    # Filas simples (no objetos del ORM): un commit posterior en esta misma
+    # petición (p. ej. guardar el XP recalculado tras entrenar) caducaba los
+    # objetos y la gráfica volvía a pedir cada peso, uno a uno (124 consultas).
+    weight_entries = db.session.execute(
+        sa.select(BodyWeightEntry.timestamp, BodyWeightEntry.weight)
         .where(BodyWeightEntry.user_id == current_user.id)
         .order_by(BodyWeightEntry.timestamp.asc())
     ).all()
@@ -1173,8 +1179,6 @@ def index():
 
     # Nivel y rango de fuerza: de la caché si tus datos no han cambiado.
     profile = cached_profile(current_user)
-    # XP: de la caché si está al día (normalmente no recalcula nada).
-    xp_total = progression.current_xp(current_user.id)
     cta = home_cta(current_user)
     checkin = progression.today_checkin(current_user.id)
     just_checked_in = session.pop("checkin_saved", False)
@@ -1964,7 +1968,15 @@ def finish_workout(workout_id):
                 if preview["bonus"]:
                     parts.append([gettext("Semana cumplida"), preview["bonus"]])
                 queue_xp_gain(gettext("Entreno terminado"), preview["gain"], parts)
-        check_achievements()
+        check_achievements()  # de paso deja en caché el perfil de fuerza (Inicio, Rango)
+        # Lo que aún falta para Inicio (y Progreso), en otro hilo mientras el
+        # móvil recibe la redirección y pide la página.
+        uid, threshold = current_user.id, current_user.stagnation_threshold
+        datacache.warm_in_background(uid, str(get_locale()), [
+            lambda: cached_volume(uid),
+            lambda: cached_strength(uid),
+            lambda: cached_overview(uid, threshold),
+        ])
         return redirect(url_for("index", celebrate=1))
     duration_estimated_from = None
     duration_suspicious = False

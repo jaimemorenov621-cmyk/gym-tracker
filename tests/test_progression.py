@@ -543,3 +543,27 @@ class CommandTests(_XpCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FinishStoresXpTests(DbTestCase):
+    def test_finishing_leaves_the_xp_cache_fresh(self):
+        """La vista previa al terminar guarda el total: Inicio no lo recalcula."""
+        app.config["WTF_CSRF_ENABLED"] = False
+        uid = self.make_user("atleta")
+        with app.app_context():
+            w = Workout(user_id=uid)
+            db.session.add(w)
+            db.session.flush()
+            for _ in range(4):
+                db.session.add(SetEntry(workout_id=w.id, exercise="sentadilla", weight=100, reps=8, completed=True))
+            db.session.commit()
+            wid = w.id
+        self.login(uid)
+        self.client.post(f"/workout/{wid}/finish", data={"performance_rating": 4, "performance_comment": "",
+                                                         "duration_hours": 1, "duration_minutes": 0})
+        with app.app_context():
+            row = db.session.execute(sa.select(User.xp_seq, User.xp_total, User.xp_cached_seq, User.xp_rules,
+                                               User.xp_cached_at).where(User.id == uid)).one()
+            self.assertTrue(xp.is_cache_fresh(row))
+            self.assertGreater(row.xp_total, 0)
+

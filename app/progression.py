@@ -351,15 +351,21 @@ def refresh_xp(user_id, _after_load=None):
     report = compute_xp(load_xp_inputs(user_id))
     if _after_load is not None:
         _after_load()
+    stored = _store_xp_cache(user_id, seq0, report.total)
+    db.session.commit()
+    return report, stored
+
+
+def _store_xp_cache(user_id, seq0, total):
+    """Guarda el total en la caché solo si xp_seq sigue siendo `seq0` (nada
+    cambió mientras se calculaba). No hace commit."""
     result = db.session.execute(
         sa.update(User)
         .where(User.id == user_id, User.xp_seq == seq0)
-        .values(xp_total=report.total, xp_cached_seq=seq0, xp_rules=XP_RULES_VERSION, xp_cached_at=_now())
+        .values(xp_total=total, xp_cached_seq=seq0, xp_rules=XP_RULES_VERSION, xp_cached_at=_now())
         .execution_options(synchronize_session=False)
     )
-    stored = result.rowcount == 1
-    db.session.commit()
-    return report, stored
+    return result.rowcount == 1
 
 
 def is_cache_fresh(row):
@@ -423,9 +429,16 @@ def workout_xp_preview(user_id, workout_id):
     usa la caché (las series guardadas por AJAX la acaban de invalidar)."""
     from app.routes import to_local
 
+    seq0 = db.session.scalar(sa.select(User.xp_seq).where(User.id == user_id))
     inputs = load_xp_inputs(user_id)
     before = compute_xp(inputs, exclude_workout=workout_id)
     after = compute_xp(inputs, include_workout=workout_id)
+    w_done = next((w for w in inputs.workouts if w.id == workout_id), None)
+    if w_done is not None and w_done.finished:
+        # Ya terminado, "después" es el XP total de verdad: se guarda en la
+        # caché (si nada cambió mientras) y Inicio no lo vuelve a calcular.
+        if _store_xp_cache(user_id, seq0, after.total):
+            db.session.commit()
     w = next((w for w in inputs.workouts if w.id == workout_id), None)
     info = after.by_workout.get(workout_id)
     if w is None or info is None:

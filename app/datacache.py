@@ -36,6 +36,8 @@ TTL_SECONDS = 6 * 3600
 
 _lock = threading.Lock()
 _cache = OrderedDict()
+_inflight = {}  # (clave, versión) -> Event mientras un hilo lo calcula
+INFLIGHT_WAIT_SECONDS = 20
 
 
 def clear():
@@ -77,19 +79,39 @@ def cached(name, user_id, compute, *extra):
     key = (name, user_id, str(get_locale()) if has_request_context() else None, extra)
     version = data_version(user_id)
     now = time.monotonic()
-    with _lock:
-        hit = _cache.get(key)
-        if hit is not None and hit[0] == version and now - hit[1] < TTL_SECONDS:
-            _cache.move_to_end(key)
-            return hit[2]
+    for _ in range(2):
+        with _lock:
+            hit = _cache.get(key)
+            if hit is not None and hit[0] == version and now - hit[1] < TTL_SECONDS:
+                _cache.move_to_end(key)
+                return hit[2]
+            running = _inflight.get((key, version))
+            if running is None:
+                running = _inflight[(key, version)] = threading.Event()
+                owner = True
+            else:
+                owner = False
+        if owner:
+            break
+        # Otro hilo (p. ej. el precálculo al terminar un entreno) ya lo está
+        # calculando con estos mismos datos: se espera en vez de repetirlo.
+        running.wait(INFLIGHT_WAIT_SECONDS)
+    else:
+        owner = False
     t0 = time.perf_counter()
-    value = compute()
-    note_recompute(name, t0)
-    with _lock:
-        _cache[key] = (version, now, value)
-        _cache.move_to_end(key)
-        while len(_cache) > MAX_ENTRIES:
-            _cache.popitem(last=False)
+    try:
+        value = compute()
+        note_recompute(name, t0)
+        with _lock:
+            _cache[key] = (version, now, value)
+            _cache.move_to_end(key)
+            while len(_cache) > MAX_ENTRIES:
+                _cache.popitem(last=False)
+    finally:
+        if owner:
+            with _lock:
+                _inflight.pop((key, version), None)
+            running.set()
     return value
 
 
@@ -98,4 +120,27 @@ def note_recompute(label, t0):
     el indicador de tiempos del admin (cabecera Server-Timing "calc")."""
     if has_request_context():
         g.setdefault("_recomputed", []).append(f"{label} {(time.perf_counter() - t0) * 1000:.0f}")
+
+
+def warm_in_background(user_id, locale, tasks):
+    """Calcula `tasks` (funciones sin argumentos que usan cached()) en otro
+    hilo, con un contexto de petición del mismo idioma para que las claves
+    coincidan con las de las páginas. Si la página llega antes de que acabe,
+    espera al cálculo en marcha en vez de repetirlo (ver cached())."""
+    from app import app
+
+    uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+    if ":memory:" in uri:  # tests: otra conexión vería otra base vacía
+        return
+
+    def run():
+        try:
+            with app.test_request_context(headers={"Accept-Language": locale},
+                                          environ_base={"HTTP_COOKIE": f"lang={locale}"}):
+                for task in tasks:
+                    task()
+        except Exception:
+            app.logger.exception("Precálculo en segundo plano de %s", user_id)
+
+    threading.Thread(target=run, name=f"warm-{user_id}", daemon=True).start()
 

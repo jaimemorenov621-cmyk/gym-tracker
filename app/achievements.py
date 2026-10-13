@@ -490,7 +490,10 @@ def compute_stats(user):
     # Fuerza relativa y estándares: mismo criterio estricto que /progress
     # (solo el levantamiento con barra, sin variantes; 1RM estimado con series
     # de hasta 10 repeticiones efectivas). Ver app/strength_standards.py.
-    profile = standards.strength_profile(user, rows=rows)
+    # El mismo perfil (en caché) que Inicio y Rango: al terminar un entreno
+    # los logros lo calculan y la siguiente página ya lo encuentra hecho.
+    from app.routes import cached_profile
+    profile = cached_profile(user)
     latest_bw = profile["latest_bw"]
     for lift in ("bench", "squat", "deadlift"):
         best = profile["lifts"][lift]["best_e1rm_all"]
