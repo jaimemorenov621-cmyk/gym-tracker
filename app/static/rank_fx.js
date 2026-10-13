@@ -1,11 +1,14 @@
 // Animaciones de rango (app/strength_standards.py, CSS en style.css):
 //  - showRankCelebration(): la celebración de subida de rango, también en
-//    mitad de un entreno (la versión de Inicio la pinta el servidor).
+//    mitad de un entreno (la versión de Inicio la pinta el servidor), con
+//    "Compartir mi rango" si la página carga share_card.js.
 //  - Bienvenida breve con tu emblema, una vez al día, que se va sola.
 //  - Barra hasta la siguiente división que se rellena desde donde la dejaste.
 // Todo respeta prefers-reduced-motion.
 (function () {
     const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const SHARE_ICON = '<svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>';
 
     function emblemSrc(rank) {
         return '/static/ranks/' + rank.file + '-512.webp';
@@ -28,14 +31,21 @@
             '<img class="rank-emblem" src="' + emblemSrc(rank) + '" width="190" height="190" alt=""></div>' +
             '<small>' + T('¡Has subido de rango!') + '</small><strong></strong>' +
             '<p>' + T('Acabas de conseguirlo con este récord. Sigue así.') + '</p>' +
-            '<div class="rank-celebration-actions"><a class="btn" href="/rango">' + T('Ver mi rango') + '</a>' +
-            '<button type="button" class="btn-outline">' + T('Seguir entrenando') + '</button></div></div>';
+            '<div class="rank-celebration-actions">' +
+            (window.openShareCard ? '<button type="button" class="btn rank-share-btn">' + SHARE_ICON + ' ' + T('Compartir mi rango') + '</button>' : '') +
+            '<a class="btn" href="/rango">' + T('Ver mi rango') + '</a>' +
+            '<button type="button" class="btn-outline rank-close-btn">' + T('Seguir entrenando') + '</button></div></div>';
         el.querySelector('strong').textContent = rank.label;
         function close() {
             el.classList.add('is-closing');
             setTimeout(function () { el.remove(); }, 250);
         }
-        el.querySelector('button').addEventListener('click', close);
+        el.querySelector('.rank-close-btn').addEventListener('click', close);
+        const share = el.querySelector('.rank-share-btn');
+        if (share) share.addEventListener('click', function () {
+            close();
+            window.openShareCard({kind: 'rank', key: 'global'});
+        });
         el.addEventListener('click', function (e) { if (e.target === el) close(); });
         document.body.appendChild(el);
     };

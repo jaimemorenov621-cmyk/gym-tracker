@@ -207,11 +207,13 @@
                 <strong id="rankCelebrationTitle">{{ r.label }}</strong>
                 <p>{{ _('Sigue así: cada kilo cuenta.') if rank_event == 'up' else _('Sale de tus 1RM estimados frente a estándares de referencia. Puede subir… y bajar.') }}</p>
                 <div class="rank-celebration-actions">
+                    <button type="button" class="btn rank-share-btn" onclick="closeRankCelebration(); openShareCard({kind: 'rank', key: 'global'})">{{ macros.icon('share', 18) }} {{ _("Compartir mi rango") }}</button>
                     <a class="btn" href="{{ url_for('rank_page') }}">{{ _("Ver mi rango") }}</a>
                     <button type="button" class="btn-outline" onclick="closeRankCelebration()">{{ _("Cerrar") }}</button>
                 </div>
             </div>
         </div>
+        <script src="{{ url_for('static', filename='share_card.js') }}"></script>
         <script>
             function closeRankCelebration() {
                 var el = document.getElementById('rankCelebration');

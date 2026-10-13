@@ -100,6 +100,7 @@ JS_STRINGS = [
     N_("Acabas de conseguirlo con este récord. Sigue así."),
     N_("Ver mi rango"),
     N_("Seguir entrenando"),
+    N_("Compartir mi rango"),
     N_("NV"),
     N_("Subida de nivel"),
     N_("Faltan {xp} XP para el nivel {level}"),

@@ -509,6 +509,8 @@ class RankCelebrationTests(_LifterCase):
         self.lift("peso muerto", 260, datetime.now() - timedelta(days=1))
         html = self.client.get("/index").get_data(as_text=True)
         self.assertIn("¡Has subido de rango!", html)
+        self.assertIn("openShareCard({kind: 'rank', key: 'global'})", html)  # se puede compartir
+        self.assertIn("share_card.js", html)
         with app.app_context():
             u = db.session.get(User, self.uid)
             u.rank_seen = 99  # como si viniera de un rango más alto: bajar no se anuncia
