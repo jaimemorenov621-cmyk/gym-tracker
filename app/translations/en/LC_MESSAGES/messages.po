@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-13 19:57+0000\n"
+"POT-Creation-Date: 2026-10-17 16:03+0000\n"
 "PO-Revision-Date: 2026-10-04 21:53+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -1532,7 +1532,7 @@ msgid "Guardar check-in"
 msgstr "Save check-in"
 
 #: app/forms.py:146 app/forms.py:197 app/forms.py:249 app/forms.py:292
-#: app/templates/_macros.html:143 app/templates/athlete_card_edit.html:59
+#: app/templates/_macros.html:144 app/templates/athlete_card_edit.html:59
 #: app/templates/exercise_notes.html:20 app/templates/exercise_progress.html:64
 #: app/templates/personal_basics.html:30
 msgid "Guardar"
@@ -3157,11 +3157,21 @@ msgstr "Search the catalog..."
 msgid "Filtrar por músculo"
 msgstr "Filter by muscle"
 
-#: app/templates/_macros.html:132
-msgid "Transición"
-msgstr "Transition"
+#: app/templates/_macros.html:131
+msgid ""
+"Haz una serie de cada ejercicio seguidas: entre una y otra corre el "
+"cambio y, al completar la ronda, el descanso. El temporizador indica cuál"
+" de los dos es."
+msgstr ""
+"Do one set of each exercise back to back: the switch timer runs between "
+"them and, once the round is complete, the rest. The timer shows which one"
+" it is."
 
-#: app/templates/_macros.html:132
+#: app/templates/_macros.html:133
+msgid "Cambio de ejercicio"
+msgstr "Exercise switch"
+
+#: app/templates/_macros.html:133
 msgid ""
 "Al terminar una serie, para pasar al siguiente ejercicio de la biserie. 0"
 " = sin temporizador."
@@ -3169,19 +3179,19 @@ msgstr ""
 "After a set, to move on to the next exercise of the superset. 0 = no "
 "timer."
 
-#: app/templates/_macros.html:134 app/templates/_macros.html:140
+#: app/templates/_macros.html:135 app/templates/_macros.html:141
 msgid "Menos"
 msgstr "Less"
 
-#: app/templates/_macros.html:134 app/templates/_macros.html:140
+#: app/templates/_macros.html:135 app/templates/_macros.html:141
 msgid "Más"
 msgstr "More"
 
-#: app/templates/_macros.html:138
+#: app/templates/_macros.html:139 app/templates/workout_detail.html:833
 msgid "Descanso de la ronda"
 msgstr "Round rest"
 
-#: app/templates/_macros.html:138
+#: app/templates/_macros.html:139
 msgid ""
 "Al terminar la serie del último ejercicio. No cambia el descanso de cada "
 "ejercicio por separado."
@@ -3189,7 +3199,7 @@ msgstr ""
 "After the set of the last exercise. It does not change each exercise's "
 "own rest."
 
-#: app/templates/_macros.html:192 app/templates/base.html:459
+#: app/templates/_macros.html:193 app/templates/base.html:462
 #: app/templates/routine_detail.html:159 app/templates/routine_detail.html:177
 #: app/templates/workout_detail.html:245
 msgid "No se pudo guardar. Revisa la conexión."
@@ -3531,85 +3541,85 @@ msgstr "%(name)s in progress"
 msgid "Descanso: tocar para plegar o desplegar"
 msgstr "Rest: tap to collapse or expand"
 
-#: app/templates/base.html:212 app/templates/landing.html:117
+#: app/templates/base.html:215 app/templates/landing.html:117
 #: app/templates/routine_detail.html:85
 msgid "Descanso"
 msgstr "Rest"
 
-#: app/templates/base.html:215
+#: app/templates/base.html:218
 msgid "Quitar 15 segundos"
 msgstr "Remove 15 seconds"
 
-#: app/templates/base.html:215
+#: app/templates/base.html:218
 msgid "−15"
 msgstr "−15"
 
-#: app/templates/base.html:216
+#: app/templates/base.html:219
 msgid "Añadir 15 segundos"
 msgstr "Add 15 seconds"
 
-#: app/templates/base.html:216
+#: app/templates/base.html:219
 msgid "+15"
 msgstr "+15"
 
-#: app/templates/base.html:217
+#: app/templates/base.html:220
 msgid "Parar descanso"
 msgstr "Stop rest"
 
-#: app/templates/base.html:223
+#: app/templates/base.html:226
 msgid "Cerrar aviso"
 msgstr "Close notice"
 
-#: app/templates/base.html:232 app/templates/friends.html:66
+#: app/templates/base.html:235 app/templates/friends.html:66
 msgid "Cancelar"
 msgstr "Cancel"
 
-#: app/templates/base.html:233 app/templates/base.html:475
+#: app/templates/base.html:236 app/templates/base.html:478
 msgid "Eliminar"
 msgstr "Delete"
 
-#: app/templates/base.html:244
+#: app/templates/base.html:247
 msgid "⏱ ¡Descanso terminado!"
 msgstr "⏱ Rest over!"
 
-#: app/templates/base.html:263
+#: app/templates/base.html:266
 msgid "Error de JS:"
 msgstr "JS error:"
 
-#: app/templates/base.html:273
+#: app/templates/base.html:276
 msgid "Promesa sin capturar:"
 msgstr "Unhandled promise:"
 
-#: app/templates/base.html:354
+#: app/templates/base.html:357
 msgid "Tu sesión se cerró: vuelve a entrar y se guardará lo pendiente"
 msgstr "You were signed out: sign in again and your pending changes will be saved"
 
-#: app/templates/base.html:357
+#: app/templates/base.html:360
 msgid "Sin conexión · 1 serie por guardar, reintentando…"
 msgstr "Offline · 1 set to save, retrying…"
 
-#: app/templates/base.html:358
+#: app/templates/base.html:361
 #, python-format
 msgid "Sin conexión · %(n)s series por guardar, reintentando…"
 msgstr "Offline · %(n)s sets to save, retrying…"
 
-#: app/templates/base.html:457
+#: app/templates/base.html:460
 msgid "Guardado ✓"
 msgstr "Saved ✓"
 
-#: app/templates/base.html:557
+#: app/templates/base.html:560
 msgid "¡Descanso terminado!"
 msgstr "Rest over!"
 
-#: app/templates/base.html:557
+#: app/templates/base.html:560
 msgid "Quedan"
 msgstr "Remaining"
 
-#: app/templates/base.html:558
+#: app/templates/base.html:561
 msgid "⏱ Descanso terminado"
 msgstr "⏱ Rest over"
 
-#: app/templates/base.html:558
+#: app/templates/base.html:561
 msgid "⏱ Descanso en curso"
 msgstr "⏱ Resting"
 
@@ -6594,6 +6604,11 @@ msgstr ""
 msgid "Tiempos de la biserie"
 msgstr "Superset timers"
 
+#: app/templates/routine_detail.html:40 app/templates/workout_detail.html:145
+#, python-format
+msgid "Cambio %(t)s · descanso %(r)s"
+msgstr "Switch %(t)s · rest %(r)s"
+
 #: app/templates/routine_detail.html:44 app/templates/routines.html:22
 #: app/templates/workout_detail.html:150
 msgid "Mantén pulsado y arrastra para ordenar"
@@ -7225,7 +7240,7 @@ msgstr "Light effort"
 msgid "Cuando acabes"
 msgstr "When you're done"
 
-#: app/templates/workout_detail.html:436 app/templates/workout_detail.html:908
+#: app/templates/workout_detail.html:436 app/templates/workout_detail.html:910
 msgid "Guardar y valorar la sesión"
 msgstr "Save and rate the session"
 
@@ -7314,20 +7329,25 @@ msgstr "Couldn't add the set. Check your connection."
 msgid "Biserie: ahora {name}"
 msgstr "Superset: now {name}"
 
-#: app/templates/workout_detail.html:841
+#: app/templates/workout_detail.html:828
+#, python-brace-format
+msgid "Cambio → {name}"
+msgstr "Switch → {name}"
+
+#: app/templates/workout_detail.html:843
 msgid "No se pudo guardar la serie. Revisa la conexión."
 msgstr "Couldn't save the set. Check your connection."
 
-#: app/templates/workout_detail.html:852
+#: app/templates/workout_detail.html:854
 msgid "No se pudo guardar la serie."
 msgstr "Couldn't save the set."
 
-#: app/templates/workout_detail.html:890
+#: app/templates/workout_detail.html:892
 #, python-brace-format
 msgid "{n} de {total} series registradas"
 msgstr "{n} of {total} sets logged"
 
-#: app/templates/workout_detail.html:908
+#: app/templates/workout_detail.html:910
 #, python-brace-format
 msgid "{n} de {total} series hechas"
 msgstr "{n} of {total} sets done"

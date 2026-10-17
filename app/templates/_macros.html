@@ -128,8 +128,9 @@ de la barra inferior) en un cuadro de color, para que se lea como título. #}
         <button type="button" class="sheet-close-btn" id="ssTimerClose" aria-label="{{ _('Cerrar') }}">{{ icon('close', 20) }}</button>
     </div>
     <div class="ss-timer-body">
+        <p class="ss-timer-how">{{ _("Haz una serie de cada ejercicio seguidas: entre una y otra corre el cambio y, al completar la ronda, el descanso. El temporizador indica cuál de los dos es.") }}</p>
         <div class="ss-timer-row">
-            <div><b>{{ _("Transición") }}</b><small>{{ _("Al terminar una serie, para pasar al siguiente ejercicio de la biserie. 0 = sin temporizador.") }}</small></div>
+            <div><b>{{ _("Cambio de ejercicio") }}</b><small>{{ _("Al terminar una serie, para pasar al siguiente ejercicio de la biserie. 0 = sin temporizador.") }}</small></div>
             <div class="ss-stepper" data-field="transition" data-step="5" data-max="180">
                 <button type="button" data-delta="-1" aria-label="{{ _('Menos') }}">−</button><output></output><button type="button" data-delta="1" aria-label="{{ _('Más') }}">+</button>
             </div>

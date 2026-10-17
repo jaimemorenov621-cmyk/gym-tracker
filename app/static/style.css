@@ -428,6 +428,10 @@ body.has-rest-timer { padding-bottom: 84px; }
 @media (prefers-reduced-motion: no-preference) {
     .rt-ring-fill { transition: stroke-dashoffset 1s linear; }
 }
+.rt-text { display: flex; flex-direction: column; justify-content: center; line-height: 1.1; min-width: 0; }
+.rt-label { max-width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 0.68rem; font-weight: 800; color: var(--accent); }
+.rt-label[hidden] { display: none; }
 .rest-toast .rt-time {
     font-size: 1.35rem;
     font-weight: 800;
@@ -1104,7 +1108,8 @@ en vez de solo encogerla, que era lo que seguía sin caber.  */
 }
 .plan-pills { display: flex; gap: 6px; flex-shrink: 0; }
 .plan-pills .pill { margin: 0; white-space: nowrap; }
-.plan-row.is-done .plan-name {
+.plan-row.is-done .plan-name,
+.plan-row.is-done .plan-target {
     color: var(--color-text-muted);
     text-decoration: line-through;
     text-decoration-thickness: 2px;
@@ -4618,6 +4623,7 @@ button.is-pending::after, input[type="submit"].is-pending::after, .active-toast.
     padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; font-family: inherit;
     background: rgba(var(--accent-rgb), 0.12); color: var(--color-brand-deep); border: 0; cursor: pointer;
 }
+.ss-timer-how { margin: 0 0 4px; font-size: 0.85rem; color: var(--color-text-muted); line-height: 1.4; }
 .ss-tag-times { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; opacity: 0.85; }
 .ss-timer-body { padding: 4px 16px 16px; display: grid; gap: 14px; }
 .ss-timer-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

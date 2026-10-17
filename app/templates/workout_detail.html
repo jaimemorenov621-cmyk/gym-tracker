@@ -117,7 +117,7 @@
                 <div class="plan-row{% if p.done >= p.target_sets %} is-done{% endif %}">
                     <span class="plan-name">{{ p.exercise|exercise_title }}</span>
                     <span class="plan-pills">
-                        <span class="pill">{{ p.sets_label }}x{{ p.target_reps }}{% if p.rir is not none %} @RIR{{ p.rir }}{% elif p.rpe is not none %} @RPE{{ p.rpe }}{% endif %}</span>
+                        <span class="pill plan-target">{{ p.sets_label }}x{{ p.target_reps }}{% if p.rir is not none %} @RIR{{ p.rir }}{% elif p.rpe is not none %} @RPE{{ p.rpe }}{% endif %}</span>
                         <span class="pill{% if p.done >= p.target_sets %} pill-success{% endif %}"
                               data-plan-exercise="{{ p.exercise|trim|lower }}"
                               data-done="{{ p.done }}"
@@ -142,7 +142,7 @@
                 <button type="button" class="ss-tag" title="{{ _('Tiempos de la biserie') }}"
                         onclick="openSupersetTimers({{ url_for('workout_superset_timers', workout_id=workout.id)|tojson|forceescape }}, {exercise: {{ exercise|tojson|forceescape }}}, {{ (ss.label ~ ' ' ~ ss.letter)|tojson|forceescape }}, {{ ss.transition }}, {{ ss.rest }})">
                     {{ macros.icon('link', 13) }} {{ ss.label }} {{ ss.letter }} · {{ ss.pos }}/{{ ss.size }}
-                    <span class="ss-tag-times">{{ macros.icon('stopwatch', 12) }} {{ format_rest(ss.transition) if ss.transition else '—' }} · {{ format_rest(ss.rest) }}</span>
+                    <span class="ss-tag-times">{{ macros.icon('stopwatch', 12) }} {{ _('Cambio %(t)s · descanso %(r)s', t=(format_rest(ss.transition) if ss.transition else '0s'), r=format_rest(ss.rest)) }}</span>
                 </button>
             {% endif %}
             <div class="exercise-header">
@@ -824,11 +824,13 @@
                     if (nextInSuperset) {
                         gyreToast({{ _('Biserie: ahora {name}')|tojson }}.replace('{name}', nextInSuperset));
                         const t = parseInt(ssCard.dataset.ssTransition, 10) || 0;
-                        if (t > 0) triggerRestTimer('→ ' + nextInSuperset, t, {persist: false});
+                        if (t > 0) triggerRestTimer('→ ' + nextInSuperset, t, {
+                            persist: false, label: {{ _('Cambio → {name}')|tojson }}.replace('{name}', nextInSuperset)});
                     } else {
                         const title = ssCard.querySelector('.exercise-header a.btn-outline');
                         triggerRestTimer(title ? title.textContent.trim() : exercise,
-                                         parseInt(ssCard.dataset.ssRest, 10) || 120, {persist: false});
+                                         parseInt(ssCard.dataset.ssRest, 10) || 120,
+                                         {persist: false, label: {{ _('Descanso de la ronda')|tojson }}});
                     }
                 } else {
                     triggerRestTimer(exercise, restSecondsMap[exercise] || 120);

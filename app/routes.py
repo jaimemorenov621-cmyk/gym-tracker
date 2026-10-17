@@ -1564,7 +1564,7 @@ def delete_workout_exercise(workout_id):
 
 def add_superset_timers(info, order, groups, timers, rest_for):
     """Añade a display_info los tiempos de cada biserie: transición (por
-    defecto 15 s) y descanso de la ronda (por defecto, el del último
+    defecto 40 s) y descanso de la ronda (por defecto, el del último
     ejercicio del grupo). `rest_for(nombre)` da el descanso de un ejercicio."""
     per_group = supersets_mod.group_timers(order, groups, timers)
     last = {}

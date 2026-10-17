@@ -111,7 +111,7 @@ def display_info(order, groups):
 
 
 # ------------------------------------------------------------- tiempos
-DEFAULT_TRANSITION = 15     # s para cambiar de ejercicio dentro de la ronda
+DEFAULT_TRANSITION = 40     # s para cambiar de ejercicio dentro de la ronda
 MAX_TRANSITION = 180
 MAX_REST = 900
 

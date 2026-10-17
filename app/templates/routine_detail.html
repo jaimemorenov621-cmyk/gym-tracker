@@ -37,7 +37,7 @@
                     <button type="button" class="ss-tag" title="{{ _('Tiempos de la biserie') }}"
                             onclick="openSupersetTimers({{ url_for('routine_superset_timers', routine_id=routine.id, ex_id=ex.id)|tojson|forceescape }}, {}, {{ (ss.label ~ ' ' ~ ss.letter)|tojson|forceescape }}, {{ ss.transition }}, {{ ss.rest }})">
                         {{ macros.icon('link', 13) }} {{ ss.label }} {{ ss.letter }} · {{ ss.pos }}/{{ ss.size }}
-                        <span class="ss-tag-times">{{ macros.icon('stopwatch', 12) }} {{ format_rest(ss.transition) if ss.transition else '—' }} · {{ format_rest(ss.rest) }}</span>
+                        <span class="ss-tag-times">{{ macros.icon('stopwatch', 12) }} {{ _('Cambio %(t)s · descanso %(r)s', t=(format_rest(ss.transition) if ss.transition else '0s'), r=format_rest(ss.rest)) }}</span>
                     </button>
                 {% endif %}
                 <div class="routine-ex-head">

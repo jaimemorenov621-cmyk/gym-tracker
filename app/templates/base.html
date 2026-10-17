@@ -208,7 +208,10 @@
                 <circle class="rt-ring-fill" id="restRingFill" cx="13" cy="13" r="10.5" fill="none" stroke-width="3.5"
                         stroke-dasharray="66" stroke-dashoffset="0"/>
             </svg>
-            <span class="rt-time" id="timerDisplay">00:00</span>
+            <span class="rt-text">
+                <span class="rt-label" id="restLabel" hidden></span>
+                <span class="rt-time" id="timerDisplay">00:00</span>
+            </span>
             <span class="visually-hidden">{{ _("Descanso") }} <span id="restExerciseName"></span></span>
         </div>
         <div class="rt-adjust">
@@ -588,12 +591,26 @@
             if (restWorker) restWorker.postMessage({ type: 'start', endTime: newEnd });
         }
 
+        // Etiqueta visible encima del tiempo (biseries: "Cambio → X" o
+        // "Descanso de la ronda"); vacía = descanso normal, sin etiqueta.
+        function setRestLabel(text) {
+            const el = document.getElementById('restLabel');
+            el.textContent = text || '';
+            el.hidden = !text;
+            try {
+                if (text) localStorage.setItem('restLabel', text);
+                else localStorage.removeItem('restLabel');
+            } catch (e) {}
+        }
+
         // opts.persist = false: no guarda este tiempo como descanso del
         // ejercicio (los tiempos de una biserie son de la biserie).
+        // opts.label: texto visible encima del tiempo.
         function startRestTimer(totalSeconds, opts) {
             if (totalSeconds <= 0) return;
             unlockAudio();
             document.getElementById('restTimerBox').style.display = 'flex';
+            setRestLabel(opts && opts.label);
             document.getElementById('restExerciseName').textContent = currentTimerExercise ? '— ' + currentTimerExercise : '';
 
             if (currentTimerExercise && !(opts && opts.persist === false)) {
@@ -625,6 +642,7 @@
                     localStorage.removeItem('restEndTime');
                     localStorage.removeItem('restExercise');
                     localStorage.removeItem('restTotalSeconds');
+                    setRestLabel('');
                     document.getElementById('restTimerBox').style.display = 'none';
                     if (restSoundEnabled) beep();
                     if (navigator.vibrate && restVibrationEnabled) navigator.vibrate([200, 100, 200]);
@@ -648,6 +666,7 @@
             localStorage.removeItem('restEndTime');
             localStorage.removeItem('restExercise');
             localStorage.removeItem('restTotalSeconds');
+            setRestLabel('');
             document.getElementById('restTimerBox').style.display = 'none';
             closeRestNotification();
         }
@@ -824,6 +843,9 @@
                 restTotalSeconds = parseInt(localStorage.getItem('restTotalSeconds')) || Math.round((parseInt(savedEnd) - Date.now()) / 1000);
                 document.getElementById('restTimerBox').style.display = 'flex';
                 document.getElementById('restExerciseName').textContent = currentTimerExercise ? '— ' + currentTimerExercise : '';
+                let label = null;
+                try { label = localStorage.getItem('restLabel'); } catch (e) {}
+                setRestLabel(label);
                 const remaining = Math.round((parseInt(savedEnd) - Date.now()) / 1000);
                 document.getElementById('timerDisplay').textContent = formatMMSS(remaining);
                 updateRestRing(remaining);
