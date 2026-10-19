@@ -717,7 +717,7 @@ def landing_stats():
     referrer_counts = defaultdict(int)
     daily = defaultdict(lambda: {"visits": 0, "trials": 0, "clicks": 0, "signups": 0})
     by_source = defaultdict(lambda: {"visits": 0, "trials": 0, "clicks": 0, "signups": 0})
-    by_language = defaultdict(lambda: {"visits": 0, "clicks": 0})
+    by_language = defaultdict(lambda: {"visits": 0, "trials": 0, "clicks": 0})
 
     for event_type, ts, referrer, user_agent, source, language in db.session.execute(events_q):
         if _is_bot_user_agent(user_agent):
@@ -739,6 +739,7 @@ def landing_stats():
             guest_clicks += 1
             daily[day]["trials"] += 1
             by_source[source]["trials"] += 1
+            by_language[language]["trials"] += 1
         elif event_type in ("cta_click", "google_click"):
             if event_type == "cta_click":
                 cta_clicks += 1

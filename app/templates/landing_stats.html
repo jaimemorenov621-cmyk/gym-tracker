@@ -105,19 +105,21 @@
         <h3 style="margin-top:0;">Idioma del navegador</h3>
         {% if by_language %}
             <table class="stats-daily">
-                <thead><tr><th>Idioma</th><th>Visitas</th><th>% visitas</th><th>Clics</th></tr></thead>
+                <thead><tr><th>Idioma</th><th>Visitas</th><th>% visitas</th><th>Pruebas</th><th>Clics</th></tr></thead>
                 <tbody>
                     {% for name, d in by_language %}
                         <tr>
                             <td>{% if name %}<strong>{{ name }}</strong>{% else %}<span class="stats-muted">desconocido</span>{% endif %}</td>
                             <td>{{ d.visits }}</td>
                             <td>{% if name and known_language_visits %}{{ (100 * d.visits / known_language_visits)|round|int }}%{% else %}—{% endif %}</td>
+                            <td>{{ d.trials }}</td>
                             <td>{{ d.clicks }}</td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
             <p class="stats-footnote" style="margin-bottom:0;">
+                Pruebas = «Probar ahora, sin cuenta» (el botón principal); clics = «Crear cuenta» y «Continuar con Google».
                 El % se calcula sobre las visitas con idioma conocido (se guarda desde el 02/10/2026).
                 La app sale en inglés automáticamente a quien tiene el móvil en inglés; el resto, en español.
             </p>

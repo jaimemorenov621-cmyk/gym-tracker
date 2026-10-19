@@ -66,6 +66,18 @@ class GuestTests(DbTestCase):
         tile = html.split("Clics para crear cuenta")[0].rsplit('stats-tile-value">', 1)[1]
         self.assertTrue(tile.startswith("0<"), tile[:20])  # probar no es un clic de crear cuenta
 
+    def test_trials_by_browser_language(self):
+        # "Probar sin cuenta" es el botón principal: la tabla de idiomas
+        # también lo cuenta (antes solo contaba crear cuenta / Google).
+        self.client.post("/probar", headers={"Accept-Language": "en-US,en;q=0.9"})
+        self.client.get("/logout")
+        self.login(self.make_user("Jaime_309"))
+        html = self.client.get("/landing/stats?periodo=todo").get_data(as_text=True)
+        table = html.split("Idioma del navegador")[1].split("</table>")[0]
+        self.assertIn("<th>Pruebas</th>", table)
+        row = table.split("<strong>Inglés</strong>")[1].split("</tr>")[0]
+        self.assertEqual([c.split("</td>")[0].strip() for c in row.split("<td>")[1:]], ["0", "—", "1", "0"])
+
     def test_guest_can_open_login(self):
         self.start()
         self.assertEqual(self.client.get("/login").status_code, 200)
