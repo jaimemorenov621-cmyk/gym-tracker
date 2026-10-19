@@ -283,18 +283,31 @@
 
         // fetch con límite de tiempo: con cobertura mala una petición puede
         // quedarse colgada minutos sin fallar; así falla y se reintenta.
+        // Si tarda más de 0,3 s, se enciende la barra de carga de arriba: sin
+        // ella, un botón que espera al servidor parecía no haberse pulsado.
+        let busyRequests = 0, busyShown = false;
         function fetchWithTimeout(url, options, ms) {
             const ctrl = window.AbortController ? new AbortController() : null;
             const timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, ms || 15000);
+            busyRequests++;
+            const slow = setTimeout(function () { busyShown = true; showBusy(); }, 300);
             return fetch(url, Object.assign({}, options || {}, ctrl ? {signal: ctrl.signal} : {}))
                 .catch(function (err) { throw (err && err.name === 'AbortError') ? new TypeError('network timeout') : err; })
-                .finally(function () { clearTimeout(timer); });
+                .finally(function () {
+                    clearTimeout(timer);
+                    clearTimeout(slow);
+                    if (--busyRequests === 0 && busyShown) { busyShown = false; showBusy(); }
+                });
         }
 
         // Barra fina de carga arriba: al tocar un enlace o enviar un
         // formulario se ve al instante que la app ha reaccionado aunque el
         // servidor tarde (cobertura del gimnasio, servidor despertando).
-        window.gyreBusy = function (on) { document.documentElement.classList.toggle('is-navigating', !!on); };
+        // La barra se ve si alguien la ha pedido (gyreBusy, p. ej. al navegar)
+        // o si hay una petición lenta en curso; cada una se apaga por su lado.
+        let busyAsked = false;
+        function showBusy() { document.documentElement.classList.toggle('is-navigating', busyAsked || busyShown); }
+        window.gyreBusy = function (on) { busyAsked = !!on; showBusy(); };
         document.addEventListener('click', function (e) {
             if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
             const a = e.target.closest && e.target.closest('a[href]');
@@ -692,6 +705,17 @@
                 box.style.bottom = 'auto';
             }
 
+            // Si cambia de tamaño (p. ej. aparece la etiqueta de biserie) o gira
+            // la pantalla, vuelve a meterla entera en la pantalla: la posición
+            // arrastrada se guarda desde la izquierda y crecería hacia fuera.
+            function keepInside() {
+                if (!box.style.left || box.style.left === 'auto' || box.style.display === 'none') return;
+                const rect = box.getBoundingClientRect();
+                applyPosition(rect.left, rect.top);
+            }
+            if (window.ResizeObserver) new ResizeObserver(keepInside).observe(box);
+            window.addEventListener('resize', keepInside);
+
             // Si se arrastra, la posición vale solo para ese entrenamiento: en el
             // siguiente vuelve a la de por defecto del CSS (abajo a la derecha,
             // encima de la barra inferior), no a donde se dejó la última vez.
@@ -858,34 +882,39 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js');
         }
-        // Pulsación "pop" en botones (ver .tap-down / .tap-pop en style.css).
+        // Pulsación en botones (ver .tap-down / .tap-pop en style.css): al
+        // apoyar el dedo se oscurece y el rebote sale solo con el clic de
+        // verdad, así una animación nunca aparenta un clic que no ocurrió.
         // La casilla de serie hecha tiene su propia animación y no entra.
         (function () {
             if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
             const SEL = 'button, .btn, .btn-outline, .btn-icon, .btn-nav, .btn-inline, .bottom-nav-item, .pill, '
                 + '.rest-badge, .add-exercise-tile, .delete-tile, .ss-link-btn, .home-cta a, a.card-link';
             const SKIP = '.set-check-btn, .drag-handle, [data-no-pop], .sortable-chosen';
-            let pressed = null;
-            document.addEventListener('pointerdown', function (e) {
+            function target(e) {
                 const el = e.target.closest && e.target.closest(SEL);
-                if (!el || el.matches(SKIP) || el.disabled) return;
-                pressed = el;
-                el.classList.remove('tap-pop');
-                el.classList.add('tap-down');
-            }, { passive: true });
+                return el && !el.matches(SKIP) && !el.disabled ? el : null;
+            }
+            let pressed = null;
             function release() {
-                if (!pressed) return;
-                const el = pressed;
+                if (pressed) pressed.classList.remove('tap-down');
                 pressed = null;
-                el.classList.remove('tap-down');
+            }
+            document.addEventListener('pointerdown', function (e) {
+                release();
+                pressed = target(e);
+                if (pressed) pressed.classList.add('tap-down');
+            }, { passive: true });
+            document.addEventListener('pointerup', release, { passive: true });
+            document.addEventListener('pointercancel', release, { passive: true });
+            document.addEventListener('click', function (e) {
+                const el = target(e);
+                if (!el) return;
+                el.classList.remove('tap-pop');
                 void el.offsetWidth;  // reinicia la animación si se pulsa seguido
                 el.classList.add('tap-pop');
                 el.addEventListener('animationend', function () { el.classList.remove('tap-pop'); }, { once: true });
-            }
-            document.addEventListener('pointerup', release, { passive: true });
-            document.addEventListener('pointercancel', function () {
-                if (pressed) { pressed.classList.remove('tap-down'); pressed = null; }
-            }, { passive: true });
+            }, true);
         })();
     </script>
     {% if show_timing %}

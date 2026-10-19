@@ -406,11 +406,13 @@ textarea {
     cursor: grab;
     touch-action: none;
     user-select: none;
+    max-width: calc(100vw - 8px);
 }
 .rest-toast.rest-toast-dragging { cursor: grabbing; }
 body.has-rest-timer { padding-bottom: 84px; }
 .rest-toast button { touch-action: auto; }
 .rt-main {
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 7px;
@@ -429,7 +431,7 @@ body.has-rest-timer { padding-bottom: 84px; }
     .rt-ring-fill { transition: stroke-dashoffset 1s linear; }
 }
 .rt-text { display: flex; flex-direction: column; justify-content: center; line-height: 1.1; min-width: 0; }
-.rt-label { max-width: 132px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+.rt-label { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     font-size: 0.68rem; font-weight: 800; color: var(--accent); }
 .rt-label[hidden] { display: none; }
 .rest-toast .rt-time {
@@ -3834,6 +3836,7 @@ a.level-strength { display: flex; align-items: center; justify-content: space-be
 :root { --vol-base: #e4e1f0; --vol-none: #d4d0e6; --vol-low: #f4b740; --vol-ok: #22c98c; --vol-high: #e5484d; }
 :root[data-theme="dark"] { --vol-base: #3a3550; --vol-none: #4a4466; }
 .vol-card { margin-top: 16px; }
+.vol-level-note { margin: 4px 0 10px; font-size: 0.82rem; color: var(--color-text-muted); line-height: 1.45; }
 .vol-map .mm-row { display: flex; justify-content: center; gap: 12px; }
 .vol-map .mm-figure { width: 42%; max-width: 150px; height: auto; }
 .vol-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin: 10px 0 6px; font-size: 0.75rem; color: var(--color-text-muted); }
@@ -4665,11 +4668,13 @@ button.is-pending::after, input[type="submit"].is-pending::after, .active-toast.
    rebota hinchándose un poco. Va por JS porque :active casi no se ve con un
    toque rápido en el móvil. */
 @media (prefers-reduced-motion: no-preference) {
-    .tap-down { transform: scale(0.94) !important; transition: transform 0.08s ease !important; }
-    .tap-pop { animation: tap-pop 0.28s cubic-bezier(0.3, 1.6, 0.5, 1) !important; }
+    /* Al apoyar el dedo: más oscuro, NUNCA más pequeño. Encogerlo sacaba el
+       borde de debajo del dedo y el navegador no contaba el clic. */
+    .tap-down { filter: brightness(0.92); }
+    .tap-pop { animation: tap-pop 0.26s cubic-bezier(0.3, 1.6, 0.5, 1) !important; }
 }
 @keyframes tap-pop {
-    0% { transform: scale(0.94); }
-    55% { transform: scale(1.06); }
+    0% { transform: scale(1); }
+    45% { transform: scale(1.06); }
     100% { transform: scale(1); }
 }

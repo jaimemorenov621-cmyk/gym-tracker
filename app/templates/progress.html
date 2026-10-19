@@ -93,6 +93,15 @@
                 <p>{{ _('Series duras de los últimos 7 días frente al rango que respalda la evidencia: %(low)s-%(high)s por semana.', low=volume_mod.LOW, high=volume_mod.HIGH) }}</p>
             </div>
         </div>
+        {# Orientación por nivel: el rango (y los colores) no cambian; la
+           evidencia no da rangos distintos por nivel, solo esta tendencia. #}
+        <p class="vol-level-note">
+            {% if training_level == 'principiante' %}{{ _('Para tu nivel (principiante o novato), la parte baja del rango, unas %(low)s series, suele bastar: al empezar casi cualquier volumen razonable hace progresar.', low=volume_mod.LOW) }}
+            {% elif training_level == 'intermedio' %}{{ _('Para tu nivel (intermedio), lo normal es moverse por la mitad del rango y subir en los músculos que se estanquen.') }}
+            {% else %}{{ _('Para tu nivel (avanzado), suele hacer falta la parte alta del rango, unas %(high)s series, para seguir progresando, sobre todo en los músculos rezagados.', high=volume_mod.HIGH) }}{% endif %}
+            {{ _('Es una orientación: los estudios no dan un rango distinto para cada nivel.') }}
+            {% if not has_rank %}{{ _('Tu nivel sale de tu rango de fuerza; sin rango todavía se toma principiante.') }}{% else %}{{ _('Tu nivel sale de tu rango de fuerza.') }}{% endif %}
+        </p>
         {% if volume.hard_sets %}
             <div class="vol-map">
                 <style>

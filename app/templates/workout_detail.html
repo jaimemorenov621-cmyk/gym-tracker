@@ -133,6 +133,19 @@
 
 
     <div id="workoutExercisesList">
+    {# Textos e iconos iguales en todas las filas: se calculan una vez por
+       página (con muchas series, traducirlos en cada fila era casi la mitad
+       del tiempo de la plantilla). Mismas cadenas que usa addSet() en JS. #}
+    {% set t_weight_n = _('Peso en kg, serie {n}') %}
+    {% set t_reps_n = _('Repeticiones, serie {n}') %}
+    {% set t_set_n = _('Serie {n}') %}
+    {% set t_set_type = _('Tipo de serie: {type}') %}
+    {% set t_mark_done = _('Marcar serie como hecha') %}
+    {% set t_delete_set = _('Eliminar serie') %}
+    {% set t_pr_title = _('Récord personal · toca para compartir') %}
+    {% set t_pr_label = _('Récord personal, compartir') %}
+    {% set icon_check = macros.icon('check', 18) %}
+    {% set icon_trash = macros.icon('trash') %}
     {% for exercise in exercise_order %}
         {% set group = grouped_sets[exercise] %}
         {% set n = exercise_notes_map.get(exercise) %}
@@ -158,7 +171,7 @@
                 </h3>
                 <span style="display:flex; align-items:center; gap:6px;">
                     <a class="rest-badge" href="{{ url_for('exercise_notes', name=exercise) }}">
-                        {{ macros.icon('note') }} {{ _('notas') }}{% if n and n.default_rest_seconds %} · {{ macros.icon('stopwatch') }} {{ format_rest(n.default_rest_seconds) }}{% endif %}
+                        {{ macros.icon('note') }} {{ _('notas') }} · {{ macros.icon('stopwatch') }} {{ format_rest(rest_seconds_map[exercise]) }}
                     </a>
                     <button type="button" class="btn-icon" title="{{ _('Reemplazar ejercicio') }}" aria-label="{{ _('Reemplazar ejercicio') }}"
                         onclick="openExercisePicker('{{ url_for('replace_workout_exercise', workout_id=workout.id) }}', {old_exercise: {{ exercise|tojson|forceescape }}})">{{ macros.icon('repeat') }}</button>
@@ -187,30 +200,32 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% set ex_title = exercise|exercise_title %}
+                    {% set ex_json = exercise|tojson|forceescape %}
                     {% for s in group %}
                     {% set p = prev[loop.index0] if prev and loop.index0 < prev|length else none %}
                     {% set untouched = (not s.completed and s.weight == 0 and s.reps == 0) %}
                     {% set ghost = untouched and p %}
                     <tr id="row-{{ s.id }}" data-exercise="{{ exercise }}" data-set-type="{{ s.set_type if s.set_type in type_short else 'normal' }}"{% if s.completed %} class="set-row-done"{% endif %}>
-                        <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" role="button" tabindex="0" title="{{ _('Récord personal · toca para compartir') }}" aria-label="{{ _('Récord personal, compartir') }}">🏅</span>{% endif %}</td>
+                        <td class="set-num">{{ loop.index }}{% if s.is_pr %}<span class="pr-badge" role="button" tabindex="0" title="{{ t_pr_title }}" aria-label="{{ t_pr_label }}">🏅</span>{% endif %}</td>
                         <td class="set-previous">{{ p.label if p else "—" }}</td>
-                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="{{ _('Peso en kg, serie %(n)s', n=loop.index) }}" value="{{ '' if ghost else ('%g' % s.weight).replace('.', ',') }}"{% if ghost %} placeholder="{{ ('%g' % p.weight).replace('.', ',') }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
-                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="{{ _('Repeticiones, serie %(n)s', n=loop.index) }}" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" oninput="checkRepsInput(this)" onchange="checkRepsInput(this, true); updateSet({{ s.id }}, 'reps', this.value)"></td>
+                        <td><input class="cell-input cell-input-number cell-input-weight" type="text" inputmode="decimal" aria-label="{{ t_weight_n|replace('{n}', loop.index) }}" value="{{ '' if ghost else ('%g' % s.weight).replace('.', ',') }}"{% if ghost %} placeholder="{{ ('%g' % p.weight).replace('.', ',') }}"{% endif %} onfocus="this.select()" onchange="updateSet({{ s.id }}, 'weight', this.value.replace(',', '.'))"></td>
+                        <td><input class="cell-input cell-input-number" type="text" inputmode="numeric" aria-label="{{ t_reps_n|replace('{n}', loop.index) }}" value="{{ '' if ghost else s.reps }}"{% if ghost %} placeholder="{{ p.reps }}"{% endif %} onfocus="this.select()" oninput="checkRepsInput(this)" onchange="checkRepsInput(this, true); updateSet({{ s.id }}, 'reps', this.value)"></td>
                         {% if effort_scale != 'none' %}
                         {% set effort_val = s.rir if s.rir is not none else (s.rpe if s.rpe is not none else '') %}
                         {% set effort_ghost = (effort_val == '' and p and p.effort is not none and p.effort_scale == effort_scale) %}
-                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', {{ (exercise|exercise_title ~ ' · ' ~ _('Serie %(n)s', n=loop.index))|tojson|forceescape }})">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
+                        <td><button type="button" class="pill effort-chip{% if effort_ghost %} effort-chip-placeholder{% elif effort_val == '' %} effort-chip-empty{% endif %}" data-set-id="{{ s.id }}" onclick="openEffortPicker({{ s.id }}, '{{ effort_val if effort_val != '' else (p.effort if effort_ghost else '') }}', {{ (ex_title ~ ' · ' ~ t_set_n|replace('{n}', loop.index))|tojson|forceescape }})">{{ effort_val if effort_val != '' else (p.effort if effort_ghost else effort_scale|upper) }}</button></td>
                         {% endif %}
                         {% set st = s.set_type if s.set_type in type_short else 'normal' %}
                         <td>
-                            <button type="button" class="set-type-pill set-type-{{ st }}" data-type="{{ st }}" aria-label="{{ _('Tipo de serie: %(type)s', type=type_label[st]) }}"
+                            <button type="button" class="set-type-pill set-type-{{ st }}" data-type="{{ st }}" aria-label="{{ t_set_type|replace('{type}', type_label[st]) }}"
                                     onclick="openSetTypePicker({{ s.id }}, this)">
                                 <span class="set-type-short">{{ type_short[st] }}</span>
                                 <span class="set-type-long">{{ type_label[st] }}</span>
                             </button>
                         </td>
-                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" aria-label="{{ _('Marcar serie como hecha') }}" onclick="toggleSetComplete({{ s.id }}, this, {{ exercise|tojson|forceescape }})">{{ macros.icon('check', 18) }}</button></td>
-                        <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})" aria-label="{{ _('Eliminar serie') }}">{{ macros.icon('trash') }}</button></td>
+                        <td><button type="button" class="set-check-btn{% if s.completed %} checked{% endif %}" aria-label="{{ t_mark_done }}" onclick="toggleSetComplete({{ s.id }}, this, {{ ex_json }})">{{ icon_check }}</button></td>
+                        <td><button type="button" class="delete-set-btn" onclick="deleteSet({{ s.id }})" aria-label="{{ t_delete_set }}">{{ icon_trash }}</button></td>
                     </tr>
                     {% endfor %}
                 </tbody>

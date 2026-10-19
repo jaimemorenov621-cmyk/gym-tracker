@@ -1562,21 +1562,14 @@ def delete_workout_exercise(workout_id):
     return jsonify({"ok": True})
 
 
-def add_superset_timers(info, order, groups, timers, rest_for):
-    """Añade a display_info los tiempos de cada biserie: transición (por
-    defecto 40 s) y descanso de la ronda (por defecto, el del último
-    ejercicio del grupo). `rest_for(nombre)` da el descanso de un ejercicio."""
+def add_superset_timers(info, order, groups, timers):
+    """Añade a display_info los tiempos de cada biserie: cambio de ejercicio
+    y descanso de la ronda (40 s cada uno si no se han elegido)."""
     per_group = supersets_mod.group_timers(order, groups, timers)
-    last = {}
-    for key in order:
-        if groups.get(key) is not None:
-            last[groups[key]] = key
-    for key, item in info.items():
+    for item in info.values():
         t, r = per_group.get(item["gid"], (None, None))
         item["transition"] = supersets_mod.DEFAULT_TRANSITION if t is None else t
-        item["rest"] = r if r is not None else (rest_for.get(last[item["gid"]], 120)
-                                                if isinstance(rest_for, dict) else rest_for(last[item["gid"]]))
-        item["rest_custom"] = r is not None
+        item["rest"] = supersets_mod.DEFAULT_ROUND_REST if r is None else r
 
 
 def _timer_payload():
@@ -1997,8 +1990,7 @@ def workout_detail(workout_id):
         )
         for name in exercise_order
     }
-    add_superset_timers(superset_info, exercise_order, superset_groups,
-                        supersets_mod.load_timers(workout), rest_seconds_map)
+    add_superset_timers(superset_info, exercise_order, superset_groups, supersets_mod.load_timers(workout))
     prefetch_catalog_exercises(exercise_order)
     return render_template(
         "workout_detail.html",
@@ -2273,6 +2265,9 @@ def progress():
     )
     strength = cached_strength(current_user.id)
     items = cached_overview(current_user.id, current_user.stagnation_threshold)
+    # Nivel de experiencia (por el rango de fuerza, como en el ritmo de peso)
+    # para la orientación de volumen; el perfil ya está en caché con Inicio.
+    rank = cached_profile(current_user)["global_rank"]
     prefetch_catalog_exercises(i["exercise"] for i in items)
     return render_template(
         "progress.html",
@@ -2285,6 +2280,8 @@ def progress():
         latest_weight=latest_weight,
         volume=cached_volume(current_user.id),
         volume_mod=volume_mod,
+        training_level=bodyweight_mod.level_for_tier(rank["tier"] if rank else None),
+        has_rank=rank is not None,
         muscle_svg=muscle_svg_markup(current_user.sex),
     )
 
@@ -3370,13 +3367,8 @@ def routine_detail(routine_id):
         ).all()
         exercise_notes_map = {n.exercise: n for n in notes_rows}
 
-    by_id = {e.id: e for e in exercises}
-
-    def rest_of(ex_id):
-        note = exercise_notes_map.get(by_id[ex_id].exercise)
-        return note.default_rest_seconds if note and note.default_rest_seconds else 120
     add_superset_timers(superset_info, order, groups,
-                        {e.id: [e.superset_transition, e.superset_rest] for e in exercises}, rest_of)
+                        {e.id: [e.superset_transition, e.superset_rest] for e in exercises})
 
     empty_form = EmptyForm()
     prefetch_catalog_exercises(e.exercise for e in exercises)
@@ -4148,35 +4140,44 @@ def get_previous_sets_map(workout, exercise_names):
     significado opuesto), así que el consumidor debe comparar antes de usar `effort`."""
     if not exercise_names:
         return {}
-    rows = db.session.execute(
-        sa.select(Workout.id, SetEntry)
-        .join(SetEntry, SetEntry.workout_id == Workout.id)
+    # Mismo criterio que is_real_set(), pero en SQL: así la base devuelve
+    # solo las series de la última sesión válida de cada ejercicio (antes
+    # traía todo su historial como objetos completos: ~1.700 por carga).
+    bodyweight_names = [n for n in exercise_names if is_bodyweight_exercise(n)]
+    real_set = sa.and_(
+        SetEntry.completed.is_(True), SetEntry.reps > 0,
+        sa.or_(SetEntry.weight > 0, sa.and_(SetEntry.weight == 0, SetEntry.exercise.in_(bodyweight_names))),
+    )
+    ranked = (
+        sa.select(SetEntry.id, SetEntry.exercise, SetEntry.weight, SetEntry.reps, SetEntry.rir, SetEntry.rpe,
+                  sa.func.dense_rank().over(partition_by=SetEntry.exercise,
+                                            order_by=(Workout.timestamp.desc(), Workout.id.desc())).label("n"))
+        .join(Workout, SetEntry.workout_id == Workout.id)
         .where(
             Workout.user_id == current_user.id,
             Workout.timestamp < workout.timestamp,
             SetEntry.exercise.in_(exercise_names),
+            real_set,
         )
-        .order_by(SetEntry.exercise, Workout.timestamp.desc(), SetEntry.id)
+        .subquery()
+    )
+    rows = db.session.execute(
+        sa.select(ranked.c.exercise, ranked.c.weight, ranked.c.reps, ranked.c.rir, ranked.c.rpe)
+        .where(ranked.c.n == 1)
+        .order_by(ranked.c.exercise, ranked.c.id)
     ).all()
 
     result = {}
-    last_workout_id = {}
-    for wid, entry in rows:
-        if not is_real_set(entry):
-            continue
-        last_workout_id.setdefault(entry.exercise, wid)
-        if last_workout_id[entry.exercise] == wid:
-            effort_value = entry.rir if entry.rir is not None else entry.rpe
-            entry_scale = "rir" if entry.rir is not None else ("rpe" if entry.rpe is not None else None)
-            result.setdefault(entry.exercise, []).append(
-                {
-                    "weight": entry.weight,
-                    "reps": entry.reps,
-                    "effort": effort_value,
-                    "effort_scale": entry_scale,
-                    "label": f"{fmt_num(entry.weight, 2)}kg×{entry.reps}",
-                }
-            )
+    for exercise, weight, reps, rir, rpe in rows:
+        result.setdefault(exercise, []).append(
+            {
+                "weight": weight,
+                "reps": reps,
+                "effort": rir if rir is not None else rpe,
+                "effort_scale": "rir" if rir is not None else ("rpe" if rpe is not None else None),
+                "label": f"{fmt_num(weight, 2)}kg×{reps}",
+            }
+        )
     return result
 
 

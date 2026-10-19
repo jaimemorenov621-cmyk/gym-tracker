@@ -116,7 +116,7 @@ class WorkoutRouteTests(DbTestCase):
         self.toggle("press de banca")  # press + remo
         html = self.client.get(f"/workout/{self.wid}").get_data(as_text=True)
         self.assertIn('data-ss-transition="40"', html)          # por defecto 40 s
-        self.assertIn('data-ss-rest="120"', html)               # el descanso del último (por defecto 2 min)
+        self.assertIn('data-ss-rest="40"', html)                # descanso de la ronda por defecto: 40 s
         resp = self.client.post(f"/workout/{self.wid}/superset/timers",
                                 json={"exercise": "remo con barra", "transition": 20, "rest": 90})
         self.assertTrue(resp.get_json()["ok"])
